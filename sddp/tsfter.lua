@@ -1,4 +1,4 @@
-if thermal == nil then thermal = Thermal(); end
-
--- TSFTER - Thermal Forced Outage Rate
-thermal.ih:save("tsfter");
+function save_tsfter()
+    if thermal == nil then thermal = Thermal(); end
+    thermal.ih:save("tsfter");
+end

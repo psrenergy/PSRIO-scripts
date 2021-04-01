@@ -1,4 +1,4 @@
-if hydro == nil then hydro = Hydro(); end
-
--- PNOMHD - Nominal hydro capacity
-hydro.capacity:save("pnomhd")
+function save_pnomhd()
+    if hydro == nil then hydro = Hydro(); end
+    hydro.capacity:save("pnomhd")
+end

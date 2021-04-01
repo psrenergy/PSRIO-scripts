@@ -1,4 +1,4 @@
-if hydro == nil then hydro = Hydro(); end
-
--- MNSOUT - Minimum spillage ctr.
-hydro.min_spillage:save("mnsout")
+function save_mnsout()
+    if hydro == nil then hydro = Hydro(); end
+    hydro.min_spillage:save("mnsout");
+end

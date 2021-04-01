@@ -1,4 +1,4 @@
-if hydro == nil then hydro = Hydro(); end
-
--- QMINIM - Minimum turbined outflow
-hydro.qmin:save("qminim")
+function save_qminim()
+    if hydro == nil then hydro = Hydro(); end
+    hydro.qmin:save("qminim");
+end

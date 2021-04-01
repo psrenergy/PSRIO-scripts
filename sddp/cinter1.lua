@@ -1,4 +1,4 @@
-if interconnection == nil then interconnection = Interconnection(); end
-
--- CINTER1
-interconnection.cost_right:save("cinter1");
+function save_cinter1()
+    if interconnection == nil then interconnection = Interconnection(); end
+    interconnection.cost_right:save("cinter1");
+end

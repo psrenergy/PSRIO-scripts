@@ -1,4 +1,4 @@
-if hydro == nil then hydro = Hydro(); end
-
--- TSFHID - Hydro Forced Outage Rate
-hydro.icp:save("tsfhid");
+function save_tsfhid()
+    if hydro == nil then hydro = Hydro(); end
+    hydro.icp:save("tsfhid");
+end

@@ -1,4 +1,4 @@
-if thermal == nil then thermal = Thermal(); end
-
--- PMNTER - Minimum thermal generation
-thermal.germin:save("pmnter")
+function save_pmnter()
+    if thermal == nil then thermal = Thermal(); end
+    thermal.germin:save("pmnter")
+end

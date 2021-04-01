@@ -1,4 +1,4 @@
-if circuit == nil then circuit = Circuit(); end
-
--- MAXFLW - Maximum flow
-circuit.capacity:save("maxflw");
+function save_maxflw()
+    if circuit == nil then circuit = Circuit(); end
+    circuit.capacity:save("maxflw");
+end

@@ -1,6 +1,6 @@
-if hydro == nil then hydro = Hydro(); end
-
--- ENEMBP - Perc. of stored energy by reserv.
-eneemb = hydro:load("eneemb");
-eembmx = hydro:load("eembmx");
-(eneemb / eembmx):convert("%"):save("enembp", {remove_zeros = true});
+function save_enembp()
+    if hydro == nil then hydro = Hydro(); end
+    local eneemb = hydro:load("eneemb");
+    local eembmx = hydro:load("eembmx");
+    (eneemb / eembmx):convert("%"):save("enembp", {remove_zeros = true});
+end

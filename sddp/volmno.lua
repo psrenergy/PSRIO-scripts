@@ -1,4 +1,4 @@
-if hydro == nil then hydro = Hydro(); end
-
--- VOLMNO - Minimum security storage
-hydro.vmin:save("volmno")
+function save_volmno()
+    if hydro == nil then hydro = Hydro(); end
+    hydro.vmin:save("volmno");
+end

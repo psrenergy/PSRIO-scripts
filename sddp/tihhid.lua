@@ -1,4 +1,4 @@
-if hydro == nil then hydro = Hydro(); end
-
--- TIHHID - Hydro Composite Outage Rate
-hydro.ih:save("tihhid");
+function save_tihhid()
+    if hydro == nil then hydro = Hydro(); end
+    hydro.ih:save("tihhid");
+end

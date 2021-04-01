@@ -1,4 +1,4 @@
-if fuelcontract == nil then fuelcontract = FuelContract(); end
-
--- FCVMAX
-fuelcontract.amount:save("fcvmax");
+function save_fcvmax()
+    if fuelcontract == nil then fuelcontract = FuelContract(); end
+    fuelcontract.amount:save("fcvmax");
+end

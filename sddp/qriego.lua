@@ -1,4 +1,4 @@
-if hydro == nil then hydro = Hydro(); end
-
--- QRIEGO - Irrigation
-hydro.irrigation:save("qriego", {remove_zeros = true});
+function save_qriego()
+    if hydro == nil then hydro = Hydro(); end
+    hydro.irrigation:save("qriego", {remove_zeros = true});
+end

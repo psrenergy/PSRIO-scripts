@@ -1,4 +1,4 @@
-if hydro == nil then hydro = Hydro(); end
-
--- VOLESP - Flood control volume
-hydro.flood_volume:save("volesp");
+function save_volesp()
+    if hydro == nil then hydro = Hydro(); end
+    hydro.flood_volume:save("volesp");
+end
