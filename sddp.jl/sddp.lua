@@ -1,5 +1,4 @@
 local study = require("collection/study");
-
 local suffixes;
 if study:is_genesys() then
     suffixes = {"__day", "__week", "__hour", "__trueup"};
@@ -7,6 +6,28 @@ else
     suffixes = {""};
 end
 
+-- INPUT DATA
+-- QMAXIM
+local qmaxim = require("sddp/qmaxim");
+qmaxim():save("qmaxim", { horizon = true });
+
+-- MNSOUT
+local mnsout = require("sddp/mnsout");
+mnsout():save("mnsout", { horizon = true });
+
+-- PMNTER
+local pmnter = require("sddp/pmnter");
+pmnter():save("pmnter", { horizon = true });
+
+-- USEFUL_STORAGE
+local useful_storage = require("sddp/useful_storage");
+useful_storage():save("useful_storage", { horizon = true });
+
+-- VOLMNO
+local volmno = require("sddp/volmno");
+volmno():save("volmno", { horizon = true });
+
+-- OUTPUT DATA
 -- GERHID_PER_BUS
 local gerhid_per_bus = require("sddp/gerhid_per_bus");
 for _, suffix in ipairs(suffixes) do gerhid_per_bus(suffix):save("gerhid_per_bus" .. suffix); end
@@ -27,18 +48,6 @@ for _, suffix in ipairs(suffixes) do gergnd_per_bus(suffix):save("gergnd_per_bus
 local gerbat_per_bus = require("sddp/gerbat_per_bus");
 for _, suffix in ipairs(suffixes) do gerbat_per_bus(suffix):save("gerbat_per_bus" .. suffix); end
 
--- QMAXIM
-local qmaxim = require("sddp/qmaxim");
-qmaxim():save("qmaxim");
-
--- MNSOUT
-local mnsout = require("sddp/mnsout");
-mnsout():save("mnsout");
-
--- PMNTER
-local pmnter = require("sddp/pmnter");
-pmnter():save("pmnter");
-
 -- POWINJ_PER_BUS
 local powinj_per_bus = require("sddp/powinj_per_bus");
 for _, suffix in ipairs(suffixes) do powinj_per_bus(suffix):save("powinj_per_bus" .. suffix); end
@@ -55,10 +64,6 @@ for _, suffix in ipairs(suffixes) do usecir(suffix):save("usecir" .. suffix); en
 local usedcl = require("sddp/usedcl");
 for _, suffix in ipairs(suffixes) do usedcl(suffix):save("usedcl" .. suffix); end
 
--- USEFUL_STORAGE
-local useful_storage = require("sddp/useful_storage");
-useful_storage():save("useful_storage");
-
 -- USEFUL_STORAGE_INITIAL
 local useful_storage_initial = require("sddp/useful_storage_initial");
 for _, suffix in ipairs(suffixes) do useful_storage_initial(suffix):save("useful_storage_initial" .. suffix); end
@@ -67,10 +72,7 @@ for _, suffix in ipairs(suffixes) do useful_storage_initial(suffix):save("useful
 local useful_storage_final = require("sddp/useful_storage_final");
 for _, suffix in ipairs(suffixes) do useful_storage_final(suffix):save("useful_storage_final" .. suffix); end
 
--- VOLMNO
-local volmno = require("sddp/volmno");
-volmno():save("volmno");
-
+-- REPORTS --
 -- SDDPCOPED
 local sddpcoped = require("sddp-reports/sddpcoped");
 sddpcoped():save("sddpcoped_psrio", {remove_zeros=true});
