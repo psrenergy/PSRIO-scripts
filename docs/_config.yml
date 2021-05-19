@@ -1,1 +1,6 @@
-theme: jekyll-theme-cayman
+title: "PSRIO"
+remote_theme: pmarsceill/just-the-docs
+
+aux_links:
+  "PSRIO Scripts on GitHub":
+    - "//github.com/psrenergy/psrio-scripts"
