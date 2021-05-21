@@ -7,7 +7,7 @@ nav_order: 2
 # Loading Outputs
 
 |   Operator  |                Syntax               |
-|:-----------:|:-----------------------------------:|
+|:------------|:------------------------------------|
 | Load method | `exp = collection:load("filename")` |
 
 ``` lua

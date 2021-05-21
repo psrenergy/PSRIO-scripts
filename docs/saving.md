@@ -6,7 +6,7 @@ nav_order: 6
 # Saving
 
 | Syntax                                     | Optionals                 |
-|:------------------------------------------:|:-------------------------:|
+|:-------------------------------------------|:--------------------------|
 | `exp1:save("filename")`                    | ---                       |
 | `exp1:save("filename", {optionals})`       | LINK TO OPTIONALS         |
 | `exp = exp1:save("filename")`              | ---                       |

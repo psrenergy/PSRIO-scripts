@@ -31,7 +31,7 @@ nav_order: 1
 ### Circuit
 
 | Data             | Unit | Syntax                                  |
-|:----------------:|:----:|:---------------------------------------:|
+|:-----------------|:----:|:----------------------------------------|
 | Circuit capacity | MW   | `exp = circuit.capacity`                |
 |     bla          | ---  | `exp = circuit.monitored`               |
 |     bla          | ---  | `exp = circuit.monitored_contingencies` |
@@ -45,7 +45,7 @@ exp = circuit.capacity;
 ### Circuits Sum
 
 | Data             | Unit | Syntax                                  |
-|:----------------:|:----:|:---------------------------------------:|
+|:-----------------|:----:|:----------------------------------------|
 | Circuit Sum LB   | MW   | `exp = circuitssum.lb`                  |
 | Circuit Sum UB   | MW   | `exp = circuitssum.ub`                  |
 
@@ -55,7 +55,7 @@ exp = circuit.capacity;
 ### DC Link
 
 | Data             | Unit | Syntax                                  |
-|:----------------:|:----:|:---------------------------------------:|
+|:-----------------|:----:|:----------------------------------------|
 |                  | MW   | `exp = dclink.capacity_right`           |
 |                  | MW   | `exp = dclink.capacity_left`            |
 
@@ -65,7 +65,7 @@ exp = circuit.capacity;
 ### Demand
 
 | Data             | Unit | Syntax                                  |
-|:----------------:|:----:|:---------------------------------------:|
+|:-----------------|:----:|:----------------------------------------|
 |                  | ---  | `exp = demand.is_elastic`               |
 |                  | MW   | `exp = demand.inelastic_hour`           |
 |                  | GWh  | `exp = demand.inelastic_block`          |
@@ -76,7 +76,7 @@ exp = circuit.capacity;
 ### Demand Segment
 
 | Data             | Unit | Syntax                                  |
-|:----------------:|:----:|:---------------------------------------:|
+|:-----------------|:----:|:----------------------------------------|
 |                  | MW   | `exp = demandsegment.hour`              |
 |                  | GWh  | `exp = demandsegment.block`             |
 
@@ -88,7 +88,7 @@ exp = circuit.capacity;
 ### Fuel
 
 | Data             | Unit  | Syntax                                  |
-|:----------------:|:-----:|:---------------------------------------:|
+|:-----------------|:----:|:----------------------------------------|
 |                  | $/gal | `exp = fuel.cost`                       |
 
 ``` lua
@@ -99,7 +99,7 @@ exp = circuit.capacity;
 ### Fuel Contract
 
 | Data             | Unit  | Syntax                                  |
-|:----------------:|:-----:|:---------------------------------------:|
+|:-----------------|:-----:|:----------------------------------------|
 |                  | ---   | `exp = fuelcontract.amount`             |
 |                  | ---   | `exp = fuelcontract.take_or_pay`        |
 |                  | ---   | `exp = fuelcontract.max_offtake`        |
@@ -110,7 +110,7 @@ exp = circuit.capacity;
 ### Fuel Reservoir
 
 | Data             | Unit  | Syntax                                           |
-|:----------------:|:-----:|:------------------------------------------------:|
+|:-----------------|:-----:|:-------------------------------------------------|
 |                  | ---   | `exp = fuelreservoir.maxinjection`               |
 |                  | ---   | `exp = fuelreservoir.maxinjection_chronological` |
 
@@ -122,7 +122,7 @@ exp = circuit.capacity;
 ### Generation Constraint
 
 | Data             | Unit  | Syntax                                           |
-|:----------------:|:-----:|:------------------------------------------------:|
+|:-----------------|:-----:|:-------------------------------------------------|
 |                  | MW    | `exp = generationconstraint.capacity`            |
 
 ``` lua
@@ -133,6 +133,7 @@ exp = circuit.capacity;
 ### Hydro
 
 | Data                | Unit  | Syntax                                       |
+|:--------------------|:-----:|:---------------------------------------------|
 | Hydro Existing Flag | ---   | `exp = hydro.existing`                       |
 | Hydro Capacity      | MW    | `exp = hydro.capacity`                       |
 | PotInst             | MW    | `exp = hydro.capacity_maintenance`           |
@@ -151,6 +152,7 @@ exp = circuit.capacity;
 ```
 
 | Data                | Unit  | Syntax                                                       |
+|:--------------------|:-----:|:-------------------------------------------------------------|
 | MinTO               | ---   | `exp = hydro.min_total_outflow_historical_scenarios_nodata`  |
 | MinTO               | m3/s  | `exp = hydro.min_total_outflow_historical_scenarios`         |
 | MinTO               | m3/s  | `exp = hydro.min_total_outflow`                              |
@@ -188,6 +190,7 @@ exp = circuit.capacity;
 ### Interconnection
 
 | Data                | Unit  | Syntax                                                       |
+|:--------------------|:-----:|:-------------------------------------------------------------|
 |                     | MW   | `exp = interconnection.capacity_right`                        |
 |                     | MW   | `exp = interconnection.capacity_left`                         |
 |                     | MW   | `exp = interconnection.cost_right`                            |
@@ -201,6 +204,7 @@ exp = circuit.capacity;
 ### Renewable
 
 | Data                | Unit  | Syntax                                                       |
+|:--------------------|:-----:|:-------------------------------------------------------------|
 |                     | MW   | `exp = renewable.existing`                                    |
 |                     | MW   | `exp = renewable.tech_type`                                   |
 |                     | MW   | `exp = renewable.capacity`                                    |
@@ -212,6 +216,7 @@ exp = circuit.capacity;
 ### Renewable Gauging Station
 
 | Data                | Unit  | Syntax                                                       |
+|:--------------------|:-----:|:-------------------------------------------------------------|
 |                     | MW   | `exp = renewablegaugingstation.hourgeneration`                |
 
 ``` lua
@@ -222,6 +227,7 @@ exp = circuit.capacity;
 ### Study
 
 | Data                | Unit  | Syntax                                                       |
+|:--------------------|:-----:|:-------------------------------------------------------------|
 |                     | %     | `exp = study.discount_rate`                                  |
 |                     | ---   | `exp = study.stage`                                          |
 |                     | ---   | `exp = study.stage_in_year`                                  |
@@ -240,6 +246,7 @@ exp = circuit.capacity;
 ### System
 
 | Data                | Unit  | Syntax                                                       |
+|:--------------------|:-----:|:-------------------------------------------------------------|
 |                     | ---   | `exp = system.duraci`                                        |
 |                     | ---   | `exp = system.hblock`                                        |
 |                     | ---   | `exp = system.sensitivity`                                   |
@@ -252,6 +259,7 @@ duraci = system.duraci;
 ### Thermal
 
 | Data                | Unit    | Syntax                                                       |
+|:--------------------|:-------:|:-------------------------------------------------------------|
 | Existing            | ---     | `exp = thermal.existing`                                     |
 | PotInst_orig        | MW      | `exp = thermal.capacity`                                     |
 | ICP                 | %       | `exp = thermal.icp`                                          |

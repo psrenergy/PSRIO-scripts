@@ -42,8 +42,12 @@ nav_order: 5
 <br/>
 
 ``` lua
-exp = cmgdem:aggregate_scenarios(BY_AVERAGE());
+system = require("collection/system");
+cmgdem = system:load("cmgdem");
+cmgdem:aggregate_scenarios(BY_AVERAGE()):save("cmgdem_average");
+```
 
+``` lua
 exp = cmgdem:aggregate_scenarios(BY_PERCENTILE(50));
 
 exp = cmgdem:aggregate_scenarios(BY_MAX(), {1, 2, 3, 4, 5, 6, 7, 8, 9, 10});

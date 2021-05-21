@@ -15,7 +15,7 @@ At the end of the day, by delegating this task to an easy-to-use and secure lang
 Para complementar o conjunto de ferramentas da PSR, foi desenvolvido o PSRIO. Ele é um interpretador de scripts Lua que permite manipular bases de dados da PSR (entrada e resultados) e realizar todas as operações matemáticas e cálculos de estatísticas necessários de forma rápida, customizável e extremamente amigável. Operações como a soma de agentes, média dos cenários, cálculo de percentis, conversão de unidades e diversas outras podem ser realizadas em menos poucas linhas de script, sem a preocupação com fórmulas ou programação de loops para leitura, processamento e escrita de arquivos. Os resultados são salvos no formato padrão e podem ser utilizados pelo graficador, para criação de dashboards, no Excel, diretamente em relatórios ou até mesmo como dado de entrada para outro modelo.
 O PSRIO já está integrado aos principais modelos e interfaces da PSR, o que permite gerar resultados customizados automaticamente após a execução dos modelos no computador local ou no PSRCloud.
 A apresentação será na tarde desta terça feira com discussão de exemplos e aplicações. Contamos com a sua presença! -->
-
+<!-- 
 ### Markdown
 
 Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
@@ -46,4 +46,4 @@ Your Pages site will use the layout and styles from the Jekyll theme you have se
 
 ### Support or Contact
 
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out. -->
