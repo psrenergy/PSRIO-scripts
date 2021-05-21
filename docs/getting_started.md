@@ -1,9 +1,9 @@
 ---
-title: Introduction
+title: Getting Started
 nav_order: 2
 ---
 
-## Welcome to GitHub Pages
+# Getting Started
 
 You can use the [editor on GitHub](https://github.com/psrenergy/pages1/edit/master/docs/index.md) to maintain and preview the content for your website in Markdown files.
 

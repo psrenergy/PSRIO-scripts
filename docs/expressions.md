@@ -19,7 +19,7 @@ nav_order: 4
 <br/>
 
 |     Operator    |            Syntax            |
-|:---------------:|:----------------------------:|
+|:----------------|:-----------------------------|
 |      Minus      |         `exp = -exp1`        |
 |  Absolute Value |      `exp = exp1:abs()`      |
 | Unit Conversion | `exp = exp1:convert("unit")` |
@@ -61,7 +61,7 @@ nav_order: 4
 ## Binary Expressions
 
 |          Operator         |          Syntax         |
-|:-------------------------:|:-----------------------:|
+|:--------------------------|:------------------------|
 |          Addition         |   `exp = exp1 + exp2`   |
 |        Subtraction        |   `exp = exp1 - exp2`   |
 |       Multiplication      |   `exp = exp1 * exp2`   |
@@ -129,5 +129,5 @@ nav_order: 4
 ## Ternary Expressions
 
 | Operator    | Syntax                           |
-|:-----------:|:--------------------------------:|
+|:------------|:---------------------------------|
 | Conditional | `exp = ifelse(exp1, exp2, exp3)` |
