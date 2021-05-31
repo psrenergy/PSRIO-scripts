@@ -73,18 +73,22 @@ local useful_storage_final = require("sddp/useful_storage_final");
 for _, suffix in ipairs(suffixes) do useful_storage_final(suffix):save("useful_storage_final" .. suffix); end
 
 -- REPORTS --
+-- SDDPCOPE
+local sddpcope = require("sddp-reports/sddpcope");
+sddpcope():save("sddpcope_psrio", {csv=true, remove_zeros=true});
+
 -- SDDPCOPED
 local sddpcoped = require("sddp-reports/sddpcoped");
-sddpcoped():save("sddpcoped_psrio", {remove_zeros=true});
+sddpcoped():save("sddpcoped_psrio", {csv=true, remove_zeros=true});
 
 -- SDDPGRXXD
 local sddpgrxxd = require("sddp-reports/sddpgrxxd");
-sddpgrxxd():save("sddpgrxxd_psrio");
+sddpgrxxd():save("sddpgrxxd_psrio", {csv=true});
 
 -- SDDPCMGD
 local sddpcmgd = require("sddp-reports/sddpcmgd");
-sddpcmgd():save("sddpcmgd_psrio");
+sddpcmgd():save("sddpcmgd_psrio", {csv=true});
 
 -- SDDPCMGA
 local sddpcmga = require("sddp-reports/sddpcmga");
-sddpcmga():save("sddpcmga_psrio");
+sddpcmga():save("sddpcmga_psrio", {csv=true});
