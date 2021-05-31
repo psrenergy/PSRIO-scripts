@@ -14,6 +14,43 @@ nav_order: 4
 
 ---
 
+## Attributes
+
+<br/>
+
+| Operator        | Type            |            Syntax                 |
+|:----------------|:---------------:|:----------------------------------|
+| Stages          | number          | `attribute = exp:stages()`        |
+| Stage           | number          | `attribute = exp:stage(index)`    |
+| Stage Type      | number          | `attribute = exp:stage_type()`    |
+| Initial Stage   | number          | `attribute = exp:initial_stage()` |
+| Initial Year    | number          | `attribute = exp:initial_year()`  |
+| Final Year      | number          | `attribute = exp:final_year()`    |
+| Week            | number          | `attribute = exp:week(stage)`     |
+| Month           | number          | `attribute = exp:month(stage)`    |
+| Year            | number          | `attribute = exp:year(stage)`     |
+
+| Operator        | Type            |            Syntax                 |
+|:----------------|:---------------:|:----------------------------------|
+| Blocks          | number          | `attribute = exp:blocks(stage)`   |
+| Has blocks      | boolean         | `attribute = exp:has_blocks()`    |
+| Is hourly       | boolean         | `attribute = exp:is_hourly()`     |
+
+| Operator        | Type            |            Syntax                 |
+|:----------------|:---------------:|:----------------------------------|
+| Scenarios       | number          | `attribute = exp:scenarios()`     |
+
+| Operator        | Type            |            Syntax                 |
+|:----------------|:---------------:|:----------------------------------|
+| Agents          | number          | `attribute = exp:agents()`        |
+| Agent           | string          | `attribute = exp:agent(index)`    |
+
+| Operator        | Type            |            Syntax                 |
+|:----------------|:---------------:|:----------------------------------|
+| Unit            | string          | `attribute = exp:unit()`          |
+
+<br/>
+
 ## Unary Expressions
 
 <br/>

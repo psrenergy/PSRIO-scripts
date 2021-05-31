@@ -42,16 +42,23 @@ nav_order: 5
 <br/>
 
 ``` lua
-system = require("collection/system");
-cmgdem = system:load("cmgdem");
 cmgdem:aggregate_scenarios(BY_AVERAGE()):save("cmgdem_average");
 ```
 
 ``` lua
 exp = cmgdem:aggregate_scenarios(BY_PERCENTILE(50));
+```
 
+``` lua
 exp = cmgdem:aggregate_scenarios(BY_MAX(), {1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
 ```
+
+<br/>
+
+| Method                         | Syntax                                                                 |
+|:-------------------------------|:-----------------------------------------------------------------------|
+| Select one scenario            | `exp = exp1:select_scenarios(scenario)`                                |
+| Select one scenario per stage  | `exp = exp1:select_scenarios({scenario_stage1, scenario_stage2, ...})` |
 
 <br/>
 
@@ -64,9 +71,11 @@ exp = cmgdem:aggregate_scenarios(BY_MAX(), {1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
 <br/>
 
 ``` lua
-exp = cmgdem:aggregate_blocks(BY_AVERAGE())
+exp = cmgdem:aggregate_blocks(BY_AVERAGE());
+```
 
-exp = gergnd:aggregate_blocks(BY_SUM())
+``` lua
+exp = gergnd:aggregate_blocks(BY_SUM());
 ```
 
 <br/>
@@ -132,8 +141,10 @@ exp = defcit:aggregate_stages(BY_SUM(), Profile.PER_YEAR);
 | Method                                                                 | Syntax                                       |
 |:-----------------------------------------------------------------------|:---------------------------------------------|
 | Select stages within case horizon                                      | `exp = exp1:select_stages()`                 |
-| Select stages                                                          | `exp = exp1:select_stages(int, int)`         |
-| Select stages by year                                                  | `exp = exp1:select_stages_by_year(int, int)` |
+| Select stage by only one stage                                         | `exp = exp1:select_stages(int)`              |
+| Select stages by first_stage and last_stage                            | `exp = exp1:select_stages(int, int)`         |
+| Select stages by initial_year and final_year                           | `exp = exp1:select_stages_by_year(int, int)` |
+| Select stages by only one year                                         | `exp = exp1:select_stages_by_year(int)`      |
 
 <br/>
 
@@ -202,12 +213,14 @@ exp = defcit:aggregate_stages(BY_SUM(), Profile.PER_YEAR);
 
 ``` lua
 exp = gerhid:aggregate_agents(BY_SUM(), "Total Hydro");
+```
 
+``` lua
 exp = defbus:aggregate_agents(BY_SUM(), Collection.SYSTEMS);
+```
 
+``` lua
 exp = gergnd:aggregate_agents(BY_SUM(), Collection.BUSES);
-
-exp = system.sensitivity * demxba:aggregate_agents(BY_SUM(), Collection.SYSTEMS);
 ```
 
 <br/>
@@ -218,8 +231,9 @@ exp = system.sensitivity * demxba:aggregate_agents(BY_SUM(), Collection.SYSTEMS)
 
 | Method                                                                     | Syntax                                         |
 |:---------------------------------------------------------------------------|:-----------------------------------------------|
-| Select agents by a list of string and/or int                               | `exp = exp1:select_agents({string or int})`    |
-| Remove agents by a list of string and/or int                               | `exp = exp1:remove_agents({string or int})`    |
+| Select agents by a list of agents names and/or int                         | `exp = exp1:select_agents({string or int})`    |
+| Select agents by a collection                                              | `exp = exp1:select_agents(collection)`         |
+| Remove agents by a list of agents names and/or int                         | `exp = exp1:remove_agents({string or int})`    |
 | Rename agents                                                              | `exp = exp1:rename_agents({string})`           |
 | Concatenate                                                                | `exp = concatenate(exp1, exp2, ...)`           |
 

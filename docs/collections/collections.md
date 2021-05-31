@@ -19,7 +19,7 @@ permalink: /docs/collections
 ## Constructors
 
 |           Collection          |                Syntax                 |                       Cache Syntax                        |
-|:-----------------------------:|:-------------------------------------:|:---------------------------------------------------------:|
+|:------------------------------|:--------------------------------------|:----------------------------------------------------------|
 |              Area             |             `col = Area()`            |             `col = require("collection/area")`            |
 |         Balancing Area        |        `col = BalancingArea()`        |        `col = require("collection/balancingarea")`        |
 |      Balancing Area Hydro     |      `col = BalancingAreaHydro()`     |      `col = require("collection/balancingareahydro")`     |

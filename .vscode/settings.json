@@ -76,6 +76,8 @@
         "study",
         "system",
         "powerinjection",
-        "thermal"
+        "thermal",
+        "Dashboard",
+        "Chart"
     ]
 }

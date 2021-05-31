@@ -199,16 +199,24 @@ exp = circuit.capacity;
 ``` lua
 ```
 
-<!-- ### Power Injection -->
+### Power Injection
+
+| Data                | Unit  | Syntax                                                        |
+|:--------------------|:-----:|:--------------------------------------------------------------|
+| Hourly Capacity     | MW    | `exp = powerinjection.hour_capacity`                          |
+| Hourly Price        | $/MWh | `exp = powerinjection.hour_price`                             |
+
+``` lua
+```
 
 ### Renewable
 
 | Data                | Unit  | Syntax                                                       |
 |:--------------------|:-----:|:-------------------------------------------------------------|
-|                     | MW   | `exp = renewable.existing`                                    |
-|                     | MW   | `exp = renewable.tech_type`                                   |
-|                     | MW   | `exp = renewable.capacity`                                    |
-|                     | MW   | `exp = renewable.omcost`                                      |
+|                     | MW    | `exp = renewable.existing`                                   |
+|                     | MW    | `exp = renewable.tech_type`                                  |
+|                     | MW    | `exp = renewable.capacity`                                   |
+|                     | MW    | `exp = renewable.omcost`                                     |
 
 ``` lua
 ```
