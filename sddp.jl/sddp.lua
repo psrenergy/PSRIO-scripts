@@ -6,6 +6,8 @@ else
     suffixes = {""};
 end
 
+local hydro = require("collection/hydro");
+
 -- INPUT DATA
 -- QMAXIM
 local qmaxim = require("sddp/qmaxim");
@@ -26,6 +28,15 @@ useful_storage():save("useful_storage", { horizon = true });
 -- VOLMNO
 local volmno = require("sddp/volmno");
 volmno():save("volmno", { horizon = true });
+
+-- FLOOD_CONTROL_HISTORICAL_SCENARIOS
+hydro.flood_control_historical_scenarios:save("flood_control_historical_scenarios", { horizon = true });
+
+-- MIN_STORAGE_HISTORICAL_SCENARIOS
+hydro.vmin_chronological_historical_scenarios:save("min_storage_historical_scenarios", { horizon = true });
+
+-- MAX_STORAGE_HISTORICAL_SCENARIOS
+hydro.vmax_chronological_historical_scenarios:save("max_storage_historical_scenarios", { horizon = true });
 
 -- OUTPUT DATA
 -- GERHID_PER_BUS
@@ -71,6 +82,14 @@ for _, suffix in ipairs(suffixes) do useful_storage_initial(suffix):save("useful
 -- USEFUL_STORAGE_FINAL
 local useful_storage_final = require("sddp/useful_storage_final");
 for _, suffix in ipairs(suffixes) do useful_storage_final(suffix):save("useful_storage_final" .. suffix); end
+
+-- VTURMN - MINIMUM TURBINED OUTFLOW VIOLATION
+local vturmn = require("sddp/vturmn");
+for _, suffix in ipairs(suffixes) do vturmn(suffix):save("vturmn" .. suffix); end
+
+-- QTOUTF
+local qtoutf = require("sddp/qtoutf");
+for _, suffix in ipairs(suffixes) do qtoutf(suffix):save("qtoutf" .. suffix); end
 
 -- REPORTS --
 -- SDDPCOPE

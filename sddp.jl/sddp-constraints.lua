@@ -50,8 +50,8 @@ local alertStorage_nodata = hydro.alert_storage_historical_scenarios_nodata;
 local alertStorage = hydro.alert_storage_historical_scenarios;
 ifelse(alertStorage_nodata:gt(0), 0, max(0, -volfin + alertStorage)):save("constraint_alert_storage");
 
-local floodVol_nodata = hydro.flood_volume_historical_scenarios_nodata;
-local floodVol = hydro.flood_volume_historical_scenarios;
+local floodVol_nodata = hydro.flood_control_historical_scenarios_nodata;
+local floodVol = hydro.flood_control_historical_scenarios;
 ifelse(floodVol_nodata:gt(0), 0, max(0, -volfin + floodVol)):save("hydro_flood_volume");
 
 local Target_nodata = hydro.target_storage_historical_scenarios_nodata;
