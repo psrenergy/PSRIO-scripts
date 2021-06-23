@@ -1,8 +1,7 @@
-local generic = require("collection/generic")
+local is_sddp = true;
 
 local hydro = require("collection/hydro");
--- local gerhid = hydro:load("gerhid"):aggregate_blocks(BY_SUM());
-local gerhid = hydro:load("gerhid_KTT"):aggregate_blocks(BY_SUM());
+local gerhid = hydro:load(is_sddp and "gerhid" or "gerhid_KTT"):aggregate_blocks(BY_SUM());
 
 local renewable = require("collection/renewable");
 local gergnd = renewable:load("gergnd"):aggregate_blocks(BY_SUM());
@@ -14,14 +13,19 @@ local interconnection = require("collection/interconnection");
 local capint2 = interconnection:load("capint2"):convert("GWh"):aggregate_blocks(BY_SUM());
 local capint2_SE = capint2:select_agents({"SE -> NI", "SE -> NE", "SE -> NO"}):aggregate_agents(BY_SUM(), "SE");
 
+local interconnection_sum = require("collection/interconnectionsum");
+local interc_sum = interconnection_sum.ub:select_agents({"Soma   14"}):aggregate_blocks(BY_AVERAGE()):convert("GWh");
+
+capint2_SE = min(capint2_SE, interc_sum);
+
 local system = require("collection/system");
--- local enearm = system:load("enearm");
-local enearm = system:load("storageenergy_aggregated");
+local enearm = system:load(is_sddp and "enearm" or "storageenergy_aggregated");
 enearm = enearm:select_stages(2, enearm:stages()):reset_stages();
--- local earmzm = system:load("earmzm");
-local earmzm = system:load("energystoragemax_aggregated");;
+
+local earmzm = system:load(is_sddp and "earmzm" or "energystoragemax_aggregated");
+
 local demand = system:load("demand"):aggregate_blocks(BY_SUM()):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
-demand:save("demand_agg")
+demand:save("demand_agg");
 
 local hydro_generation = gerhid:aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
 local renewable_generation = gergnd:aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
