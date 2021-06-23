@@ -40,10 +40,11 @@ nav_order: 4
 |:----------------|:---------------:|:----------------------------------|
 | Scenarios       | number          | `attribute = exp:scenarios()`     |
 
-| Operator        | Type            |            Syntax                 |
-|:----------------|:---------------:|:----------------------------------|
-| Agents          | number          | `attribute = exp:agents()`        |
-| Agent           | string          | `attribute = exp:agent(index)`    |
+| Operator        | Type              |            Syntax                 |
+|:----------------|:-----------------:|:----------------------------------|
+| Agents          | vector of strings | `attribute = exp:agents()`        |
+| Agents Size     | number            | `attribute = exp:agents_size()`   |
+| Agent           | string            | `attribute = exp:agent(index)`    |
 
 | Operator        | Type            |            Syntax                 |
 |:----------------|:---------------:|:----------------------------------|

@@ -60,7 +60,7 @@ Additionally, PSRIO also enables the direct creation of dashboards.
 
 ### Support or Contact
 
-Having trouble with PSRIO? Check out our [documentation](https://psrenergy.github.io/psrio-scripts/getting_started.html) or contact our support team via `sddp@psr-inc.com` and we’ll help you sort it out. -->
+Having trouble with PSRIO? Check out our [documentation](https://psrenergy.github.io/psrio-scripts/getting_started.html) or contact our support team via `sddp@psr-inc.com` and we’ll help you sort it out.
 
 
  <!-- O processamento de dados de entrada e saída é uma etapa fundamental para a compreensão dos resultados, elaboração de estudos e encadeamento com outros modelos. As ferramentas tradicionalmente utilizadas como o Excel ou rotinas feitas sob medida para o processamento de arquivos específicos, além de trabalhosas, repetitivas e sujeitas a erro, possuem limitações relacionadas a escalabilidade devido ao aumento no volume de resultados originado da maior complexidade e detalhamento na representação dos modelos.
