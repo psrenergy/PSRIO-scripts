@@ -223,48 +223,48 @@ local function get_percentile_chart(chart, filename, name_agent)
 
     local label = filename .. "_"  .. "_avg";
     selected:aggregate_scenarios(BY_AVERAGE()):rename_agents({name_agent .. " avg"}):save(label);
-    chart:push(label, "line");
+    chart:add_line(label);
 
     local label = filename .. "_" .. "_min";
     selected:aggregate_scenarios(BY_MIN()):rename_agents({name_agent .." min"}):save(label);
-    chart:push(label, "line");
+    chart:add_line(label);
     
     for _, p in ipairs(P) do 
         local label = filename .. "_" .. "_p" .. tostring(p);
         selected:aggregate_scenarios(BY_PERCENTILE(p)):rename_agents({name_agent .. " p" .. tostring(p)}):save(label);
-        chart:push(label, "line");
+        chart:add_line(label);
     end
 
     local label = filename .. "_" .. "_max";
     selected:aggregate_scenarios(BY_MAX()):rename_agents({name_agent .. " max"}):save(label);
-    chart:push(label, "line");
+    chart:add_line(label);
 
     return chart
 end
 
-local dashboard = Dashboard();
+local dashboard = Dashboard("Home");
 
 local chart1 = Chart("Violação de volume mínimo - balanço hídrico");
-chart1:push("enearm_risk_level1_SU", "column");
-chart1:push("enearm_risk_level1_SE", "column");
-chart1:push("enearm_risk_level1_SE_or_SU", "column");
-chart1:push("enearm_risk_level2_SU", "column");
-chart1:push("enearm_risk_level2_SE", "column");
-chart1:push("enearm_risk_level2_SE_or_SU", "column");
+chart1:add_column("enearm_risk_level1_SU");
+chart1:add_column("enearm_risk_level1_SE");
+chart1:add_column("enearm_risk_level1_SE_or_SU");
+chart1:add_column("enearm_risk_level2_SU");
+chart1:add_column("enearm_risk_level2_SE");
+chart1:add_column("enearm_risk_level2_SE_or_SU");
 dashboard:push(chart1);
 
 local chart2 = Chart("Violação de volume mínimo");
-chart2:push("enearm_final_risk_level1_SU", "column");
-chart2:push("enearm_final_risk_level1_SE", "column");
-chart2:push("enearm_final_risk_level1_SE_or_SU", "column");
-chart2:push("enearm_final_risk_level2_SU", "column");
-chart2:push("enearm_final_risk_level2_SE", "column");
-chart2:push("enearm_final_risk_level2_SE_or_SU", "column");
+chart2:add_column("enearm_final_risk_level1_SU");
+chart2:add_column("enearm_final_risk_level1_SE");
+chart2:add_column("enearm_final_risk_level1_SE_or_SU");
+chart2:add_column("enearm_final_risk_level2_SU");
+chart2:add_column("enearm_final_risk_level2_SE");
+chart2:add_column("enearm_final_risk_level2_SE_or_SU");
 dashboard:push(chart2);
 
 local chart3 = Chart("Deficit risk");
-chart3:push("mismatch_risk", "column");
-chart3:push("deficit_final_risk", "column");
+chart3:add_column("mismatch_risk");
+chart3:add_column("deficit_final_risk");
 dashboard:push(chart3);
 
 local chart4 = Chart("Mismatch - balanço hídrico");
@@ -284,23 +284,23 @@ enearm_SE_ini_stage = enearm:select_agents({"SUDESTE"}):save_and_load("enearm_SE
 
 local chart6 = Chart("Debug");
 mismatch_stages:select_stages(1, 5):aggregate_scenarios(BY_FIRST_VALUE()):rename_agents({"Mismatch"}):save("Mismatch - first");
-chart6:push("Mismatch - first", "line");
+chart6:add_line("Mismatch - first");
 deficit_stages:select_stages(1, 5):aggregate_scenarios(BY_FIRST_VALUE()):rename_agents({"Deficit"}):save("Deficit - first");
-chart6:push("Deficit - first", "line");
+chart6:add_line("Deficit - first");
 enearm_SE_ini_stage:select_stages(1, 5):aggregate_scenarios(BY_FIRST_VALUE()):rename_agents({"enearm_SE_ini"}):save("enearm_SE_ini - first");
-chart6:push("enearm_SE_ini - first", "line");
+chart6:add_line("enearm_SE_ini - first");
 enearm_SU_ini_stage:select_stages(1, 5):aggregate_scenarios(BY_FIRST_VALUE()):rename_agents({"enearm_SU_ini"}):save("enearm_SU_ini - first");
-chart6:push("enearm_SU_ini - first", "line");
+chart6:add_line("enearm_SU_ini - first");
 dashboard:push(chart6);
 
 
 local chart7 = Chart("Debug - 2");
 hydro_generation = gerhid:select_stages(1, 5):aggregate_scenarios(BY_FIRST_VALUE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_stages(BY_SUM()):save("gethid_debug");
-chart7:push("gethid_debug", "column");
+chart7:add_column("gethid_debug");
 enearm_SE_ini_stage:select_stages(1, 5):aggregate_scenarios(BY_FIRST_VALUE()):aggregate_stages(BY_LAST_VALUE()):rename_agents({"enearm_SE_ini"}):save("enearm_SE_ini_laststage");
-chart7:push("enearm_SE_ini_laststage", "column");
+chart7:add_column("enearm_SE_ini_laststage");
 enearm_SU_ini_stage:select_stages(1, 5):aggregate_scenarios(BY_FIRST_VALUE()):aggregate_stages(BY_LAST_VALUE()):rename_agents({"enearm_SU_ini"}):save("enearm_SU_ini_laststage");
-chart7:push("enearm_SU_ini_laststage", "column");
+chart7:add_column("enearm_SU_ini_laststage");
 dashboard:push(chart7);
 
-dashboard:save_style2("risk");
+dashboard:save("risk");
