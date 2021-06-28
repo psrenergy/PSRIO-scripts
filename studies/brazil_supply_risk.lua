@@ -1,16 +1,17 @@
-local is_sddp = true;
+local is_sddp = false;
 
 local generic = require("collection/generic");
 local hydro = require("collection/hydro");
 
 local gerhid = hydro:load(is_sddp and "gerhid" or "gerhid_KTT"):convert("GWh"):aggregate_blocks(BY_SUM());
 
+
 local renewable = require("collection/renewable");
 local gergnd = renewable:load("gergnd"):aggregate_blocks(BY_SUM());
 
 local thermal = require("collection/thermal");
 local potter = thermal:load("potter"):convert("GWh"):aggregate_blocks(BY_SUM());
-potter:save("potter_test")
+
 
 local interconnection = require("collection/interconnection");
 local capint2 = interconnection:load("capint2"):convert("GWh"):aggregate_blocks(BY_SUM());
@@ -19,14 +20,15 @@ capint2_SE:save("capin2_se")
 
 local interconnection_sum = require("collection/interconnectionsum");
 local interc_sum = interconnection_sum.ub:select_agents({"Soma   14"}):aggregate_blocks(BY_AVERAGE()):convert("GWh");
+interc_sum:save("interc_sum_risk")
 
 capint2_SE = min(capint2_SE, interc_sum);
 
 local system = require("collection/system");
-local enearm = system:load(is_sddp and "enearm" or "storageenergy_aggregated");
+local enearm = system:load(is_sddp and "enearm" or "storageenergy_aggregated"):convert("GWh");
 enearm = is_sddp and enearm or enearm:select_stages(2, enearm:stages()):reset_stages();
 
-local earmzm = system:load(is_sddp and "earmzm" or "energystoragemax_aggregated");
+local earmzm = system:load(is_sddp and "earmzm" or "energystoragemax_aggregated"):convert("GWh");
 
 local demand = system:load("demand"):aggregate_blocks(BY_SUM()):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
 demand:save("demand_agg");
@@ -34,6 +36,10 @@ demand:save("demand_agg");
 local hydro_generation = gerhid:aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
 local renewable_generation = gergnd:aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
 local thermal_generation = potter:aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
+
+hydro_generation:save("gerhid_risk")
+renewable_generation:save("gergnd_risk")
+thermal_generation:save("potter_risk")
 
 -- MAX GENERATION
 local generation = hydro_generation + renewable_generation + thermal_generation + capint2_SE;
@@ -47,17 +53,20 @@ mismatch_stages = deficit:select_stages(1, 5):rename_agents({"Mismatch - balanç
 local deficit_sum = deficit:select_stages(1, 5):aggregate_stages(BY_SUM());
 mismatch = deficit_sum:save_and_load("mismatch");
 
-ifelse(deficit_sum:gt(0), 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"Mismatch - balanço hídrico"}):save("mismatch_risk");
+ifelse(deficit_sum:gt(1), 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"Mismatch - balanço hídrico"}):save("mismatch_risk");
 
 -- DEFICIT RISCO A PRIORI
 -- ifelse(deficit_sum:gt(0), 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"risk"}):save("deficit_risk");
+
+enearm_SU_ini_stage = enearm:select_agents({"SUL"}):save_and_load("enearm_SU_ini_stage");
+enearm_SE_ini_stage = enearm:select_agents({"SUDESTE"}):save_and_load("enearm_SE_ini_stage");
 
 -- ENERGIA ARMAZENADA DO SUL E SUDESTE
 local enearm_SU = enearm:select_agents({"SUL"}):select_stages(5);
 local enearm_SE = enearm:select_agents({"SUDESTE"}):select_stages(5);
 
-enearm_SU:save("enearm_SU_ini")
-enearm_SE:save("enearm_SE_ini")
+enearm_SU_ini = enearm_SU:save_and_load("enearm_SU_ini");
+enearm_SE_ini = enearm_SE:save_and_load("enearm_SE_ini");
 
 local earmzm_max_SU = earmzm:select_agents({"SUL"}):select_stages(5);
 local earmzm_max_SE = earmzm:select_agents({"SUDESTE"}):select_stages(5);
@@ -198,10 +207,11 @@ ifelse(has_SE_level2_violation, 1, 0):aggregate_scenarios(BY_AVERAGE()):convert(
 ifelse(has_SU_level2_violation | has_SE_level2_violation, 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"SUL or SUDESTE - level 2"}):save("enearm_final_risk_level2_SE_or_SU");
 
 
-ifelse(deficit_sum:gt(0), 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"Deficit risk"}):reset_stages():save("deficit_final_risk");
+ifelse(deficit_sum:gt(1), 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"Deficit risk"}):reset_stages():save("deficit_final_risk");
 
-(mismatch_stages * (deficit_sum / mismatch)):save("Deficit_stages")
+deficit_stages = (mismatch_stages * (deficit_sum / mismatch)):save_and_load("Deficit_stages");
 
+(deficit_sum/(demand:select_stages(demand:stages()-3,demand:stages()-1):reset_stages():aggregate_stages(BY_SUM()))):convert("%"):save("deficit_percentual");
 
 local function get_percentile_chart(chart, filename, name_agent)    
     local generic = require("collection/generic");
@@ -264,5 +274,33 @@ dashboard:push(chart4);
 local chart5 = Chart("Deficit");
 chart5 = get_percentile_chart(chart5, "Deficit_stages", "Deficit");
 dashboard:push(chart5);
+
+
+----- debug -------
+
+enearm_SU_ini_stage = enearm:select_agents({"SUL"}):save_and_load("enearm_SU_ini_stage");
+enearm_SE_ini_stage = enearm:select_agents({"SUDESTE"}):save_and_load("enearm_SE_ini_stage");
+
+
+local chart6 = Chart("Debug");
+mismatch_stages:select_stages(1, 5):aggregate_scenarios(BY_FIRST_VALUE()):rename_agents({"Mismatch"}):save("Mismatch - first");
+chart6:push("Mismatch - first", "line");
+deficit_stages:select_stages(1, 5):aggregate_scenarios(BY_FIRST_VALUE()):rename_agents({"Deficit"}):save("Deficit - first");
+chart6:push("Deficit - first", "line");
+enearm_SE_ini_stage:select_stages(1, 5):aggregate_scenarios(BY_FIRST_VALUE()):rename_agents({"enearm_SE_ini"}):save("enearm_SE_ini - first");
+chart6:push("enearm_SE_ini - first", "line");
+enearm_SU_ini_stage:select_stages(1, 5):aggregate_scenarios(BY_FIRST_VALUE()):rename_agents({"enearm_SU_ini"}):save("enearm_SU_ini - first");
+chart6:push("enearm_SU_ini - first", "line");
+dashboard:push(chart6);
+
+
+local chart7 = Chart("Debug - 2");
+hydro_generation = gerhid:select_stages(1, 5):aggregate_scenarios(BY_FIRST_VALUE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_stages(BY_SUM()):save("gethid_debug");
+chart7:push("gethid_debug", "column");
+enearm_SE_ini_stage:select_stages(1, 5):aggregate_scenarios(BY_FIRST_VALUE()):aggregate_stages(BY_LAST_VALUE()):rename_agents({"enearm_SE_ini"}):save("enearm_SE_ini_laststage");
+chart7:push("enearm_SE_ini_laststage", "column");
+enearm_SU_ini_stage:select_stages(1, 5):aggregate_scenarios(BY_FIRST_VALUE()):aggregate_stages(BY_LAST_VALUE()):rename_agents({"enearm_SU_ini"}):save("enearm_SU_ini_laststage");
+chart7:push("enearm_SU_ini_laststage", "column");
+dashboard:push(chart7);
 
 dashboard:save_style2("risk");
