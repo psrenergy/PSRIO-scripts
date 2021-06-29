@@ -1,4 +1,4 @@
-local is_sddp = false;
+local is_sddp = true;
 
 local generic = require("collection/generic");
 local hydro = require("collection/hydro");
@@ -211,96 +211,209 @@ ifelse(deficit_sum:gt(1), 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):r
 
 deficit_stages = (mismatch_stages * (deficit_sum / mismatch)):save_and_load("Deficit_stages");
 
-(deficit_sum/(demand:select_stages(demand:stages()-3,demand:stages()-1):reset_stages():aggregate_stages(BY_SUM()))):convert("%"):save("deficit_percentual");
+deficit_percentual = (deficit_sum/(demand:select_stages(demand:stages()-3,demand:stages()-1):reset_stages():aggregate_stages(BY_SUM()))):convert("%"):save_and_load("deficit_percentual");
 
+--------------------------------------
+---------- violacao usinas -----------
+--------------------------------------
+
+-- min outflow
+minimum_outflow_violation = hydro:load("minimum_outflow_violation") ;
+minimum_outflow = hydro.min_total_outflow;
+minimum_outflow_cronologico = hydro.min_total_outflow_modification;
+minimum_outflow_valido = max(minimum_outflow, minimum_outflow_cronologico):select_stages(1,5);
+-- conferir se agregacao em estágios deve ser antes ou depois da divisão
+minimum_outflow_violation_percentual = (minimum_outflow_violation:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_SUM())/minimum_outflow_valido:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_SUM())):convert("%"):save_and_load("minimum_outflow_violation_percentual");
+
+-- irrigation
+irrigation_violation = hydro:load("irrigation_violation") ;
+irrigation = hydro.irrigation:select_stages(1,5);
+irrigation_violation_percentual =  (irrigation_violation:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_SUM())/irrigation:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_SUM())):convert("%"):save_and_load("irrigation_violation_percentual");
+
+-- turbinamento
+minimum_turbining_violation = hydro:load("minimum_turbining_violation") ;
+minimum_turbining = hydro.qmin:select_stages(1,5);
+minimum_turbining_violation_percentual =  (minimum_turbining_violation:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_SUM())/minimum_turbining:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_SUM())):convert("%"):save_and_load("minimum_turbining_violation_percentual");
+
+--------------------------------------
+---------- dashboard -----------------
+--------------------------------------
+-- local P = {1, 5, 10, 25, 50, 75, 90, 95, 99}
 local function get_percentile_chart(chart, filename, name_agent)    
     local generic = require("collection/generic");
     local output = generic:load(filename);
-
     local selected = output;
-
-    local P = {1, 5, 10, 25, 50, 75, 90, 95, 99};
-
-    local label = filename .. "_"  .. "_avg";
-    selected:aggregate_scenarios(BY_AVERAGE()):rename_agents({name_agent .. " avg"}):save(label);
-    chart:add_line(label);
-
-    local label = filename .. "_" .. "_min";
-    selected:aggregate_scenarios(BY_MIN()):rename_agents({name_agent .." min"}):save(label);
-    chart:add_line(label);
-    
+    local P = {99, 95, 90, 75};
+    local min = selected:aggregate_scenarios(BY_MIN()):rename_agents({"min"});
+    chart:add_line(min, {color="#77a1e5"});
     for _, p in ipairs(P) do 
-        local label = filename .. "_" .. "_p" .. tostring(p);
-        selected:aggregate_scenarios(BY_PERCENTILE(p)):rename_agents({name_agent .. " p" .. tostring(p)}):save(label);
-        chart:add_line(label);
+        local p_min = selected:aggregate_scenarios(BY_PERCENTILE(100 - p)):rename_agents({"p" .. tostring(100-p)});
+        local p_max = selected:aggregate_scenarios(BY_PERCENTILE(p)):rename_agents({"p" .. tostring(p)});
+        chart:add_area_range(p_min, p_max, {color="#77a1e5"});
     end
-
-    local label = filename .. "_" .. "_max";
-    selected:aggregate_scenarios(BY_MAX()):rename_agents({name_agent .. " max"}):save(label);
-    chart:add_line(label);
-
+    local p50 = selected:aggregate_scenarios(BY_PERCENTILE(50)):rename_agents({"p50"});
+    chart:add_line(p50, {color="#77a1e5"});
+    local avg = selected:aggregate_scenarios(BY_AVERAGE()):rename_agents({"avg"});
+    chart:add_line(avg, {color="#000000"});
+    local max = selected:aggregate_scenarios(BY_MAX()):rename_agents({"max"});
+    chart:add_line(max, {color="#77a1e5"});
     return chart
 end
 
-local dashboard = Dashboard("Home");
+local dashboard1 = Dashboard("Energia armazenada");
 
-local chart1 = Chart("Violação de volume mínimo - balanço hídrico");
+-- charts de energia armazenada
+local chart1 = Chart("Violação de energia mínima - balanço hídrico");
 chart1:add_column("enearm_risk_level1_SU");
 chart1:add_column("enearm_risk_level1_SE");
 chart1:add_column("enearm_risk_level1_SE_or_SU");
 chart1:add_column("enearm_risk_level2_SU");
 chart1:add_column("enearm_risk_level2_SE");
 chart1:add_column("enearm_risk_level2_SE_or_SU");
-dashboard:push(chart1);
+dashboard1:push(chart1);
 
-local chart2 = Chart("Violação de volume mínimo");
+local chart2 = Chart("Violação de energia mínima");
 chart2:add_column("enearm_final_risk_level1_SU");
 chart2:add_column("enearm_final_risk_level1_SE");
 chart2:add_column("enearm_final_risk_level1_SE_or_SU");
 chart2:add_column("enearm_final_risk_level2_SU");
 chart2:add_column("enearm_final_risk_level2_SE");
 chart2:add_column("enearm_final_risk_level2_SE_or_SU");
-dashboard:push(chart2);
+dashboard1:push(chart2);
+
+-- charts de deficit
+local dashboard2 = Dashboard("Deficit");
 
 local chart3 = Chart("Deficit risk");
 chart3:add_column("mismatch_risk");
 chart3:add_column("deficit_final_risk");
-dashboard:push(chart3);
+dashboard2:push(chart3);
+
+local label =  "Deficit - histogram";
+local chart = Chart(label);
+local agents = deficit_percentual:scenarios_to_agents();
+agents:select_agents(agents:gt(0.1)):save(label);
+chart:add_histogram(label);
+dashboard2:push(chart);
 
 local chart4 = Chart("Mismatch - balanço hídrico");
 chart4 = get_percentile_chart(chart4, "mismatch_stages", "Mismatch - balanço hídrico");
-dashboard:push(chart4);
+dashboard2:push(chart4);
 
 local chart5 = Chart("Deficit");
 chart5 = get_percentile_chart(chart5, "Deficit_stages", "Deficit");
-dashboard:push(chart5);
+dashboard2:push(chart5);
 
 
 ----- debug -------
+-- local dashboard3 = Dashboard("Debug");
 
-enearm_SU_ini_stage = enearm:select_agents({"SUL"}):save_and_load("enearm_SU_ini_stage");
-enearm_SE_ini_stage = enearm:select_agents({"SUDESTE"}):save_and_load("enearm_SE_ini_stage");
-
-
-local chart6 = Chart("Debug");
-mismatch_stages:select_stages(1, 5):aggregate_scenarios(BY_FIRST_VALUE()):rename_agents({"Mismatch"}):save("Mismatch - first");
-chart6:add_line("Mismatch - first");
-deficit_stages:select_stages(1, 5):aggregate_scenarios(BY_FIRST_VALUE()):rename_agents({"Deficit"}):save("Deficit - first");
-chart6:add_line("Deficit - first");
-enearm_SE_ini_stage:select_stages(1, 5):aggregate_scenarios(BY_FIRST_VALUE()):rename_agents({"enearm_SE_ini"}):save("enearm_SE_ini - first");
-chart6:add_line("enearm_SE_ini - first");
-enearm_SU_ini_stage:select_stages(1, 5):aggregate_scenarios(BY_FIRST_VALUE()):rename_agents({"enearm_SU_ini"}):save("enearm_SU_ini - first");
-chart6:add_line("enearm_SU_ini - first");
-dashboard:push(chart6);
+-- enearm_SU_ini_stage = enearm:select_agents({"SUL"}):save_and_load("enearm_SU_ini_stage");
+-- enearm_SE_ini_stage = enearm:select_agents({"SUDESTE"}):save_and_load("enearm_SE_ini_stage");
 
 
-local chart7 = Chart("Debug - 2");
-hydro_generation = gerhid:select_stages(1, 5):aggregate_scenarios(BY_FIRST_VALUE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_stages(BY_SUM()):save("gethid_debug");
-chart7:add_column("gethid_debug");
-enearm_SE_ini_stage:select_stages(1, 5):aggregate_scenarios(BY_FIRST_VALUE()):aggregate_stages(BY_LAST_VALUE()):rename_agents({"enearm_SE_ini"}):save("enearm_SE_ini_laststage");
-chart7:add_column("enearm_SE_ini_laststage");
-enearm_SU_ini_stage:select_stages(1, 5):aggregate_scenarios(BY_FIRST_VALUE()):aggregate_stages(BY_LAST_VALUE()):rename_agents({"enearm_SU_ini"}):save("enearm_SU_ini_laststage");
-chart7:add_column("enearm_SU_ini_laststage");
-dashboard:push(chart7);
+-- local chart6 = Chart("Debug");
+-- mismatch_stages:select_stages(1, 5):aggregate_scenarios(BY_FIRST_VALUE()):rename_agents({"Mismatch"}):save("Mismatch - first");
+-- chart6:add_line("Mismatch - first");
+-- deficit_stages:select_stages(1, 5):aggregate_scenarios(BY_FIRST_VALUE()):rename_agents({"Deficit"}):save("Deficit - first");
+-- chart6:add_line("Deficit - first");
+-- enearm_SE_ini_stage:select_stages(1, 5):aggregate_scenarios(BY_FIRST_VALUE()):rename_agents({"enearm_SE_ini"}):save("enearm_SE_ini - first");
+-- chart6:add_line("enearm_SE_ini - first");
+-- enearm_SU_ini_stage:select_stages(1, 5):aggregate_scenarios(BY_FIRST_VALUE()):rename_agents({"enearm_SU_ini"}):save("enearm_SU_ini - first");
+-- chart6:add_line("enearm_SU_ini - first");
+-- dashboard3:push(chart6);
 
-dashboard:save("risk");
+
+-- local chart7 = Chart("Debug - 2");
+-- hydro_generation = gerhid:select_stages(1, 5):aggregate_scenarios(BY_FIRST_VALUE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_stages(BY_SUM()):save("gethid_debug");
+-- chart7:add_column("gethid_debug");
+-- enearm_SE_ini_stage:select_stages(1, 5):aggregate_scenarios(BY_FIRST_VALUE()):aggregate_stages(BY_LAST_VALUE()):rename_agents({"enearm_SE_ini"}):save("enearm_SE_ini_laststage");
+-- chart7:add_column("enearm_SE_ini_laststage");
+-- enearm_SU_ini_stage:select_stages(1, 5):aggregate_scenarios(BY_FIRST_VALUE()):aggregate_stages(BY_LAST_VALUE()):rename_agents({"enearm_SU_ini"}):save("enearm_SU_ini_laststage");
+-- chart7:add_column("enearm_SU_ini_laststage");
+-- dashboard:push(chart7);
+
+
+
+-- charts de violações de retrições de usinas
+local dashboard4 = Dashboard("Violações - Defluência mínima");
+
+usinas_relevantes_min_outflow = {"JIRAU",
+                                "P. PRIMAVERA",
+                                "JUPIA",
+                                "PEIXE ANGIC",
+                                "SERRA MESA",
+                                "TRES MARIAS",
+                                "MARIMBONDO",
+                                "CAPIVARA",
+                                "BAIXO IGUACU",
+                                "FOZ CHAPECO",
+                                "ITA",
+                                "MACHADINHO",
+                                "FUNIL-GRANDE", 
+                                "D. FRANCISCA"
+                                }
+for _, p in ipairs(usinas_relevantes_min_outflow) do 
+    local label =  "minimum_outflow_violation_" .. p;
+    local chart = Chart(label);
+    local agents = minimum_outflow_violation_percentual:select_agents({p}):scenarios_to_agents();
+    agents:select_agents(agents:gt(0.1)):save(label);
+    chart:add_histogram(label);
+    dashboard4:push(chart);
+end
+
+local dashboard5 = Dashboard("Violações - Irrigação");
+usinas_relevantes_irrigacao = {  "JIRAU",
+                                "MARIMBONDO",
+                                "FOZ CHAPECO",
+                                "SAO SIMAO",
+                                "SERRA MESA",
+                                "MAUA",
+                                "P. PRIMAVERA",
+                                "SINOP",
+                                "AIMORES",
+                                "ITUMBIARA",
+                                "EMBORCACAO",
+                                "ITAIPU",
+                                "A. VERMELHA",
+                                "P. COLOMBIA",
+                                "TELES PIRES",
+                                "FURNAS"}
+for _, p in ipairs(usinas_relevantes_irrigacao) do 
+    local label =  "irrigation_violation_" .. p;
+    local chart = Chart(label);
+    local agents = irrigation_violation_percentual:select_agents({p}):scenarios_to_agents();
+    agents:select_agents(agents:gt(0.1)):save(label);
+    chart:add_histogram(label);
+    dashboard5:push(chart);
+end
+
+
+-- local dashboard6 = Dashboard("Violações - Turbinamento mínimo");
+-- -- to do: atualizar lista
+-- usinas_relevantes_turbinamento = {"JIRAU",
+--                                 "P. PRIMAVERA",
+--                                 "JUPIA",
+--                                 "PEIXE ANGIC",
+--                                 "SERRA MESA",
+--                                 "TRES MARIAS",
+--                                 "MARIMBONDO",
+--                                 "CAPIVARA",
+--                                 "BAIXO IGUACU",
+--                                 "FOZ CHAPECO",
+--                                 "ITA",
+--                                 "MACHADINHO",
+--                                 "FUNIL-GRANDE", 
+--                                 "D. FRANCISCA"
+--                                 }
+-- for _, p in ipairs(usinas_relevantes_turbinamento) do 
+--     local label =  "minimum_turbining_violation_" .. p;
+--     local chart = Chart(label);
+--     local agents = minimum_turbining_violation_percentual:select_agents({p}):scenarios_to_agents();
+--     agents:select_agents(agents:gt(0.1)):save(label);
+--     chart:add_histogram(label);
+--     dashboard6:push(chart);
+-- end
+
+
+(dashboard1 + dashboard2 + dashboard4 + dashboard5):save("risk");
