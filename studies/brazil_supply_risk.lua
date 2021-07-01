@@ -3,17 +3,14 @@ local is_debug = false;
 
 local bool_dead_storage_input = true;
 
-local bool_oferta_extra = false;
-local input_oferta_extra = 6.5
+local bool_termica_extra = true;
+local input_termica_extra = 6.5 -- GWh
 
-local bool_int_extra = false;
-local input_capint2_SE = 0.1;
+local bool_int_extra = true;
+local input_int_extra = 0.1;
 
-local bool_demanda_extra = false;
-local input_demanda_extra = 0.09;
-
-local bool_demanda_reduzida = false;
-local input_demanda_reduzida = 0.5;
+local bool_demanda_reduzida = true;
+local input_demanda_reduzida = 0.09; -- %
 
 local function get_scenarios_violations(data, threshold)
     local violations = ifelse(data:gt(threshold), 1, 0);
@@ -43,7 +40,7 @@ interc_sum:save("interc_sum_risk");
 capint2_SE = min(capint2_SE, interc_sum):select_stages(1,5);
 capint2_SE:save("capin2_se_min_risk");
 
-local capint2_SE_extra = capint2_SE * input_capint2_SE;
+local capint2_SE_extra = capint2_SE * input_int_extra;
 capint2_SE_extra:save("capint2_SE_extra");
 
 local system = require("collection/system");
@@ -55,6 +52,10 @@ local earmzm = system:load(is_sddp and "earmzm" or "energystoragemax_aggregated"
 local demand = system:load("demand"):aggregate_blocks(BY_SUM()):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU"):select_stages(1,5);
 demand:save("demand_agg");
 
+if bool_demanda_reduzida then
+    demand = (1 - input_demanda_reduzida) * demand;
+end
+
 local hydro_generation = gerhid:aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
 local renewable_generation = gergnd:aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
 local thermal_generation = potter:aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
@@ -64,16 +65,16 @@ renewable_generation:save("gergnd_risk")
 thermal_generation:save("potter_risk")
 
 -- MAX GENERATION
-generation = hydro_generation + renewable_generation + thermal_generation + capint2_SE;
+local generation = hydro_generation + renewable_generation + thermal_generation + capint2_SE;
+
 if bool_int_extra then
     generation = generation + capint2_SE_extra;
 end
-if bool_geracao_extra then
-    -- generation = generation + capint2_SE_extra;
+
+if bool_termica_extra then
+    generation = generation + input_termica_extra;
 end
-if bool_oferta_extra then
-    -- generation = generation + capint2_SE_extra;
-end
+
 generation:save("max_generation");
 
 -- DEFICIT SEM ENERGIA ARMAZENADA -- TODO CHAMAR DE missmatch
@@ -370,6 +371,7 @@ chart1_3:add_pie(enearm_risk_level2_SU_pie:rename_agents({"Nível 2 (abaixo de 6
 -- dashboard1:push(chart1_3);
 enearm_risk_level1_SE = generic:load("enearm_risk_level1_SE"):rename_agents({"SE"});
 enearm_risk_level2_SE = generic:load("enearm_risk_level2_SE"):rename_agents({"SE"});
+
 enearm_risk_level0_SE_pie = 100 - enearm_risk_level1_SE;
 enearm_risk_level1_SE_pie = enearm_risk_level1_SE - enearm_risk_level2_SE;
 enearm_risk_level2_SE_pie = enearm_risk_level2_SE;
@@ -384,6 +386,7 @@ dashboard1:push({chart1_3, chart1_4});
 
 enearm_final_risk_level1_SU = generic:load("enearm_final_risk_level1_SU"):rename_agents({"SUL"});
 enearm_final_risk_level2_SU = generic:load("enearm_final_risk_level2_SU"):rename_agents({"SUL"});
+
 enearm_final_risk_level0_SU_pie = 100 - enearm_final_risk_level1_SU;
 enearm_final_risk_level1_SU_pie = enearm_final_risk_level1_SU - enearm_final_risk_level2_SU;
 enearm_final_risk_level2_SU_pie = enearm_final_risk_level2_SU;
@@ -397,6 +400,7 @@ chart1_5:add_pie(enearm_final_risk_level2_SU_pie:rename_agents({"Nível 2 (abaix
 
 enearm_final_risk_level1_SE = generic:load("enearm_final_risk_level1_SE"):rename_agents({"SE"});
 enearm_final_risk_level2_SE = generic:load("enearm_final_risk_level2_SE"):rename_agents({"SE"});
+
 enearm_final_risk_level0_SE_pie = 100 - enearm_final_risk_level1_SE;
 enearm_final_risk_level1_SE_pie = enearm_final_risk_level1_SE - enearm_final_risk_level2_SE;
 enearm_final_risk_level2_SE_pie = enearm_final_risk_level2_SE;
@@ -415,6 +419,13 @@ local dashboard2 = Dashboard("Energia");
 
 local chart2_1 = Chart("Oferta x Demanda – Sul e Sudeste (valores médios)");
 
+
+if bool_termica_extra then
+    chart2_1:add_column_stacking(
+        (generic:load("capint2_SE_extra") * 0 + input_termica_extra):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Geração térmica extra"}):convert("GW"), 
+    {color="red"}); -- to do: checar cor
+end
+
 if bool_int_extra then
     chart2_1:add_column_stacking(
         generic:load("capint2_SE_extra"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Capacidade de interconexão extra"}):convert("GW"), 
@@ -422,17 +433,9 @@ if bool_int_extra then
     ); -- to do: checar cor
 end
 
-if bool_geracao_extra then
-    -- chart2_1:add_column_stacking(generic:load("capint2_SE_extra"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Capacidade de interconexão exta"}):convert("GW"), {color="#808080"}); -- to do: checar cor
-end
-
-if bool_oferta_extra then
-    -- chart2_1:add_column_stacking(generic:load("capint2_SE_extra"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Capacidade de interconexão exta"}):convert("GW"), {color="#808080"}); -- to do: checar cor
-end
-
 chart2_1:add_column_stacking(
     generic:load("potter_risk"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Oferta térmica disponível"}):convert("GW"), 
-    {color="#808080", yUnit="GWm"}
+    {color="red", yUnit="GWm"}
 );
 chart2_1:add_column_stacking(
     generic:load("capin2_se_min_risk"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Importação do Norte-Nordeste"}):convert("GW"), 
