@@ -1,9 +1,24 @@
 local is_sddp = false;
 local is_debug = false;
+
 local bool_dead_storage_input = true;
-local bool_int_extra = true;
-local bool_geracao_extra = false;
+
 local bool_oferta_extra = false;
+local input_oferta_extra = 6.5
+
+local bool_int_extra = false;
+local input_capint2_SE = 0.1;
+
+local bool_demanda_extra = false;
+local input_demanda_extra = 0.09;
+
+local bool_demanda_reduzida = false;
+local input_demanda_reduzida = 0.5;
+
+local function get_scenarios_violations(data, threshold)
+    local violations = ifelse(data:gt(threshold), 1, 0);
+    return violations:aggregate_scenarios(BY_SUM()):to_list()[1];
+end
 
 local generic = require("collection/generic");
 local hydro = require("collection/hydro");
@@ -28,8 +43,8 @@ interc_sum:save("interc_sum_risk");
 capint2_SE = min(capint2_SE, interc_sum):select_stages(1,5);
 capint2_SE:save("capin2_se_min_risk");
 
-capint2_SE_extra = capint2_SE * 0.1;
-capint2_SE_extra:save("capint2_SE_extra")
+local capint2_SE_extra = capint2_SE * input_capint2_SE;
+capint2_SE_extra:save("capint2_SE_extra");
 
 local system = require("collection/system");
 local enearm = system:load(is_sddp and "enearm" or "storageenergy_aggregated"):convert("GWh");
@@ -63,6 +78,8 @@ generation:save("max_generation");
 
 -- DEFICIT SEM ENERGIA ARMAZENADA -- TODO CHAMAR DE missmatch
 local deficit = ifelse((demand - generation):gt(0), demand - generation, 0);
+local demanda_residual = (demand - generation):select_stages(1, 5);
+demanda_residual:convert("GW"):save("demanda_residual");
 
 -- DEFICIT SOMA DE MAIO A NOVEMBRO
 mismatch_stages = deficit:select_stages(1, 5):rename_agents({"Mismatch - balanço hídrico"}):convert("GW"):save_and_load("mismatch_stages");
@@ -289,26 +306,23 @@ total_violation_percentual =  (violacao_total:aggregate_blocks(BY_AVERAGE()):agg
 --------------------------------------
 ---------- dashboard -----------------
 --------------------------------------
--- local P = {1, 5, 10, 25, 50, 75, 90, 95, 99}
-local function get_percentile_chart(chart, filename, name_agent)    
+
+local function add_percentile_layers(chart, filename, force_unit)    
     local generic = require("collection/generic");
     local output = generic:load(filename);
-    local selected = output;
-    local P = {95};
-    -- local min = selected:aggregate_scenarios(BY_MIN()):rename_agents({"min"});
-    -- chart:add_line(min, {color="#77a1e5"});
-    for _, p in ipairs(P) do 
-        local p_min = selected:aggregate_scenarios(BY_PERCENTILE(100 - p)):rename_agents({"p" .. tostring(100-p)});
-        local p_max = selected:aggregate_scenarios(BY_PERCENTILE(p)):rename_agents({"p" .. tostring(p)});
+    
+    local p_min = output:aggregate_scenarios(BY_PERCENTILE(5)):rename_agents({"Intervalo de confiança de 95%"});
+    local p_max = output:aggregate_scenarios(BY_PERCENTILE(95)):rename_agents({""});
+    local avg = output:aggregate_scenarios(BY_AVERAGE()):rename_agents({"Média"});
+
+    if force_unit then
+        chart:add_area_range(p_min, p_max, {color="#77a1e5", yUnit=force_unit});
+        chart:add_line(avg, {color="#000000", yUnit=force_unit});
+    else
         chart:add_area_range(p_min, p_max, {color="#77a1e5"});
+        chart:add_line(avg, {color="#000000"});
     end
-    -- local p50 = selected:aggregate_scenarios(BY_PERCENTILE(50)):rename_agents({"p50"});
-    -- chart:add_line(p50, {color="#77a1e5"});
-    local avg = selected:aggregate_scenarios(BY_AVERAGE()):rename_agents({"avg"});
-    avg:save(filename .. "avgdebug")
-    chart:add_line(filename .. "avgdebug", {color="#000000"});
-    -- local max = selected:aggregate_scenarios(BY_MAX()):rename_agents({"max"});
-    -- chart:add_line(max, {color="#77a1e5"});
+
     return chart
 end
 
@@ -397,73 +411,94 @@ chart1_6:add_pie(enearm_final_risk_level2_SE_pie:rename_agents({"Nível 2 (abaix
 dashboard1:push({chart1_5, chart1_6});
 
 -- charts de deficit
-local dashboard2 = Dashboard("Análise energética");
+local dashboard2 = Dashboard("Energia");
 
-local chart2_1 = Chart("Oferta x Demanda - sul e sudete");
+local chart2_1 = Chart("Oferta x Demanda – Sul e Sudeste (valores médios)");
 
 if bool_int_extra then
-    chart2_1:add_column_stacking(generic:load("capint2_SE_extra"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Capacidade de interconexão exta"}):convert("GW"), {color="#808080"}); -- to do: checar cor
+    chart2_1:add_column_stacking(
+        generic:load("capint2_SE_extra"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Capacidade de interconexão extra"}):convert("GW"), 
+        {color="#808080", yUnit="GWm"}
+    ); -- to do: checar cor
 end
+
 if bool_geracao_extra then
     -- chart2_1:add_column_stacking(generic:load("capint2_SE_extra"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Capacidade de interconexão exta"}):convert("GW"), {color="#808080"}); -- to do: checar cor
 end
+
 if bool_oferta_extra then
     -- chart2_1:add_column_stacking(generic:load("capint2_SE_extra"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Capacidade de interconexão exta"}):convert("GW"), {color="#808080"}); -- to do: checar cor
 end
-chart2_1:add_column_stacking(generic:load("potter_risk"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Geração térmica disponível"}):convert("GW"), {color="#808080"});
-chart2_1:add_column_stacking(generic:load("capin2_se_min_risk"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Importação do NO-NE"}):convert("GW"), {color="#e9e9e9"});
-chart2_1:add_column_stacking(generic:load("gergnd_risk"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Geração renovável (média) + biomassa"}):convert("GW"), {color="#ADD8E6"});
-chart2_1:add_column_stacking(generic:load("gerhid_risk"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Geração hídrica obrigatória"}):convert("GW"), {color="#4c4cff"}); -- #0000ff
-chart2_1:add_line(generic:load("demand_agg"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Demanda"}):convert("GW"), {color="#000000"});
+
+chart2_1:add_column_stacking(
+    generic:load("potter_risk"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Oferta térmica disponível"}):convert("GW"), 
+    {color="#808080", yUnit="GWm"}
+);
+chart2_1:add_column_stacking(
+    generic:load("capin2_se_min_risk"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Importação do Norte-Nordeste"}):convert("GW"), 
+    {color="#e9e9e9", yUnit="GWm"}
+);
+chart2_1:add_column_stacking(
+    generic:load("gergnd_risk"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Geração renovável (média) + biomassa"}):convert("GW"), 
+    {color="#ADD8E6", yUnit="GWm"}
+);
+chart2_1:add_column_stacking(
+    generic:load("gerhid_risk"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Geração hídrica obrigatória"}):convert("GW"), 
+    {color="#4c4cff", yUnit="GWm"}
+); -- #0000ff
+chart2_1:add_line(
+    generic:load("demand_agg"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Demanda"}):convert("GW"), 
+    {color="#000000", yUnit="GWm"}
+);
 dashboard2:push(chart2_1);
 
-enearm_final_risk_level1_SE_or_SU = generic:load("enearm_final_risk_level1_SE_or_SU"):rename_agents({"SE+SU"});
-enearm_final_risk_level2_SE_or_SU = generic:load("enearm_final_risk_level2_SE_or_SU"):rename_agents({"SE"});
-enearm_final_risk_level0_SE_or_SU_pie = 100 - enearm_final_risk_level1_SE;
-enearm_final_risk_level1_SE_or_SU_pie = enearm_final_risk_level1_SE - deficit_final_risk;
-enearm_final_risk_level2_SE_or_SU_pie = deficit_final_risk;
-enearm_final_risk_level0_SE_or_SU_pie:save("enearm_final_risk_level0_SE_or_SU_pie");
-enearm_final_risk_level1_SE_or_SU_pie:save("enearm_final_risk_level1_SE_or_SU_pie");
-enearm_final_risk_level2_SE_or_SU_pie:save("enearm_final_risk_level2_SE_or_SU_pie");
+-- local enearm_final_risk_level1_SE_or_SU = generic:load("enearm_final_risk_level1_SE_or_SU"):rename_agents({"SE+SU"});
+-- local enearm_final_risk_level2_SE_or_SU = generic:load("enearm_final_risk_level2_SE_or_SU"):rename_agents({"SE"});
+local enearm_final_risk_level0_SE_or_SU_pie = 100 - enearm_final_risk_level1_SE;
+local enearm_final_risk_level1_SE_or_SU_pie = enearm_final_risk_level1_SE - deficit_final_risk;
+local enearm_final_risk_level2_SE_or_SU_pie = deficit_final_risk;
 
-local chart2_3 = Chart("Análise de suprimento");
-chart2_3:add_pie(enearm_final_risk_level0_SE_or_SU_pie:rename_agents({"Êxito"}), {color="green"});
-chart2_3:add_pie(enearm_final_risk_level1_SE_or_SU_pie:rename_agents({"Preocupação"}), {color="yellow"});
+local chart2_3 = Chart("Análise de suprimento: probabilidade por categoria");
+chart2_3:add_pie(enearm_final_risk_level0_SE_or_SU_pie:rename_agents({"Normal"}), {color="green"});
+chart2_3:add_pie(enearm_final_risk_level1_SE_or_SU_pie:rename_agents({"Atenção"}), {color="yellow"});
 chart2_3:add_pie(enearm_final_risk_level2_SE_or_SU_pie:rename_agents({"Racionamento"}), {color="red"});
 dashboard2:push(chart2_3);
 
-dashboard2:push("Êxito: SE acima de 10% e SU acima de 30%");
-dashboard2:push("Preocupação: SE abaixo de 10% ou SU abaixo de 30%. Sem deficit.");
-dashboard2:push("Racionamento: Deficit.");
+dashboard2:push("**Normal**: SE acima de 10% e SU acima de 30%");
+dashboard2:push("**Atenção**: SE abaixo de 10% ou SU abaixo de 30%. Sem deficit.");
+dashboard2:push("**Racionamento**: Deficit.");
 
-local chart2_2 = Chart("Deficit risk");
-chart2_2:add_column("mismatch_risk", {color="#CD5C5C"}); -- indian red
-chart2_2:add_column("deficit_final_risk", {color="#D30000"}); -- red
-dashboard2:push(chart2_2);
+-- local chart2_2 = Chart("Risco de déficit de energia");
+-- chart2_2:add_column("mismatch_risk", {color="#CD5C5C"}); -- indian red
+-- chart2_2:add_column("deficit_final_risk", {color="#D30000"}); -- red
+-- dashboard2:push(chart2_2);
 
-local label =  "Deficit - histogram";
-local chart2_4 = Chart(label);
--- local agents = deficit_percentual:scenarios_to_agents();
--- agents:select_agents(agents:gt(0.1)):save(label);
-deficit_percentual:save(label);
-local agents = deficit_percentual:scenarios_to_agents();
-local agents = agents:select_agents(agents:gt(0.1));
-local number_violations = agents:agents_size();
+local chart2_4 = Chart("Deficit - histograma");
+local number_violations = get_scenarios_violations(deficit_percentual, 0.1);
 local media_violacoes = deficit_percentual:aggregate_scenarios(BY_SUM()) / number_violations;
 local maxima_violacao = deficit_percentual:aggregate_scenarios(BY_MAX());
-media_violacoes:save("media_deficit");
-maxima_violacao:save("maximo_deficit");
-dashboard2:push("### Média condicional de violação: " .. string.format("%.1f", tostring(media_violacoes:to_list()[1])) .. " %");
-dashboard2:push("### Máxima violação: " .. string.format("%.1f", tostring(maxima_violacao:to_list()[1])) .. " %"); 
-chart2_4:add_histogram(label, {color="#d3d3d3"}); -- grey
+
+if is_debug then
+    deficit_percentual:save("Deficit - histograma");
+    media_violacoes:save("media_deficit");
+    maxima_violacao:save("maximo_deficit");
+end
+
+dashboard2:push("Violação média: **" .. string.format("%.1f", media_violacoes:to_list()[1]) .. "%** da defluência mínima");
+dashboard2:push("Violação máxima: **" .. string.format("%.1f", maxima_violacao:to_list()[1]) .. "%** da defluência mínima"); 
+chart2_4:add_histogram(deficit_percentual, {color="#d3d3d3", xtickPositions="[0, 20, 40, 60, 80, 100]"}); -- grey
 dashboard2:push(chart2_4);
 
-local chart2_5 = Chart("Mismatch - balanço hídrico");
-chart2_5 = get_percentile_chart(chart2_5, "mismatch_stages", "Mismatch - balanço hídrico");
+local chart2_5 = Chart("Demanda residual");
+chart2_5 = add_percentile_layers(chart2_5, "demanda_residual", "GWm");
 dashboard2:push(chart2_5);
 
+local chart = Chart("Demanda residual - histograma");
+chart:add_histogram(demanda_residual:aggregate_stages(BY_SUM()), {color="#d3d3d3", xtickPositions="[0, 20, 40, 60, 80, 100]"});
+dashboard2:push(chart);
+
 local chart2_6 = Chart("Deficit");
-chart2_6 = get_percentile_chart(chart2_6, "Deficit_stages", "Deficit");
+chart2_6 = add_percentile_layers(chart2_6, "Deficit_stages", "GWm");
 dashboard2:push(chart2_6);
 
 
@@ -500,47 +535,57 @@ dashboard2:push(chart2_6);
 -- charts de violações de retrições de usinas
 local dashboard4 = Dashboard("Violações - Defluência mínima");
 
-usinas_relevantes_min_outflow = {"JIRAU",
-                                "P. PRIMAVERA",
-                                "JUPIA",
-                                "PEIXE ANGIC",
-                                "SERRA MESA",
-                                "TRES MARIAS",
-                                "MARIMBONDO",
-                                "CAPIVARA",
-                                "BAIXO IGUACU",
-                                "FOZ CHAPECO",
-                                "ITA",
-                                "MACHADINHO",
-                                "FUNIL-GRANDE", 
-                                "D. FRANCISCA"
-                                }
+local usinas_relevantes_min_outflow = {
+    "JIRAU",
+    "P. PRIMAVERA",
+    "JUPIA",
+    "PEIXE ANGIC",
+    "SERRA MESA",
+    "TRES MARIAS",
+    "MARIMBONDO",
+    "CAPIVARA",
+    "BAIXO IGUACU",
+    "FOZ CHAPECO",
+    "ITA",
+    "MACHADINHO",
+    "FUNIL-GRANDE", 
+    "D. FRANCISCA"
+};
+table.sort(usinas_relevantes_min_outflow);
+
 for _, p in ipairs(usinas_relevantes_min_outflow) do 
     local label =  "minimum_outflow_violation_" .. p;
+    print(label);
     local chart = Chart(label);
     chart:add_histogram(minimum_outflow_violation_percentual:select_agents({p}), {color="#d3d3d3"}); -- grey
     dashboard4:push(chart);
 end
 
 local dashboard5 = Dashboard("Violações - Irrigação");
-usinas_relevantes_irrigacao = {  "JIRAU",
-                                "MARIMBONDO",
-                                "FOZ CHAPECO",
-                                "SAO SIMAO",
-                                "SERRA MESA",
-                                "MAUA",
-                                "P. PRIMAVERA",
-                                "SINOP",
-                                "AIMORES",
-                                "ITUMBIARA",
-                                "EMBORCACAO",
-                                "ITAIPU",
-                                "A. VERMELHA",
-                                "P. COLOMBIA",
-                                "TELES PIRES",
-                                "FURNAS"}
+local usinas_relevantes_irrigacao = {  
+    "JIRAU",
+    "MARIMBONDO",
+    "FOZ CHAPECO",
+    "SAO SIMAO",
+    "SERRA MESA",
+    "MAUA",
+    "P. PRIMAVERA",
+    "SINOP",
+    "AIMORES",
+    "ITUMBIARA",
+    "EMBORCACAO",
+    "ITAIPU",
+    "A. VERMELHA",
+    "P. COLOMBIA",
+    "TELES PIRES",
+    "FURNAS"
+}
+table.sort(usinas_relevantes_irrigacao);
+
 for _, p in ipairs(usinas_relevantes_irrigacao) do 
     local label =  "irrigation_violation_" .. p;
+    print(label);
+
     local chart = Chart(label);
     local agents = irrigation_violation_percentual:select_agents({p}):scenarios_to_agents();
     agents:select_agents(agents:gt(0.1)):save(label);
@@ -576,16 +621,16 @@ end
 -- end
 
 -- inflows
-local dashboard7 = Dashboard("Análise hídrica");
+local dashboard7 = Dashboard("Hidrologia (ENA)");
 
---get_percentile_chart(chart, filename, name_agent)   
+--add_percentile_layers(chart, filename, name_agent)   
 -- local chart7_1 = Chart("Água afluente");
 -- Inflow_agua = hydro:load("inflow")
 -- Inflow_agua_su = Inflow_agua:select_stages(1,5):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL"}):aggregate_agents(BY_SUM(), "SU");
 -- Inflow_agua_su:save("inflow_agua+su");
 -- Inflow_agua_se = Inflow_agua:select_stages(1,5):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL"}):aggregate_agents(BY_SUM(), "SU");
 -- Inflow_agua_se:save("inflow_agua_se");
--- chart7_1 = get_percentile_chart(chart7_1, "inflow_agua", "Inflow - água");
+-- chart7_1 = add_percentile_layers(chart7_1, "inflow_agua", "Inflow - água");
 -- dashboard7:push(chart7_1);
 Inflow_energia_historico_2020 = generic:load("enaflu2020"):rename_agents({"Histórico 2020 - SU", "Histórico 2020 - SE"});
 Inflow_energia_historico_2021 = generic:load("enaflu2021"):rename_agents({"Histórico 2021 - SU", "Histórico 2021 - SE"});
@@ -595,66 +640,78 @@ Inflow_energia_mlt = generic:load("enafluMLT")
 -- Inflow_energia = system:load("enaflu"):select_stages(1,6):aggregate_blocks(BY_SUM()); -- rho variado, a conferir
 Inflow_energia = system:load("enaf65"):select_stages(1,6):aggregate_blocks(BY_SUM()); -- rho fixo, 65% do máximo
 local chart7_2 = Chart("Energia afluente - Sudeste");
+
 -- Inflow_energia_se_historico_2020 = Inflow_energia_historico_2020:select_agents({"Histórico 2020 - SE"});
 -- Inflow_energia_se_historico_2020:save("Inflow_energia_se_historico_2020");
 -- chart7_2:add_line("Inflow_energia_se_historico_2020")
+
 Inflow_energia_se_historico_2020_09 = Inflow_energia_historico_2020:select_agents({"Histórico 2020 - SE"}):rename_agents({"Histórico 2020 - SE x 90%"}) * 0.9; -- 2020 * 0.9
 Inflow_energia_se_historico_2020_09:save("Inflow_energia_se_historico_2020_09");
-chart7_2:add_line("Inflow_energia_se_historico_2020_09")
+chart7_2:add_line("Inflow_energia_se_historico_2020_09", {yUnit="MWm"});
+
 Inflow_energia_se_historico_2021 = Inflow_energia_historico_2021:select_agents({"Histórico 2021 - SE"});
 Inflow_energia_se_historico_2021:save("Inflow_energia_se_historico_2021");
-chart7_2:add_line("Inflow_energia_se_historico_2021")
+chart7_2:add_line("Inflow_energia_se_historico_2021", {yUnit="MWm"});
+
 Inflow_energia_mlt_se = Inflow_energia_mlt:select_agents({"SE-MLT"});
 Inflow_energia_mlt_se:save("Inflow_energia_mlt_se");
-chart7_2:add_line("Inflow_energia_mlt_se")
+chart7_2:add_line("Inflow_energia_mlt_se", {yUnit="MWm"});
+
 Inflow_energia_se = Inflow_energia:convert("MW"):select_agents({"SUDESTE"});
 Inflow_energia_se:save("inflow_energia_se");
-chart7_2 = get_percentile_chart(chart7_2, "inflow_energia_se", "Energia afluente - par-p - Sudeste");
+chart7_2 = add_percentile_layers(chart7_2, "inflow_energia_se", "MWm");
+
 dashboard7:push(chart7_2);
+
+
 local chart7_3 = Chart("Energia afluente - Sul");
 -- Inflow_energia_su_historico_2020 = Inflow_energia_historico_2020:select_agents({"Histórico 2020 - SU"});
 -- Inflow_energia_su_historico_2020:save("Inflow_energia_su_historico_2020");
 -- chart7_3:add_line("Inflow_energia_su_historico_2020")
 Inflow_energia_su_historico_2020_09 = Inflow_energia_historico_2020:select_agents({"Histórico 2020 - SU"}):rename_agents({"Histórico 2020 - SU x 90%"}) * 0.9; -- 2020 * 0.9
 Inflow_energia_su_historico_2020_09:save("Inflow_energia_su_historico_2020_09");
-chart7_3:add_line("Inflow_energia_su_historico_2020_09")
+chart7_3:add_line("Inflow_energia_su_historico_2020_09", {yUnit="MWm"});
+
 Inflow_energia_su_historico_2021 = Inflow_energia_historico_2021:select_agents({"Histórico 2021 - SU"});
 Inflow_energia_su_historico_2021:save("Inflow_energia_su_historico_2021");
-chart7_3:add_line("Inflow_energia_su_historico_2021")
+chart7_3:add_line("Inflow_energia_su_historico_2021", {yUnit="MWm"});
+
 Inflow_energia_mlt_su = Inflow_energia_mlt:select_agents({"SU-MLT"});
 Inflow_energia_mlt_su:save("Inflow_energia_mlt_su");
-chart7_3:add_line("Inflow_energia_mlt_su")
+chart7_3:add_line("Inflow_energia_mlt_su", {yUnit="MWm"})
+
 Inflow_energia_su = Inflow_energia:convert("MW"):select_agents({"SUL"});
 Inflow_energia_su:save("inflow_energia_su");
-chart7_3 = get_percentile_chart(chart7_3, "inflow_energia_su", "Energia afluente - par-p - Sul");
+chart7_3 = add_percentile_layers(chart7_3, "inflow_energia_su", "MWm");
+
 dashboard7:push(chart7_3);
 
-local dashboard8 = Dashboard("Análise hídrica - usinas");
+local dashboard8 = Dashboard("Hidrologia (usinas)");
 --inflow_min_selected
 --inflow_2021janjun_selected.csv
 
-minimum_outflow = hydro.min_total_outflow;
-minimum_outflow_cronologico = hydro.min_total_outflow_modification;
-minimum_outflow_valido = max(minimum_outflow, minimum_outflow_cronologico):select_stages(1,5);
-minimum_turbining_violation = hydro:load("minimum_turbining_violation") ;
-minimum_turbining = hydro.qmin:select_stages(1,5);
-minimum_outflow_valido = max(minimum_outflow_valido, minimum_turbining);
-irrigation_violation = hydro:load("irrigation_violation") ;
-irrigation = hydro.irrigation:select_stages(1,5);
-agua_outros_usos = minimum_outflow_valido + irrigation;
+local minimum_outflow = hydro.min_total_outflow;
+local minimum_outflow_cronologico = hydro.min_total_outflow_modification;
+local minimum_outflow_valido = max(minimum_outflow, minimum_outflow_cronologico):select_stages(1,5);
+local minimum_turbining_violation = hydro:load("minimum_turbining_violation") ;
+local minimum_turbining = hydro.qmin:select_stages(1,5);
+local minimum_outflow_valido = max(minimum_outflow_valido, minimum_turbining);
+local irrigation_violation = hydro:load("irrigation_violation") ;
+local irrigation = hydro.irrigation:select_stages(1,5);
+local agua_outros_usos = minimum_outflow_valido + irrigation;
 
 -- tem que usar generic neste graf para não assumir que temos dados para todas as hidros
 -- dados são para um subconjunto das hidros
-inflow_min_selected = generic:load("inflow_min_selected");
+local inflow_min_selected = generic:load("inflow_min_selected");
 inflow_2021janjun_selected = generic:load("inflow_2021janjun_selected");
 inflow_agua = generic:load("vazao_natural"):select_stages(1,5)
 
 
-md = MarkdownTable()
+local md = MarkdownTable()
 md:add("|table>");
-md:add("Usina|Mínimo Histórico |Uso múltimo da água|probabilidade violação| média condicional de violação | violação máxima");
-md:add(" | (m3/s)              |(m3/s)             | (%)                  | (%)                           | (%)");
-md:add("- | - | - | - | - | -");
+md:add("Usina|Mínimo Histórico |Uso múltimo da água|probabilidade violação| violação média | violação máxima");
+md:add(" | (m3/s)              |(m3/s)             | (%)                  | (%)            | (%)");
+md:add("-|-|-|-|-|-");
 -- md:add("cell 1|cell 2|cell 3|cell 4|cell 5|cell 6");
 -- md:add("cell 4|cell 5|cell 6");
 
@@ -666,43 +723,46 @@ for i = 1,inflow_min_selected:agents_size(),1 do
     local label =  "total_violation_percentual_" .. agent
     local total_violation_percentual_agent = total_violation_percentual:select_agents({agent});
     total_violation_percentual_agent:save(label);
-    dashboard8:push("## Análise de violações: " .. agent);
-    local agents = total_violation_percentual_agent:scenarios_to_agents();
-    violation_minimum_value = 0.1; -- em %
-    violations = ifelse(total_violation_percentual_agent:gt(violation_minimum_value), 1, 0);
-    violations_values = ifelse(total_violation_percentual_agent:gt(violation_minimum_value), total_violation_percentual_agent, 0.0);
+    dashboard8:push("### Violações de defluência mínima: " .. agent);
+
+    local violation_minimum_value = 0.1; -- em %
+    local violations = ifelse(total_violation_percentual_agent:gt(violation_minimum_value), 1, 0);
+    local violations_values = ifelse(total_violation_percentual_agent:gt(violation_minimum_value), total_violation_percentual_agent, 0.0);
     number_violations = violations:aggregate_scenarios(BY_SUM()):to_list()[1];
-    dashboard8:push("### Probabilidade de violar: " .. string.format("%.1f", tostring((number_violations/1200) * 100)) .. "%");
+    dashboard8:push("Probabilidade de violar: **" .. string.format("%.1f", tostring((number_violations/1200) * 100)) .. "%**");
     if number_violations > 0 then
         media_violacoes = violations_values:aggregate_scenarios(BY_SUM()) / number_violations;
         maxima_violacao = violations_values:aggregate_scenarios(BY_MAX());
-        media_violacoes:save("media_" .. agent);
-        maxima_violacao:save("maximo_" .. agent);
-        dashboard8:push("### Média condicional de violação: " .. string.format("%.1f", tostring(media_violacoes:to_list()[1])) .. " %");
-        dashboard8:push("### Máxima violação: " .. string.format("%.1f", tostring(maxima_violacao:to_list()[1])) .. " %"); 
+        
+        if is_debug then media_violacoes:save("media_" .. agent); maxima_violacao:save("maximo_" .. agent); end
+
+        dashboard8:push("Violação média: **" .. string.format("%.1f", media_violacoes:to_list()[1]) .. "%** da defluência mínima");
+        dashboard8:push("Violação máxima: **" .. string.format("%.1f", maxima_violacao:to_list()[1]) .. "%** da defluência mínima"); 
     else
-        media_violacoes = 0.0;
-        maxima_violacao = 0.0;
-        dashboard8:push("### Média condicional de violação: 0.0 %");
-        dashboard8:push("### Máxima violação: 0.0 %");
+        dashboard8:push("Violação média: **0.0%** da defluência mínima");
+        dashboard8:push("Violação máxima: **0.0%** da defluência mínima");
     end
     -- chart
-    local label_chart =  "viabiliade_hidro_" .. agent;
-    local inflow_min_selected_agent = inflow_min_selected:select_agents({agent}):rename_agents({"min inflow"});
-    sum_min_inflow_horizon = inflow_min_selected_agent:select_stages(7,11):aggregate_stages(BY_SUM()):to_list()[1] / 5;
-    local inflow_2021janjun_selected_agent = inflow_2021janjun_selected:select_agents({agent}):rename_agents({"histórico inflow 2021"});
-    local agua_outros_usos_agent = agua_outros_usos:select_agents({agent}):rename_agents({"uso obrigatório de água"});
-    sum_agua_outros_usos = agua_outros_usos_agent:aggregate_stages(BY_SUM()):to_list()[1] / 5;
-    local inflow_agua_agent = inflow_agua:select_agents({agent}):save_and_load("inflow_agua_agent_" .. agent);
-    local chart8_i = Chart("Agua outros usos - usina: " .. agent);
+    local inflow_min_selected_agent = inflow_min_selected:select_agents({agent}):rename_agents({"Vazão mínima"});
+    local sum_min_inflow_horizon = inflow_min_selected_agent:select_stages(7,11):aggregate_stages(BY_SUM()):to_list()[1] / 5;
+    local inflow_2021janjun_selected_agent = inflow_2021janjun_selected:select_agents({agent}):rename_agents({"2021"});
+    local agua_outros_usos_agent = agua_outros_usos:select_agents({agent}):rename_agents({"Defluência mínima"});
+    local sum_agua_outros_usos = agua_outros_usos_agent:aggregate_stages(BY_SUM()):to_list()[1] / 5;
+    local p_min = inflow_agua:select_agents({agent}):aggregate_scenarios(BY_PERCENTILE(5)):rename_agents({"Intervalo de 95% das vazões naturais"});
+    local p_max = inflow_agua:select_agents({agent}):aggregate_scenarios(BY_PERCENTILE(95)):rename_agents({""});   
+    local avg = inflow_agua:select_agents({agent}):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Vazão média"});
+    
+    local chart8_i = Chart("");
     chart8_i:add_line(inflow_min_selected_agent);
     chart8_i:add_line(inflow_2021janjun_selected_agent);
     chart8_i:add_line(agua_outros_usos_agent);
-    chart8_i = get_percentile_chart(chart8_i, "inflow_agua_agent_" .. agent, "par-p");
+    chart8_i:add_area_range(p_min, p_max, {color="#77a1e5"});
+    chart8_i:add_line(avg, {color="#000000"});
     dashboard8:push(chart8_i);
+    
     -- historgrama
-    local chart8_i2 = Chart("Não atendimento em percental das obrigações da usina:" .. agent);
-    chart8_i2:add_histogram(label, {color="#d3d3d3"}); -- grey
+    local chart8_i2 = Chart("Histograma de violações de defluência mínima");
+    chart8_i2:add_histogram(label, {color="#d3d3d3", yUnit="% da defluência mínima não atendida", xtickPositions="[0, 20, 40, 60, 80, 100]"}); -- grey
     dashboard8:push(chart8_i2);
 
     if number_violations > 0 then
