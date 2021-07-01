@@ -6,7 +6,7 @@ local bool_dead_storage_input = true;
 local bool_termica_extra = false;
 local input_termica_extra = 6.5 -- GWh
 
-local bool_int_extra = true;
+local bool_int_extra = false;
 local input_int_extra = 0.1;
 
 local bool_demanda_reduzida = false;
@@ -271,6 +271,10 @@ ifelse(has_SU_level2_violation, 1, 0):aggregate_scenarios(BY_AVERAGE()):convert(
 ifelse(has_SE_level2_violation, 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"SUDESTE - nível 2 (6%)"}):save("enearm_final_risk_level2_SE");
 ifelse(has_SU_level2_violation | has_SE_level2_violation, 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"SUL or SUDESTE - level 2"}):save("enearm_final_risk_level2_SE_or_SU");
 
+local has_deficit = ifelse(deficit_sum:gt(1), 1, 0);
+(1 - ifelse(has_SU_level1_violation | has_SE_level1_violation, 1, 0)):save("cenarios_normal");
+(ifelse(has_SU_level1_violation | has_SE_level1_violation, 1, 0) - has_deficit):save("cenarios_atencao");
+has_deficit:save("cenarios_racionamento");
 
 deficit_final_risk = ifelse(deficit_sum:gt(1), 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"Deficit risk"}):reset_stages():save_and_load("deficit_final_risk");
 
