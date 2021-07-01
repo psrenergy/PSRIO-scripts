@@ -99,8 +99,8 @@ enearm_SE_ini_stage = enearm:select_agents({"SUDESTE"}):save_and_load("enearm_SE
 local enearm_SU = enearm:select_agents({"SUL"}):select_stages(5);
 local enearm_SE = enearm:select_agents({"SUDESTE"}):select_stages(5);
 
-enearm_SU_ini = enearm_SU:save_and_load("enearm_SU_ini");
-enearm_SE_ini = enearm_SE:save_and_load("enearm_SE_ini");
+local enearm_SU_ini = enearm_SU:save_and_load("enearm_SU_ini");
+local enearm_SE_ini = enearm_SE:save_and_load("enearm_SE_ini");
 
 local earmzm_max_SU = earmzm:select_agents({"SUL"}):select_stages(5);
 local earmzm_max_SE = earmzm:select_agents({"SUDESTE"}):select_stages(5);
@@ -240,13 +240,15 @@ for i = 1,3,1 do
     deficit_sum = ifelse(nao_pode_atender, deficit_sum - pode_esvaziar, 0):save_and_load("deficit_sum_it" .. tostring(i));
 end
 
-if is_debug then
-    enearm_SE:rename_agents({"SUDESTE"}):save("enearm_SE_final");
-    enearm_SU:rename_agents({"SUL"}):save("enearm_SU_final");
-    deficit_sum:rename_agents({"Deficit"}):reset_stages():save("deficit_sum_final");
-end
 
-deficit = deficit_sum
+local enearm_SE_final = enearm_SE:rename_agents({"SUDESTE"}):save_and_load("enearm_SE_final");
+local enearm_SU_final = enearm_SU:rename_agents({"SUL"}):save_and_load("enearm_SU_final");
+deficit_sum:rename_agents({"Deficit"}):reset_stages():save("deficit_sum_final");
+
+(enearm_SE_ini - enearm_SE_final):save("geracao_hidro_extra_SE");
+(enearm_SU_ini - enearm_SU_final):save("geracao_hidro_extra_SU");
+
+deficit = deficit_sum;
 
 if is_debug then
     earmzm_SE_level1:save("earmzm_SE_level1");
