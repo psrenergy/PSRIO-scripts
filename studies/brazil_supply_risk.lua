@@ -705,10 +705,10 @@ local dashboard8 = Dashboard("Hidrologia (usinas)");
 local minimum_outflow = hydro.min_total_outflow;
 local minimum_outflow_cronologico = hydro.min_total_outflow_modification;
 local minimum_outflow_valido = max(minimum_outflow, minimum_outflow_cronologico):select_stages(1,5);
-local minimum_turbining_violation = hydro:load("minimum_turbining_violation") ;
+local minimum_turbining_violation = hydro:load("minimum_turbining_violation");
 local minimum_turbining = hydro.qmin:select_stages(1,5);
 local minimum_outflow_valido = max(minimum_outflow_valido, minimum_turbining);
-local irrigation_violation = hydro:load("irrigation_violation") ;
+local irrigation_violation = hydro:load("irrigation_violation");
 local irrigation = hydro.irrigation:select_stages(1,5);
 local agua_outros_usos = minimum_outflow_valido + irrigation;
 
@@ -727,10 +727,14 @@ md:add("-|-|-|-|-|-");
 -- md:add("cell 1|cell 2|cell 3|cell 4|cell 5|cell 6");
 -- md:add("cell 4|cell 5|cell 6");
 
+local inflow_min_selected_agents = {};
+for i = 1,inflow_min_selected:agents_size(),1 do
+    table.insert(inflow_min_selected_agents, inflow_min_selected:agent(i));
+end
+table.sort(inflow_min_selected_agents)
 
 -- inflow_min_selected:agents_size()
-for i = 1,inflow_min_selected:agents_size(),1 do
-    local agent = inflow_min_selected:agent(i);
+for _,agent in ipairs(inflow_min_selected_agents) do
     -- tabela
     local label =  "total_violation_percentual_" .. agent
     local total_violation_percentual_agent = total_violation_percentual:select_agents({agent});
