@@ -424,7 +424,6 @@ local dashboard2 = Dashboard("Energia");
 
 local chart2_1 = Chart("Oferta x Demanda – Sul e Sudeste (valores médios)");
 
-
 if bool_termica_extra then
     chart2_1:add_column_stacking(
         (generic:load("capint2_SE_extra") * 0 + input_termica_extra):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Geração térmica extra"}):convert("GW"), 
@@ -438,27 +437,29 @@ if bool_int_extra then
     ); -- to do: checar cor
 end
 
-chart2_1:add_column_stacking(
-    generic:load("potter_risk"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Oferta térmica disponível"}):convert("GW"), 
-    {color="red", yUnit="GWm"}
-);
-chart2_1:add_column_stacking(
-    generic:load("capin2_se_min_risk"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Importação do Norte-Nordeste"}):convert("GW"), 
-    {color="#e9e9e9", yUnit="GWm"}
-);
-chart2_1:add_column_stacking(
-    generic:load("gergnd_risk"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Geração renovável (média) + biomassa"}):convert("GW"), 
-    {color="#ADD8E6", yUnit="GWm"}
-);
-chart2_1:add_column_stacking(
-    generic:load("gerhid_risk"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Geração hídrica obrigatória"}):convert("GW"), 
-    {color="#4c4cff", yUnit="GWm"}
-); -- #0000ff
-chart2_1:add_line(
-    generic:load("demand_agg"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Demanda"}):convert("GW"), 
-    {color="#000000", yUnit="GWm"}
-);
+local oferta_termica = generic:load("potter_risk"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Oferta térmica disponível"}):convert("GW");
+chart2_1:add_column_stacking(oferta_termica, {color="red", yUnit="GWm"});
+
+local importacao_NO_NE = generic:load("capin2_se_min_risk"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Importação do Norte-Nordeste"}):convert("GW");
+chart2_1:add_column_stacking(importacao_NO_NE, {color="#e9e9e9", yUnit="GWm"});
+
+local geracao_renovavel_media = generic:load("gergnd_risk"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Geração renovável (média) + biomassa"}):convert("GW");
+chart2_1:add_column_stacking(geracao_renovavel_media, {color="#ADD8E6", yUnit="GWm"});
+
+local geracao_hidrica_obrigatoria = generic:load("gerhid_risk"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Geração hídrica obrigatória"}):convert("GW");
+chart2_1:add_column_stacking(geracao_hidrica_obrigatoria, {color="#4c4cff", yUnit="GWm"}); -- #0000ff
+
+local demanda = generic:load("demand_agg"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Demanda"}):convert("GW");
+chart2_1:add_line(demanda, {color="#000000", yUnit="GWm"});
 dashboard2:push(chart2_1);
+
+concatenate(
+    oferta_termica,
+    importacao_NO_NE,
+    geracao_renovavel_media,
+    geracao_hidrica_obrigatoria,
+    demanda
+):save("oferta_parcelas");
 
 local enearm_final_risk_level1_SE_or_SU = generic:load("enearm_final_risk_level1_SE_or_SU"):rename_agents({"SE+SU"});
 -- local enearm_final_risk_level2_SE_or_SU = generic:load("enearm_final_risk_level2_SE_or_SU"):rename_agents({"SE"});
