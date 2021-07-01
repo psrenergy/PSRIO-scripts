@@ -3,13 +3,13 @@ local is_debug = false;
 
 local bool_dead_storage_input = true;
 
-local bool_termica_extra = true;
+local bool_termica_extra = false;
 local input_termica_extra = 6.5 -- GWh
 
 local bool_int_extra = true;
 local input_int_extra = 0.1;
 
-local bool_demanda_reduzida = true;
+local bool_demanda_reduzida = false;
 local input_demanda_reduzida = 0.09; -- %
 
 local function get_scenarios_violations(data, threshold)
@@ -404,9 +404,10 @@ enearm_final_risk_level2_SE = generic:load("enearm_final_risk_level2_SE"):rename
 enearm_final_risk_level0_SE_pie = 100 - enearm_final_risk_level1_SE;
 enearm_final_risk_level1_SE_pie = enearm_final_risk_level1_SE - enearm_final_risk_level2_SE;
 enearm_final_risk_level2_SE_pie = enearm_final_risk_level2_SE;
-enearm_final_risk_level0_SE_pie:save("enearm_final_risk_level0_SE_pie");
-enearm_final_risk_level1_SE_pie:save("enearm_final_risk_level1_SE_pie");
-enearm_final_risk_level2_SE_pie:save("enearm_final_risk_level2_SE_pie");
+
+-- enearm_final_risk_level0_SE_pie:save("enearm_final_risk_level0_SE_pie");
+-- enearm_final_risk_level1_SE_pie:save("enearm_final_risk_level1_SE_pie");
+-- enearm_final_risk_level2_SE_pie:save("enearm_final_risk_level2_SE_pie");
 
 local chart1_6 = Chart("Violação de energia mínima - SUDESTE");
 chart1_6:add_pie(enearm_final_risk_level0_SE_pie:rename_agents({"Nível 0 (acima de 10%)"}), {color="green"});
@@ -455,10 +456,11 @@ chart2_1:add_line(
 );
 dashboard2:push(chart2_1);
 
--- local enearm_final_risk_level1_SE_or_SU = generic:load("enearm_final_risk_level1_SE_or_SU"):rename_agents({"SE+SU"});
+local enearm_final_risk_level1_SE_or_SU = generic:load("enearm_final_risk_level1_SE_or_SU"):rename_agents({"SE+SU"});
 -- local enearm_final_risk_level2_SE_or_SU = generic:load("enearm_final_risk_level2_SE_or_SU"):rename_agents({"SE"});
-local enearm_final_risk_level0_SE_or_SU_pie = 100 - enearm_final_risk_level1_SE;
-local enearm_final_risk_level1_SE_or_SU_pie = enearm_final_risk_level1_SE - deficit_final_risk;
+
+local enearm_final_risk_level0_SE_or_SU_pie = 100 - enearm_final_risk_level1_SE_or_SU;
+local enearm_final_risk_level1_SE_or_SU_pie = enearm_final_risk_level1_SE_or_SU - deficit_final_risk;
 local enearm_final_risk_level2_SE_or_SU_pie = deficit_final_risk;
 
 local chart2_3 = Chart("Análise de suprimento: probabilidade por categoria");
