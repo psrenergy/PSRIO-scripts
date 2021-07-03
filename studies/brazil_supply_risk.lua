@@ -733,13 +733,13 @@ local dashboard7 = Dashboard("Hidrologia (ENA)");
 -- Inflow_agua_se:save("inflow_agua_se");
 -- chart7_1 = add_percentile_layers(chart7_1, "inflow_agua", "Inflow - água");
 -- dashboard7:push(chart7_1);
-Inflow_energia_historico_2020 = generic:load("enaflu2020"):rename_agents({"Histórico 2020 - SU", "Histórico 2020 - SE"});
-Inflow_energia_historico_2021 = generic:load("enaflu2021"):rename_agents({"Histórico 2021 - SU", "Histórico 2021 - SE"});
-Inflow_energia_mlt = generic:load("enafluMLT")
+Inflow_energia_historico_2020 = generic:load("enaflu2020"):convert("GW"):rename_agents({"Histórico 2020 - SU", "Histórico 2020 - SE"});
+Inflow_energia_historico_2021 = generic:load("enaflu2021"):convert("GW"):rename_agents({"Histórico 2021 - SU", "Histórico 2021 - SE"});
+Inflow_energia_mlt = generic:load("enafluMLT"):convert("GW");
 -- Inflow_energia = hydro:load("energia_afluente_ktt") * 10^6 / (3600); -- to do: remoer esta conversao
 -- Inflow_energia_se = Inflow_energia:convert("MW"):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUDESTE"}):aggregate_agents(BY_SUM(), "SE");
 -- Inflow_energia = system:load("enaflu"):select_stages(1,6):aggregate_blocks(BY_SUM()); -- rho variado, a conferir
-Inflow_energia = system:load("enaf65"):select_stages(1,6):aggregate_blocks(BY_SUM()); -- rho fixo, 65% do máximo
+Inflow_energia = system:load("enaf65"):select_stages(1,6):convert("GW"):aggregate_blocks(BY_SUM()); -- rho fixo, 65% do máximo
 local chart7_2 = Chart("Energia afluente - Sudeste");
 
 -- Inflow_energia_se_historico_2020 = Inflow_energia_historico_2020:select_agents({"Histórico 2020 - SE"});
@@ -748,19 +748,19 @@ local chart7_2 = Chart("Energia afluente - Sudeste");
 
 Inflow_energia_se_historico_2020_09 = Inflow_energia_historico_2020:select_agents({"Histórico 2020 - SE"}):rename_agents({"Histórico 2020 - SE x 90%"}) * 0.9; -- 2020 * 0.9
 Inflow_energia_se_historico_2020_09:save("Inflow_energia_se_historico_2020_09");
-chart7_2:add_line("Inflow_energia_se_historico_2020_09", {yUnit="MWm"});
+chart7_2:add_line("Inflow_energia_se_historico_2020_09", {yUnit="GWm"});
 
 Inflow_energia_se_historico_2021 = Inflow_energia_historico_2021:select_agents({"Histórico 2021 - SE"});
 Inflow_energia_se_historico_2021:save("Inflow_energia_se_historico_2021");
-chart7_2:add_line("Inflow_energia_se_historico_2021", {yUnit="MWm"});
+chart7_2:add_line("Inflow_energia_se_historico_2021", {yUnit="GWm"});
 
 Inflow_energia_mlt_se = Inflow_energia_mlt:select_agents({"SE-MLT"});
 Inflow_energia_mlt_se:save("Inflow_energia_mlt_se");
-chart7_2:add_line("Inflow_energia_mlt_se", {yUnit="MWm"});
+chart7_2:add_line("Inflow_energia_mlt_se", {yUnit="GWm"});
 
-Inflow_energia_se = Inflow_energia:convert("MW"):select_agents({"SUDESTE"});
+Inflow_energia_se = Inflow_energia:select_agents({"SUDESTE"});
 Inflow_energia_se:save("inflow_energia_se");
-chart7_2 = add_percentile_layers(chart7_2, "inflow_energia_se", "MWm");
+chart7_2 = add_percentile_layers(chart7_2, "inflow_energia_se", "GWm");
 
 dashboard7:push(chart7_2);
 
@@ -771,24 +771,24 @@ local chart7_3 = Chart("Energia afluente - Sul");
 -- chart7_3:add_line("Inflow_energia_su_historico_2020")
 Inflow_energia_su_historico_2020_09 = Inflow_energia_historico_2020:select_agents({"Histórico 2020 - SU"}):rename_agents({"Histórico 2020 - SU x 90%"}) * 0.9; -- 2020 * 0.9
 Inflow_energia_su_historico_2020_09:save("Inflow_energia_su_historico_2020_09");
-chart7_3:add_line("Inflow_energia_su_historico_2020_09", {yUnit="MWm"});
+chart7_3:add_line("Inflow_energia_su_historico_2020_09", {yUnit="GWm"});
 
 Inflow_energia_su_historico_2021 = Inflow_energia_historico_2021:select_agents({"Histórico 2021 - SU"});
 Inflow_energia_su_historico_2021:save("Inflow_energia_su_historico_2021");
-chart7_3:add_line("Inflow_energia_su_historico_2021", {yUnit="MWm"});
+chart7_3:add_line("Inflow_energia_su_historico_2021", {yUnit="GWm"});
 
 Inflow_energia_mlt_su = Inflow_energia_mlt:select_agents({"SU-MLT"});
 Inflow_energia_mlt_su:save("Inflow_energia_mlt_su");
-chart7_3:add_line("Inflow_energia_mlt_su", {yUnit="MWm"})
+chart7_3:add_line("Inflow_energia_mlt_su", {yUnit="GWm"})
 
-Inflow_energia_su = Inflow_energia:convert("MW"):select_agents({"SUL"});
+Inflow_energia_su = Inflow_energia:select_agents({"SUL"});
 Inflow_energia_su:save("inflow_energia_su");
-chart7_3 = add_percentile_layers(chart7_3, "inflow_energia_su", "MWm");
+chart7_3 = add_percentile_layers(chart7_3, "inflow_energia_su", "GWm");
 
 dashboard7:push(chart7_3);
 
 local chart7_4 = Chart("Energia afluente - histograma");
-chart7_4:add_histogram(Inflow_energia:select_stages(1,5):convert("MW"):aggregate_stages(BY_AVERAGE()):select_agents({"SUDESTE", "SUL"}):aggregate_agents(BY_SUM(), "SE+SU"), {yUnit="MWm", xLine="30000"});
+chart7_4:add_histogram(Inflow_energia:select_stages(1,5):convert("GW"):aggregate_stages(BY_AVERAGE()):select_agents({"SUDESTE", "SUL"}):aggregate_agents(BY_SUM(), "SE+SU"), {yUnit="GWm", xLine="30"});
 dashboard7:push(chart7_4);
 
 
