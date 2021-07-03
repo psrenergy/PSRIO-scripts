@@ -787,6 +787,11 @@ chart7_3 = add_percentile_layers(chart7_3, "inflow_energia_su", "MWm");
 
 dashboard7:push(chart7_3);
 
+local chart7_4 = Chart("Energia afluente - histograma");
+chart7_4:add_histogram(Inflow_energia:select_stages(1,5):convert("MW"):aggregate_stages(BY_AVERAGE()):select_agents({"SUDESTE", "SUL"}):aggregate_agents(BY_SUM(), "SE+SU"), {yUnit="MWm", xLine="30000"});
+dashboard7:push(chart7_4);
+
+
 local dashboard8 = Dashboard("Hidrologia (usinas)");
 --inflow_min_selected
 --inflow_2021janjun_selected.csv
