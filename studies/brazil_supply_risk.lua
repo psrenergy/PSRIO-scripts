@@ -2,19 +2,21 @@ local is_sddp = false;
 local is_debug = false;
 
 local bool_dead_storage_input = true;
-local bool_decrease_dead_storage = true;
+local bool_decrease_dead_storage = false;
 local decrease_dead_storage = 0.06;
 
 local bool_termica_extra = false;
 local input_termica_extra = 6.5 -- GW
 
-local bool_oferta_extra = true;
+local bool_oferta_extra = false;
 
 local bool_int_extra = false;
 local input_int_extra = 0.2; -- %
 
 local bool_demanda_reduzida = false;
-local input_demanda_reduzida = -0.03; -- % -- adicionar opção de GW, além do aumento percentual
+local input_demanda_reduzida = -0.027; -- % -- adicionar opção de GW, além do aumento percentual
+
+local bool_demanda_substituta = false; -- GWh
 
 local bool_demand_per_block = false
 
@@ -112,13 +114,18 @@ else
     earmzm = earmzm:select_stages(1,1):reset_stages():convert("GWh");
 end
 
-if bool_demand_per_block then
-    demand = system:load("demand"):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU"):select_stages(1,5);
+if bool_demanda_substituta then
+    demand = generic:load("demanda_substituta");
+    demand:save("demanda_substituta_debug");
 else
-    demand = system:load("demand"):aggregate_blocks(BY_SUM()):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU"):select_stages(1,5);
-end
-if bool_demanda_reduzida then
-    demand = (1 - input_demanda_reduzida) * demand;
+    if bool_demand_per_block then
+        demand = system:load("demand"):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU"):select_stages(1,5);
+    else
+        demand = system:load("demand"):aggregate_blocks(BY_SUM()):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU"):select_stages(1,5);
+    end
+    if bool_demanda_reduzida then
+        demand = (1 - input_demanda_reduzida) * demand;
+    end
 end
 demand = demand:select_stages(1,5):save_and_load("demand_agg");
 
@@ -360,7 +367,7 @@ deficit_final_risk = ifelse(deficit_sum:gt(1), 1, 0):aggregate_scenarios(BY_AVER
 
 local deficit_stages = ifelse(mismatch:ne(0), mismatch_stages * (deficit_sum / mismatch), 0.0):convert("GW"):save_and_load("Deficit_stages");
 
-local deficit_percentual = (deficit_sum/(demand:aggregate_blocks(BY_SUM()):select_stages(demand:stages()-3,demand:stages()-1):reset_stages():aggregate_stages(BY_SUM()))):convert("%"):save_and_load("deficit_percentual");
+local deficit_percentual = (deficit_sum/(demand:aggregate_blocks(BY_SUM()):select_stages(demand:stages()-2,demand:stages()):reset_stages():aggregate_stages(BY_SUM()))):convert("%"):save_and_load("deficit_percentual");
 
 --------------------------------------
 ---------- violacao usinas -----------
@@ -588,6 +595,7 @@ dashboard2:push(chart2_5);
 local chart = Chart("Demanda residual - histograma");
 chart:add_histogram(demanda_residual:aggregate_stages(BY_SUM()), {color="#d3d3d3", xtickPositions="[0, 20, 40, 60, 80, 100]"});
 dashboard2:push(chart);
+demanda_residual:aggregate_stages(BY_SUM()):save("demanda_residual_histogram_data");
 
 local chart2_6 = Chart("Deficit");
 chart2_6 = add_percentile_layers(chart2_6, "Deficit_stages", "GWm");
@@ -788,9 +796,15 @@ chart7_3 = add_percentile_layers(chart7_3, "inflow_energia_su", "GWm");
 dashboard7:push(chart7_3);
 
 local chart7_4 = Chart("Energia afluente - histograma");
-chart7_4:add_histogram(Inflow_energia:select_stages(1,5):convert("GW"):aggregate_stages(BY_AVERAGE()):select_agents({"SUDESTE", "SUL"}):aggregate_agents(BY_SUM(), "SE+SU"), {yUnit="GWm", xLine="30"});
+-- xLine = ena media de 2020 entre julho e novembro em GWm
+chart7_4:add_histogram(Inflow_energia:select_stages(1,5):convert("GW"):aggregate_stages(BY_AVERAGE()):select_agents({"SUDESTE", "SUL"}):aggregate_agents(BY_SUM(), "SE+SU"), {yUnit="GWm", xLine="23.07"});
 dashboard7:push(chart7_4);
+Inflow_energia:select_stages(1,5):convert("GW"):aggregate_stages(BY_AVERAGE()):select_agents({"SUDESTE", "SUL"}):aggregate_agents(BY_SUM(), "SE+SU"):save("ena_historgram_data");
 
+ena_media_horizonte_2020 = 23.07; -- GWm
+Inflow_energia_2021 = Inflow_energia:select_stages(1,5):convert("GW"):aggregate_stages(BY_AVERAGE()):select_agents({"SUDESTE", "SUL"}):aggregate_agents(BY_SUM(), "SE+SU");
+inflows_acima_ena_2020 = ifelse(Inflow_energia_2021:gt(ena_media_horizonte_2020), 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%");
+dashboard7:push("Probabilidade de ena ser maior que média de 2020 para horizonte: **" .. string.format("%.1f", inflows_acima_ena_2020:to_list()[1]) .. "%**");
 
 local dashboard8 = Dashboard("Hidrologia (usinas)");
 --inflow_min_selected
