@@ -227,8 +227,13 @@ Eaflu		INTEGER	791	791	AUTOSET
 |                     | MW   | `exp = interconnection.cost_right`                            |
 |                     | MW   | `exp = interconnection.cost_left`                             |
 
-``` lua
-```
+### Interconnection Sum
+
+| Data                | Unit  | Syntax                                                       |
+|:--------------------|:-----:|:-------------------------------------------------------------|
+|                     | MW   | `exp = interconnectionsum.lb`                                 |
+|                     | MW   | `exp = interconnectionsum.ub`                                 |
+
 
 ### Power Injection
 

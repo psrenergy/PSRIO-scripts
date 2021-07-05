@@ -1,6 +1,6 @@
 ---
-title: Dashboards
-nav_order: 7
+title: Dashboards (beta)
+nav_order: 8
 ---
 
 # Dashboards
