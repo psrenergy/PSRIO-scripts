@@ -2,19 +2,22 @@ local is_sddp = false;
 local is_debug = false;
 
 local bool_dead_storage_input = true;
-local bool_decrease_dead_storage = false;
+local bool_decrease_dead_storage = true;
 local decrease_dead_storage = 0.06;
 
 local bool_termica_extra = false;
 local input_termica_extra = 6.5 -- GW
 
-local bool_oferta_extra = false;
+local bool_oferta_extra = true;
 
-local bool_int_extra = false;
+local bool_int_extra = true;
 local input_int_extra = 0.2; -- %
 
-local bool_demanda_reduzida = false;
-local input_demanda_reduzida = -0.027; -- % -- adicionar opção de GW, além do aumento percentual
+local bool_demanda_reduzida = true;
+local input_demanda_reduzida = -0.086; -- % -- adicionar opção de GW, além do aumento percentual
+-- 6%2020  = 2.7% 0.027
+-- 9%2020 = 5.6% 0.056
+-- 12%2020 = 8.6% 0.086
 
 local bool_demanda_substituta = false; -- GWh
 
@@ -189,9 +192,9 @@ local rho_dead = hydro:load("rho_dead");
     
 if bool_decrease_dead_storage then
     min_vol = decrease_dead_storage * (hydro.vmax - hydro.vmin) + hydro.vmin;
-    energiamorta = ((min(min_vol, max(hydro.alert_storage,hydro.vmin_chronological)) - hydro.vmin) * rho_dead);
+    energiamorta = (max(0.0, (min(min_vol, max(hydro.alert_storage,hydro.vmin_chronological)) - hydro.vmin)) * rho_dead);
 else
-    energiamorta = ((max(hydro.alert_storage,hydro.vmin_chronological) - hydro.vmin) * rho_dead);
+    energiamorta = (max(0.0, (max(hydro.alert_storage,hydro.vmin_chronological) - hydro.vmin)) * rho_dead);
 end
 -- energiamorta = energiamorta:select_stages(5):save_and_load("deadenergy");
 energiamorta = hydro:load("dead_energy"):select_stages(5,5):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):convert("GWh");;
@@ -205,6 +208,8 @@ else
     energiamorta_SU = earmzm_max_SU * 0.06;
 end
 
+local earmzm_SE_level0 = earmzm_max_SE * 0.15;
+
 local earmzm_SU_level1 = earmzm_max_SU * 0.3;
 local earmzm_SE_level1 = earmzm_max_SE * 0.1;
 
@@ -215,14 +220,18 @@ local earmzm_SE_level2 = earmzm_max_SE * 0.06;
 -- abaixo de 0.06 -> desespero
 
 -- RISCO DE VIOLAÇÃO DOS NÍVEIS ONS A PRIORI
+local has_SE_level0_violation = enearm_SE:le(earmzm_SE_level0); -- only SE has level 0
 local has_SU_level1_violation = enearm_SU:le(earmzm_SU_level1);
 local has_SE_level1_violation = enearm_SE:le(earmzm_SE_level1);
 local has_SU_level2_violation = enearm_SU:le(earmzm_SU_level2);
 local has_SE_level2_violation = enearm_SE:le(earmzm_SE_level2);
 
+ifelse(has_SE_level0_violation, 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"SUDESTE - level 0 (15%)"}):save("enearm_risk_level0_SE");
 ifelse(has_SU_level1_violation, 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"SUL - level 1 (30%)"}):save("enearm_risk_level1_SU");
 ifelse(has_SE_level1_violation, 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"SUDESTE - level 1 (10%)"}):save("enearm_risk_level1_SE");
+ifelse(has_SU_level1_violation | has_SE_level0_violation, 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"SUL or SUDESTE - level 0"}):save("enearm_risk_level0_SE_or_SU");
 ifelse(has_SU_level1_violation | has_SE_level1_violation, 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"SUL or SUDESTE - level 1"}):save("enearm_risk_level1_SE_or_SU");
+
 
 ifelse(has_SU_level2_violation, 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"SUL - level 2 (6%)"}):save("enearm_risk_level2_SU");
 ifelse(has_SE_level2_violation, 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"SUDESTE - level 2 (6%)"}):save("enearm_risk_level2_SE");
@@ -342,7 +351,8 @@ if is_debug then
     earmzm_SU_level2:save("earmzm_SU_level2");
 end
 
- -- RISCO DE VIOLAÇÃO DOS NÍVEIS ONS A PRIORI
+ -- RISCO DE VIOLAÇÃO DOS NÍVEIS ONS A POSTEIORIE
+local has_SE_level0_violation = enearm_SE:le(earmzm_SE_level0); -- only SE has level 0
 local has_SU_level1_violation = enearm_SU:le(earmzm_SU_level1);
 local has_SE_level1_violation = enearm_SE:le(earmzm_SE_level1);
 local has_SU_level2_violation = enearm_SU:le(earmzm_SU_level2);
@@ -351,8 +361,11 @@ local has_SE_level2_violation = enearm_SE:le(earmzm_SE_level2);
 has_SE_level1_violation:save("has_SE_level1_violation");
 
 ifelse(has_SU_level1_violation, 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"SUL - nível 1 (30%)"}):save("enearm_final_risk_level1_SU");
+ifelse(has_SE_level0_violation, 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"SUDESTE - nível 0 (15%)"}):save("enearm_final_risk_level0_SE");
 ifelse(has_SE_level1_violation, 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"SUDESTE - nível 1 (10%)"}):save("enearm_final_risk_level1_SE");
+ifelse(has_SU_level1_violation | has_SE_level0_violation, 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"SUL or SUDESTE - nível 0"}):save("enearm_final_risk_level0_SE_or_SU");
 ifelse(has_SU_level1_violation | has_SE_level1_violation, 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"SUL or SUDESTE - nível 1"}):save("enearm_final_risk_level1_SE_or_SU");
+
 
 ifelse(has_SU_level2_violation, 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"SUL - nível 2 (6%)"}):save("enearm_final_risk_level2_SU");
 ifelse(has_SE_level2_violation, 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"SUDESTE - nível 2 (6%)"}):save("enearm_final_risk_level2_SE");
@@ -548,6 +561,7 @@ concatenate(
     demanda
 ):save("oferta_parcelas");
 
+local enearm_final_risk_level0_SE_or_SU = generic:load("enearm_final_risk_level0_SE_or_SU"):rename_agents({"SE+SU"});
 local enearm_final_risk_level1_SE_or_SU = generic:load("enearm_final_risk_level1_SE_or_SU"):rename_agents({"SE+SU"});
 -- local enearm_final_risk_level2_SE_or_SU = generic:load("enearm_final_risk_level2_SE_or_SU"):rename_agents({"SE"});
 
@@ -564,6 +578,9 @@ dashboard2:push(chart2_3);
 dashboard2:push("**Normal**: SE acima de 10% e SU acima de 30%");
 dashboard2:push("**Atenção**: SE abaixo de 10% ou SU abaixo de 30%. Sem deficit.");
 dashboard2:push("**Racionamento**: Deficit.");
+
+dashboard2:push("**RISCO DO SE ficar entre 10% e 15%: " .. string.format("%.1f", (enearm_final_risk_level0_SE_or_SU-enearm_final_risk_level1_SE_or_SU):to_list()[1]));
+--  tostring(enearm_final_risk_level1_SE_or_SU-enearm_final_risk_level0_SE_or_SU));
 
 -- local chart2_2 = Chart("Risco de déficit de energia");
 -- chart2_2:add_column("mismatch_risk", {color="#CD5C5C"}); -- indian red
@@ -795,16 +812,22 @@ chart7_3 = add_percentile_layers(chart7_3, "inflow_energia_su", "GWm");
 
 dashboard7:push(chart7_3);
 
+duracao_horizonte = duraci:aggregate_stages(BY_SUM());
+media_mlt_horizonte = Inflow_energia_mlt:convert("GW"):select_stages(7,11):aggregate_stages(BY_AVERAGE()):reset_stages():aggregate_agents(BY_SUM(), "SE+SU");
+-- media_mlt_horizonte = 35.29 GWm
+
 local chart7_4 = Chart("Energia afluente - histograma");
 -- xLine = ena media de 2020 entre julho e novembro em GWm
-chart7_4:add_histogram(Inflow_energia:select_stages(1,5):convert("GW"):aggregate_stages(BY_AVERAGE()):select_agents({"SUDESTE", "SUL"}):aggregate_agents(BY_SUM(), "SE+SU"), {yUnit="GWm", xLine="23.07"});
+chart7_4:add_histogram((Inflow_energia:select_stages(1,5):convert("GW"):aggregate_stages(BY_AVERAGE()):select_agents({"SUDESTE", "SUL"}):aggregate_agents(BY_SUM(), "SE+SU")/media_mlt_horizonte):convert("%"), {xLine="65.4"});
 dashboard7:push(chart7_4);
-Inflow_energia:select_stages(1,5):convert("GW"):aggregate_stages(BY_AVERAGE()):select_agents({"SUDESTE", "SUL"}):aggregate_agents(BY_SUM(), "SE+SU"):save("ena_historgram_data");
+(Inflow_energia:select_stages(1,5):convert("GW"):aggregate_stages(BY_AVERAGE()):select_agents({"SUDESTE", "SUL"}):aggregate_agents(BY_SUM(), "SE+SU")/media_mlt_horizonte):convert("%"):save("ena_historgram_data");
 
 ena_media_horizonte_2020 = 23.07; -- GWm
-Inflow_energia_2021 = Inflow_energia:select_stages(1,5):convert("GW"):aggregate_stages(BY_AVERAGE()):select_agents({"SUDESTE", "SUL"}):aggregate_agents(BY_SUM(), "SE+SU");
-inflows_acima_ena_2020 = ifelse(Inflow_energia_2021:gt(ena_media_horizonte_2020), 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%");
+ena_media_horizonte_2020_relativo_mlt = 23.07 / media_mlt_horizonte:to_list()[1] * 100; -- %.
+Inflow_energia_2021 = (Inflow_energia:select_stages(1,5):convert("GW"):aggregate_stages(BY_AVERAGE()):select_agents({"SUDESTE", "SUL"}):aggregate_agents(BY_SUM(), "SE+SU")/media_mlt_horizonte):convert("%");
+inflows_acima_ena_2020 = ifelse(Inflow_energia_2021:gt(ena_media_horizonte_2020_relativo_mlt), 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%");
 dashboard7:push("Probabilidade de ena ser maior que média de 2020 para horizonte: **" .. string.format("%.1f", inflows_acima_ena_2020:to_list()[1]) .. "%**");
+dashboard7:push("Ena mlt media: **" .. string.format("%.1f", media_mlt_horizonte:to_list()[1]) .. "**GWm");
 
 local dashboard8 = Dashboard("Hidrologia (usinas)");
 --inflow_min_selected
