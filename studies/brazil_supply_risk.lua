@@ -2,18 +2,18 @@ local is_sddp = false;
 local is_debug = false;
 
 local bool_dead_storage_input = true;
-local bool_decrease_dead_storage = true;
+local bool_decrease_dead_storage = false;
 local decrease_dead_storage = 0.06;
 
 local bool_termica_extra = false;
 local input_termica_extra = 6.5 -- GW
 
-local bool_oferta_extra = true;
+local bool_oferta_extra = false;
 
-local bool_int_extra = true;
+local bool_int_extra = false;
 local input_int_extra = 0.2; -- %
 
-local bool_demanda_reduzida = true;
+local bool_demanda_reduzida = false;
 local input_demanda_reduzida = -0.086; -- % -- adicionar opção de GW, além do aumento percentual
 -- 6%2020  = 2.7% 0.027
 -- 9%2020 = 5.6% 0.056
@@ -936,6 +936,30 @@ dashboard8:push(md);
 dashboard8:push("Obs: Aimores tem bastante violação mesmo com o uso múltiplo da água ser abaixo do mínimo histórico." ..
     "Isso pode ser explicado porque a usina a jusante dela - Mascarenhas - tem um aumento de 120m3/s na defluência mínima." ..
     " Isto obriga Aimores turbinar ou verter mais.");
+
+
+-- local hydro_selected_agents = {};
+-- for i = 1,hydro.vmin:agents_size(),1 do
+--     agent
+--     if hydro.vmax:agent(i) > hydro.vmin:agent(i) then
+--         table.insert(hydro_selected_agents, hydro.vmin:agent(i));
+--     end
+-- end
+-- hydro.vmax:gt(hydro.vmin):select_stages(5,5):reset_stages();
+hydro_selected_agents = hydro.vmax:select_agents(hydro.vmax:gt(hydro.vmin):select_stages(5,5)):agents();
+table.sort(inflow_min_selected_agents);
+local md = Markdown();
+md:add("|table>");
+md:add("Usina | Volume morto (%) | volume  útil (Hm3)");
+md:add("-|-|-");
+for _,agent in ipairs(hydro_selected_agents) do
+    vol_util = (hydro.vmax-hydro.vmin):select_agents({agent});
+    dead_storage = (max(0.0, (max(hydro.alert_storage,hydro.vmin_chronological) - hydro.vmin)):select_agents({agent})/vol_util):convert("%");
+    md:add(agent .. " | " .. string.format("%.1f", dead_storage:to_list()[1]) .. " | " .. string.format("%.1f", vol_util:to_list()[1]));
+end
+md:add("-|-|-");
+md:add("|<table");
+dashboard8:push(md);
 
 
 
