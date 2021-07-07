@@ -31,6 +31,9 @@ local thermal = require("collection/thermal");
 local interconnection = require("collection/interconnection");
 local interconnection_sum = require("collection/interconnectionsum");
 
+-- LOAD FATOR ENERGIA ARMAZENADA
+local fator_energia_armazenada = hydro:load("fatorEnergiaArmazenada", true);
+
 -- LOAD DURACI
 local duraci = system.duraci;
 if bool_demand_per_block then
@@ -38,7 +41,6 @@ if bool_demand_per_block then
 else
     duraci = duraci:select_agents({1}):select_stages(1,5):aggregate_blocks(BY_SUM());
 end
-duraci:save("duraci_risk");
 
 -- LOAD HYDRO GENERATION
 local gerhid = nil;
@@ -50,7 +52,6 @@ else
     gerhid = hydro:load(is_sddp and "gerhid" or "gerhid_KTT", true):convert("GWh"):aggregate_blocks(BY_SUM()):select_stages(1,5);
 end
 local hydro_generation = gerhid:aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
-hydro_generation:save("gerhid_risk");
 
 -- LOAD RENEWABLE GENERATION
 local gergnd = nil;
@@ -60,7 +61,6 @@ else
     gergnd = renewable:load("gergnd", true):aggregate_blocks(BY_SUM()):select_stages(1,5);
 end
 local renewable_generation = gergnd:aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
-renewable_generation:save("gergnd_risk");
 
 -- LOAD THERMAL GENERATION
 local potter = nil;
@@ -71,7 +71,6 @@ else
     potter = thermal:load("potter", true):convert("GWh"):aggregate_blocks(BY_SUM()):select_stages(1,5);
 end
 local thermal_generation = potter:aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
-thermal_generation:save("potter_risk");
 
 -- LOAD INTERCONNECTION
 local capint2 = nil;
@@ -92,21 +91,22 @@ end
 
 -- DEBUG
 if is_debug then 
+    duraci:save("duraci_risk");
+    hydro_generation:save("gerhid_risk");
+    renewable_generation:save("gergnd_risk");
+    thermal_generation:save("potter_risk");
     capint2_SE:save("capin2_se");
     interc_sum:save("interc_sum_risk");
+    fator_energia_armazenada:save("fator_energia_armazenada_debug");
 end
 
 capint2_SE = min(capint2_SE, interc_sum):select_stages(1,5);
-capint2_SE:save("capin2_se_min_risk");
-
 local capint2_SE_extra = capint2_SE * input_int_extra;
-capint2_SE_extra:save("capint2_SE_extra");
-
-local fator_energia_armazenada = hydro:load("fatorEnergiaArmazenada", true);
 
 -- DEBUG
 if is_debug then 
-    fator_energia_armazenada:save("fator_energia_armazenada_debug");
+    capint2_SE:save("capin2_se_min_risk");
+    capint2_SE_extra:save("capint2_SE_extra");
 end
 
 -- local enearm = system:load(is_sddp and "enearm" or "storageenergy_aggregated"):convert("GWh");
@@ -139,19 +139,18 @@ end
 -- LOAD DEMAND
 local demand = nil;
 if bool_demanda_substituta then
-    demand = generic:load("demanda_substituta");
-    demand:save("demanda_substituta_debug");
+    demand = generic:load("demanda_substituta", true);
 else
     if bool_demand_per_block then
-        demand = system:load("demand"):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU"):select_stages(1,5);
+        demand = system:load("demand", true):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU"):select_stages(1,5);
     else
-        demand = system:load("demand"):aggregate_blocks(BY_SUM()):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU"):select_stages(1,5);
+        demand = system:load("demand", true):aggregate_blocks(BY_SUM()):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU"):select_stages(1,5);
     end
     if bool_demanda_reduzida then
         demand = (1 - input_demanda_reduzida) * demand;
     end
 end
-demand = demand:select_stages(1,5):save_and_load("demand_agg");
+demand = demand:select_stages(1,5);
 
 -- MAX GENERATION
 local generation = hydro_generation + renewable_generation + thermal_generation + capint2_SE;
@@ -159,21 +158,17 @@ if bool_int_extra then
     generation = generation + capint2_SE_extra;
 end
 if bool_termica_extra then
-    duraci:save("duraci_ktt");
     generation = generation + (input_termica_extra * duraci):force_unit("GWh");
 end
 if bool_oferta_extra then
     local oferta_extra = generic:load("oferta_extra");
     generation = generation + oferta_extra;
-
-    if is_debug then oferta_extra:save("oferta_extra_debug"); end
 end
-generation = generation:select_stages(1,5):save_and_load("max_generation");
+generation = generation:select_stages(1,5);
 
 -- MISMATCH
 local deficit = ifelse((demand - generation):gt(0), demand - generation, 0);
-local demanda_residual = (demand - generation):select_stages(1, 5);
-demanda_residual:convert("GW"):save("demanda_residual");
+local demanda_residual = (demand - generation):select_stages(1, 5):convert("GW");
 
 -- DEFICIT SOMA DE MAIO A NOVEMBRO
 local mismatch_stages = deficit:select_stages(1, 5):rename_agents({"Mismatch - balanço hídrico"}):convert("GW"):save_and_load("mismatch_stages");
@@ -182,8 +177,8 @@ local mismatch = deficit_sum:save_and_load("mismatch");
 
 ifelse(deficit_sum:gt(1), 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"Mismatch - balanço hídrico"}):save("mismatch_risk");
 
-local enearm_SU_ini_stage = enearm:select_agents({"SUL"}):save_and_load("enearm_SU_ini_stage");
-local enearm_SE_ini_stage = enearm:select_agents({"SUDESTE"}):save_and_load("enearm_SE_ini_stage");
+local enearm_SU_ini_stage = enearm:select_agents({"SUL"});
+local enearm_SE_ini_stage = enearm:select_agents({"SUDESTE"});
 
 -- ENERGIA ARMAZENADA DO SUL E SUDESTE
 local enearm_SU = enearm:select_agents({"SUL"}):select_stages(5);
@@ -196,9 +191,15 @@ local earmzm_max_SU = earmzm:select_agents({"SUL"});
 local earmzm_max_SE = earmzm:select_agents({"SUDESTE"});
 
 if is_debug then
+    generation:save("max_generation");
+    duraci:save("duraci_ktt");
+    demand:save("demand_agg");
     enearm_SE:save("enearm_SE");
     enearm_SU:save("enearm_SU");
     deficit_sum:save("deficit_sum");
+    enearm_SU_ini_stage:save("enearm_SU_ini_stage");
+    enearm_SE_ini_stage:save("enearm_SE_ini_stage");
+    demanda_residual:save("demanda_residual");
 end
 
 -- local volumemorto = max(hydro.vmin, max(hydro.alert_storage, hydro.vmin_chronological)) - hydro.vmin;
@@ -281,7 +282,7 @@ local function get_current_energy(deficit, target_S1, current_energy_S1, max_ene
             current_energy_S2
         ),
         current_energy_S2
-    )
+    );
 end
 
 for i = 1,3,1 do 
@@ -360,6 +361,7 @@ local has_SE_level2_violation = enearm_SE:le(earmzm_SE_level2);
 ifelse(has_SU_level1_violation, 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"SUL - nível 1 (30%)"}):save("enearm_final_risk_level1_SU");
 ifelse(has_SE_level0_violation, 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"SUDESTE - nível 0 (15%)"}):save("enearm_final_risk_level0_SE");
 ifelse(has_SE_level1_violation, 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"SUDESTE - nível 1 (10%)"}):save("enearm_final_risk_level1_SE");
+
 ifelse(has_SU_level1_violation | has_SE_level0_violation, 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"SUL or SUDESTE - nível 0"}):save("enearm_final_risk_level0_SE_or_SU");
 ifelse(has_SU_level1_violation | has_SE_level1_violation, 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"SUL or SUDESTE - nível 1"}):save("enearm_final_risk_level1_SE_or_SU");
 
@@ -367,23 +369,27 @@ ifelse(has_SU_level2_violation, 1, 0):aggregate_scenarios(BY_AVERAGE()):convert(
 ifelse(has_SE_level2_violation, 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"SUDESTE - nível 2 (6%)"}):save("enearm_final_risk_level2_SE");
 ifelse(has_SU_level2_violation | has_SE_level2_violation, 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"SUL or SUDESTE - level 2"}):save("enearm_final_risk_level2_SE_or_SU");
 
-local has_deficit = ifelse(deficit_sum:gt(1), 1, 0);
-(1 - ifelse(has_SU_level1_violation | has_SE_level1_violation, 1, 0)):save("cenarios_normal");
-(ifelse(has_SU_level1_violation | has_SE_level1_violation, 1, 0) - has_deficit):save("cenarios_atencao");
-has_deficit:save("cenarios_racionamento");
-
 local deficit_final_risk = ifelse(deficit_sum:gt(1), 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"Deficit risk"}):reset_stages():save_and_load("deficit_final_risk");
 
-ifelse(mismatch:ne(0), mismatch_stages * (deficit_sum / mismatch), 0.0):convert("GW"):save_and_load("Deficit_stages");
+local deficit_stages = ifelse(mismatch:ne(0), mismatch_stages * (deficit_sum / mismatch), 0.0):convert("GW");
 
 local deficit_percentual = (deficit_sum/(demand:aggregate_blocks(BY_SUM()):select_stages(demand:stages()-2,demand:stages()):reset_stages():aggregate_stages(BY_SUM()))):convert("%"):save_and_load("deficit_percentual");
+
+if is_debug then
+    local has_deficit = ifelse(deficit_sum:gt(1), 1, 0);
+    (1 - ifelse(has_SU_level1_violation | has_SE_level1_violation, 1, 0)):save("cenarios_normal");
+    (ifelse(has_SU_level1_violation | has_SE_level1_violation, 1, 0) - has_deficit):save("cenarios_atencao");
+    has_deficit:save("cenarios_racionamento");
+
+    deficit_stages:save("deficit_stages");
+end
 
 --------------------------------------
 ---------- violacao usinas -----------
 --------------------------------------
 
 -- min outflow
-local minimum_outflow_violation = hydro:load("minimum_outflow_violation") ;
+local minimum_outflow_violation = hydro:load("minimum_outflow_violation");
 local minimum_outflow = hydro.min_total_outflow;
 local minimum_outflow_cronologico = hydro.min_total_outflow_modification;
 local minimum_outflow_valido = max(minimum_outflow, minimum_outflow_cronologico):select_stages(1,5);
@@ -391,11 +397,11 @@ local minimum_outflow_valido = max(minimum_outflow, minimum_outflow_cronologico)
 local minimum_outflow_violation_percentual = (minimum_outflow_violation:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_SUM())/minimum_outflow_valido:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_SUM())):convert("%"):save_and_load("minimum_outflow_violation_percentual");
 
 -- irrigation
-local irrigation_violation = hydro:load("irrigation_violation") ;
+local irrigation_violation = hydro:load("irrigation_violation");
 local irrigation = hydro.irrigation:select_stages(1,5);
 
 -- turbinamento
-local minimum_turbining_violation = hydro:load("minimum_turbining_violation") ;
+local minimum_turbining_violation = hydro:load("minimum_turbining_violation");
 local minimum_turbining = hydro.qmin:select_stages(1,5);
 
 local obrigacao_total = max(minimum_turbining, minimum_outflow_valido) + irrigation;
@@ -411,10 +417,7 @@ end
 ---------- dashboard -----------------
 --------------------------------------
 
-local function add_percentile_layers(chart, filename, force_unit)    
-    local generic = require("collection/generic");
-    local output = generic:load(filename);
-    
+local function add_percentile_layers(chart, output, force_unit)    
     local p_min = output:aggregate_scenarios(BY_PERCENTILE(5)):rename_agents({"Intervalo de confiança de 95%"});
     local p_max = output:aggregate_scenarios(BY_PERCENTILE(95)):rename_agents({""});
     local avg = output:aggregate_scenarios(BY_AVERAGE()):rename_agents({"Média"});
@@ -447,19 +450,20 @@ if bool_int_extra then
     ); -- to do: checar cor
 end
 
-local oferta_termica = generic:load("potter_risk"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Oferta térmica disponível"}):convert("GW");
+local oferta_termica = thermal_generation:aggregate_scenarios(BY_AVERAGE()):rename_agents({"Oferta térmica disponível"}):convert("GW");
 chart2_1:add_column_stacking(oferta_termica, {color="red", yUnit="GWm"});
 
 local importacao_NO_NE = generic:load("capin2_se_min_risk"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Importação do Norte-Nordeste"}):convert("GW");
 chart2_1:add_column_stacking(importacao_NO_NE, {color="#e9e9e9", yUnit="GWm"});
 
-local geracao_renovavel_media = generic:load("gergnd_risk"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Geração renovável (média) + biomassa"}):convert("GW");
+local geracao_renovavel_media = renewable_generation:aggregate_scenarios(BY_AVERAGE()):rename_agents({"Geração renovável (média) + biomassa"}):convert("GW");
 chart2_1:add_column_stacking(geracao_renovavel_media, {color="#ADD8E6", yUnit="GWm"});
 
-local geracao_hidrica_obrigatoria = generic:load("gerhid_risk"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Geração hídrica obrigatória"}):convert("GW");
+local geracao_hidrica_obrigatoria = hydro_generation:aggregate_scenarios(BY_AVERAGE()):rename_agents({"Geração hídrica obrigatória"}):convert("GW");
 chart2_1:add_column_stacking(geracao_hidrica_obrigatoria, {color="#4c4cff", yUnit="GWm"}); -- #0000ff
 
-local demanda = generic:load("demand_agg"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Demanda"}):convert("GW");
+-- CUIDADO MUDAR NOME - demand e demanda!
+local demanda = demand:aggregate_scenarios(BY_AVERAGE()):rename_agents({"Demanda"}):convert("GW");
 chart2_1:add_line(demanda, {color="#000000", yUnit="GWm"});
 dashboard2:push(chart2_1);
 
@@ -473,7 +477,6 @@ concatenate(
 
 local enearm_final_risk_level0_SE_or_SU = generic:load("enearm_final_risk_level0_SE_or_SU"):rename_agents({"SE+SU"});
 local enearm_final_risk_level1_SE_or_SU = generic:load("enearm_final_risk_level1_SE_or_SU"):rename_agents({"SE+SU"});
--- local enearm_final_risk_level2_SE_or_SU = generic:load("enearm_final_risk_level2_SE_or_SU"):rename_agents({"SE"});
 
 local enearm_final_risk_level0_SE_or_SU_pie = 100 - enearm_final_risk_level1_SE_or_SU;
 local enearm_final_risk_level1_SE_or_SU_pie = enearm_final_risk_level1_SE_or_SU - deficit_final_risk;
@@ -490,21 +493,10 @@ dashboard2:push("**Atenção**: SE abaixo de 10% ou SU abaixo de 30%. Sem defici
 dashboard2:push("**Racionamento**: Deficit.");
 
 dashboard2:push("**RISCO DO SE ficar entre 10% e 15%: " .. string.format("%.1f", (enearm_final_risk_level0_SE_or_SU-enearm_final_risk_level1_SE_or_SU):to_list()[1]));
---  tostring(enearm_final_risk_level1_SE_or_SU-enearm_final_risk_level0_SE_or_SU));
-
--- local chart2_2 = Chart("Risco de déficit de energia");
--- chart2_2:add_column("mismatch_risk", {color="#CD5C5C"}); -- indian red
--- chart2_2:add_column("deficit_final_risk", {color="#D30000"}); -- red
--- dashboard2:push(chart2_2);
-
-local function get_scenarios_violations(data, threshold)
-    local violations = ifelse(data:gt(threshold), 1, 0);
-    return violations:aggregate_scenarios(BY_SUM()):to_list()[1];
-end
 
 local chart2_4 = Chart("Deficit - histograma");
 local violation_minimum_value = 0.1;
-local number_violations = get_scenarios_violations(deficit_percentual, violation_minimum_value);
+local number_violations = ifelse(deficit_percentual:gt(violation_minimum_value), 1, 0):aggregate_scenarios(BY_SUM()):to_list()[1];
 local deficit_percentual = ifelse(deficit_percentual:gt(violation_minimum_value), deficit_percentual, 0);
 local media_violacoes = deficit_percentual:aggregate_scenarios(BY_SUM()) / number_violations;
 local maxima_violacao = deficit_percentual:aggregate_scenarios(BY_MAX());
@@ -521,26 +513,27 @@ chart2_4:add_histogram(deficit_percentual, {color="#d3d3d3", xtickPositions="[0,
 dashboard2:push(chart2_4);
 
 local chart2_5 = Chart("Demanda residual");
-chart2_5 = add_percentile_layers(chart2_5, "demanda_residual", "GWm");
+chart2_5 = add_percentile_layers(chart2_5, demanda_residual, "GWm");
 dashboard2:push(chart2_5);
 
 local chart = Chart("Demanda residual - histograma");
-chart:add_histogram(demanda_residual:aggregate_stages(BY_SUM()), {color="#d3d3d3", xtickPositions="[0, 20, 40, 60, 80, 100]"});
+chart:add_histogram(demanda_residual:aggregate_stages(BY_SUM()), {yUnit="GWm", color="#d3d3d3", xtickPositions="[0, 20, 40, 60, 80, 100]"});
 dashboard2:push(chart);
-demanda_residual:aggregate_stages(BY_SUM()):save("demanda_residual_histogram_data");
 
 local chart2_6 = Chart("Deficit");
-chart2_6 = add_percentile_layers(chart2_6, "Deficit_stages", "GWm");
+chart2_6 = add_percentile_layers(chart2_6, deficit_stages, "GWm");
 dashboard2:push(chart2_6);
 
 local chart2_7 = Chart("Enegergia Armazenada - Sudeste");
--- enearm_se = enearm:select_agents({"SE"}):save_and_load("enearm_se");
-chart2_7 = add_percentile_layers(chart2_7, "enearm_SE_ini_stage", false)
+chart2_7 = add_percentile_layers(chart2_7, enearm_SE_ini_stage, false);
 
 local chart2_8 = Chart("Enegergia Armazenada - Sul");
--- enearm_su = enearm:select_agents({"SU"}):save_and_load("enearm_su");
-chart2_8 = add_percentile_layers(chart2_8, "enearm_SU_ini_stage", false)
+chart2_8 = add_percentile_layers(chart2_8, enearm_SU_ini_stage, false);
 dashboard2:push({chart2_7, chart2_8});
+
+if is_debug then
+    demanda_residual:aggregate_stages(BY_SUM()):save("demanda_residual_histogram_data");
+end
 
 -- inflows
 local dashboard7 = Dashboard("Hidrologia (ENA)");
@@ -552,42 +545,46 @@ Inflow_energia_mlt = generic:load("enafluMLT"):convert("GW");
 Inflow_energia = system:load("enaf65"):select_stages(1,6):convert("GW"):aggregate_blocks(BY_SUM()); -- rho fixo, 65% do máximo
 local chart7_2 = Chart("Energia afluente - Sudeste");
 
-Inflow_energia_se_historico_2020_09 = Inflow_energia_historico_2020:select_agents({"Histórico 2020 - SE"}):rename_agents({"Histórico 2020 - SE x 90%"}) * 0.9; -- 2020 * 0.9
-Inflow_energia_se_historico_2020_09:save("Inflow_energia_se_historico_2020_09");
-chart7_2:add_line("Inflow_energia_se_historico_2020_09", {yUnit="GWm"});
+local inflow_energia_se_historico_2020_09 = Inflow_energia_historico_2020:select_agents({"Histórico 2020 - SE"}):rename_agents({"Histórico 2020 - SE x 90%"}) * 0.9; -- 2020 * 0.9
+chart7_2:add_line(inflow_energia_se_historico_2020_09, {yUnit="GWm"});
 
-Inflow_energia_se_historico_2021 = Inflow_energia_historico_2021:select_agents({"Histórico 2021 - SE"});
-Inflow_energia_se_historico_2021:save("Inflow_energia_se_historico_2021");
-chart7_2:add_line("Inflow_energia_se_historico_2021", {yUnit="GWm"});
+local inflow_energia_se_historico_2021 = Inflow_energia_historico_2021:select_agents({"Histórico 2021 - SE"});
+chart7_2:add_line(inflow_energia_se_historico_2021, {yUnit="GWm"});
 
-Inflow_energia_mlt_se = Inflow_energia_mlt:select_agents({"SE-MLT"});
-Inflow_energia_mlt_se:save("Inflow_energia_mlt_se");
-chart7_2:add_line("Inflow_energia_mlt_se", {yUnit="GWm"});
+local inflow_energia_mlt_se = Inflow_energia_mlt:select_agents({"SE-MLT"});
+chart7_2:add_line(inflow_energia_mlt_se, {yUnit="GWm"});
 
-Inflow_energia_se = Inflow_energia:select_agents({"SUDESTE"});
-Inflow_energia_se:save("inflow_energia_se");
-chart7_2 = add_percentile_layers(chart7_2, "inflow_energia_se", "GWm");
-
+local inflow_energia_se = Inflow_energia:select_agents({"SUDESTE"});
+chart7_2 = add_percentile_layers(chart7_2, inflow_energia_se, "GWm");
 dashboard7:push(chart7_2);
 
+if is_debug then
+    inflow_energia_se:save("inflow_energia_se");
+    inflow_energia_mlt_se:save("inflow_energia_mlt_se");
+    inflow_energia_se_historico_2021:save("Inflow_energia_se_historico_2021");
+    inflow_energia_se_historico_2020_09:save("Inflow_energia_se_historico_2020_09");
+end
+
 local chart7_3 = Chart("Energia afluente - Sul");
-Inflow_energia_su_historico_2020_09 = Inflow_energia_historico_2020:select_agents({"Histórico 2020 - SU"}):rename_agents({"Histórico 2020 - SU x 90%"}) * 0.9; -- 2020 * 0.9
-Inflow_energia_su_historico_2020_09:save("Inflow_energia_su_historico_2020_09");
-chart7_3:add_line("Inflow_energia_su_historico_2020_09", {yUnit="GWm"});
+local inflow_energia_su_historico_2020_09 = Inflow_energia_historico_2020:select_agents({"Histórico 2020 - SU"}):rename_agents({"Histórico 2020 - SU x 90%"}) * 0.9; -- 2020 * 0.9
+chart7_3:add_line(inflow_energia_su_historico_2020_09, {yUnit="GWm"});
 
-Inflow_energia_su_historico_2021 = Inflow_energia_historico_2021:select_agents({"Histórico 2021 - SU"});
-Inflow_energia_su_historico_2021:save("Inflow_energia_su_historico_2021");
-chart7_3:add_line("Inflow_energia_su_historico_2021", {yUnit="GWm"});
+local inflow_energia_su_historico_2021 = Inflow_energia_historico_2021:select_agents({"Histórico 2021 - SU"});
+chart7_3:add_line(inflow_energia_su_historico_2021, {yUnit="GWm"});
 
-Inflow_energia_mlt_su = Inflow_energia_mlt:select_agents({"SU-MLT"});
-Inflow_energia_mlt_su:save("Inflow_energia_mlt_su");
-chart7_3:add_line("Inflow_energia_mlt_su", {yUnit="GWm"})
+local inflow_energia_mlt_su = Inflow_energia_mlt:select_agents({"SU-MLT"});
+chart7_3:add_line(inflow_energia_mlt_su, {yUnit="GWm"})
 
-Inflow_energia_su = Inflow_energia:select_agents({"SUL"});
-Inflow_energia_su:save("inflow_energia_su");
-chart7_3 = add_percentile_layers(chart7_3, "inflow_energia_su", "GWm");
-
+local inflow_energia_su = Inflow_energia:select_agents({"SUL"});
+chart7_3 = add_percentile_layers(chart7_3, inflow_energia_su, "GWm");
 dashboard7:push(chart7_3);
+
+if is_debug then
+    inflow_energia_su_historico_2020_09:save("inflow_energia_su_historico_2020_09");
+    inflow_energia_su_historico_2021:save("inflow_energia_su_historico_2021");
+    inflow_energia_mlt_su:save("inflow_energia_mlt_su");
+    inflow_energia_su:save("inflow_energia_su");
+end
 
 local media_mlt_horizonte = Inflow_energia_mlt:convert("GW"):select_stages(7,11):aggregate_stages(BY_AVERAGE()):reset_stages():aggregate_agents(BY_SUM(), "SE+SU");
 -- media_mlt_horizonte = 35.29 GWm
