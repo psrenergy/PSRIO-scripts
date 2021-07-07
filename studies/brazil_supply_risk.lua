@@ -462,13 +462,15 @@ local demanda = demand:aggregate_scenarios(BY_AVERAGE()):rename_agents({"Demanda
 chart2_1:add_line(demanda, {color="#000000", yUnit="GWm"});
 dashboard2:push(chart2_1);
 
-concatenate(
-    oferta_termica,
-    importacao_NO_NE,
-    geracao_renovavel_media,
-    geracao_hidrica_obrigatoria,
-    demanda
-):save("oferta_parcelas");
+if is_debug then
+    concatenate(
+        oferta_termica,
+        importacao_NO_NE,
+        geracao_renovavel_media,
+        geracao_hidrica_obrigatoria,
+        demanda
+    ):save("oferta_parcelas");
+end
 
 local enearm_final_risk_level0_SE_or_SU = generic:load("enearm_final_risk_level0_SE_or_SU"):rename_agents({"SE+SU"});
 local enearm_final_risk_level1_SE_or_SU = generic:load("enearm_final_risk_level1_SE_or_SU"):rename_agents({"SE+SU"});
@@ -630,9 +632,9 @@ end
 table.sort(inflow_min_selected_agents)
 
 for _,agent in ipairs(inflow_min_selected_agents) do
-    local label =  "total_violation_percentual_" .. agent
     local total_violation_percentual_agent = total_violation_percentual:select_agents({agent});
-    total_violation_percentual_agent:save(label);
+    if is_debug then total_violation_percentual_agent:save("total_violation_percentual_" .. agent); end
+
     dashboard8:push("### Violações de defluência mínima: " .. agent);
 
     local violation_minimum_value = 0.1; -- em %
@@ -672,7 +674,7 @@ for _,agent in ipairs(inflow_min_selected_agents) do
     
     -- historgrama
     local chart8_i2 = Chart("Histograma de violações de defluência mínima");
-    chart8_i2:add_histogram(label, {color="#d3d3d3", yUnit="% da defluência mínima não atendida", xtickPositions="[0, 20, 40, 60, 80, 100]"}); -- grey
+    chart8_i2:add_histogram(total_violation_percentual_agent, {color="#d3d3d3", yUnit="% da defluência mínima não atendida", xtickPositions="[0, 20, 40, 60, 80, 100]"}); -- grey
     dashboard8:push(chart8_i2);
 
     if number_violations > 0 then
