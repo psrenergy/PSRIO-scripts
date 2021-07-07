@@ -184,9 +184,6 @@ local enearm_SE_ini_stage = enearm:select_agents({"SUDESTE"});
 local enearm_SU = enearm:select_agents({"SUL"}):select_stages(5);
 local enearm_SE = enearm:select_agents({"SUDESTE"}):select_stages(5);
 
-local enearm_SU_ini = enearm_SU:save_and_load("enearm_SU_ini");
-local enearm_SE_ini = enearm_SE:save_and_load("enearm_SE_ini");
-
 local earmzm_max_SU = earmzm:select_agents({"SUL"});
 local earmzm_max_SE = earmzm:select_agents({"SUDESTE"});
 
@@ -335,20 +332,18 @@ for i = 1,3,1 do
     deficit_sum = ifelse(nao_pode_atender, deficit_sum - pode_esvaziar, 0):save_and_load("deficit_sum_it" .. tostring(i));
 end
 
-local enearm_SE_final = enearm_SE:rename_agents({"SUDESTE"}):save_and_load("enearm_SE_final");
-local enearm_SU_final = enearm_SU:rename_agents({"SUL"}):save_and_load("enearm_SU_final");
-deficit_sum:rename_agents({"Deficit"}):reset_stages():save("deficit_sum_final");
-
-(enearm_SE_ini - enearm_SE_final):save("geracao_hidro_extra_SE");
-(enearm_SU_ini - enearm_SU_final):save("geracao_hidro_extra_SU");
-
-deficit = deficit_sum;
-
 if is_debug then
     earmzm_SE_level1:save("earmzm_SE_level1");
     earmzm_SE_level2:save("earmzm_SE_level2");
     earmzm_SU_level1:save("earmzm_SU_level1");
     earmzm_SU_level2:save("earmzm_SU_level2");
+   
+    deficit_sum:rename_agents({"Deficit"}):reset_stages():save("deficit_sum_final");
+
+    local enearm_SE_final = enearm_SE:rename_agents({"SUDESTE"}):save_and_load("enearm_SE_final");
+    local enearm_SU_final = enearm_SU:rename_agents({"SUL"}):save_and_load("enearm_SU_final");
+    (enearm_SE - enearm_SE_final):save("geracao_hidro_extra_SE");
+    (enearm_SU - enearm_SU_final):save("geracao_hidro_extra_SU");
 end
 
  -- RISCO DE VIOLAÇÃO DOS NÍVEIS ONS A POSTEIORIE
@@ -393,8 +388,6 @@ local minimum_outflow_violation = hydro:load("minimum_outflow_violation");
 local minimum_outflow = hydro.min_total_outflow;
 local minimum_outflow_cronologico = hydro.min_total_outflow_modification;
 local minimum_outflow_valido = max(minimum_outflow, minimum_outflow_cronologico):select_stages(1,5);
--- conferir se agregacao em estágios deve ser antes ou depois da divisão
-local minimum_outflow_violation_percentual = (minimum_outflow_violation:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_SUM())/minimum_outflow_valido:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_SUM())):convert("%"):save_and_load("minimum_outflow_violation_percentual");
 
 -- irrigation
 local irrigation_violation = hydro:load("irrigation_violation");
@@ -409,6 +402,8 @@ local violacao_total = max(irrigation_violation, minimum_outflow_violation) + ir
 local total_violation_percentual = (violacao_total:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_SUM())/obrigacao_total:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_SUM())):convert("%"):save_and_load("total_violation_percentual");
 
 if is_debug then
+    -- conferir se agregacao em estágios deve ser antes ou depois da divisão
+    (minimum_outflow_violation:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_SUM())/minimum_outflow_valido:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_SUM())):convert("%"):save("minimum_outflow_violation_percentual");
     (irrigation_violation:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_SUM())/irrigation:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_SUM())):convert("%"):save("irrigation_violation_percentual");
     (minimum_turbining_violation:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_SUM())/minimum_turbining:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_SUM())):convert("%"):save("minimum_turbining_violation_percentual");
 end
