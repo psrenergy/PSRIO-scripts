@@ -70,7 +70,7 @@ if bool_demand_per_block then
 else
     potter = thermal:load("potter", true):convert("GWh"):aggregate_blocks(BY_SUM()):select_stages(1,5);
 end
-potter_block = thermal:load("potter", true):convert("GWh"):select_stages(1,5);
+local potter_block = thermal:load("potter", true):convert("GWh"):select_stages(1,5);
 local thermal_generation = potter:aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
 local thermal_generation_block = potter_block:aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
 
@@ -81,7 +81,7 @@ if bool_demand_per_block then
 else
     capint2 = interconnection:load("capint2", true):convert("GWh"):aggregate_blocks(BY_SUM());
 end
-capint2_block = interconnection:load("capint2", true):convert("GWh");
+local capint2_block = interconnection:load("capint2", true):convert("GWh");
 local capint2_SE = capint2:select_agents({"SE -> NI", "SE -> NE", "SE -> NO"}):aggregate_agents(BY_SUM(), "SE");
 local capint2_SE_block = capint2_block:select_agents({"SE -> NI", "SE -> NE", "SE -> NO"}):aggregate_agents(BY_SUM(), "SE");
 
@@ -92,7 +92,7 @@ if bool_demand_per_block then
 else
     interc_sum = interconnection_sum.ub:select_agents({"Soma   14"}):aggregate_blocks(BY_AVERAGE()):convert("GWh");
 end
-interc_sum_block = interconnection_sum.ub:select_agents({"Soma   14"}):convert("GWh");
+local interc_sum_block = interconnection_sum.ub:select_agents({"Soma   14"}):convert("GWh");
 
 -- DEBUG
 if is_debug then 
@@ -108,13 +108,14 @@ end
 capint2_SE = min(capint2_SE, interc_sum):select_stages(1,5);
 capint2_SE_block = min(capint2_SE_block, interc_sum_block):select_stages(1,5);
 local capint2_SE_extra = capint2_SE * input_int_extra;
-local capint2_SE_extra_block = capint2_SE_block * input_int_extra;
+-- local capint2_SE_extra_block = capint2_SE_block * input_int_extra;
 
--- -- DEBUG
--- if is_debug then 
---     capint2_SE:save("capin2_se_min_risk");
---     capint2_SE_extra:save("capint2_SE_extra");
--- end
+capint2_SE:save("capin2_se_min_risk");
+
+-- DEBUG
+if is_debug then 
+    capint2_SE_extra:save("capint2_SE_extra");
+end
 
 -- local enearm = system:load(is_sddp and "enearm" or "storageenergy_aggregated"):convert("GWh");
 -- enearm = is_sddp and enearm or enearm:select_stages(2, enearm:stages()):reset_stages();
@@ -168,7 +169,7 @@ if bool_termica_extra then
     generation = generation + (input_termica_extra * duraci):force_unit("GWh");
 end
 if bool_oferta_extra then
-    local oferta_extra = generic:load("oferta_extra");
+    local oferta_extra = generic:load("oferta_extra", true);
     generation = generation + oferta_extra;
 end
 generation = generation:select_stages(1,5);
@@ -209,7 +210,7 @@ end
 -- local volumemorto = max(hydro.vmin, max(hydro.alert_storage, hydro.vmin_chronological)) - hydro.vmin;
 
 -- LOAD ENERGIA MORTA
-local energiamorta = hydro:load("dead_energy"):select_stages(5,5):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):convert("GWh");
+local energiamorta = hydro:load("dead_energy", true):select_stages(5,5):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):convert("GWh");
 if is_debug then energiamorta:save("energiamorta_sistema"); end
 
 local energiamorta_SE = nil;
@@ -455,7 +456,7 @@ end
 local oferta_termica = thermal_generation:aggregate_scenarios(BY_AVERAGE()):rename_agents({"Oferta térmica disponível"}):convert("GW");
 chart2_1:add_column_stacking(oferta_termica, {color="red", yUnit="GWm"});
 
-local importacao_NO_NE = generic:load("capin2_se_min_risk"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Importação do Norte-Nordeste"}):convert("GW");
+local importacao_NO_NE = generic:load("capin2_se_min_risk", true):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Importação do Norte-Nordeste"}):convert("GW");
 chart2_1:add_column_stacking(importacao_NO_NE, {color="#e9e9e9", yUnit="GWm"});
 
 local geracao_renovavel_media = renewable_generation:aggregate_scenarios(BY_AVERAGE()):rename_agents({"Geração renovável (média) + biomassa"}):convert("GW");
@@ -479,8 +480,8 @@ if is_debug then
     ):save("oferta_parcelas");
 end
 
-local enearm_final_risk_level0_SE_or_SU = generic:load("enearm_final_risk_level0_SE_or_SU"):rename_agents({"SE+SU"});
-local enearm_final_risk_level1_SE_or_SU = generic:load("enearm_final_risk_level1_SE_or_SU"):rename_agents({"SE+SU"});
+local enearm_final_risk_level0_SE_or_SU = generic:load("enearm_final_risk_level0_SE_or_SU", true):rename_agents({"SE+SU"});
+local enearm_final_risk_level1_SE_or_SU = generic:load("enearm_final_risk_level1_SE_or_SU", true):rename_agents({"SE+SU"});
 
 local enearm_final_risk_level0_SE_or_SU_pie = 100 - enearm_final_risk_level1_SE_or_SU;
 local enearm_final_risk_level1_SE_or_SU_pie = enearm_final_risk_level1_SE_or_SU - deficit_final_risk;
@@ -624,12 +625,8 @@ local inflow_min_selected = generic:load("inflow_min_selected");
 local inflow_2021janjun_selected = generic:load("inflow_2021janjun_selected");
 local inflow_agua = generic:load("vazao_natural"):select_stages(1,5)
 
-dashboard8:push("## Resumo");
-
 local md = Markdown()
-md:add("|table>");
-md:add("Usina|Mínimo Histórico |Uso múltimo da água|probabilidade violação| violação média | violação máxima");
-md:add(" | (m3/s)              |(m3/s)             | (%)                  | (%)            | (%)");
+md:add("Usina|Mínimo Histórico (m3/s) | Uso múltimo da água (m3/s) | Probabilidade Violação (%) | Violação Média (%) | Violação Máxima (%)");
 md:add("-|-|-|-|-|-");
 
 local inflow_min_selected_agents = {};
@@ -691,29 +688,24 @@ for _,agent in ipairs(inflow_min_selected_agents) do
     end
 end
 
-md:add("- | - | - | - | - | -");
-md:add("|<table");
-
+dashboard8:push("## Resumo");
 dashboard8:push(md);
-
-dashboard8:push("Obs: Aimores tem bastante violação mesmo com o uso múltiplo da água ser abaixo do mínimo histórico." ..
+dashboard8:push("\nObs: Aimores tem bastante violação mesmo com o uso múltiplo da água ser abaixo do mínimo histórico." ..
     "Isso pode ser explicado porque a usina a jusante dela - Mascarenhas - tem um aumento de 120m3/s na defluência mínima." ..
     " Isto obriga Aimores turbinar ou verter mais.");
+dashboard8:push("---");
 
 local hydro_selected_agents = hydro.vmax:select_agents(hydro.vmax:gt(hydro.vmin):select_stages(5,5)):agents();
 table.sort(inflow_min_selected_agents);
 
 local md = Markdown();
-md:add("|table>");
-md:add("Usina | Volume morto (%) | volume  útil (Hm3)");
+md:add("Usina | Volume morto (%) | volume  útil (hm3)");
 md:add("-|-|-");
 for _,agent in ipairs(hydro_selected_agents) do
     local vol_util = (hydro.vmax-hydro.vmin):select_agents({agent});
     local dead_storage = (max(0.0, (max(hydro.alert_storage,hydro.vmin_chronological) - hydro.vmin)):select_agents({agent})/vol_util):convert("%");
     md:add(agent .. " | " .. string.format("%.1f", dead_storage:to_list()[1]) .. " | " .. string.format("%.1f", vol_util:to_list()[1]));
 end
-md:add("-|-|-");
-md:add("|<table");
 dashboard8:push(md);
 
 
