@@ -51,9 +51,9 @@ nav_order: 3
 
 ## Loading an Output
 
-|   Operator  |                Syntax               |
-|:------------|:------------------------------------|
-| Load method | `exp = collection:load("filename")` |
+| Operator    | Syntax                                 |
+|:------------|:---------------------------------------|
+| Load method | `output = collection:load("filename")` |
 
 The following example loads two outputs, gerhid and fprodt, considering the agents as hydro plants collection:
 

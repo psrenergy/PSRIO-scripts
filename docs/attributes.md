@@ -14,11 +14,11 @@ nav_order: 4
 
 ---
 
-## Attributes Metadata
+## Metadata
 
 TODO - mostrar que cada atributo tem um estagio inicial, cenarios, blocos...
 
-## Attributes Getters
+## Getters
 
 <br/>
 

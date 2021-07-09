@@ -235,7 +235,7 @@ gerhid_buses = gerhid:aggregate_agents(BY_SUM(), Collection.BUSES);
 |:---------------------------------------------------------------------------|:----------------------------------------------------------------|
 | Select agents by a list of agents names or indices                         | `exp = exp1:select_agents({string or int, int or string, ...})` |
 | Select agents by a collection                                              | `exp = exp1:select_agents(collection)`                          |
-<!-- | Select agents by a query                                                   | `exp = exp1:select_agents(query)`                               | -->
+| Select agents by a query                                                   | `exp = exp1:select_agents(query)`                               |
 | Remove agents by a list of agents names or indices                         | `exp = exp1:remove_agents({string or int, int or string, ...})` |
 
 <br/>
