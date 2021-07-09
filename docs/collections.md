@@ -1,10 +1,9 @@
 ---
-title: Input Data
-parent: Collections
-nav_order: 1
+title: Collections
+nav_order: 3
 ---
 
-# Input Data
+# Collections
 {: .no_toc }
 
 ## Table of contents
@@ -14,6 +13,81 @@ nav_order: 1
 {:toc}
 
 ---
+
+## Loading a Collection
+
+|           Collection          | Syntax                                                           |
+|:------------------------------|:-----------------------------------------------------------------|
+| Area                          | `collection = require("collection/area")`                        |
+| Balancing Area                | `collection = require("collection/balancingarea")`               |
+| Balancing Area Hydro          | `collection = require("collection/balancingareahydro")`          |
+| Balancing Area Thermal        | `collection = require("collection/balancingareathermal")`        |
+| Battery                       | `collection = require("collection/battery")`                     |
+| Bus                           | `collection = require("collection/bus")`                         |
+| Circuit                       | `collection = require("collection/circuit")`                     |
+| Circuits Sum                  | `collection = require("collection/circuitssum")`                 |
+| DC Link                       | `collection = require("collection/dclink")`                      |
+| Demand                        | `collection = require("collection/demand")`                      |
+| Demand Segment                | `collection = require("collection/demandsegment")`               |
+| Expansion Project             | `collection = require("collection/expansionproject")`            |
+| Fuel                          | `collection = require("collection/fuel")`                        |
+| Fuel Consumption              | `collection = require("collection/fuelconsumption")`             |
+| Fuel Contract                 | `collection = require("collection/fuelcontract")`                |
+| Fuel Reservoir                | `collection = require("collection/fuelreservoir")`               |
+| Generator                     | `collection = require("collection/generator")`                   |
+| Generation Constraint         | `collection = require("collection/generationconstraint")`        |
+| Generic                       | `collection = require("collection/generic")`                     |
+| Hydro                         | `collection = require("collection/hydro")`                       |
+| Interconnection               | `collection = require("collection/interconnection")`             |
+| Interconnection Sum           | `collection = require("collection/interconnectionsum")`          |
+| Power Injection               | `collection = require("collection/powerinjection")`              |
+| Renewable                     | `collection = require("collection/renewable")`                   |
+| Renewable Gauging Station     | `collection = require("collection/renewablegaugingstation")`     |
+| Reserve Generation Constraint | `collection = require("collection/reservegenerationconstraint")` |
+| Study                         | `collection = require("collection/study")`                       |
+| System                        | `collection = require("collection/system")`                      |
+| Thermal                       | `collection = require("collection/thermal")`                     |                 
+
+
+## Loading an Output
+
+|   Operator  |                Syntax               |
+|:------------|:------------------------------------|
+| Load method | `exp = collection:load("filename")` |
+
+The following example loads two outputs, gerhid and fprodt, considering the agents as hydro plants collection:
+
+``` lua
+hydro = require("collection/hydro");
+gerhid = hydro:load("gerhid");
+fprodt = hydro:load("fprodt");
+```
+
+The following example loads two outputs, cmgdem and demand, considering the agents as system collection:
+
+``` lua
+system = require("collection/system");
+cmgdem = system:load("cmgdem");
+demand = system:load("demand");
+```
+
+The following example loads two outputs, gerter and coster, considering the agents as thermal plants collection:
+
+``` lua
+thermal = require("collection/thermal");
+gerter = thermal:load("gerter");
+coster = thermal:load("coster");
+```
+
+The following example loads two outputs, objcop and outdfact, considering the agents as generic:
+
+``` lua
+generic = require("collection/generic");
+objcop = generic:load("objcop");
+outdfact = generic:load("outdfact");
+```
+
+## Loading an Input
 
 
 <!-- ### Area -->
