@@ -26,7 +26,7 @@ nav_order: 6
 |             | `BY_CVAR_R(number)`      |
 |             | `BY_PERCENTILE(number)`  |
 |             | `BY_NTH_ELEMENT(number)` |
-|             | `BY_STDDEV`              |
+|             | `BY_STDDEV()`            |
 |             | `BY_FIRST_VALUE()`       |
 |             | `BY_LAST_VALUE()`        |
 
@@ -34,56 +34,60 @@ nav_order: 6
 
 ## Scenarios
 
-| Method                                        | Syntax                                       |
-|:----------------------------------------------|:---------------------------------------------|
-| Aggregate scenarios by agg (table 4)          | `exp = exp1:aggregate_scenarios(agg)`        |
-| Aggregate selected scenarios by agg (table 4) | `exp = exp1:aggregate_scenarios(agg, {int})` |
+| Method                                               | Syntax                                                 |
+|:-----------------------------------------------------|:-------------------------------------------------------|
+| Aggregate scenarios by a function (table 4)          | `exp = exp1:aggregate_scenarios(f)`                    |
+| Aggregate selected scenarios by a function (table 4) | `exp = exp1:aggregate_scenarios(f, {int, int, ...})`   |
+| Select one scenario                                  | `exp = exp1:select_scenario(int)`                      |
 
 <br/>
 
 ``` lua
-cmgdem:aggregate_scenarios(BY_AVERAGE()):save("cmgdem_average");
+system = require("collection/system");
+cmgdem = system:load("cmgdem");
+
+cmgdem_average = cmgdem:aggregate_scenarios(BY_AVERAGE());
+
+cmgdem_p90 = cmgdem:aggregate_scenarios(BY_PERCENTILE(90));
+
+cmgdem_max = cmgdem:aggregate_scenarios(BY_MAX(), {1, 2, 3, 4, 5});
+
+cmgdem_scenario32 = cmgdem:select_scenario(32);
 ```
-
-``` lua
-exp = cmgdem:aggregate_scenarios(BY_PERCENTILE(50));
-```
-
-``` lua
-exp = cmgdem:aggregate_scenarios(BY_MAX(), {1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
-```
-
-<br/>
-
-| Method                         | Syntax                                                                 |
-|:-------------------------------|:-----------------------------------------------------------------------|
-| Select one scenario            | `exp = exp1:select_scenarios(scenario)`                                |
-| Select one scenario per stage  | `exp = exp1:select_scenarios({scenario_stage1, scenario_stage2, ...})` |
 
 <br/>
 
 ## Blocks and Hours
 
-| Method                                        | Syntax                                       |
-|:----------------------------------------------|:---------------------------------------------|
-| Aggregate blocks/hours by agg (table 4)       | `exp = exp1:aggregate_blocks(agg)`           |
-
-<br/>
-
-``` lua
-exp = cmgdem:aggregate_blocks(BY_AVERAGE());
-```
-
-``` lua
-exp = gergnd:aggregate_blocks(BY_SUM());
-```
-
-<br/>
-
 | Method                                                     | Syntax                                       |
 |:-----------------------------------------------------------|:---------------------------------------------|
+| Aggregate blocks/hours by a function (table 4)             | `exp = exp1:aggregate_blocks(f)`             |
+| Select one block                                           | `exp = exp1:select_block(int)`               |
 | Map blocks into hours (`BY_AVERAGE()` or `BY_REPEATING()`) | `exp = exp1:to_hour(type)`                   |
 | Map hour into blocks (`BY_AVERAGE()` or `BY_SUM()`)        | `exp = exp1:to_block(type)`                  |
+
+<br/>
+
+``` lua
+system = require("collection/system");
+cmgdem = system:load("cmgdem");
+
+cmgdem_agg = cmgdem:aggregate_blocks(BY_AVERAGE());
+
+cmgdem_block21 = cmgdem:select_block(21);
+```
+
+``` lua
+renewable = require("collection/renewable");
+gergnd = renewable:load("gergnd");
+
+gergnd_agg = gergnd:aggregate_blocks(BY_SUM());
+```
+
+TODO to_hour e to_block exemplo
+``` lua
+
+```
 
 <br/>
 
@@ -107,8 +111,8 @@ exp = gergnd:aggregate_blocks(BY_SUM());
 
 | Method                                                                 | Syntax                                       |
 |:-----------------------------------------------------------------------|:---------------------------------------------|
-| Aggregate stages by aggregate function (table 4)                       | `exp = exp1:aggregate_stages(agg)`           |
-| Aggregate stages by aggregate function (table 4) and profile (table 5) | `exp = exp1:aggregate_stages(agg, profile)`  |
+| Aggregate stages by a function (table 4)                               | `exp = exp1:aggregate_stages(f)`             |
+| Aggregate stages by a function (table 4) and profile (table 5)         | `exp = exp1:aggregate_stages(f, profile)`    |
 
 <br/>
 
@@ -171,34 +175,33 @@ exp = defcit:aggregate_stages(BY_SUM(), Profile.PER_YEAR);
 
 |           Collection          | Syntax                                     |
 |:-----------------------------:|:------------------------------------------:|
-|              Area             | `Collection.AREA`                          |
-|         Balancing Area        | `Collection.BALANCINGAREA`                 |
-|      Balancing Area Hydro     | `Collection.BALANCINGAREA_HYDRO`           |
-|     Balancing Area Thermal    | `Collection.BALANCINGAREA_THERMAL`         |
-|            Battery            | `Collection.BATTERY`                       |
-|              Bus              | `Collection.BUS`                           |
-|            Circuit            | `Collection.CIRCUIT`                       |
-|          Circuits Sum         | `Collection.CIRCUITS_SUM`                  |
-|            DC Link            | `Collection.DCLINK`                        |
-|             Demand            | `Collection.DEMAND`                        |
-|         DemandSegment         | `Collection.DEMAND_SEGMENT`                |
-|       Expansion Project       | `Collection.EXPANSION_PROJECT`             |
-|              Fuel             | `Collection.FUEL`                          |
-|        Fuel Consumption       | `Collection.FUEL_CONSUMPTION`              |
-|         Fuel Contract         | `Collection.FUEL_CONTRACT`                 |
-|         Fuel Reservoir        | `Collection.FUEL_RESERVOIR`                |
-|           Generator           | `Collection.GENERATOR`                     |
-|     Generation Constraint     | `Collection.GENERATION_CONSTRAINT`         |
-|            Generic            | `Collection.GENERIC`                       | 
-|             Hydro             | `Collection.HYDRO`                         |
-|        Interconnection        | `Collection.INTERCONNECTION`               |
-|        Power Injection        | `Collection.POWERINJECTION`                |
-|           Renewable           | `Collection.RENEWABLE`                     |
-|   Renewable Gauging Station   | `Collection.RENEWABLE_GAUGING_STATION`     |
+| Area                          | `Collection.AREA`                          |
+| Balancing Area                | `Collection.BALANCINGAREA`                 |
+| Balancing Area Hydro          | `Collection.BALANCINGAREA_HYDRO`           |
+| Balancing Area Thermal        | `Collection.BALANCINGAREA_THERMAL`         |
+| Battery                       | `Collection.BATTERY`                       |
+| Bus                           | `Collection.BUS`                           |
+| Circuit                       | `Collection.CIRCUIT`                       |
+| Circuits Sum                  | `Collection.CIRCUITS_SUM`                  |
+| DC Link                       | `Collection.DCLINK`                        |
+| Demand                        | `Collection.DEMAND`                        |
+| Demand Segment                | `Collection.DEMAND_SEGMENT`                |
+| Expansion Project             | `Collection.EXPANSION_PROJECT`             |
+| Fuel                          | `Collection.FUEL`                          |
+| Fuel Consumption              | `Collection.FUEL_CONSUMPTION`              |
+| Fuel Contract                 | `Collection.FUEL_CONTRACT`                 |
+| Fuel Reservoir                | `Collection.FUEL_RESERVOIR`                |
+| Generator                     | `Collection.GENERATOR`                     |
+| Generation Constraint         | `Collection.GENERATION_CONSTRAINT`         |
+| Hydro                         | `Collection.HYDRO`                         |
+| Interconnection               | `Collection.INTERCONNECTION`               |
+| Power Injection               | `Collection.POWERINJECTION`                |
+| Renewable                     | `Collection.RENEWABLE`                     |
+| Renewable Gauging Station     | `Collection.RENEWABLE_GAUGING_STATION`     |
 | Reserve Generation Constraint | `Collection.RESERVE_GENERATION_CONSTRAINT` |
-|             Study             | `Collection.STUDY`                         |
-|             System            | `Collection.SYSTEM`                        |
-|            Thermal            | `Collection.THERMAL`                       |
+<!-- | Study                         | `Collection.STUDY`                         | -->
+| System                        | `Collection.SYSTEM`                        |
+| Thermal                       | `Collection.THERMAL`                       |
 
 <br/>
 
@@ -208,19 +211,18 @@ exp = defcit:aggregate_stages(BY_SUM(), Profile.PER_YEAR);
 
 | Method                                                                     | Syntax                                         |
 |:---------------------------------------------------------------------------|:-----------------------------------------------|
-| Aggregate agents by aggregate function (table 4)                           | `exp = exp1:aggregate_agents(agg, label)`      |
-| Aggregate agents by aggregate function (table 4) into collection (table 5) | `exp = exp1:aggregate_agents(agg, collection)` |
+| Aggregate agents by a function (table 4)                                   | `exp = exp1:aggregate_agents(agg, label)`      |
+| Aggregate agents by a function (table 4) into collection (table 5)         | `exp = exp1:aggregate_agents(agg, collection)` |
 
 ``` lua
-exp = gerhid:aggregate_agents(BY_SUM(), "Total Hydro");
-```
+hydro = require("collection/hydro");
+gerhid = hydro:load("gerhid");
 
-``` lua
-exp = defbus:aggregate_agents(BY_SUM(), Collection.SYSTEMS);
-```
+gerhid_sum = gerhid:aggregate_agents(BY_SUM(), "Total Hydro");
 
-``` lua
-exp = gergnd:aggregate_agents(BY_SUM(), Collection.BUSES);
+gerhid_systems = gerhid:aggregate_agents(BY_SUM(), Collection.SYSTEM);
+
+gerhid_buses = gerhid:aggregate_agents(BY_SUM(), Collection.BUSES);
 ```
 
 <br/>
@@ -229,16 +231,36 @@ exp = gergnd:aggregate_agents(BY_SUM(), Collection.BUSES);
 
 <br/>
 
-| Method                                                                     | Syntax                                         |
-|:---------------------------------------------------------------------------|:-----------------------------------------------|
-| Select agents by a list of agents names and/or int                         | `exp = exp1:select_agents({string or int})`    |
-| Select agents by a collection                                              | `exp = exp1:select_agents(collection)`         |
-| Remove agents by a list of agents names and/or int                         | `exp = exp1:remove_agents({string or int})`    |
-| Rename agents                                                              | `exp = exp1:rename_agents({string})`           |
-| Concatenate                                                                | `exp = concatenate(exp1, exp2, ...)`           |
+| Method                                                                     | Syntax                                                          |
+|:---------------------------------------------------------------------------|:----------------------------------------------------------------|
+| Select agents by a list of agents names or indices                         | `exp = exp1:select_agents({string or int, int or string, ...})` |
+| Select agents by a collection                                              | `exp = exp1:select_agents(collection)`                          |
+<!-- | Select agents by a query                                                   | `exp = exp1:select_agents(query)`                               | -->
+| Remove agents by a list of agents names or indices                         | `exp = exp1:remove_agents({string or int, int or string, ...})` |
 
 <br/>
 
 ``` lua
-exp = gerter:select_agents({"Thermal 1", "Thermal 2"});
+thermal = require("collection/thermal");
+gerter = thermal:load("gerter");
+
+gerter_t1_and_t2 = gerter:select_agents({"Thermal 1", "Thermal 2"});
 ```
+
+| Method                                                                     | Syntax                                                          |
+|:---------------------------------------------------------------------------|:----------------------------------------------------------------|
+| Rename the agents based on the input vector                                | `exp = exp1:rename_agents({string, string, ...})`               |
+| Rename all the agents names                                                | `exp = exp1:rename_agents(string)`                              |
+| Add a suffix to all agents names                                           | `exp = exp1:rename_agents_with_suffix(string)`                  |
+
+``` lua
+thermal = require("collection/thermal");
+gerter = thermal:load("gerter");
+
+gerter_renamed = gerter:rename_agents({"T1", "T2", "T3"});
+```
+
+
+| Method                                                                     | Syntax                                                          |
+|:---------------------------------------------------------------------------|:----------------------------------------------------------------|
+| Concatenate                                                                | `exp = concatenate(exp1, exp2, ...)`                            |
