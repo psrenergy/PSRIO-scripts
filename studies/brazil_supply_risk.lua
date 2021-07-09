@@ -117,9 +117,6 @@ if is_debug then
     capint2_SE_extra:save("capint2_SE_extra");
 end
 
--- local enearm = system:load(is_sddp and "enearm" or "storageenergy_aggregated"):convert("GWh");
--- enearm = is_sddp and enearm or enearm:select_stages(2, enearm:stages()):reset_stages();
-
 -- LOAD RHO
 local rho = hydro:load("rho", true):select_stages(1,1):reset_stages();
 
@@ -206,8 +203,6 @@ if is_debug then
     enearm_SE_ini_stage:save("enearm_SE_ini_stage");
     demanda_residual:save("demanda_residual");
 end
-
--- local volumemorto = max(hydro.vmin, max(hydro.alert_storage, hydro.vmin_chronological)) - hydro.vmin;
 
 -- LOAD ENERGIA MORTA
 local energiamorta = hydro:load("dead_energy", true):select_stages(5,5):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):convert("GWh");
@@ -604,7 +599,7 @@ local ena_media_horizonte_2020_relativo_mlt = 23.07 / media_mlt_horizonte:to_lis
 local Inflow_energia_2021 = (Inflow_energia:select_stages(1,5):convert("GW"):aggregate_stages(BY_AVERAGE()):select_agents({"SUDESTE", "SUL"}):aggregate_agents(BY_SUM(), "SE+SU")/media_mlt_horizonte):convert("%");
 local inflows_acima_ena_2020 = ifelse(Inflow_energia_2021:gt(ena_media_horizonte_2020_relativo_mlt), 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%");
 dashboard7:push("Probabilidade de ena ser maior que média de 2020 para horizonte: **" .. string.format("%.1f", inflows_acima_ena_2020:to_list()[1]) .. "%**");
-dashboard7:push("Ena mlt media: **" .. string.format("%.1f", media_mlt_horizonte:to_list()[1]) .. "**GWm");
+dashboard7:push("Ena mlt media: **" .. string.format("%.1f", media_mlt_horizonte:to_list()[1]) .. "** GWm");
 
 local dashboard8 = Dashboard("Hidrologia (usinas)");
 --inflow_min_selected
@@ -639,7 +634,7 @@ for _,agent in ipairs(inflow_min_selected_agents) do
     local total_violation_percentual_agent = total_violation_percentual:select_agents({agent});
     if is_debug then total_violation_percentual_agent:save("total_violation_percentual_" .. agent); end
 
-    dashboard8:push("### Violações de defluência mínima: " .. agent);
+    dashboard8:push("### Violações de defluência mínima - " .. agent);
 
     local violation_minimum_value = 0.1; -- em %
     local violations = ifelse(total_violation_percentual_agent:gt(violation_minimum_value), 1, 0);
@@ -652,11 +647,11 @@ for _,agent in ipairs(inflow_min_selected_agents) do
         
         if is_debug then media_violacoes:save("media_" .. agent); maxima_violacao:save("maximo_" .. agent); end
 
-        dashboard8:push("Violação média: **" .. string.format("%.1f", media_violacoes:to_list()[1]) .. "%** da defluência mínima");
-        dashboard8:push("Violação máxima: **" .. string.format("%.1f", maxima_violacao:to_list()[1]) .. "%** da defluência mínima"); 
+        dashboard8:push("Violação média: **" .. string.format("%.1f", media_violacoes:to_list()[1]) .. " %** da defluência mínima");
+        dashboard8:push("Violação máxima: **" .. string.format("%.1f", maxima_violacao:to_list()[1]) .. " %** da defluência mínima"); 
     else
-        dashboard8:push("Violação média: **0.0%** da defluência mínima");
-        dashboard8:push("Violação máxima: **0.0%** da defluência mínima");
+        dashboard8:push("Violação média: **0.0 %** da defluência mínima");
+        dashboard8:push("Violação máxima: **0.0 %** da defluência mínima");
     end
     -- chart
     local inflow_min_selected_agent = inflow_min_selected:select_agents({agent}):rename_agents({"Vazão mínima"});
@@ -681,6 +676,9 @@ for _,agent in ipairs(inflow_min_selected_agents) do
     chart8_i2:add_histogram(total_violation_percentual_agent, {color="#d3d3d3", yUnit="% da defluência mínima não atendida", xtickPositions="[0, 20, 40, 60, 80, 100]"}); -- grey
     dashboard8:push(chart8_i2);
 
+    dashboard8:push("---");
+
+    -- tabela
     if number_violations > 0 then
         md:add(agent .. " | " .. string.format("%.1f", tostring(sum_min_inflow_horizon)) .. " | " .. string.format("%.1f", tostring(sum_agua_outros_usos)) .. " | " .. string.format("%.1f", tostring((number_violations/1200) * 100)) .. " | " .. string.format("%.1f", tostring(media_violacoes:to_list()[1]))  .. " | " .. string.format("%.1f", tostring(maxima_violacao:to_list()[1])));
     else
@@ -690,7 +688,8 @@ end
 
 dashboard8:push("## Resumo");
 dashboard8:push(md);
-dashboard8:push("\nObs: Aimores tem bastante violação mesmo com o uso múltiplo da água ser abaixo do mínimo histórico." ..
+dashboard8:push("\n");
+dashboard8:push("Obs: Aimores tem bastante violação mesmo com o uso múltiplo da água ser abaixo do mínimo histórico." ..
     "Isso pode ser explicado porque a usina a jusante dela - Mascarenhas - tem um aumento de 120m3/s na defluência mínima." ..
     " Isto obriga Aimores turbinar ou verter mais.");
 dashboard8:push("---");
