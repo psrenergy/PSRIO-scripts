@@ -1,6 +1,6 @@
 title: "PSRIO"
 remote_theme: pmarsceill/just-the-docs
-
+color_scheme: dark
 aux_links:
   "PSRIO Scripts on GitHub":
     - "//github.com/psrenergy/psrio-scripts"

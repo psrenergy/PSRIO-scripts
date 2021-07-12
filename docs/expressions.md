@@ -36,9 +36,59 @@ abs_cirflw = cirflw:abs();
 
 ### Unit Conversion
 
-![SI](images/si.svg)
+<div style="text-align:center">
+    <img src="images/si.svg" width="200"/>
+</div>
 
-The units conversion follows the SI base units and syntax (https://www.nist.gov/si-redefinition).
+The units conversion follows the International System of Units units and syntax, based on the [2019 redefinition](https://www.nist.gov/si-redefinition). The PSRIO will perform a multi-step process with all the expressions inputs, producing a conversion factor with the desired unit.
+
+#### Example 1
+
+``` lua
+hydro = require("collection/hydro");
+fprodt = hydro:load("fprodt");
+    
+pothid = min(hydro.qmax * fprodt, hydro.capacity_maintenance);
+```
+
+In this example we have two inputs with different units: `hydro.qmax` `[m3/s]` and `fprodt` `[MW/(m3/s)]`. The pothid output will be the multiplication: `[m3/s] × [MW/(m3/s)] = 1.0 × [MW]`.
+
+#### Example 2
+
+``` lua
+renewable = require("collection/renewable");
+gergnd = renewable:load("gergnd");
+vergnd = renewable:load("vergnd");
+    
+captured_prices = (gergnd * vergnd) / (gergnd + vergnd);
+```
+
+The unit conversion output of Example 2 is the expression: `([GWh] × [GWh]) / ([GWh] + [GWh]) = 1.0 × [GWh]`
+
+#### Example 3
+
+``` lua
+thermal = require("collection/thermal");
+fuel = require("collection/fuel");
+    
+cinte1 = (thermal.cesp1 * (thermal.transport_cost + fuel.cost) + thermal.omcost);
+```
+
+The unit conversion output of Example 3 is the expression: `[gal/MWh] × ([$/gal] + [$/gal]) + [$/MWh] = 1.0 × [$/MWh]`
+
+#### Example 4
+
+``` lua
+hydro = require("collection/hydro");
+volfin = hydro:load("volfin");
+fprodtac = hydro:load("fprodtac");
+    
+eneemb = ((volfin - hydro.vmin) * fprodtac):convert("GWh");
+```
+
+The unit conversion output of Example 4 is the expression: `([hm3] - [hm3]) × [MW/(m3/s)] = 0.27 × [GWh]`
+
+<br/>
 
 ## Binary Expressions
 
@@ -58,7 +108,7 @@ The units conversion follows the SI base units and syntax (https://www.nist.gov/
 |        Greater-than       |  `exp = exp1:gt(exp2)`  |
 | Greater-than-or-equals to |  `exp = exp1:ge(exp2)`  |
 |            And            |   `exp = exp1 & exp2`   |
-|             Or            |   `exp = exp1 | exp2`   |
+|             Or            |   `exp = exp1 \| exp2`  |
 
 <br/>
 
