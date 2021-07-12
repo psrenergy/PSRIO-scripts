@@ -27,37 +27,18 @@ nav_order: 5
 
 <br/>
 
-### Stages and Scenarios
+``` lua
+circuit = require("collection/circuit");
+cirflw = circuit:load("cirflw");
 
-| exp1 | exp |
-|:----:|:---:|
-| `1`  | `1` |
-| `n`  | `n` |
-
-<br/>
-
-### Block and Hours
-
-| exp1     | exp     |
-|:--------:|:-------:|
-| none     | none    |
-| block    | block   |
-| hour     | hour    |
-
-<br/>
-
-### Agents
-
-| exp1               | exp                |
-|:------------------:|:------------------:|
-| `n` (collection 1) | `n` (collection 1) |
-| `n` (generic 1)    | `n` (generic 1)    |
-
-<br/>
+abs_cirflw = cirflw:abs();
+```
 
 ### Unit Conversion
 
-<br/>
+![SI](images/si.svg)
+
+The units conversion follows the SI base units and syntax (https://www.nist.gov/si-redefinition).
 
 ## Binary Expressions
 
