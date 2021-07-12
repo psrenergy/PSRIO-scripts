@@ -57,11 +57,17 @@ nav_order: 3
 
 The following example loads two outputs, gerhid and fprodt, considering the agents as hydro plants collection:
 
+#### Example 1
+{: .no_toc }
+
 ``` lua
 hydro = require("collection/hydro");
 gerhid = hydro:load("gerhid");
 fprodt = hydro:load("fprodt");
 ```
+
+#### Example 2
+{: .no_toc }
 
 The following example loads two outputs, cmgdem and demand, considering the agents as system collection:
 
@@ -71,6 +77,9 @@ cmgdem = system:load("cmgdem");
 demand = system:load("demand");
 ```
 
+#### Example 3
+{: .no_toc }
+
 The following example loads two outputs, gerter and coster, considering the agents as thermal plants collection:
 
 ``` lua
@@ -78,6 +87,9 @@ thermal = require("collection/thermal");
 gerter = thermal:load("gerter");
 coster = thermal:load("coster");
 ```
+
+#### Example 4
+{: .no_toc }
 
 The following example loads two outputs, objcop and outdfact, considering the agents as generic:
 
@@ -115,6 +127,9 @@ outdfact = generic:load("outdfact");
 | Selected for monitoring (contingencies)                             | ---  | `exp = circuit.monitored_contingencies` |
 | Circuit Operative Condition (connected = 0 or disconnected = 1)     | ---  | `exp = circuit.status`                  |
 
+#### Example
+{: .no_toc }
+
 ``` lua
 circuit = require("collection/circuit");
 exp = circuit.capacity;
@@ -127,6 +142,9 @@ exp = circuit.capacity;
 |                  | MW   | `exp = circuitssum.lb`                  |
 |                  | MW   | `exp = circuitssum.ub`                  |
 
+#### Example
+{: .no_toc }
+
 ``` lua
 ```
 
@@ -137,6 +155,9 @@ exp = circuit.capacity;
 | DC Link Type (existing = 0 or future = 1)       | ---  | TODO                                    |
 | Nominal Flow Limit in the FROM -> TO direction  | MW   | `exp = dclink.capacity_right`           |
 | Nominal Flow Limit in the FROM <- TO direction  | MW   | `exp = dclink.capacity_left`            |
+
+#### Example
+{: .no_toc }
 
 ``` lua
 ```
@@ -149,6 +170,9 @@ exp = circuit.capacity;
 | Energy to be consumed by inelastic demand (hourly)     | MW   | `exp = demand.inelastic_hour`           |
 | Energy to be consumed by inelastic demand (block)      | GWh  | `exp = demand.inelastic_block`          |
 
+#### Example
+{: .no_toc }
+
 ``` lua
 ```
 
@@ -158,6 +182,9 @@ exp = circuit.capacity;
 |:-------------------------------------------------|:----:|:----------------------------------------|
 | Energy to be consumed by demand segment (hourly) | MW   | `exp = demandsegment.hour`              |
 | Energy to be consumed by demand segment (block)  | GWh  | `exp = demandsegment.block`             |
+
+#### Example
+{: .no_toc }
 
 ``` lua
 ```
@@ -169,6 +196,9 @@ exp = circuit.capacity;
 | Data             | Unit  | Syntax                                 |
 |:-----------------|:-----:|:---------------------------------------|
 |                  | $/gal | `exp = fuel.cost`                      |
+
+#### Example
+{: .no_toc }
 
 ``` lua
 ```
@@ -183,6 +213,9 @@ exp = circuit.capacity;
 |                  | ---   | `exp = fuelcontract.take_or_pay`        |
 |                  | ---   | `exp = fuelcontract.max_offtake`        |
 
+#### Example
+{: .no_toc }
+
 ``` lua
 ```
 
@@ -192,6 +225,9 @@ exp = circuit.capacity;
 |:-----------------|:-----:|:-------------------------------------------------|
 |                  | ---   | `exp = fuelreservoir.maxinjection`               |
 |                  | ---   | `exp = fuelreservoir.maxinjection_chronological` |
+
+#### Example
+{: .no_toc }
 
 ``` lua
 ```
@@ -204,6 +240,9 @@ exp = circuit.capacity;
 |:-----------------|:-----:|:-------------------------------------------------|
 |                  | MW    | `exp = generationconstraint.capacity`            |
 
+#### Example
+{: .no_toc }
+
 ``` lua
 ```
 
@@ -215,9 +254,6 @@ exp = circuit.capacity;
 |:-------------------------------------------------|:-----:|:---------------------------------------------|
 | Construction Status (existing = 0 or future = 1) | ---   | `exp = hydro.status`                         |
 | Number of Generating Units                       | ---   | `exp = hydro.units`                          |
-
-
-
 | Installed Capacity      | MW    | `exp = hydro.capacity`                       |
 | PotInst             | MW    | `exp = hydro.capacity_maintenance`           |
 | ICP                 | %     | `exp = hydro.icp`                            |
@@ -251,6 +287,9 @@ OxT_Tail($(P))        REAL          695+(16*$(P))  701+(16*$(P))  AUTOSET
 OxT_Outflow($(P))     REAL          703+(16*$(P))  709+(16*$(P))  AUTOSET
 Eaflu		INTEGER	791	791	AUTOSET
 
+
+#### Example
+{: .no_toc }
 
 ``` lua
 ```
@@ -289,6 +328,9 @@ Eaflu		INTEGER	791	791	AUTOSET
 | TargetStorage                                               | hm3   | `exp = hydro.target_storage_historical_scenarios`            |
 | TargetStorage                                               | ---   | `exp = hydro.target_storage_historical_scenarios_nodata`     |
 
+#### Example
+{: .no_toc }
+
 ``` lua
 ```
 
@@ -316,6 +358,9 @@ Eaflu		INTEGER	791	791	AUTOSET
 | Hourly Capacity     | MW    | `exp = powerinjection.hour_capacity`                          |
 | Hourly Price        | $/MWh | `exp = powerinjection.hour_price`                             |
 
+#### Example
+{: .no_toc }
+
 ``` lua
 ```
 
@@ -328,6 +373,9 @@ Eaflu		INTEGER	791	791	AUTOSET
 |                     | MW    | `exp = renewable.capacity`                                   |
 |                     | MW    | `exp = renewable.omcost`                                     |
 
+#### Example
+{: .no_toc }
+
 ``` lua
 ```
 
@@ -336,6 +384,9 @@ Eaflu		INTEGER	791	791	AUTOSET
 | Data                | Unit  | Syntax                                                       |
 |:--------------------|:-----:|:-------------------------------------------------------------|
 |                     | MW   | `exp = renewablegaugingstation.hourgeneration`                |
+
+#### Example
+{: .no_toc }
 
 ``` lua
 ```
@@ -358,6 +409,9 @@ Eaflu		INTEGER	791	791	AUTOSET
 |                     | ---   | `exp = study.stages_per_year`                                |
 |                     | ---   | `exp = study.scenarios`                                      |
 
+#### Example
+{: .no_toc }
+
 ``` lua
 ```
 
@@ -368,6 +422,9 @@ Eaflu		INTEGER	791	791	AUTOSET
 |                     | ---   | `exp = system.duraci`                                        |
 |                     | ---   | `exp = system.hblock`                                        |
 |                     | ---   | `exp = system.sensitivity`                                   |
+
+#### Example
+{: .no_toc }
 
 ``` lua
 system = require("collection/system");
@@ -393,6 +450,9 @@ duraci = system.duraci;
 | Specific Fuel Consumption (segment 1)            | gal/MWh | `exp = thermal.cesp1`                                        |
 | Specific Fuel Consumption (segment 2)            | gal/MWh | `exp = thermal.cesp2`                                        |
 | Specific Fuel Consumption (segment 3)            | gal/MWh | `exp = thermal.cesp3`                                        |
+
+#### Example
+{: .no_toc }
 
 ``` lua
 ```
