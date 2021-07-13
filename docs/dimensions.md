@@ -135,6 +135,9 @@ TODO to_hour e to_block exemplo
 \caption{Aggregate stages rules.}
 \end{table} -->
 
+#### Example 1
+{: .no_toc }
+
 ``` lua
 exp = defcit:aggregate_stages(BY_SUM(), Profile.PER_YEAR);
 ```
@@ -155,6 +158,20 @@ exp = defcit:aggregate_stages(BY_SUM(), Profile.PER_YEAR);
 
 <br/>
 
+#### Example 1
+{: .no_toc }
+
+``` lua
+generic = require("collection/generic");
+objcop = generic:load("objcop");
+
+exp1 = objcop:select_stages();
+exp2 = objcop:select_stages(1);
+exp3 = objcop:select_stages(13, 24);
+exp4 = objcop:select_stages_by_year(2026, 2050);
+exp5 = objcop:select_stages_by_year(2032);
+```
+
 ### Reshape Stages
 
 <br/>
@@ -173,6 +190,12 @@ exp = defcit:aggregate_stages(BY_SUM(), Profile.PER_YEAR);
 | `n` (yearly)    | `365⋅n` (daily) |
 
 <br/>
+
+#### Example
+{: .no_toc }
+
+``` lua
+```
 
 ## Agents
 
@@ -218,6 +241,9 @@ exp = defcit:aggregate_stages(BY_SUM(), Profile.PER_YEAR);
 | Aggregate agents by an [aggregate function][aggregate-functions]           | `exp = exp1:aggregate_agents(agg, label)`      |
 | Aggregate agents by an [aggregate function][aggregate-functions] into collection (table 5)         | `exp = exp1:aggregate_agents(agg, collection)` |
 
+#### Example
+{: .no_toc }
+
 ``` lua
 hydro = require("collection/hydro");
 gerhid = hydro:load("gerhid");
@@ -244,6 +270,9 @@ gerhid_buses = gerhid:aggregate_agents(BY_SUM(), Collection.BUSES);
 
 <br/>
 
+#### Example 1
+{: .no_toc }
+
 ``` lua
 thermal = require("collection/thermal");
 gerter = thermal:load("gerter");
@@ -257,6 +286,9 @@ gerter_t1_and_t2 = gerter:select_agents({"Thermal 1", "Thermal 2"});
 | Rename all the agents names                                                | `exp = exp1:rename_agents(string)`                              |
 | Add a suffix to all agents names                                           | `exp = exp1:rename_agents_with_suffix(string)`                  |
 
+#### Example 2
+{: .no_toc }
+
 ``` lua
 thermal = require("collection/thermal");
 gerter = thermal:load("gerter");
@@ -264,11 +296,25 @@ gerter = thermal:load("gerter");
 gerter_renamed = gerter:rename_agents({"T1", "T2", "T3"});
 ```
 
+| Method      | Syntax                                                          |
+|:------------|:----------------------------------------------------------------|
+| Concatenate | `exp = concatenate(exp1, exp2, exp3, ...)`                      |
 
-| Method                                                                     | Syntax                                                          |
-|:---------------------------------------------------------------------------|:----------------------------------------------------------------|
-| Concatenate                                                                | `exp = concatenate(exp1, exp2, ...)`                            |
+#### Example 3
+{: .no_toc }
 
+``` lua
+hydro = require("collection/hydro");
+gerhid = hydro:load("gerhid");
+
+thermal = require("collection/thermal");
+gerter = thermal:load("gerter");
+    
+renewable = require("collection/renewable");
+gergnd = renewable:load("gergnd");
+    
+generation = concatenate(gerhid, gerter, gergnd);
+```
 
 [aggregate-functions]: https://psrenergy.github.io/psrio-scripts/dimensions.html#aggregate-functions
 [aggregate-stages]: https://psrenergy.github.io/psrio-scripts/dimensions.html#aggregate-stages

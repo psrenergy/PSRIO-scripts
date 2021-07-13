@@ -42,7 +42,7 @@ Additionally, PSRIO also enables the direct creation of dashboards.
 ### LUA
 
 <div style="text-align:center">
-    <img src="images/lua.svg" width="200"/>
+    <img src="images/lua.svg" width="160"/>
 </div>
 
 - A scripting language designed by Roberto Ierusalimschy, Luiz H. de Figueiredo, and Waldemar Celes at Tecgraf/PUC-Rio
