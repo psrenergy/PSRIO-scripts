@@ -34,11 +34,11 @@ nav_order: 6
 
 ## Scenarios
 
-| Method | Syntax |
-|:-------|:-------|
-| Aggregate scenarios by an [aggregate function][aggregate-functions] | `exp = exp1:aggregate_scenarios(f)` |
-| Aggregate selected scenarios by an [aggregate function](https://psrenergy.github.io/psrio-scripts/dimensions.html#aggregate-functions) | `exp = exp1:aggregate_scenarios(f, {int, int, ...})` |
-| Select one scenario | `exp = exp1:select_scenario(int)` |
+| Method                                                                       | Syntax                                               |
+|:-----------------------------------------------------------------------------|:-----------------------------------------------------|
+| Aggregate scenarios by an [aggregate function][aggregate-functions]          | `exp = exp1:aggregate_scenarios(f)`                  |
+| Aggregate selected scenarios by an [aggregate function][aggregate-functions] | `exp = exp1:aggregate_scenarios(f, {int, int, ...})` |
+| Select one scenario                                                          | `exp = exp1:select_scenario(int)`                    |
 
 <br/>
 
@@ -62,12 +62,12 @@ cmgdem_scenario32 = cmgdem:select_scenario(32);
 
 ## Blocks and Hours
 
-| Method | Syntax |
-|:-------|:-------|
-| Aggregate blocks/hours by an [aggregate function](https://psrenergy.github.io/psrio-scripts/dimensions.html#aggregate-functions) | `exp = exp1:aggregate_blocks(f)` |
-| Select one block | `exp = exp1:select_block(int)` |
-| Map blocks into hours (`BY_AVERAGE()` or `BY_REPEATING()`) | `exp = exp1:to_hour(type)` |
-| Map hour into blocks (`BY_AVERAGE()` or `BY_SUM()`) | `exp = exp1:to_block(type)` |
+| Method                                                                 | Syntax                           |
+|:-----------------------------------------------------------------------|:---------------------------------|
+| Aggregate blocks/hours by an [aggregate function][aggregate-functions] | `exp = exp1:aggregate_blocks(f)` |
+| Select one block                                                       | `exp = exp1:select_block(int)`   |
+| Map blocks into hours (`BY_AVERAGE()` or `BY_REPEATING()`)             | `exp = exp1:to_hour(type)`       |
+| Map hour into blocks (`BY_AVERAGE()` or `BY_SUM()`)                    | `exp = exp1:to_block(type)`      |
 
 <br/>
 
@@ -112,10 +112,10 @@ TODO to_hour e to_block exemplo
 
 <br/>
 
-| Method                                                                 | Syntax                                       |
-|:-----------------------------------------------------------------------|:---------------------------------------------|
-| Aggregate stages by a function (table 4)                               | `exp = exp1:aggregate_stages(f)`             |
-| Aggregate stages by a function (table 4) and profile (table 5)         | `exp = exp1:aggregate_stages(f, profile)`    |
+| Method                                                                                             | Syntax                                    |
+|:---------------------------------------------------------------------------------------------------|:------------------------------------------|
+| Aggregate stages by an [aggregate function][aggregate-functions]                                   | `exp = exp1:aggregate_stages(f)`          |
+| Aggregate stages by an [aggregate function][aggregate-functions] and a [profile][aggregate-stages] | `exp = exp1:aggregate_stages(f, profile)` |
 
 <br/>
 
@@ -176,6 +176,8 @@ exp = defcit:aggregate_stages(BY_SUM(), Profile.PER_YEAR);
 
 ## Agents
 
+### Collections
+
 |           Collection          | Syntax                                     |
 |:-----------------------------:|:------------------------------------------:|
 | Area                          | `Collection.AREA`                          |
@@ -213,8 +215,8 @@ exp = defcit:aggregate_stages(BY_SUM(), Profile.PER_YEAR);
 
 | Method                                                                     | Syntax                                         |
 |:---------------------------------------------------------------------------|:-----------------------------------------------|
-| Aggregate agents by a function (table 4)                                   | `exp = exp1:aggregate_agents(agg, label)`      |
-| Aggregate agents by a function (table 4) into collection (table 5)         | `exp = exp1:aggregate_agents(agg, collection)` |
+| Aggregate agents by an [aggregate function][aggregate-functions]           | `exp = exp1:aggregate_agents(agg, label)`      |
+| Aggregate agents by an [aggregate function][aggregate-functions] into collection (table 5)         | `exp = exp1:aggregate_agents(agg, collection)` |
 
 ``` lua
 hydro = require("collection/hydro");
@@ -269,3 +271,4 @@ gerter_renamed = gerter:rename_agents({"T1", "T2", "T3"});
 
 
 [aggregate-functions]: https://psrenergy.github.io/psrio-scripts/dimensions.html#aggregate-functions
+[aggregate-stages]: https://psrenergy.github.io/psrio-scripts/dimensions.html#aggregate-stages
