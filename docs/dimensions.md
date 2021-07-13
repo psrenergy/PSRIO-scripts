@@ -36,7 +36,7 @@ nav_order: 6
 
 | Method | Syntax |
 |:-------|:-------|
-| Aggregate scenarios by an [aggregate function](https://psrenergy.github.io/psrio-scripts/dimensions.html#aggregate-functions) | `exp = exp1:aggregate_scenarios(f)` |
+| Aggregate scenarios by an [aggregate function][aggregate-functions] | `exp = exp1:aggregate_scenarios(f)` |
 | Aggregate selected scenarios by an [aggregate function](https://psrenergy.github.io/psrio-scripts/dimensions.html#aggregate-functions) | `exp = exp1:aggregate_scenarios(f, {int, int, ...})` |
 | Select one scenario | `exp = exp1:select_scenario(int)` |
 
@@ -266,3 +266,6 @@ gerter_renamed = gerter:rename_agents({"T1", "T2", "T3"});
 | Method                                                                     | Syntax                                                          |
 |:---------------------------------------------------------------------------|:----------------------------------------------------------------|
 | Concatenate                                                                | `exp = concatenate(exp1, exp2, ...)`                            |
+
+
+[aggregate-functions]: https://psrenergy.github.io/psrio-scripts/dimensions.html#aggregate-functions

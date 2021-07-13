@@ -45,7 +45,7 @@ Additionally, PSRIO also enables the direct creation of dashboards.
     <img src="images/lua.svg" width="200"/>
 </div>
 
-- A scripting language designed by Roberto Ierusalimschy, Luiz H. de Figueiredo, Waldemar Celes at Tecgraf/PUC-Rio
+- A scripting language designed by Roberto Ierusalimschy, Luiz H. de Figueiredo, and Waldemar Celes at Tecgraf/PUC-Rio
 - "The simplest thing that could possibly work"
 - Simple, yet powerful, language for embedding and extending applications
 - Portable and small, written in ANSI C, easy to integrate with C/C++
