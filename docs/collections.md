@@ -99,6 +99,8 @@ objcop = generic:load("objcop");
 outdfact = generic:load("outdfact");
 ```
 
+**The generic collection can load any output with any agent type.**
+
 ## Loading an Input
 
 

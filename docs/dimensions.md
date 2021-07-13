@@ -16,31 +16,34 @@ nav_order: 6
 
 ## Aggregate Functions
 
-| Description |          Syntax          |
-|:-----------:|:------------------------:|
-|             | `BY_SUM()`               |
-|             | `BY_AVERAGE()`           |
-|             | `BY_MAX()`               |
-|             | `BY_MIN()`               |
-|             | `BY_CVAR_L(number)`      |
-|             | `BY_CVAR_R(number)`      |
-|             | `BY_PERCENTILE(number)`  |
-|             | `BY_NTH_ELEMENT(number)` |
-|             | `BY_STDDEV()`            |
-|             | `BY_FIRST_VALUE()`       |
-|             | `BY_LAST_VALUE()`        |
+|          Syntax          |
+|:------------------------:|
+| `BY_SUM()`               |
+| `BY_AVERAGE()`           |
+| `BY_MAX()`               |
+| `BY_MIN()`               |
+| `BY_CVAR_L(number)`      |
+| `BY_CVAR_R(number)`      |
+| `BY_PERCENTILE(number)`  |
+| `BY_NTH_ELEMENT(number)` |
+| `BY_STDDEV()`            |
+| `BY_FIRST_VALUE()`       |
+| `BY_LAST_VALUE()`        |
 
 <br/>
 
 ## Scenarios
 
-| Method                                               | Syntax                                                 |
-|:-----------------------------------------------------|:-------------------------------------------------------|
-| Aggregate scenarios by a function (table 4)          | `exp = exp1:aggregate_scenarios(f)`                    |
-| Aggregate selected scenarios by a function (table 4) | `exp = exp1:aggregate_scenarios(f, {int, int, ...})`   |
-| Select one scenario                                  | `exp = exp1:select_scenario(int)`                      |
+| Method | Syntax |
+|:-------|:-------|
+| Aggregate scenarios by an [aggregate function](https://psrenergy.github.io/psrio-scripts/dimensions.html#aggregate-functions) | `exp = exp1:aggregate_scenarios(f)` |
+| Aggregate selected scenarios by an [aggregate function](https://psrenergy.github.io/psrio-scripts/dimensions.html#aggregate-functions) | `exp = exp1:aggregate_scenarios(f, {int, int, ...})` |
+| Select one scenario | `exp = exp1:select_scenario(int)` |
 
 <br/>
+
+#### Example 1
+{: .no_toc }
 
 ``` lua
 system = require("collection/system");
@@ -59,12 +62,12 @@ cmgdem_scenario32 = cmgdem:select_scenario(32);
 
 ## Blocks and Hours
 
-| Method                                                     | Syntax                                       |
-|:-----------------------------------------------------------|:---------------------------------------------|
-| Aggregate blocks/hours by a function (table 4)             | `exp = exp1:aggregate_blocks(f)`             |
-| Select one block                                           | `exp = exp1:select_block(int)`               |
-| Map blocks into hours (`BY_AVERAGE()` or `BY_REPEATING()`) | `exp = exp1:to_hour(type)`                   |
-| Map hour into blocks (`BY_AVERAGE()` or `BY_SUM()`)        | `exp = exp1:to_block(type)`                  |
+| Method | Syntax |
+|:-------|:-------|
+| Aggregate blocks/hours by an [aggregate function](https://psrenergy.github.io/psrio-scripts/dimensions.html#aggregate-functions) | `exp = exp1:aggregate_blocks(f)` |
+| Select one block | `exp = exp1:select_block(int)` |
+| Map blocks into hours (`BY_AVERAGE()` or `BY_REPEATING()`) | `exp = exp1:to_hour(type)` |
+| Map hour into blocks (`BY_AVERAGE()` or `BY_SUM()`) | `exp = exp1:to_block(type)` |
 
 <br/>
 
@@ -199,7 +202,6 @@ exp = defcit:aggregate_stages(BY_SUM(), Profile.PER_YEAR);
 | Renewable                     | `Collection.RENEWABLE`                     |
 | Renewable Gauging Station     | `Collection.RENEWABLE_GAUGING_STATION`     |
 | Reserve Generation Constraint | `Collection.RESERVE_GENERATION_CONSTRAINT` |
-<!-- | Study                         | `Collection.STUDY`                         | -->
 | System                        | `Collection.SYSTEM`                        |
 | Thermal                       | `Collection.THERMAL`                       |
 

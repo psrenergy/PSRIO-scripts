@@ -41,6 +41,10 @@ Additionally, PSRIO also enables the direct creation of dashboards.
 
 ### LUA
 
+<div style="text-align:center">
+    <img src="images/lua.svg" width="200"/>
+</div>
+
 - A scripting language designed by Roberto Ierusalimschy, Luiz H. de Figueiredo, Waldemar Celes at Tecgraf/PUC-Rio
 - "The simplest thing that could possibly work"
 - Simple, yet powerful, language for embedding and extending applications
@@ -49,7 +53,7 @@ Additionally, PSRIO also enables the direct creation of dashboards.
   - 1st C; 2nd Java; 3rd Python; 4th C++; 5th C#; 7th JavaScript; 22nd Fortran; 34th Julia; **38th Lua**
 - Widely used in big games and small devices (embedded systems and IoT)
 
-### PSRIO
+### Scripting + LUA + PSR = PSRIO
 
 - Treating code as data: every time you build a query, you're treating code as data
 - C++ code implements the complex and stable parts:

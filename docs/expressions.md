@@ -67,7 +67,7 @@ vergnd = renewable:load("vergnd");
 captured_prices = (gergnd * vergnd) / (gergnd + vergnd);
 ```
 
-The unit conversion output of Example 2 is the expression: `([GWh] × [GWh]) / ([GWh] + [GWh]) = 1.0 × [GWh]`
+The unit conversion output of Example 2 is `([GWh] × [GWh]) / ([GWh] + [GWh]) = 1.0 × [GWh]`
 
 #### Example 3
 {: .no_toc }
@@ -79,7 +79,7 @@ fuel = require("collection/fuel");
 cinte1 = (thermal.cesp1 * (thermal.transport_cost + fuel.cost) + thermal.omcost);
 ```
 
-The unit conversion output of Example 3 is the expression: `[gal/MWh] × ([$/gal] + [$/gal]) + [$/MWh] = 1.0 × [$/MWh]`
+The unit conversion output of Example 3 is `[gal/MWh] × ([$/gal] + [$/gal]) + [$/MWh] = 1.0 × [$/MWh]`
 
 #### Example 4
 {: .no_toc }
@@ -92,9 +92,7 @@ fprodtac = hydro:load("fprodtac");
 eneemb = ((volfin - hydro.vmin) * fprodtac):convert("GWh");
 ```
 
-The unit conversion output of Example 4 is the expression: `([hm3] - [hm3]) × [MW/(m3/s)] = 0.27 × [GWh]`
-
-<br/>
+The unit conversion output of Example 4 is `([hm3] - [hm3]) × [MW/(m3/s)] = 0.27 × [GWh]`
 
 ## Binary Expressions
 
@@ -112,14 +110,14 @@ The second table defines the logic/comparison operators: and, or, equality, ineq
 
 |          Operator         |          Syntax         |
 |:--------------------------|:------------------------|
-|            And            |   `exp = exp1 & exp2`   |
-|             Or            |   `exp = exp1 \| exp2`  |
 |          Equal to         |  `exp = exp1:eq(exp2)`  |
 |        Not Equal to       |  `exp = exp1:ne(exp2)`  |
 |         Less-than         |  `exp = exp1:lt(exp2)`  |
 |   Less-than-or-equals to  |  `exp = exp1:le(exp2)`  |
 |        Greater-than       |  `exp = exp1:gt(exp2)`  |
 | Greater-than-or-equals to |  `exp = exp1:ge(exp2)`  |
+|            And            |   `exp = exp1 & exp2`   |
+|             Or            |   `exp = exp1 | exp2`   |
 
 The third table defines two element-wise max and min methods between the two data arguments.
 
