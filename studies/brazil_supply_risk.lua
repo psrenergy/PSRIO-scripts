@@ -1,35 +1,39 @@
-------------------------------------------------- INPUT -------------------------------------------------
-local is_sddp = false;
-local is_debug = false;
+local hydro = require("collection/hydro");
+local generic = require("collection/generic");
+local interconnection = require("collection/interconnection");
+local interconnection_sum = require("collection/interconnectionsum");
+local renewable = require("collection/renewable");
+local study = require("collection/study");
+local system = require("collection/system");
+local thermal = require("collection/thermal");
 
-local bool_dead_storage_input = true;
+-- READ INPUT FILE
+local toml = study:load_toml("risk.toml");
 
-local bool_termica_extra = false;
-local input_termica_extra = 6.5 -- GW
+local is_sddp = toml:get_bool("is_sddp");
+local is_debug = toml:get_bool("is_debug");
 
-local bool_oferta_extra = false;
+local bool_dead_storage_input = toml:get_bool("bool_dead_storage_input");
 
-local bool_int_extra = false;
-local input_int_extra = 0.2; -- %
+local bool_termica_extra = toml:get_bool("bool_termica_extra");
+local input_termica_extra = toml:get_double("input_termica_extra");
 
-local bool_demanda_reduzida = false;
-local input_demanda_reduzida = -0.086; -- % -- adicionar opção de GW, além do aumento percentual
+local bool_oferta_extra = toml:get_bool("bool_oferta_extra");
+
+local bool_int_extra = toml:get_bool("bool_int_extra");
+local input_int_extra = toml:get_double("input_int_extra");
+
+local bool_demanda_reduzida = toml:get_bool("bool_demanda_reduzida");
+local input_demanda_reduzida = toml:get_double("input_demanda_reduzida"); -- % -- adicionar opção de GW, além do aumento percentual
+
 -- 6%2020  = 2.7% 0.027
 -- 9%2020 = 5.6% 0.056
 -- 12%2020 = 8.6% 0.086
 
-local bool_demanda_substituta = false; -- GWh
+local bool_demanda_substituta = toml:get_bool("bool_demanda_substituta"); -- GWh
 
-local bool_demand_per_block = false
+local bool_demand_per_block = toml:get_bool("bool_demand_per_block");
 ------------------------------------------------- INPUT -------------------------------------------------
-
-local generic = require("collection/generic");
-local hydro = require("collection/hydro");
-local renewable = require("collection/renewable");
-local system = require("collection/system");
-local thermal = require("collection/thermal");
-local interconnection = require("collection/interconnection");
-local interconnection_sum = require("collection/interconnectionsum");
 
 -- LOAD FATOR ENERGIA ARMAZENADA
 local fator_energia_armazenada = hydro:load("fatorEnergiaArmazenada", true);
