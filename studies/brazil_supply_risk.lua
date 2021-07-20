@@ -714,11 +714,12 @@ dashboard8:push(md);
 
 local dashboard9 = Dashboard("Análise de potência");
 demand_hr = system:load("demand_hr"):select_stages(1,5):convert("GW"):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
-    if bool_demanda_reduzida then
-        demand_hr = (1 - input_demanda_reduzida) * demand_hr;
-    end
+if bool_demanda_reduzida then
+    demand_hr = (1 - input_demanda_reduzida) * demand_hr;
+end
 gergnd_hr = renewable:load("gergnd_hr"):select_stages(1,5):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
 hydro_max_power = hydro:load("potencia_maxima_volume_minimo");
+
 hydro_disponibilidade = hydro.ih;
 (100-hydro_disponibilidade):save("cache_hydro_disponibilidade", {tmp = false, csv = true});
 -- hydro_max_power_disponivel  = hydro_max_power * (100-hydro_disponibilidade);
@@ -764,8 +765,21 @@ local stages = apagao_severo_dia:stages();
 -- apagao_reserva_dia:save("tmp_apagao_reserva_dia", {tmp = false, csv = false});
 for stage = 1,stages,1 do
     local month = apagao_severo_dia:month(stage);
-    local tmp_severo = apagao_severo_dia:select_stages(stage):reshape_stages(Profile.DAILY):aggregate_blocks(BY_MAX()):aggregate_stages(BY_SUM()):aggregate_scenarios(BY_AVERAGE());
-    local tmp_reserva = apagao_reserva_dia:select_stages(stage):reshape_stages(Profile.DAILY):aggregate_blocks(BY_MAX()):aggregate_stages(BY_SUM()):aggregate_scenarios(BY_AVERAGE());
+    
+    local tmp_severo = apagao_severo_dia
+        :select_stages(stage)
+        :reshape_stages(Profile.DAILY)
+        :aggregate_blocks(BY_MAX())
+        :aggregate_stages(BY_SUM(), Profile.PER_MONTH)
+        :aggregate_scenarios(BY_AVERAGE());
+    
+    local tmp_reserva = apagao_reserva_dia
+        :select_stages(stage)
+        :reshape_stages(Profile.DAILY)
+        :aggregate_blocks(BY_MAX())
+        :aggregate_stages(BY_SUM(), Profile.PER_MONTH)
+        :aggregate_scenarios(BY_AVERAGE());
+
     tmp_reserva = tmp_reserva - tmp_severo; -- quando acontece apagao severo, também acontece apagão na reserva, mas não queremos dupla contagem
     tmp_reserva:save("tmp_reserva" .. tostring(stage), {tmp = true, csv = false});
     apagao_reserva_dia:select_stages(stage):reshape_stages(Profile.DAILY):save("tmp_reserva_intermediario" .. tostring(stage), {tmp = true, csv = false});
@@ -796,8 +810,7 @@ demand_hr:convert("GW"):aggregate_blocks(BY_MAX()):save("cache_demand", {tmp = f
 hydro_max_power:convert("GW"):save("cache_hydro_max_power", {tmp = false, csv = true});
 hydro_max_power_disponivel:convert("GW"):save("cache_hydro_max_power_disponivel", {tmp = false, csv = true});
 
-( pothid:convert("GW") - hydro_max_power:select_scenarios(1):convert("GW")):save("cache_dif_pothid", {tmp = true, csv = false});
+(pothid:convert("GW") - hydro_max_power:select_scenarios(1):convert("GW")):save("cache_dif_pothid", {tmp = true, csv = false});
 
 
 (dashboard7 + dashboard8 + dashboard2 + dashboard9):save("risk");
--- (dashboard9):save("risk");
