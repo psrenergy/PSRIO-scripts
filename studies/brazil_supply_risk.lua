@@ -699,6 +699,7 @@ for _,agent in ipairs(inflow_min_selected_agents) do
     end
 end
 
+local dashboard10 = Dashboard("Hidrologia (usinas) - resumo");
 dashboard10:push("## Resumo");
 dashboard10:push(md);
 dashboard10:push("\n");
@@ -827,5 +828,5 @@ end
 -- ( pothid:convert("GW") - hydro_max_power:select_scenarios(1):convert("GW")):save("cache_dif_pothid", {tmp = true, csv = false});
 
 
-(dashboard7 + dashboard8 + dashboard2):save("risk");
+(dashboard7 + dashboard8 + dashboard10 + dashboard2):save("risk");
 -- (dashboard9):save("risk");
