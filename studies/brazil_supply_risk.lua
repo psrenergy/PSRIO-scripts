@@ -141,7 +141,7 @@ local volfin = nil;
 if is_sddp then
     volfin = hydro:load("volfin", true):select_stages(1,5):reset_stages();
 else
-    volfin = hydro:load("volini_ktt", true):select_stages(2,6):reset_stages();
+    volfin = hydro:load("volini_KTT", true):select_stages(2,6):reset_stages();
 end
 local enearm = (max(0, volfin - hydro.vmin) *  rho):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):convert("GWh");
 
