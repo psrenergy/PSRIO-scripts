@@ -207,7 +207,7 @@ local earmzm_max_SE = earmzm:select_agents({"SUDESTE"});
 
 if is_debug then
     generation:save("max_generation");
-    duraci:save("duraci_ktt");
+    duraci:save("duraci_KTT");
     demand:save("demand_agg");
     enearm_SE:save("enearm_SE");
     enearm_SU:save("enearm_SU");
