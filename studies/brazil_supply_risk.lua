@@ -28,18 +28,20 @@ local bool_dead_storage_input = true -- toml:get_bool("bool_dead_storage_input")
 local bool_termica_extra = false -- toml:get_bool("bool_termica_extra");
 local input_termica_extra = false -- toml:get_double("input_termica_extra");
 
-local bool_oferta_extra = true -- toml:get_bool("bool_oferta_extra");
+local bool_oferta_extra = false -- toml:get_bool("bool_oferta_extra");
 -- bool_oferta_extra = toml:get_double("ExtraInterc");
 
-local bool_int_extra = true -- toml:get_bool("bool_int_extra");
+local bool_int_extra = false -- toml:get_bool("bool_int_extra");
 local input_int_extra = toml:get_double("ExtraInterc");
 
+local bool_demanda_reduzida = true;
 -- local bool_demanda_reduzida = toml:get_bool("bool_demanda_reduzida");
 -- local input_demanda_reduzida = toml:get_double("input_demanda_reduzida"); -- % -- adicionar opção de GW, além do aumento percentual
 
 -- 6%2020  = 2.7% 0.027
 -- 9%2020 = 5.6% 0.056
 -- 12%2020 = 8.6% 0.086
+local input_demanda_reduzida = -0.086
 
 -- local bool_demanda_substituta = toml:get_bool("bool_demanda_substituta"); -- GWh
 
@@ -350,19 +352,17 @@ for i = 1,3,1 do
     deficit_sum = ifelse(nao_pode_atender, deficit_sum - pode_esvaziar, 0):save_and_load("deficit_sum_it" .. tostring(i));
 end
 
-if is_debug then
-    earmzm_SE_level1:save("earmzm_SE_level1");
-    earmzm_SE_level2:save("earmzm_SE_level2");
-    earmzm_SU_level1:save("earmzm_SU_level1");
-    earmzm_SU_level2:save("earmzm_SU_level2");
-   
-    deficit_sum:rename_agents({"Deficit"}):reset_stages():save("deficit_sum_final");
+earmzm_SE_level1:save("earmzm_SE_level1");
+earmzm_SE_level2:save("earmzm_SE_level2");
+earmzm_SU_level1:save("earmzm_SU_level1");
+earmzm_SU_level2:save("earmzm_SU_level2");
 
-    local enearm_SE_final = enearm_SE:rename_agents({"SUDESTE"}):save_and_load("enearm_SE_final");
-    local enearm_SU_final = enearm_SU:rename_agents({"SUL"}):save_and_load("enearm_SU_final");
-    (enearm_SE - enearm_SE_final):save("geracao_hidro_extra_SE");
-    (enearm_SU - enearm_SU_final):save("geracao_hidro_extra_SU");
-end
+deficit_sum:rename_agents({"Deficit"}):reset_stages():save("deficit_sum_final");
+
+local enearm_SE_final = enearm_SE:rename_agents({"SUDESTE"}):save_and_load("enearm_SE_final");
+local enearm_SU_final = enearm_SU:rename_agents({"SUL"}):save_and_load("enearm_SU_final");
+(enearm_SE - enearm_SE_final):save("geracao_hidro_extra_SE");
+(enearm_SU - enearm_SU_final):save("geracao_hidro_extra_SU");
 
  -- RISCO DE VIOLAÇÃO DOS NÍVEIS ONS A POSTEIORIE
 local has_SE_level0_violation = enearm_SE:le(earmzm_SE_level0); -- only SE has level 0
@@ -462,15 +462,15 @@ end
 
 if bool_int_extra then
     chart2_1:add_column_stacking(
-        generic:load("capint2_SE_extra"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Capacidade de interconexão extra"}):convert("GW"):round(number_of_digits_round), 
+        generic:load("capint2_SE_extra"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"NO+NE extra"}):convert("GW"):round(number_of_digits_round), 
         {color="#808080", yUnit="GWm"}
     ); -- to do: checar cor
 end
 
-local oferta_termica = thermal_generation:aggregate_scenarios(BY_AVERAGE()):rename_agents({"Oferta térmica disponível"}):convert("GW"):round(number_of_digits_round);
+local oferta_termica = thermal_generation:aggregate_scenarios(BY_AVERAGE()):rename_agents({"Oferta térmica"}):convert("GW"):round(number_of_digits_round);
 chart2_1:add_column_stacking(oferta_termica, {color="red", yUnit="GWm"});
 
-local importacao_NO_NE = generic:load("capin2_se_min_risk", true):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Importação do Norte-Nordeste"}):convert("GW"):round(number_of_digits_round);
+local importacao_NO_NE = generic:load("capin2_se_min_risk", true):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Importação do NO+NE"}):convert("GW"):round(number_of_digits_round);
 chart2_1:add_column_stacking(importacao_NO_NE, {color="#e9e9e9", yUnit="GWm"});
 
 local geracao_renovavel_media = renewable_generation:aggregate_scenarios(BY_AVERAGE()):rename_agents({"Geração renovável (média) + biomassa"}):convert("GW"):round(number_of_digits_round);
@@ -502,9 +502,9 @@ local enearm_final_risk_level1_SE_or_SU_pie = enearm_final_risk_level1_SE_or_SU 
 local enearm_final_risk_level2_SE_or_SU_pie = deficit_final_risk;
 
 local chart2_3 = Chart("Análise de suprimento");
-chart2_3:add_pie(enearm_final_risk_level0_SE_or_SU_pie:rename_agents({"Normal"}), {color="green"});
-chart2_3:add_pie(enearm_final_risk_level1_SE_or_SU_pie:rename_agents({"Atenção"}), {color="yellow"});
-chart2_3:add_pie(enearm_final_risk_level2_SE_or_SU_pie:rename_agents({"Racionamento"}), {color="red"});
+chart2_3:add_pie(enearm_final_risk_level0_SE_or_SU_pie:rename_agents({"Normal"}):round(number_of_digits_round), {color="green"});
+chart2_3:add_pie(enearm_final_risk_level1_SE_or_SU_pie:rename_agents({"Atenção"}):round(number_of_digits_round), {color="yellow"});
+chart2_3:add_pie(enearm_final_risk_level2_SE_or_SU_pie:rename_agents({"Racionamento"}):round(number_of_digits_round), {color="red"});
 dashboard2:push(chart2_3);
 
 dashboard2:push("**Normal**: SE acima de 10% e SU acima de 30%");
@@ -719,7 +719,7 @@ for _,agent in ipairs(inflow_min_selected_agents) do
     end
 end
 
-local dashboard10 = Dashboard("Hidrologia (usinas) - resumo");
+local dashboard10 = Dashboard("Violações- resumo");
 dashboard10:push("## Resumo");
 dashboard10:push(md);
 dashboard10:push("\n");
@@ -746,11 +746,11 @@ end
 
 -- cenarios de atencao na energia serão usados para a analise de potenica
 cenarios_potencia = {};
-cenarios_atencao_list = cenarios_atencao.to_int_list();
+cenarios_atencao_list = cenarios_atencao:to_int_list();
 for cenario, value in ipairs( cenarios_atencao_list ) do
   if value == 1 then table.insert(cenarios_potencia, cenario) end
 end
--- cenarios_potencia = {1,3,5};
+-- cenarios_potencia = {1,3,5,10,11,12,13,14,15,20,100};
 
 
 local dashboard9 = Dashboard("Potência");
@@ -763,29 +763,32 @@ gergnd_hr = renewable:load("gergnd_hr"):select_stages(1,5):aggregate_agents(BY_S
 gergnd_hr = gergnd_hr:select_scenarios(cenarios_potencia);
 
 -- hydro max_power computation
-hydro_max_power = hydro:load("potencia_maxima_volume_minimo"):select_scenarios(cenarios_potencia);;
+-- hydro_max_power = hydro:load("potencia_maxima_volume_minimo_minimorum");
 
 -- hydro_max_power_disponivel  = hydro_max_power * (100-hydro_disponibilidade);
--- waveguide_volumes = hydro:load("waveguide"):select_stages(2,19):reset_stages():aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"});
--- waveguides_storageenergy = hydro:load("storageenergy_waveguide"):select_stages(2,19):reset_stages():aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):convert("GWh");
--- waveguide_power = hydro:load("potencia_maxima_waveguide"):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"});
--- waveguide_volumes:save("waveguide_volumes_system", {csv = true});
--- waveguide_power:save("waveguide_power_system", {csv = true});
+waveguide_volumes = hydro:load("waveguide"):select_stages(2,19):reset_stages():aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"});
+waveguides_storageenergy = hydro:load("storageenergy_waveguide"):select_stages(2,19):reset_stages():aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):convert("GWh");
+waveguide_power = hydro:load("potencia_maxima_waveguide"):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"});
+waveguide_volumes:save("waveguide_volumes_system", {csv = true});
+waveguide_power:save("waveguide_power_system", {csv = true});
 -- waveguide_power:save("waveguide_energy_system", {csv = true});
 -- enearm_final = enearm_SE:convert("GW"):select_scenarios(cenarios_potencia);
--- -- enearm_final =  concatenate_agents(enearm_SU_final,
--- --                             enearm_SE_final):select_scenarios(cenarios_potencia);
--- hydro_max_power = interpolate_stages(enearm_final, waveguides_storageenergy, waveguide_power);
+enearm_final =  concatenate(enearm_SU_final,
+                            enearm_SE_final):select_scenarios(cenarios_potencia);
+hydro_max_power = interpolate_stages(enearm_final, waveguides_storageenergy, waveguide_power:convert("GWh"));--:convert("GW");
+
+
+--
+-- hydro_disponibilidade = hydro.ih;
+-- (100-hydro_disponibilidade):save("cache_hydro_disponibilidade", {tmp = false, csv = true});
+--
 
 hydro_max_power_disponivel  = hydro_max_power * (1-0.1);
+-- hydro_max_power_disponivel = hydro_max_power_disponivel:aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
+-- hydro_max_power = hydro_max_power:aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
+hydro_max_power_disponivel = hydro_max_power_disponivel:select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
+hydro_max_power = hydro_max_power:select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
 hydro_max_power:save("hydro_max_power", {csv = true});
---
-hydro_disponibilidade = hydro.ih;
-(100-hydro_disponibilidade):save("cache_hydro_disponibilidade", {tmp = false, csv = true});
---
-hydro_max_power_disponivel  = hydro_max_power * (1-0.1);
-hydro_max_power_disponivel = hydro_max_power_disponivel:aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
-hydro_max_power = hydro_max_power:aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
 
 pothid = hydro:load("pothid"):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
 power_hr = gergnd_hr:convert("GW") + thermal_generation_block:convert("GW") + capint2_SE_block:convert("GW"):to_hour(BY_REPEATING()) + hydro_max_power_disponivel:convert("GW");
@@ -837,16 +840,29 @@ for stage = 1,stages,1 do
 end
 dashboard9:push(chart9_2);
 
-local stages = mismatch_power_reserva:stages();
+-- cvar
+local stages = mismatch_power:stages();
 for stage = 1,stages,1 do
-    local month = mismatch_power_reserva:month(stage);
-    local chart9_3 = Chart("Histograma - Apagão - reserva - condicional - Mês: " .. tostring(month));
-    demanda_estagio = (demand_hr * criterio_severidade_de_apagao):select_stages(stage);
-    mismatch_power_reserva_estagio = mismatch_power_reserva:select_stages(stage);
-    mismatch_power_reserva_estagio_fake_agents = ifelse(mismatch_power_reserva_estagio:gt(0), mismatch_power_reserva_estagio / demanda_estagio, 0):convert("%"):blocks_to_agents():scenarios_to_agents();
-    mismatch_power_reserva_estagio_fake_agents = mismatch_power_reserva_estagio_fake_agents:select_agents(mismatch_power_reserva_estagio_fake_agents:gt(0));
-    chart9_3:add_histogram(mismatch_power_reserva_estagio_fake_agents:rename_agents("Apagão reserva - relativo à demanda"), {color="#d3d3d3"}); -- grey -- xtickPositions="[0, 20, 40, 60, 80, 100]"
+    local month = mismatch_power:month(stage);
+    local chart9_3 = Chart("CVAR horário - corte de carga - Mês: " .. tostring(month));
+    local tmp_severo = ifelse(mismatch_power:gt(0), mismatch_power, 0):select_stages(stage):aggregate_stages(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE());
+    chart9_3:add_column(tmp_severo:rename_agents({"Corte de carga médio (CVAR)"}));
     dashboard9:push(chart9_3);
+end
+
+
+if is_complete then
+    local stages = mismatch_power_reserva:stages();
+    for stage = 1,stages,1 do
+        local month = mismatch_power_reserva:month(stage);
+        local chart9_4 = Chart("Histograma - Apagão - reserva - condicional - Mês: " .. tostring(month));
+        demanda_estagio = (demand_hr * criterio_severidade_de_apagao):select_stages(stage);
+        mismatch_power_reserva_estagio = mismatch_power_reserva:select_stages(stage);
+        mismatch_power_reserva_estagio_fake_agents = ifelse(mismatch_power_reserva_estagio:gt(0), mismatch_power_reserva_estagio / demanda_estagio, 0):convert("%"):blocks_to_agents():scenarios_to_agents();
+        mismatch_power_reserva_estagio_fake_agents = mismatch_power_reserva_estagio_fake_agents:select_agents(mismatch_power_reserva_estagio_fake_agents:gt(0));
+        chart9_4:add_histogram(mismatch_power_reserva_estagio_fake_agents:rename_agents("Apagão reserva - relativo à demanda"), {color="#d3d3d3"}); -- grey -- xtickPositions="[0, 20, 40, 60, 80, 100]"
+        dashboard9:push(chart9_4);
+    end
 end
 
 
