@@ -7,6 +7,8 @@ local study = require("collection/study");
 local system = require("collection/system");
 local thermal = require("collection/thermal");
 
+local number_of_digits_round = 2;
+
 -- READ INPUT FILE
 local toml = study:load_toml("brazil_supply_risk.toml");
 
@@ -179,8 +181,8 @@ if bool_termica_extra then
     generation = generation + (input_termica_extra * duraci):force_unit("GWh");
 end
 if bool_oferta_extra then
-    local oferta_extra = generic:load("extra_generation", true):convert("GWh"):aggregate_agents(BY_SUM(), "SE + SU");
-    generation = generation + oferta_extra;
+    oferta_extra = generic:load("extra_generation", true):convert("GWh");
+    generation = generation + oferta_extra:aggregate_agents(BY_SUM(), "SE + SU");
 end
 generation = generation:select_stages(1,5);
 
@@ -386,14 +388,12 @@ local deficit_stages = ifelse(mismatch:ne(0), mismatch_stages * (deficit_sum / m
 
 local deficit_percentual = (deficit_sum/(demand:aggregate_blocks(BY_SUM()):select_stages(demand:stages()-2,demand:stages()):reset_stages():aggregate_stages(BY_SUM()))):convert("%"):save_and_load("deficit_percentual");
 
-if is_debug then
-    local has_deficit = ifelse(deficit_sum:gt(1), 1, 0);
-    (1 - ifelse(has_SU_level1_violation | has_SE_level1_violation, 1, 0)):save("cenarios_normal");
-    (ifelse(has_SU_level1_violation | has_SE_level1_violation, 1, 0) - has_deficit):save("cenarios_atencao");
-    has_deficit:save("cenarios_racionamento");
+local has_deficit = ifelse(deficit_sum:gt(1), 1, 0);
+(1 - ifelse(has_SU_level1_violation | has_SE_level1_violation, 1, 0)):save("cenarios_normal");
+cenarios_atencao = (ifelse(has_SU_level1_violation | has_SE_level1_violation, 1, 0) - has_deficit):save_and_load("cenarios_atencao");
+has_deficit:save("cenarios_racionamento");
 
-    deficit_stages:save("deficit_stages");
-end
+deficit_stages:save("deficit_stages");
 
 --------------------------------------
 ---------- violacao usinas -----------
@@ -450,31 +450,37 @@ local dashboard2 = Dashboard("Energia");
 local chart2_1 = Chart("Oferta x Demanda – Sul e Sudeste (valores médios)");
 if bool_termica_extra then
     chart2_1:add_column_stacking(
-        ((input_termica_extra * duraci):force_unit("GWh")):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Oferta extra"}):convert("GW"), 
+        ((input_termica_extra * duraci):force_unit("GWh")):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Oferta extra"}):convert("GW"):round(number_of_digits_round), 
     {color="red", yUnit="GWm"}); -- to do: checar cor
 end
+local chart2_1 = Chart("Oferta x Demanda – Sul e Sudeste (valores médios)");
+if bool_oferta_extra then
+    chart2_1:add_column_stacking(
+        oferta_extra:aggregate_scenarios(BY_AVERAGE()):convert("GW"):round(number_of_digits_round), 
+    {yUnit="GWm"}); -- to do: checar cor
+end 
 
 if bool_int_extra then
     chart2_1:add_column_stacking(
-        generic:load("capint2_SE_extra"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Capacidade de interconexão extra"}):convert("GW"), 
+        generic:load("capint2_SE_extra"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Capacidade de interconexão extra"}):convert("GW"):round(number_of_digits_round), 
         {color="#808080", yUnit="GWm"}
     ); -- to do: checar cor
 end
 
-local oferta_termica = thermal_generation:aggregate_scenarios(BY_AVERAGE()):rename_agents({"Oferta térmica disponível"}):convert("GW");
+local oferta_termica = thermal_generation:aggregate_scenarios(BY_AVERAGE()):rename_agents({"Oferta térmica disponível"}):convert("GW"):round(number_of_digits_round);
 chart2_1:add_column_stacking(oferta_termica, {color="red", yUnit="GWm"});
 
-local importacao_NO_NE = generic:load("capin2_se_min_risk", true):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Importação do Norte-Nordeste"}):convert("GW");
+local importacao_NO_NE = generic:load("capin2_se_min_risk", true):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Importação do Norte-Nordeste"}):convert("GW"):round(number_of_digits_round);
 chart2_1:add_column_stacking(importacao_NO_NE, {color="#e9e9e9", yUnit="GWm"});
 
-local geracao_renovavel_media = renewable_generation:aggregate_scenarios(BY_AVERAGE()):rename_agents({"Geração renovável (média) + biomassa"}):convert("GW");
+local geracao_renovavel_media = renewable_generation:aggregate_scenarios(BY_AVERAGE()):rename_agents({"Geração renovável (média) + biomassa"}):convert("GW"):round(number_of_digits_round);
 chart2_1:add_column_stacking(geracao_renovavel_media, {color="#ADD8E6", yUnit="GWm"});
 
-local geracao_hidrica_obrigatoria = hydro_generation:aggregate_scenarios(BY_AVERAGE()):rename_agents({"Geração hídrica obrigatória"}):convert("GW");
+local geracao_hidrica_obrigatoria = hydro_generation:aggregate_scenarios(BY_AVERAGE()):rename_agents({"Geração hídrica obrigatória"}):convert("GW"):round(number_of_digits_round);
 chart2_1:add_column_stacking(geracao_hidrica_obrigatoria, {color="#4c4cff", yUnit="GWm"}); -- #0000ff
 
 -- CUIDADO MUDAR NOME - demand e demanda!
-local demanda = demand:aggregate_scenarios(BY_AVERAGE()):rename_agents({"Demanda"}):convert("GW");
+local demanda = demand:aggregate_scenarios(BY_AVERAGE()):rename_agents({"Demanda"}):convert("GW"):round(number_of_digits_round);
 chart2_1:add_line(demanda, {color="#000000", yUnit="GWm"});
 dashboard2:push(chart2_1);
 
@@ -521,28 +527,34 @@ if is_debug then
 end
 
 dashboard2:push("Violação média: **" .. string.format("%.1f", media_violacoes:to_list()[1]) .. "%** da demanda");
-dashboard2:push("Violação máxima: **" .. string.format("%.1f", maxima_violacao:to_list()[1]) .. "%** da demanda"); 
-chart2_4:add_histogram(deficit_percentual, {color="#d3d3d3", xtickPositions="[0, 20, 40, 60, 80, 100]"}); -- grey
-dashboard2:push(chart2_4);
+if is_complete then
+    dashboard2:push("Violação máxima: **" .. string.format("%.1f", maxima_violacao:to_list()[1]) .. "%** da demanda"); 
+    chart2_4:add_histogram(deficit_percentual, {color="#d3d3d3", xtickPositions="[0, 20, 40, 60, 80, 100]"}); -- grey
+    dashboard2:push(chart2_4);
+end
 
-local chart2_5 = Chart("Demanda residual");
-chart2_5 = add_percentile_layers(chart2_5, demanda_residual, "GWm");
-dashboard2:push(chart2_5);
+if is_complete then
+    local chart2_5 = Chart("Demanda residual");
+    chart2_5 = add_percentile_layers(chart2_5, demanda_residual, "GWm");
+    dashboard2:push(chart2_5);
 
-local chart = Chart("Demanda residual - histograma");
-chart:add_histogram(demanda_residual:aggregate_stages(BY_SUM()), {yUnit="GWm", color="#d3d3d3", xtickPositions="[0, 20, 40, 60, 80, 100]"});
-dashboard2:push(chart);
+    local chart = Chart("Demanda residual - histograma");
+    chart:add_histogram(demanda_residual:aggregate_stages(BY_SUM()), {yUnit="GWm", color="#d3d3d3", xtickPositions="[0, 20, 40, 60, 80, 100]"});
+    dashboard2:push(chart);
+end
 
 local chart2_6 = Chart("Deficit");
 chart2_6 = add_percentile_layers(chart2_6, deficit_stages, "GWm");
 dashboard2:push(chart2_6);
 
-local chart2_7 = Chart("Enegergia Armazenada - Sudeste");
-chart2_7 = add_percentile_layers(chart2_7, enearm_SE_ini_stage, false);
+if is_complete then
+    local chart2_7 = Chart("Enegergia Armazenada - Sudeste");
+    chart2_7 = add_percentile_layers(chart2_7, enearm_SE_ini_stage, false);
 
-local chart2_8 = Chart("Enegergia Armazenada - Sul");
-chart2_8 = add_percentile_layers(chart2_8, enearm_SU_ini_stage, false);
-dashboard2:push({chart2_7, chart2_8});
+    local chart2_8 = Chart("Enegergia Armazenada - Sul");
+    chart2_8 = add_percentile_layers(chart2_8, enearm_SU_ini_stage, false);
+    dashboard2:push({chart2_7, chart2_8});
+end
 
 if is_debug then
     demanda_residual:aggregate_stages(BY_SUM()):save("demanda_residual_histogram_data");
@@ -558,8 +570,11 @@ Inflow_energia_mlt = generic:load("enafluMLT"):convert("GW");
 Inflow_energia = system:load("enaf65"):select_stages(1,6):convert("GW"):aggregate_blocks(BY_SUM()); -- rho fixo, 65% do máximo
 local chart7_2 = Chart("Energia afluente - Sudeste");
 
-local inflow_energia_se_historico_2020_09 = Inflow_energia_historico_2020:select_agents({"Histórico 2020 - SE"}):rename_agents({"Histórico 2020 - SE x 90%"}) * 0.9; -- 2020 * 0.9
-chart7_2:add_line(inflow_energia_se_historico_2020_09, {yUnit="GWm"});
+-- local inflow_energia_se_historico_2020_09 = Inflow_energia_historico_2020:select_agents({"Histórico 2020 - SE"}):rename_agents({"Histórico 2020 - SE x 90%"}) * 0.9; -- 2020 * 0.9
+-- chart7_2:add_line(inflow_energia_se_historico_2020_09, {yUnit="GWm"});
+
+local inflow_energia_se_historico_2020 = Inflow_energia_historico_2020:select_agents({"Histórico 2020 - SE"}):rename_agents({"Histórico 2020 - SE"}) -- 2020
+chart7_2:add_line(inflow_energia_se_historico_2020, {yUnit="GWm"});
 
 local inflow_energia_se_historico_2021 = Inflow_energia_historico_2021:select_agents({"Histórico 2021 - SE"});
 chart7_2:add_line(inflow_energia_se_historico_2021, {yUnit="GWm"});
@@ -579,8 +594,11 @@ if is_debug then
 end
 
 local chart7_3 = Chart("Energia afluente - Sul");
-local inflow_energia_su_historico_2020_09 = Inflow_energia_historico_2020:select_agents({"Histórico 2020 - SU"}):rename_agents({"Histórico 2020 - SU x 90%"}) * 0.9; -- 2020 * 0.9
-chart7_3:add_line(inflow_energia_su_historico_2020_09, {yUnit="GWm"});
+-- local inflow_energia_su_historico_2020_09 = Inflow_energia_historico_2020:select_agents({"Histórico 2020 - SU"}):rename_agents({"Histórico 2020 - SU x 90%"}) * 0.9; -- 2020 * 0.9
+-- chart7_3:add_line(inflow_energia_su_historico_2020_09, {yUnit="GWm"});
+
+local inflow_energia_su_historico_2020 = Inflow_energia_historico_2020:select_agents({"Histórico 2020 - SU"}):rename_agents({"Histórico 2020 - SU"}); -- 2020
+chart7_3:add_line(inflow_energia_su_historico_2020, {yUnit="GWm"});
 
 local inflow_energia_su_historico_2021 = Inflow_energia_historico_2021:select_agents({"Histórico 2021 - SU"});
 chart7_3:add_line(inflow_energia_su_historico_2021, {yUnit="GWm"});
@@ -635,7 +653,7 @@ local inflow_agua = generic:load("vazao_natural"):select_stages(1,5)
 
 local md = Markdown()
 md:add("Usina|Mínimo Histórico (m3/s) | Uso múltimo da água (m3/s) | Probabilidade Violação (%) | Violação Média (%) | Violação Máxima (%)");
-md:add("-|-|-|-|-|-");
+md:add(":-|-:|-:|-:|-:|-:");
 
 local inflow_min_selected_agents = {};
 for i = 1,inflow_min_selected:agents_size(),1 do
@@ -647,27 +665,27 @@ for _,agent in ipairs(inflow_min_selected_agents) do
     local total_violation_percentual_agent = total_violation_percentual:select_agents({agent});
     if is_debug then total_violation_percentual_agent:save("total_violation_percentual_" .. agent); end
 
-    dashboard8:push("### Violações de defluência mínima - " .. agent);
+    -- dashboard8:push("### Violações de defluência mínima - " .. agent);
 
     local violation_minimum_value = 0.1; -- em %
     local violations = ifelse(total_violation_percentual_agent:gt(violation_minimum_value), 1, 0);
     local violations_values = ifelse(total_violation_percentual_agent:gt(violation_minimum_value), total_violation_percentual_agent, 0.0);
     number_violations = violations:aggregate_scenarios(BY_SUM()):to_list()[1];
-    dashboard8:push("Probabilidade de violar: **" .. string.format("%.1f", tostring((number_violations/1200) * 100)) .. "%**");
+    -- dashboard8:push("Probabilidade de violar: **" .. string.format("%.1f", tostring((number_violations/1200) * 100)) .. "%**");
     if number_violations > 0 then
         media_violacoes = violations_values:aggregate_scenarios(BY_SUM()) / number_violations;
         maxima_violacao = violations_values:aggregate_scenarios(BY_MAX());
         
-        if is_debug then media_violacoes:save("media_" .. agent); maxima_violacao:save("maximo_" .. agent); end
+        -- if is_debug then media_violacoes:save("media_" .. agent); maxima_violacao:save("maximo_" .. agent); end
 
-        dashboard8:push("Violação média: **" .. string.format("%.1f", media_violacoes:to_list()[1]) .. " %** da defluência mínima");
-        dashboard8:push("Violação máxima: **" .. string.format("%.1f", maxima_violacao:to_list()[1]) .. " %** da defluência mínima"); 
+        -- dashboard8:push("Violação média: **" .. string.format("%.1f", media_violacoes:to_list()[1]) .. " %** da defluência mínima");
+        -- dashboard8:push("Violação máxima: **" .. string.format("%.1f", maxima_violacao:to_list()[1]) .. " %** da defluência mínima"); 
     else
-        dashboard8:push("Violação média: **0.0 %** da defluência mínima");
-        dashboard8:push("Violação máxima: **0.0 %** da defluência mínima");
+        -- dashboard8:push("Violação média: **0.0 %** da defluência mínima");
+        -- dashboard8:push("Violação máxima: **0.0 %** da defluência mínima");
     end
     -- chart
-    local inflow_min_selected_agent = inflow_min_selected:select_agents({agent}):rename_agents({"Vazão mínima"});
+    local inflow_min_selected_agent = inflow_min_selected:select_stages(1,11):select_agents({agent}):rename_agents({"Vazão mínima"});
     local sum_min_inflow_horizon = inflow_min_selected_agent:select_stages(7,11):aggregate_stages(BY_SUM()):to_list()[1] / 5;
     local inflow_2021janjun_selected_agent = inflow_2021janjun_selected:select_agents({agent}):rename_agents({"2021"});
     local agua_outros_usos_agent = agua_outros_usos:select_agents({agent}):rename_agents({"Defluência mínima"});
@@ -685,9 +703,11 @@ for _,agent in ipairs(inflow_min_selected_agents) do
     dashboard8:push(chart8_i);
     
     -- historgrama
-    local chart8_i2 = Chart("Histograma de violações de defluência mínima");
-    chart8_i2:add_histogram(total_violation_percentual_agent, {color="#d3d3d3", yUnit="% da defluência mínima não atendida", xtickPositions="[0, 20, 40, 60, 80, 100]"}); -- grey
-    dashboard8:push(chart8_i2);
+    if is_complete then
+        local chart8_i2 = Chart("Histograma de violações de defluência mínima");
+        chart8_i2:add_histogram(total_violation_percentual_agent, {color="#d3d3d3", yUnit="% da defluência mínima não atendida", xtickPositions="[0, 20, 40, 60, 80, 100]"}); -- grey
+        dashboard8:push(chart8_i2);
+    end
 
     dashboard8:push("---");
 
@@ -714,7 +734,7 @@ if is_complete then
     table.sort(inflow_min_selected_agents);
     local md = Markdown();
     md:add("Usina | Volume morto (%) | volume  útil (hm3)");
-    md:add("-|-|-");
+    md:add(":-|-:|-:");
     for _,agent in ipairs(hydro_selected_agents) do
         local vol_util = (hydro.vmax-hydro.vmin):select_agents({agent});
         local dead_storage = (max(0.0, (max(hydro.alert_storage,hydro.vmin_chronological) - hydro.vmin)):select_agents({agent})/vol_util):convert("%");
@@ -724,55 +744,69 @@ if is_complete then
 end
 
 
--- local dashboard9 = Dashboard("Análise de potência");
--- demand_hr = system:load("demand_hr"):select_stages(1,5):convert("GW"):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
---     if bool_demanda_reduzida then
---         demand_hr = (1 - input_demanda_reduzida) * demand_hr;
---     end
--- gergnd_hr = renewable:load("gergnd_hr"):select_stages(1,5):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
+-- cenarios de atencao na energia serão usados para a analise de potenica
+cenarios_potencia = {};
+cenarios_atencao_list = cenarios_atencao.to_int_list();
+for cenario, value in ipairs( cenarios_atencao_list ) do
+  if value == 1 then table.insert(cenarios_potencia, cenario) end
+end
+-- cenarios_potencia = {1,3,5};
 
--- -- hydro max_power computation
--- hydro_max_power = hydro:load("potencia_maxima_volume_minimo");
--- -- hydro_max_power_disponivel  = hydro_max_power * (100-hydro_disponibilidade);
--- -- hydro_max_power_disponivel  = hydro_max_power * (1-0.1);
--- -- waveguide_volumes = hydro:load("waveguide"):select_stages(2,19):reset_stages():aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"});
--- -- waveguides_storageenergy = hydro:load("storageenergy_waveguide"):select_stages(2,19):reset_stages():aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):convert("GWh");
--- -- waveguide_power = hydro:load("potencia_maxima_waveguide"):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"});
--- -- waveguide_volumes:save("waveguide_volumes_system", {csv = true});
--- -- waveguide_power:save("waveguide_power_system", {csv = true});
--- -- waveguide_power:save("waveguide_energy_system", {csv = true});
--- -- enearm_final = enearm_SE:convert("GW");
--- -- -- enearm_final =  concatenate_agents(enearm_SU_final,
--- -- --                             enearm_SE_final);
--- -- hydro_max_power = interpolate_stages(enearm_final, waveguides_storageenergy, waveguide_power);
--- -- hydro_max_power:save("hydro_max_power", {csv = true});
--- --
--- hydro_disponibilidade = hydro.ih;
--- (100-hydro_disponibilidade):save("cache_hydro_disponibilidade", {tmp = false, csv = true});
--- --
--- hydro_max_power_disponivel  = hydro_max_power * (1-0.1);
--- hydro_max_power_disponivel = hydro_max_power_disponivel:aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
--- hydro_max_power = hydro_max_power:aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
 
--- pothid = hydro:load("pothid"):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
--- power_hr = gergnd_hr:convert("GW") + thermal_generation_block:convert("GW") + capint2_SE_block:convert("GW"):to_hour(BY_REPEATING()) + hydro_max_power_disponivel:convert("GW");
--- power_hr = power_hr:save_and_load("cache_power_hr", {tmp = true, csv = false});
--- mismatch_power = (demand_hr - power_hr):save_and_load("cache_mismatch_power", {tmp = true, csv = false});
--- criterio_severidade_de_apagao = 1.05;
--- mismatch_power_reserva = (demand_hr * criterio_severidade_de_apagao - power_hr):save_and_load("cache_mismatch_power_reserva", {tmp = true, csv = false});
--- apagao_severo = ifelse(mismatch_power:gt(0), 1, 0):aggregate_blocks(BY_AVERAGE()):convert("%");
--- apagao_reserva = ifelse(mismatch_power_reserva:gt(0), 1, 0):aggregate_blocks(BY_AVERAGE()):convert("%");
--- apagao_reserva = apagao_reserva - apagao_severo; -- quando acontece apagao severo, também acontece apagão na reserva, mas não queremos dupla contagem
--- percentual_threshold = 1 -- %
--- risco_apagao_reserva = ifelse(apagao_reserva:gt(percentual_threshold), 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"); -- maior que percentual_threshold %
--- risco_apagao_severo = ifelse(apagao_severo:gt(percentual_threshold), 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"); -- maior que percentual_threshold %
--- sem_risco_apagao = 100 - (risco_apagao_reserva+risco_apagao_severo);
--- local chart9_1 = Chart("Risco apagao");
--- chart9_1:add_column_stacking(sem_risco_apagao:rename_agents({"Sem Apagao"}), {color="green"});
--- chart9_1:add_column_stacking(risco_apagao_reserva:rename_agents({"Apagao - reserva"}), {color="yellow"});
--- chart9_1:add_column_stacking(risco_apagao_severo:rename_agents({"Apagao - severo"}), {color="red"});
--- dashboard9:push(chart9_1);
+local dashboard9 = Dashboard("Potência");
+demand_hr = system:load("demand_hr"):select_stages(1,5):convert("GW"):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
+if bool_demanda_reduzida then
+    demand_hr = (1 - input_demanda_reduzida) * demand_hr;
+end
 
+gergnd_hr = renewable:load("gergnd_hr"):select_stages(1,5):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
+gergnd_hr = gergnd_hr:select_scenarios(cenarios_potencia);
+
+-- hydro max_power computation
+hydro_max_power = hydro:load("potencia_maxima_volume_minimo"):select_scenarios(cenarios_potencia);;
+
+-- hydro_max_power_disponivel  = hydro_max_power * (100-hydro_disponibilidade);
+-- waveguide_volumes = hydro:load("waveguide"):select_stages(2,19):reset_stages():aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"});
+-- waveguides_storageenergy = hydro:load("storageenergy_waveguide"):select_stages(2,19):reset_stages():aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):convert("GWh");
+-- waveguide_power = hydro:load("potencia_maxima_waveguide"):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"});
+-- waveguide_volumes:save("waveguide_volumes_system", {csv = true});
+-- waveguide_power:save("waveguide_power_system", {csv = true});
+-- waveguide_power:save("waveguide_energy_system", {csv = true});
+-- enearm_final = enearm_SE:convert("GW"):select_scenarios(cenarios_potencia);
+-- -- enearm_final =  concatenate_agents(enearm_SU_final,
+-- --                             enearm_SE_final):select_scenarios(cenarios_potencia);
+-- hydro_max_power = interpolate_stages(enearm_final, waveguides_storageenergy, waveguide_power);
+
+hydro_max_power_disponivel  = hydro_max_power * (1-0.1);
+hydro_max_power:save("hydro_max_power", {csv = true});
+--
+hydro_disponibilidade = hydro.ih;
+(100-hydro_disponibilidade):save("cache_hydro_disponibilidade", {tmp = false, csv = true});
+--
+hydro_max_power_disponivel  = hydro_max_power * (1-0.1);
+hydro_max_power_disponivel = hydro_max_power_disponivel:aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
+hydro_max_power = hydro_max_power:aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
+
+pothid = hydro:load("pothid"):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
+power_hr = gergnd_hr:convert("GW") + thermal_generation_block:convert("GW") + capint2_SE_block:convert("GW"):to_hour(BY_REPEATING()) + hydro_max_power_disponivel:convert("GW");
+power_hr = power_hr:save_and_load("cache_power_hr", {tmp = true, csv = false});
+mismatch_power = (demand_hr - power_hr):save_and_load("cache_mismatch_power", {tmp = true, csv = false});
+criterio_severidade_de_apagao = 1.05;
+mismatch_power_reserva = (demand_hr * criterio_severidade_de_apagao - power_hr):save_and_load("cache_mismatch_power_reserva", {tmp = true, csv = false});
+apagao_severo = ifelse(mismatch_power:gt(0), 1, 0):aggregate_blocks(BY_AVERAGE()):convert("%");
+apagao_reserva = ifelse(mismatch_power_reserva:gt(0), 1, 0):aggregate_blocks(BY_AVERAGE()):convert("%");
+apagao_reserva = apagao_reserva - apagao_severo; -- quando acontece apagao severo, também acontece apagão na reserva, mas não queremos dupla contagem
+percentual_threshold = 1 -- %
+risco_apagao_reserva = ifelse(apagao_reserva:gt(percentual_threshold), 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"); -- maior que percentual_threshold %
+risco_apagao_severo = ifelse(apagao_severo:gt(percentual_threshold), 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"); -- maior que percentual_threshold %
+sem_risco_apagao = 100 - (risco_apagao_reserva+risco_apagao_severo);
+local chart9_1 = Chart("Suprimento de ponta");
+chart9_1:add_column_stacking(sem_risco_apagao:rename_agents({"Normal"}), {color="blue"});
+chart9_1:add_column_stacking(risco_apagao_reserva:rename_agents({"Violação da reserva"}), {color="orange"});
+chart9_1:add_column_stacking(risco_apagao_severo:rename_agents({"Corte de carga"}), {color="purple"});
+dashboard9:push(chart9_1);
+
+-- apagar ?
 -- apagao_severo_dia = ifelse(mismatch_power:gt(0), 1, 0):select_stages(3):reshape_stages(Profile.DAILY):aggregate_blocks(BY_MAX()):aggregate_stages(BY_SUM());
 -- apagao_reserva_dia = ifelse(mismatch_power_reserva:gt(0), 1, 0):select_stages(3):reshape_stages(Profile.DAILY):aggregate_blocks(BY_MAX()):aggregate_stages(BY_SUM());
 -- apagao_severo_dia = ifelse(apagao_severo_dia:gt(0), 1, 0):aggregate_scenarios(BY_AVERAGE());
@@ -786,34 +820,34 @@ end
 -- dashboard9:push(chart9_2);
 
 
--- local chart9_2 = Chart("Risco apagao diário");
--- local apagao_severo_dia = ifelse(mismatch_power:gt(0), 1, 0);
--- local apagao_reserva_dia = ifelse(mismatch_power_reserva:gt(0), 1, 0);
--- local stages = apagao_severo_dia:stages();
--- -- apagao_reserva_dia:save("tmp_apagao_reserva_dia", {tmp = false, csv = false});
--- for stage = 1,stages,1 do
---     local month = apagao_severo_dia:month(stage);
---     local tmp_severo = apagao_severo_dia:select_stages(stage):reshape_stages(Profile.DAILY):aggregate_blocks(BY_MAX()):aggregate_stages(BY_SUM()):aggregate_scenarios(BY_AVERAGE());
---     local tmp_reserva = apagao_reserva_dia:select_stages(stage):reshape_stages(Profile.DAILY):aggregate_blocks(BY_MAX()):aggregate_stages(BY_SUM()):aggregate_scenarios(BY_AVERAGE());
---     tmp_reserva = tmp_reserva - tmp_severo; -- quando acontece apagao severo, também acontece apagão na reserva, mas não queremos dupla contagem
---     tmp_reserva:save("tmp_reserva" .. tostring(stage), {tmp = true, csv = false});
---     apagao_reserva_dia:select_stages(stage):reshape_stages(Profile.DAILY):save("tmp_reserva_intermediario" .. tostring(stage), {tmp = true, csv = false});
---     chart9_2:add_column_stacking(tmp_reserva:rename_agents({"Apagao - reserva. Mês: " .. tostring(month)}), {color="yellow"});
---     chart9_2:add_column_stacking(tmp_severo:rename_agents({"Apagao - severo. Mês: " .. tostring(month)}), {color="red"});
--- end
--- dashboard9:push(chart9_2);
+local chart9_2 = Chart("Risco apagao diário");
+local apagao_severo_dia = ifelse(mismatch_power:gt(0), 1, 0);
+local apagao_reserva_dia = ifelse(mismatch_power_reserva:gt(0), 1, 0);
+local stages = apagao_severo_dia:stages();
+-- apagao_reserva_dia:save("tmp_apagao_reserva_dia", {tmp = false, csv = false});
+for stage = 1,stages,1 do
+    local month = apagao_severo_dia:month(stage);
+    local tmp_severo = apagao_severo_dia:select_stages(stage):reshape_stages(Profile.DAILY):aggregate_blocks(BY_MAX()):aggregate_stages(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE());
+    local tmp_reserva = apagao_reserva_dia:select_stages(stage):reshape_stages(Profile.DAILY):aggregate_blocks(BY_MAX()):aggregate_stages(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE());
+    tmp_reserva = tmp_reserva - tmp_severo; -- quando acontece apagao severo, também acontece apagão na reserva, mas não queremos dupla contagem
+    tmp_reserva:save("tmp_reserva" .. tostring(stage), {tmp = true, csv = false});
+    apagao_reserva_dia:select_stages(stage):reshape_stages(Profile.DAILY):save("tmp_reserva_intermediario" .. tostring(stage), {tmp = true, csv = false});
+    chart9_2:add_column_stacking(tmp_reserva:rename_agents({"Violação da reserva. Mês: " .. tostring(month)}), {color="orange"});
+    chart9_2:add_column_stacking(tmp_severo:rename_agents({"Corte de carga. Mês: " .. tostring(month)}), {color="purple"});
+end
+dashboard9:push(chart9_2);
 
--- local stages = mismatch_power_reserva:stages();
--- for stage = 1,stages,1 do
---     local month = mismatch_power_reserva:month(stage);
---     local chart9_3 = Chart("Histograma - Apagão - reserva - condicional - Mês: " .. tostring(month));
---     demanda_estagio = (demand_hr * criterio_severidade_de_apagao):select_stages(stage);
---     mismatch_power_reserva_estagio = mismatch_power_reserva:select_stages(stage);
---     mismatch_power_reserva_estagio_fake_agents = ifelse(mismatch_power_reserva_estagio:gt(0), mismatch_power_reserva_estagio / demanda_estagio, 0):convert("%"):blocks_to_agents():scenarios_to_agents();
---     mismatch_power_reserva_estagio_fake_agents = mismatch_power_reserva_estagio_fake_agents:select_agents(mismatch_power_reserva_estagio_fake_agents:gt(0));
---     chart9_3:add_histogram(mismatch_power_reserva_estagio_fake_agents:rename_agents("Apagão reserva - relativo à demanda"), {color="#d3d3d3"}); -- grey -- xtickPositions="[0, 20, 40, 60, 80, 100]"
---     dashboard9:push(chart9_3);
--- end
+local stages = mismatch_power_reserva:stages();
+for stage = 1,stages,1 do
+    local month = mismatch_power_reserva:month(stage);
+    local chart9_3 = Chart("Histograma - Apagão - reserva - condicional - Mês: " .. tostring(month));
+    demanda_estagio = (demand_hr * criterio_severidade_de_apagao):select_stages(stage);
+    mismatch_power_reserva_estagio = mismatch_power_reserva:select_stages(stage);
+    mismatch_power_reserva_estagio_fake_agents = ifelse(mismatch_power_reserva_estagio:gt(0), mismatch_power_reserva_estagio / demanda_estagio, 0):convert("%"):blocks_to_agents():scenarios_to_agents();
+    mismatch_power_reserva_estagio_fake_agents = mismatch_power_reserva_estagio_fake_agents:select_agents(mismatch_power_reserva_estagio_fake_agents:gt(0));
+    chart9_3:add_histogram(mismatch_power_reserva_estagio_fake_agents:rename_agents("Apagão reserva - relativo à demanda"), {color="#d3d3d3"}); -- grey -- xtickPositions="[0, 20, 40, 60, 80, 100]"
+    dashboard9:push(chart9_3);
+end
 
 
 
@@ -828,5 +862,5 @@ end
 -- ( pothid:convert("GW") - hydro_max_power:select_scenarios(1):convert("GW")):save("cache_dif_pothid", {tmp = true, csv = false});
 
 
-(dashboard7 + dashboard8 + dashboard10 + dashboard2):save("risk");
+(dashboard7 + dashboard8 + dashboard10 + dashboard2 + dashboard9):save("risk");
 -- (dashboard9):save("risk");
