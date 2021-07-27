@@ -876,11 +876,11 @@ local stages = apagao_severo_dia:stages();
 for stage = 1,stages,1 do
     local month = apagao_severo_dia:month(stage);
     if false then
-        tmp_severo = concatenate_stages(tmp_severo, apagao_severo_dia:select_stages(stage):reshape_stages(Profile.DAILY):aggregate_blocks(BY_MAX()):aggregate_stages(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()));
-        tmp_reserva = concatenate_stages(tmp_reserva, apagao_reserva_dia:select_stages(stage):reshape_stages(Profile.DAILY):aggregate_blocks(BY_MAX()):aggregate_stages(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()));
+        tmp_severo = concatenate_stages(tmp_severo, apagao_severo_dia:select_stages(stage):reshape_stages(Profile.DAILY):aggregate_blocks(BY_MAX()):aggregate_stages(BY_AVERAGE(), Profile.PER_MONTH):aggregate_scenarios(BY_AVERAGE()));
+        tmp_reserva = concatenate_stages(tmp_reserva, apagao_reserva_dia:select_stages(stage):reshape_stages(Profile.DAILY):aggregate_blocks(BY_MAX()):aggregate_stages(BY_AVERAGE(), Profile.PER_MONTH):aggregate_scenarios(BY_AVERAGE()));
     else
-        tmp_severo = apagao_severo_dia:select_stages(stage):reshape_stages(Profile.DAILY):aggregate_blocks(BY_MAX()):aggregate_stages(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE());
-        tmp_reserva = apagao_reserva_dia:select_stages(stage):reshape_stages(Profile.DAILY):aggregate_blocks(BY_MAX()):aggregate_stages(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE());
+        tmp_severo = apagao_severo_dia:select_stages(stage):reshape_stages(Profile.DAILY):aggregate_blocks(BY_MAX()):aggregate_stages(BY_AVERAGE(), Profile.PER_MONTH):aggregate_scenarios(BY_AVERAGE());
+        tmp_reserva = apagao_reserva_dia:select_stages(stage):reshape_stages(Profile.DAILY):aggregate_blocks(BY_MAX()):aggregate_stages(BY_AVERAGE(), Profile.PER_MONTH):aggregate_scenarios(BY_AVERAGE());
     end
     -- tmp_reserva:save("tmp_reserva" .. tostring(stage), {tmp = true, csv = false});
     -- apagao_reserva_dia:select_stages(stage):reshape_stages(Profile.DAILY):save("tmp_reserva_intermediario" .. tostring(stage), {tmp = true, csv = false});
