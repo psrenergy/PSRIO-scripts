@@ -78,6 +78,9 @@
         "powerinjection",
         "thermal",
         "Dashboard",
-        "Chart"
+        "Chart",
+        "Report",
+        "Compare",
+        "require_collection"
     ]
 }
