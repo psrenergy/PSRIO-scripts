@@ -150,7 +150,7 @@ my_dash:push(my_chart);
 my_dash:save("ThermalReport");
 ```
 
-There are 3 ways to run the script above. We are now going to explain each one of them in the next section of this tutorial.
+There are 2 ways to run the script above. We are now going to explain each one of them in the next section of this tutorial.
 
 ## Running a script
 
