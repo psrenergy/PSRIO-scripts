@@ -36,7 +36,7 @@ cmgdem = system:load("cmgdem");
 The data can be seen in the image below:
 
 <div style="text-align:center">
-    <img src="images/cmgdem.png" width="350"/>
+    <img src="images/getting_started/cmgdem.png" width="350"/>
 </div>
 
 The processing is accomplished using the method `aggregate_stages`, with the parameter `BY_AVERAGE()`:
@@ -60,7 +60,7 @@ cmgdem_avg:save("cmgdem_avg", {csv=true});
 Let's see what the final result looks like:
 
 <div style="text-align:center">
-    <img src="images/cmgdem_avg.png" width="350"/>
+    <img src="images/getting_started/cmgdem_avg.png" width="350"/>
 </div>
 
 As we can see, the stages collapsed into one single value representing the average value of the demand marginal costs over the study horizon. 
@@ -83,7 +83,7 @@ gerter = thermal:load("gerter");
 Check the data contained in the file:
 
 <div style="text-align:center">
-    <img src="images/gerter.png" width="350"/>
+    <img src="images/getting_started/gerter.png" width="350"/>
 </div>
 
 Notice that we managed to load the generation data by informing the filename of the output. Now, we can make operations with the thermal generation data. We want to sum the values of each plant regarding one stage so that there is only one value per stage representing the total generation of the system.
@@ -97,7 +97,7 @@ total_gerter:save("total_gerter", {csv=true});
 The first instruction is to aggregate agents, summing their respective generations for each stage. In the subsequent command, we are saving the data stored in the variable `total_gerter` to the file `total_gerter.csv`. The processed data looks like this:
 
 <div style="text-align:center">
-    <img src="images/totalgerter.png" width="350"/>
+    <img src="images/getting_started/totalgerter.png" width="350"/>
 </div>
 
 The best way to visualize the output is by plotting the data, making one of them. First, let’s define an object for the chart.
@@ -123,7 +123,7 @@ dashboard:save("thermal_report");
 By clicking in the file `thermal_report.html`, that's what we get:
 
 <div style="text-align:center">
-    <img src="images/dashboard.png" width="850"/>
+    <img src="images/getting_started/dashboard.png" width="850"/>
 </div>
 
 In short, the recipe for this work is as follows:
