@@ -32,7 +32,7 @@ local bool_oferta_extra = true; -- toml:get_bool("bool_oferta_extra");
 -- bool_oferta_extra = toml:get_double("ExtraInterc");
 
 local bool_int_extra = true; -- toml:get_bool("bool_int_extra");
-local input_int_extra = toml:get_double("ExtraInterc");
+local input_int_extra = toml:get_double("ExtraInterc")/100;
 
 local bool_demanda_reduzida = false;
 -- local bool_demanda_reduzida = toml:get_bool("bool_demanda_reduzida");
