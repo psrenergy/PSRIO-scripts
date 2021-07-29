@@ -102,19 +102,19 @@ The first instruction tells PSRIO to aggregate agents, summing their respective 
  The best way to visualize data is by plots, so we will also make one of them. First, let’s define a object for the chart.
 
 ``` lua 
-my_chart = Chart();
+my_chart = Chart("My first chart");
 ```
 
 Now, we indicate to the chart object that we want to plot the data contained in the file `TotalThermalGen.csv`, which we have just created.
 
 ``` lua 
-my_chart:push("TotalThermalGen", "line");
+my_chart:add_line("TotalThermalGen");
 ```
 
 After that, we will define a dashboard object to hold chart objects information and then add the charts and save to the file `ThermalReport.html`.
 
 ``` lua 
-my_dash = Dashboard();
+my_dash = Dashboard("My first dashboard");
 my_dash:push(my_chart);
 my_dash:save("ThermalReport");
 ```
@@ -130,20 +130,20 @@ In short, the recipe for this work is as follows:
 ``` lua 
 --Load thermal collections and thermal generation data
 thermal_plants = require("collection/thermal");
-thermal_gen=thermal_plants:load("gerter");
+thermal_gen = thermal_plants:load("gerter");
 
 --Aggregate agents generations by sum and save to output file
 total_thermal_gen = thermal_gen:aggregate_agents(BY_SUM(), "Total thermal");
 total_thermal_gen:save("TotalThermalGen", {csv=true});
 
 --Create chart object
-my_chart = Chart();
+my_chart = Chart("My first chart");
 
 --Add total generation info
-my_chart:push("TotalThermalGen", "line");
+my_chart:add_line("TotalThermalGen");
 
 --Create dashboad object
-my_dash = Dashboard();
+my_dash = Dashboard("My first dashboard");
 
 --Add chart and save to html file
 my_dash:push(my_chart);
@@ -156,16 +156,29 @@ There are 3 ways to run the script above. We are now going to explain each one o
 
 ### Graph 4.0
 
+Graph 4.0 is a graphing tool that allows us to make PSRIO scripts inside an editor. After the execution of SDDP, open Graph 4.0:
 
+<div style="text-align:center">
+    <img src="images\Srcsht_graph_step1.png" width="600"/>
+</div>
 
+The application's interface will be opened. Select the PSRIO editor option in the menu located on the left side of your screen:
+
+<div style="text-align:center">
+    <img src="images\Srcsht_graph_step2.png" width="600"/>
+</div>
+
+PSRIO editor will be opened. Create a new script, write down the code, save it and then you are ready to go.
+
+<div style="text-align:center">
+    <img src="images\Srcsht_graph_step3_v2.png" width="600"/>
+</div>
 
 ### SDDP
 
-The instructions to PSRIO can be put in a `.lua` file inside the example case directory. At the end of execution of SDDP, PSRIO will find your `.lua` and run it, executing the all the instruction contained in it.
+The instructions to PSRIO can be put in a `.lua` file inside the example case directory. **File name must be `sddp.lua` in order for PSRIO to find your file**. At the end of execution of SDDP, PSRIO will find your `.lua` and run it, executing the all the instruction contained in it.
 
-### Command Line
-
-Using the command line terminal of your operating system, you can execute PSRIO, passing the path to your case as argument, and inform the commands.
-
-
+<div style="text-align:center">
+    <img src="images\Srcsht_ScriptSDDP.png" width="750"/>
+</div>
 
