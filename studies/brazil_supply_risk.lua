@@ -829,10 +829,11 @@ gergnd_hr = gergnd_hr:select_scenarios(cenarios_potencia);
 -- hydro_max_power = hydro:load("potencia_maxima_volume_minimo_minimorum");
 
 -- hydro_max_power_disponivel  = hydro_max_power * (100-hydro_disponibilidade);
-waveguide_volumes = hydro:load("waveguide"):select_stages(1,19):reset_stages():aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"});
-waveguides_storageenergy = hydro:load("storageenergy_waveguide"):select_stages(1,19):reset_stages():aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):convert("GWh");
--- waveguide_power = hydro:load("potencia_maxima_waveguide"):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"});
 waveguide_power = hydro:load("potencia_maxima_waveguide");
+local stages = waveguide_power:stages();
+waveguide_volumes = hydro:load("waveguide"):select_stages(1,stages):reset_stages():aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"});
+waveguides_storageenergy = hydro:load("storageenergy_waveguide"):select_stages(1,stages):reset_stages():aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):convert("GWh");
+-- waveguide_power = hydro:load("potencia_maxima_waveguide"):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"});
 gerhid_power_fio_dagua = ifelse(hydro.vmax:gt(hydro.vmin), 0, hydro:load(is_sddp and "gerhid" or "gerhid_KTT", true):select_scenarios(cenarios_potencia):convert("GW"):aggregate_blocks(BY_AVERAGE()):select_stages(1,5)):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"});
 waveguide_power = ifelse(hydro.vmax:gt(hydro.vmin), waveguide_power, 0); -- diminui potencia disponivel das fio d'água
 -- waveguide_power = ifelse(hydro.vmax:gt(hydro.vmin), waveguide_power, waveguide_power*0.55); -- diminui potencia disponivel das fio d'água
