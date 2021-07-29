@@ -19,19 +19,19 @@ tipo_ssensib_gnd_quantilensib_gnd = 0 --toml:get_double("sensib_gnd_quantil");
 
 -- fix parameters
 
-local is_sddp = false -- toml:get_bool("is_sddp");
-local is_debug =  false -- toml:get_bool("is_debug");
+local is_sddp = false; -- toml:get_bool("is_sddp");
+local is_debug =  false; -- toml:get_bool("is_debug");
 local is_complete =  false;
 
 local bool_dead_storage_input = true -- toml:get_bool("bool_dead_storage_input");
 
-local bool_termica_extra = false -- toml:get_bool("bool_termica_extra");
-local input_termica_extra = false -- toml:get_double("input_termica_extra");
+local bool_termica_extra = false; -- toml:get_bool("bool_termica_extra");
+local input_termica_extra = false; -- toml:get_double("input_termica_extra");
 
-local bool_oferta_extra = true -- toml:get_bool("bool_oferta_extra");
+local bool_oferta_extra = false; -- toml:get_bool("bool_oferta_extra");
 -- bool_oferta_extra = toml:get_double("ExtraInterc");
 
-local bool_int_extra = true -- toml:get_bool("bool_int_extra");
+local bool_int_extra = false; -- toml:get_bool("bool_int_extra");
 local input_int_extra = toml:get_double("ExtraInterc");
 
 local bool_demanda_reduzida = false;
@@ -41,7 +41,7 @@ local bool_demanda_reduzida = false;
 -- 6%2020  = 2.7% 0.027
 -- 9%2020 = 5.6% 0.056
 -- 12%2020 = 8.6% 0.086
-local input_demanda_reduzida = -0.027
+local input_demanda_reduzida = -0.086
 
 -- local bool_demanda_substituta = toml:get_bool("bool_demanda_substituta"); -- GWh
 
@@ -794,6 +794,7 @@ demand_hr = system:load("demand_hr"):select_stages(1,5):convert("GW"):select_age
 if bool_demanda_reduzida then
     demand_hr = (1 - input_demanda_reduzida) * demand_hr;
 end
+demand_hr:save("demand_hr_tmp", {csv=true})
 
 gergnd_hr = renewable:load("gergnd_hr"):select_stages(1,5):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
 gergnd_hr = gergnd_hr:select_scenarios(cenarios_potencia);
@@ -802,11 +803,16 @@ gergnd_hr = gergnd_hr:select_scenarios(cenarios_potencia);
 -- hydro_max_power = hydro:load("potencia_maxima_volume_minimo_minimorum");
 
 -- hydro_max_power_disponivel  = hydro_max_power * (100-hydro_disponibilidade);
-waveguide_volumes = hydro:load("waveguide"):select_stages(2,19):reset_stages():aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"});
-waveguides_storageenergy = hydro:load("storageenergy_waveguide"):select_stages(2,19):reset_stages():aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):convert("GWh");
-waveguide_power = hydro:load("potencia_maxima_waveguide"):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"});
-waveguide_volumes:save("waveguide_volumes_system", {csv = true});
-waveguide_power:save("waveguide_power_system", {csv = true});
+waveguide_volumes = hydro:load("waveguide"):select_stages(1,19):reset_stages():aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"});
+waveguides_storageenergy = hydro:load("storageenergy_waveguide"):select_stages(1,19):reset_stages():aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):convert("GWh");
+-- waveguide_power = hydro:load("potencia_maxima_waveguide"):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"});
+waveguide_power = hydro:load("potencia_maxima_waveguide");
+gerhid_power_fio_dagua = ifelse(hydro.vmax:gt(hydro.vmin), 0, hydro:load(is_sddp and "gerhid" or "gerhid_KTT", true):select_scenarios(cenarios_potencia):convert("GW"):aggregate_blocks(BY_AVERAGE()):select_stages(1,5)):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"});
+waveguide_power = ifelse(hydro.vmax:gt(hydro.vmin), waveguide_power, 0); -- diminui potencia disponivel das fio d'água
+-- waveguide_power = ifelse(hydro.vmax:gt(hydro.vmin), waveguide_power, waveguide_power*0.55); -- diminui potencia disponivel das fio d'água
+waveguide_power = waveguide_power:aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"});
+waveguide_volumes = waveguide_volumes:save_and_load("waveguide_volumes_system", {tmp = true, csv = false});
+waveguide_power = waveguide_power:save_and_load("waveguide_power_system", {tmp = false, csv = true});
 -- waveguide_power:save("waveguide_energy_system", {csv = true});
 -- enearm_final = enearm_SE:convert("GW"):select_scenarios(cenarios_potencia);
 -- enearm_SU_ini_stage = concatenate(enearm_SU_ini_stage,
@@ -814,7 +820,8 @@ waveguide_power:save("waveguide_power_system", {csv = true});
 enearm_final =  concatenate(enearm_SU_stages,
                             enearm_SE_stages):select_scenarios(cenarios_potencia);
 hydro_max_power = interpolate_stages(enearm_final, waveguides_storageenergy, waveguide_power:convert("GWh")):convert("GW");
-
+gerhid_power_fio_dagua:save("gerhid_power_fio_dagua", {tmp = false, csv = true});
+hydro_max_power = hydro_max_power + gerhid_power_fio_dagua;
 
 --
 -- hydro_disponibilidade = hydro.ih;
@@ -826,10 +833,14 @@ hydro_max_power_disponivel  = hydro_max_power * (1-0.1);
 -- hydro_max_power = hydro_max_power:aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
 hydro_max_power_disponivel = hydro_max_power_disponivel:select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
 hydro_max_power = hydro_max_power:select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
-hydro_max_power:save("hydro_max_power", {csv = true});
+hydro_max_power = hydro_max_power:save_and_load("hydro_max_power", {tmp = false, csv = true});
 
 -- pothid = hydro:load("pothid"):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
-power_hr = gergnd_hr:convert("GW") + thermal_generation_block:convert("GW") + capint2_SE_block:convert("GW"):to_hour(BY_REPEATING()) + hydro_max_power_disponivel:convert("GW");
+gergnd_hr = gergnd_hr:convert("GW"):save_and_load("gergnd_hr_temp", {tmp = false, csv = true});
+thermal_generation_hr = thermal_generation_block:convert("GW"):to_hour(BY_REPEATING()):save_and_load("thermal_generation_hr_temp", {tmp = false, csv = true});
+capint2_SE_hr = capint2_SE_block:convert("GW"):to_hour(BY_REPEATING()):save_and_load("capint2_SE_hr_temp", {tmp = false, csv = true});
+hydro_max_power_hr =  hydro_max_power_disponivel:convert("GW"):save_and_load("hydro_max_power_hr_temp", {tmp = false, csv = true});
+power_hr = gergnd_hr + thermal_generation_hr + capint2_SE_hr + hydro_max_power_hr;
 if bool_int_extra then
     power_hr = power_hr + capint2_SE_extra_block:convert("GW"):to_hour(BY_REPEATING());
 end
