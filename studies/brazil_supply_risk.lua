@@ -28,10 +28,10 @@ local bool_dead_storage_input = true -- toml:get_bool("bool_dead_storage_input")
 local bool_termica_extra = false; -- toml:get_bool("bool_termica_extra");
 local input_termica_extra = false; -- toml:get_double("input_termica_extra");
 
-local bool_oferta_extra = false; -- toml:get_bool("bool_oferta_extra");
+local bool_oferta_extra = true; -- toml:get_bool("bool_oferta_extra");
 -- bool_oferta_extra = toml:get_double("ExtraInterc");
 
-local bool_int_extra = false; -- toml:get_bool("bool_int_extra");
+local bool_int_extra = true; -- toml:get_bool("bool_int_extra");
 local input_int_extra = toml:get_double("ExtraInterc");
 
 local bool_demanda_reduzida = false;
@@ -42,6 +42,13 @@ local bool_demanda_reduzida = false;
 -- 9%2020 = 5.6% 0.056
 -- 12%2020 = 8.6% 0.086
 local input_demanda_reduzida = -0.086
+
+
+-- 2020 (JAN-DEZ) = 602970 GWh
+-- 2021 (JAN-JUN) = 313263 GWh
+local bool_demanda_extra = false;
+local input_demanda_aumento_anual_sobre_2020 = toml:get_double("ExtraDemand");
+
 
 -- local bool_demanda_substituta = toml:get_bool("bool_demanda_substituta"); -- GWh
 
@@ -161,6 +168,7 @@ end
 
 -- LOAD DEMAND
 local demand = nil;
+local input_demanda_extra = nil;
 if bool_demanda_substituta then
     demand = generic:load("demanda_substituta", true);
 else
@@ -169,8 +177,23 @@ else
     else
         demand = system:load("demand", true):aggregate_blocks(BY_SUM()):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU"):select_stages(1,5);
     end
+    -- 2020 (JAN-DEZ) = 602,970 GWh
+    -- 2021 (JAN-JUN) = 313,263 GWh
+    -- 2021 (JULHO-DEZ prev) =  269,392.70 GWh
+    local acontecido_2020_total = 602970; --GWh
+    local acontecido_2021_1_semestre = 313263; --GWh
+    local previsao_atual_2021_2_semetre = 269392.70; --GWh
+    local nova_demanda_2021_total = input_demanda_aumento_anual_sobre_2020 * acontecido_2020_total;
+    local nova_demanda_2021_2_semestre = nova_demanda_2021_total - acontecido_2021_1_semestre;
+    input_demanda_extra = nova_demanda_2021_2_semestre / previsao_atual_2021_2_semetre - 1;
+    -- input_demanda_extra:save("input_demanda_extra", {csv=true});
+    print("Aumento de demanda:")
+    print(input_demanda_extra)
     if bool_demanda_reduzida then
         demand = (1 - input_demanda_reduzida) * demand;
+    end
+    if bool_demanda_extra then
+        demand = (1 + input_demanda_extra) * demand;
     end
 end
 demand = demand:select_stages(1,5);
@@ -793,6 +816,9 @@ dashboard9:push(md);
 demand_hr = system:load("demand_hr"):select_stages(1,5):convert("GW"):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
 if bool_demanda_reduzida then
     demand_hr = (1 - input_demanda_reduzida) * demand_hr;
+end
+if bool_demanda_extra then
+    demand_hr = (1 + input_demanda_extra) * demand_hr;
 end
 demand_hr:save("demand_hr_tmp", {csv=true})
 
