@@ -46,7 +46,7 @@ local input_demanda_reduzida = -0.086
 
 -- 2020 (JAN-DEZ) = 602970 GWh
 -- 2021 (JAN-JUN) = 313263 GWh
-local bool_demanda_extra = false;
+local bool_demanda_extra = true;
 local input_demanda_aumento_anual_sobre_2020 = toml:get_double("ExtraDemand");
 
 
@@ -182,7 +182,7 @@ else
     -- 2021 (JULHO-DEZ prev) =  269,392.70 GWh
     local acontecido_2020_total = 602970; --GWh
     local acontecido_2021_1_semestre = 313263; --GWh
-    local previsao_atual_2021_2_semetre = 269392.70; --GWh
+    local previsao_atual_2021_2_semetre = 307610; --GWh
     local nova_demanda_2021_total = input_demanda_aumento_anual_sobre_2020 * acontecido_2020_total;
     local nova_demanda_2021_2_semestre = nova_demanda_2021_total - acontecido_2021_1_semestre;
     input_demanda_extra = nova_demanda_2021_2_semestre / previsao_atual_2021_2_semetre - 1;
