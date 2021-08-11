@@ -16,19 +16,19 @@ nav_order: 6
 
 ## Aggregate Functions
 
-|          Syntax          |
-|:------------------------:|
-| `BY_SUM()`               |
-| `BY_AVERAGE()`           |
-| `BY_MAX()`               |
-| `BY_MIN()`               |
-| `BY_CVAR_L(number)`      |
-| `BY_CVAR_R(number)`      |
-| `BY_PERCENTILE(number)`  |
-| `BY_NTH_ELEMENT(number)` |
-| `BY_STDDEV()`            |
-| `BY_FIRST_VALUE()`       |
-| `BY_LAST_VALUE()`        |
+| Aggregate Functions        |
+|:--------------------------:|
+| `BY_SUM()`                 |
+| `BY_AVERAGE()`             |
+| `BY_MAX()`                 |
+| `BY_MIN()`                 |
+| `BY_CVAR_L(number)`        |
+| `BY_CVAR_R(number)`        |
+| `BY_PERCENTILE(number)`    |
+| `BY_NTH_ELEMENT(number)`   |
+| `BY_STDDEV()`              |
+| `BY_FIRST_VALUE()`         |
+| `BY_LAST_VALUE()`          |
 
 <br/>
 
@@ -50,10 +50,34 @@ system = require("collection/system");
 cmgdem = system:load("cmgdem");
 
 cmgdem_average = cmgdem:aggregate_scenarios(BY_AVERAGE());
+```
+
+#### Example 2
+{: .no_toc }
+
+``` lua
+system = require("collection/system");
+cmgdem = system:load("cmgdem");
 
 cmgdem_p90 = cmgdem:aggregate_scenarios(BY_PERCENTILE(90));
+```
+
+#### Example 3
+{: .no_toc }
+
+``` lua
+system = require("collection/system");
+cmgdem = system:load("cmgdem");
 
 cmgdem_max = cmgdem:aggregate_scenarios(BY_MAX(), {1, 2, 3, 4, 5});
+```
+
+#### Example 4
+{: .no_toc }
+
+``` lua
+system = require("collection/system");
+cmgdem = system:load("cmgdem");
 
 cmgdem_scenario32 = cmgdem:select_scenario(32);
 ```
@@ -71,14 +95,25 @@ cmgdem_scenario32 = cmgdem:select_scenario(32);
 
 <br/>
 
+#### Example 1
+
 ``` lua
 system = require("collection/system");
 cmgdem = system:load("cmgdem");
 
 cmgdem_agg = cmgdem:aggregate_blocks(BY_AVERAGE());
+```
+
+#### Example 2
+
+``` lua
+system = require("collection/system");
+cmgdem = system:load("cmgdem");
 
 cmgdem_block21 = cmgdem:select_block(21);
 ```
+
+#### Example 3
 
 ``` lua
 renewable = require("collection/renewable");
@@ -87,6 +122,7 @@ gergnd = renewable:load("gergnd");
 gergnd_agg = gergnd:aggregate_blocks(BY_SUM());
 ```
 
+#### Example 4
 TODO to_hour e to_block exemplo
 ``` lua
 
@@ -100,15 +136,15 @@ TODO to_hour e to_block exemplo
 
 ### Aggregate Stages
 
-| Description |          Syntax          |
-|:-----------:|:------------------------:|
-|             | `PROFILE.STAGE`          |
-|             | `PROFILE.WEEK`           | 
-|             | `PROFILE.MONTH`          | 
-|             | `PROFILE.YEAR`           | 
-|             | `PROFILE.PER_WEEK`       | 
-|             | `PROFILE.PER_MONTH`      |
-|             | `PROFILE.PER_YEAR`       | 
+| Profiles                 |
+|:------------------------:|
+| `PROFILE.STAGE`          |
+| `PROFILE.WEEK`           | 
+| `PROFILE.MONTH`          | 
+| `PROFILE.YEAR`           | 
+| `PROFILE.PER_WEEK`       | 
+| `PROFILE.PER_MONTH`      |
+| `PROFILE.PER_YEAR`       | 
 
 <br/>
 
@@ -118,6 +154,13 @@ TODO to_hour e to_block exemplo
 | Aggregate stages by an [aggregate function][aggregate-functions] and a [profile][aggregate-stages] | `exp = exp1:aggregate_stages(f, profile)` |
 
 <br/>
+
+| exp1          | exp1          | exp1          | exp1          | exp1          | exp1          | exp1          | exp1          |
+|:-------------:|:-------------:|:-------------:|:-------------:|:-------------:|:-------------:|:-------------:|:-------------:|
+| `n` (daily)   | `n` (daily)   | `n` (daily)   | `n` (daily)   | `n` (daily)   | `n` (daily)   | `n` (daily)   | `n` (daily)   |
+| `n` (weekly)  | `n` (weekly)  | `n` (weekly)  | `n` (weekly)  | `n` (weekly)  | `n` (weekly)  | `n` (weekly)  | `n` (weekly)  |
+| `n` (monthly) | `n` (monthly) | `n` (monthly) | `n` (monthly) | `n` (monthly) | `n` (monthly) | `n` (monthly) | `n` (monthly) |
+| `n` (yearly)  | `n` (yearly)  | `n` (yearly)  | `n` (yearly)  | `n` (yearly)  | `n` (yearly)  | `n` (yearly)  | `n` (yearly)  |
 
 <!-- \begin{table}[H]
 \centering
