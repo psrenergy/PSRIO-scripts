@@ -1,6 +1,6 @@
 ---
 title: Examples
-nav_order: 9
+nav_order: 10
 ---
 
 # Examples
@@ -13,6 +13,11 @@ cirflw = circuit:load("cirflw");
     
 usecir = (cirflw:abs() / circuit.capacity):convert("%");
 usecir:save("usecir");
+```
+
+``` lua
+usecir = require("sddp/usecir");
+usecir():save("usecir");
 ```
 
 ## Deficit Risk per Year
