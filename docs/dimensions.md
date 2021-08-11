@@ -32,13 +32,12 @@ nav_order: 6
 
 <br/>
 
-## Scenarios
+## Aggregate Scenarios
 
 | Method                                                                       | Syntax                                               |
 |:-----------------------------------------------------------------------------|:-----------------------------------------------------|
 | Aggregate scenarios by an [aggregate function][aggregate-functions]          | `exp = exp1:aggregate_scenarios(f)`                  |
 | Aggregate selected scenarios by an [aggregate function][aggregate-functions] | `exp = exp1:aggregate_scenarios(f, {int, int, ...})` |
-| Select one scenario                                                          | `exp = exp1:select_scenario(int)`                    |
 
 <br/>
 
@@ -72,7 +71,16 @@ cmgdem = system:load("cmgdem");
 cmgdem_max = cmgdem:aggregate_scenarios(BY_MAX(), {1, 2, 3, 4, 5});
 ```
 
-#### Example 4
+## Select Scenarios
+
+| Method                    | Syntax                                               |
+|:--------------------------|:-----------------------------------------------------|
+| Select one scenario       | `exp = exp1:select_scenario(int)`                    |
+| Select multiple scenarios | `exp = exp1:select_scenarios({int, int, int, ...})`  |
+
+<br/>
+
+#### Example 1
 {: .no_toc }
 
 ``` lua
@@ -84,18 +92,16 @@ cmgdem_scenario32 = cmgdem:select_scenario(32);
 
 <br/>
 
-## Blocks and Hours
+## Aggregate Blocks/Hours
 
 | Method                                                                 | Syntax                           |
 |:-----------------------------------------------------------------------|:---------------------------------|
 | Aggregate blocks/hours by an [aggregate function][aggregate-functions] | `exp = exp1:aggregate_blocks(f)` |
-| Select one block                                                       | `exp = exp1:select_block(int)`   |
-| Map blocks into hours (`BY_AVERAGE()` or `BY_REPEATING()`)             | `exp = exp1:to_hour(type)`       |
-| Map hour into blocks (`BY_AVERAGE()` or `BY_SUM()`)                    | `exp = exp1:to_block(type)`      |
 
 <br/>
 
 #### Example 1
+{: .no_toc }
 
 ``` lua
 system = require("collection/system");
@@ -105,15 +111,7 @@ cmgdem_agg = cmgdem:aggregate_blocks(BY_AVERAGE());
 ```
 
 #### Example 2
-
-``` lua
-system = require("collection/system");
-cmgdem = system:load("cmgdem");
-
-cmgdem_block21 = cmgdem:select_block(21);
-```
-
-#### Example 3
+{: .no_toc }
 
 ``` lua
 renewable = require("collection/renewable");
@@ -122,7 +120,36 @@ gergnd = renewable:load("gergnd");
 gergnd_agg = gergnd:aggregate_blocks(BY_SUM());
 ```
 
-#### Example 4
+## Select Block/Hour
+
+| Method                                                                 | Syntax                           |
+|:-----------------------------------------------------------------------|:---------------------------------|
+| Select one block                                                       | `exp = exp1:select_block(int)`   |
+
+<br/>
+
+#### Example 1
+{: .no_toc }
+
+``` lua
+system = require("collection/system");
+cmgdem = system:load("cmgdem");
+
+cmgdem_block21 = cmgdem:select_block(21);
+```
+
+## Map Blocks/Hours
+
+| Method                                                                 | Syntax                           |
+|:-----------------------------------------------------------------------|:---------------------------------|
+| Map blocks into hours (`BY_AVERAGE()` or `BY_REPEATING()`)             | `exp = exp1:to_hour(type)`       |
+| Map hour into blocks (`BY_AVERAGE()` or `BY_SUM()`)                    | `exp = exp1:to_block(type)`      |
+
+<br/>
+
+#### Example 1
+{: .no_toc }
+
 TODO to_hour e to_block exemplo
 ``` lua
 
@@ -130,11 +157,10 @@ TODO to_hour e to_block exemplo
 
 <br/>
 
-## Stages
+## Aggregate Stages
 
-<br/>
-
-### Aggregate Stages
+### Profiles
+{: .no_toc }
 
 | Profiles                 |
 |:------------------------:|
@@ -151,32 +177,50 @@ TODO to_hour e to_block exemplo
 | Method                                                                                             | Syntax                                    |
 |:---------------------------------------------------------------------------------------------------|:------------------------------------------|
 | Aggregate stages by an [aggregate function][aggregate-functions]                                   | `exp = exp1:aggregate_stages(f)`          |
-| Aggregate stages by an [aggregate function][aggregate-functions] and a [profile][aggregate-stages] | `exp = exp1:aggregate_stages(f, profile)` |
+| Aggregate stages by an [aggregate function][aggregate-functions] and a [profile][profiles]         | `exp = exp1:aggregate_stages(f, profile)` |
 
 <br/>
 
-| exp1          | exp1          | exp1          | exp1          | exp1          | exp1          | exp1          | exp1          |
-|:-------------:|:-------------:|:-------------:|:-------------:|:-------------:|:-------------:|:-------------:|:-------------:|
-| `n` (daily)   | `n` (daily)   | `n` (daily)   | `n` (daily)   | `n` (daily)   | `n` (daily)   | `n` (daily)   | `n` (daily)   |
-| `n` (weekly)  | `n` (weekly)  | `n` (weekly)  | `n` (weekly)  | `n` (weekly)  | `n` (weekly)  | `n` (weekly)  | `n` (weekly)  |
-| `n` (monthly) | `n` (monthly) | `n` (monthly) | `n` (monthly) | `n` (monthly) | `n` (monthly) | `n` (monthly) | `n` (monthly) |
-| `n` (yearly)  | `n` (yearly)  | `n` (yearly)  | `n` (yearly)  | `n` (yearly)  | `n` (yearly)  | `n` (yearly)  | `n` (yearly)  |
+### Profile: STAGE
+{: .no_toc }
 
-<!-- \begin{table}[H]
-\centering
-\begin{tabular}{@{}cccccc@{}}
-\multicolumn{6}{c}{\textbf{Stages}} \\ \toprule
-\multicolumn{2}{c|}{\textbf{exp1}}                                        & $n$ (daily)                  & $n$ (weekly)                          & $n$ (monthly)                         & $n$ (yearly)                          \\ \midrule
-                               & \multicolumn{1}{c|}{\textbf{STAGE}}      & $1$ (daily)                  & $1$ (weekly)                          & $1$ (monthly)                         & $1$ (yearly)                          \\
-                               & \multicolumn{1}{c|}{\textbf{WEEK}}       & $7$ (daily)                  & $1$ (weekly)                          & {\color[HTML]{FE0000} \textbf{error}} & {\color[HTML]{FE0000} \textbf{error}} \\
-							   & \multicolumn{1}{c|}{\textbf{MONTH}}      & $31$ (daily)                 & {\color[HTML]{FE0000} \textbf{error}} & $1$ (monthly)                         & {\color[HTML]{FE0000} \textbf{error}} \\
-                               & \multicolumn{1}{c|}{\textbf{YEAR}}       & $365$ (daily)                & $52$ (weekly)                         & $12$ (monthly)                        & $1$ (yearly)                          \\
-                               & \multicolumn{1}{c|}{\textbf{PER\_WEEK}}  & $\frac{n}{7}$ (weekly)       & $n$ (weekly)                          & {\color[HTML]{FE0000} \textbf{error}} & {\color[HTML]{FE0000} \textbf{error}} \\
-                               & \multicolumn{1}{c|}{\textbf{PER\_MONTH}} & $\frac{n}{\sim30}$ (monthly) & {\color[HTML]{FE0000} \textbf{error}} & $n$ (monthly)                         & {\color[HTML]{FE0000} \textbf{error}} \\
-\multirow{-7}{*}{\textbf{exp}} & \multicolumn{1}{c|}{\textbf{PER\_YEAR}}  & $\frac{n}{365}$ (yearly)     & $\frac{n}{52}$ (yearly)               & $\frac{n}{12}$ (yearly)               & $\frac{n}{1}$ (yearly)                \\ \bottomrule
-\end{tabular}
-\caption{Aggregate stages rules.}
-\end{table} -->
+| exp1          | exp (profile = STAGE) |
+|:-------------:|:---------------------:|
+| `n` (daily)   | `1` (daily)           |
+| `n` (weekly)  | `1` (weekly)          |
+| `n` (monthly) | `1` (monthly)         |
+| `n` (yearly)  | `1` (yearly)          |
+
+### Profile: WEEK and PER_WEEK
+{: .no_toc }
+
+| exp1          | exp (profile = WEEK) | exp (profile = PER_WEEK) |
+|:-------------:|:--------------------:|:------------------------:|
+| `n` (daily)   | `7` (daily)          | `n/7` (weekly)           |
+| `n` (weekly)  | `1` (weekly)         | `n` (weekly)             |
+| `n` (monthly) | ❌                  |  ❌                      |
+| `n` (yearly)  | ❌                  |  ❌                      |
+
+### Profile: MONTH and PER_MONTH
+{: .no_toc }
+
+| exp1          | exp (profile = MONTH) | exp (profile = PER_MONTH) |
+|:-------------:|:---------------------:|:-------------------------:|
+| `n` (daily)   | `31` (daily)          | `n/~30` (monthly)         |
+| `n` (weekly)  | ❌                   | ❌                        |
+| `n` (monthly) | `1` (monthly)         | `n` (monthly)             |
+| `n` (yearly)  | ❌                   | ❌                        |
+
+### Profile: YEAR and PER_YEAR
+{: .no_toc }
+
+| exp1          | exp (profile = YEAR) | exp (profile = PER_YEAR) |
+|:-------------:|:--------------------:|:------------------------:|
+| `n` (daily)   | `365` (daily)        | `n/365` (yearly)         |
+| `n` (weekly)  | ❌                  |  `n/52` (yearly)         |
+| `n` (monthly) | ❌                  |  `n/12` (yearly)        |
+| `n` (yearly)  | `1` (yearly)         | `1` (yearly)             |
+
 
 #### Example 1
 {: .no_toc }
@@ -187,7 +231,7 @@ exp = defcit:aggregate_stages(BY_SUM(), Profile.PER_YEAR);
 
 <br/>
 
-### Select Stages
+## Select Stages
 
 <br/>
 
@@ -215,7 +259,7 @@ exp4 = objcop:select_stages_by_year(2026, 2050);
 exp5 = objcop:select_stages_by_year(2032);
 ```
 
-### Reshape Stages
+## Reshape Stages
 
 <br/>
 
@@ -228,9 +272,9 @@ exp5 = objcop:select_stages_by_year(2032);
 | exp1            | exp             |
 |:---------------:|:---------------:|
 | `n` (daily)     | `n` (daily)     |
-| `n` (weekly)    | `7⋅n` (daily)    |
-| `n` (monthly)   | `~30⋅n` (daily)  |
-| `n` (yearly)    | `365⋅n` (daily) |
+| `n` (weekly)    | `7n` (daily)    |
+| `n` (monthly)   | `~30n` (daily)  |
+| `n` (yearly)    | `365n` (daily)  |
 
 <br/>
 
@@ -279,12 +323,12 @@ exp5 = objcop:select_stages_by_year(2032);
 
 <br/>
 
-| Method                                                                     | Syntax                                         |
-|:---------------------------------------------------------------------------|:-----------------------------------------------|
-| Aggregate agents by an [aggregate function][aggregate-functions]           | `exp = exp1:aggregate_agents(agg, label)`      |
-| Aggregate agents by an [aggregate function][aggregate-functions] into collection (table 5)         | `exp = exp1:aggregate_agents(agg, collection)` |
+| Method                                                                                            | Syntax                                         |
+|:--------------------------------------------------------------------------------------------------|:-----------------------------------------------|
+| Aggregate all agents by an [aggregate function][aggregate-functions]                              | `exp = exp1:aggregate_agents(f, label)`        |
+| Aggregate agents by an [aggregate function][aggregate-functions] into a [collection][collections] | `exp = exp1:aggregate_agents(f, collection)`   |
 
-#### Example
+#### Example 1
 {: .no_toc }
 
 ``` lua
@@ -292,26 +336,36 @@ hydro = require("collection/hydro");
 gerhid = hydro:load("gerhid");
 
 gerhid_sum = gerhid:aggregate_agents(BY_SUM(), "Total Hydro");
+```
+
+#### Example 2
+{: .no_toc }
+
+``` lua
+hydro = require("collection/hydro");
+gerhid = hydro:load("gerhid");
 
 gerhid_systems = gerhid:aggregate_agents(BY_SUM(), Collection.SYSTEM);
+```
+
+#### Example 3
+{: .no_toc }
+
+``` lua
+hydro = require("collection/hydro");
+gerhid = hydro:load("gerhid");
 
 gerhid_buses = gerhid:aggregate_agents(BY_SUM(), Collection.BUSES);
 ```
 
-<br/>
-
-### Generic Agents
-
-<br/>
+### Select Agents
 
 | Method                                                                     | Syntax                                                          |
 |:---------------------------------------------------------------------------|:----------------------------------------------------------------|
 | Select agents by a list of agents names or indices                         | `exp = exp1:select_agents({string or int, int or string, ...})` |
-| Select agents by a collection                                              | `exp = exp1:select_agents(collection)`                          |
+| Select agents by a [collection][collections]                               | `exp = exp1:select_agents(collection)`                          |
 | Select agents by a query                                                   | `exp = exp1:select_agents(query)`                               |
 | Remove agents by a list of agents names or indices                         | `exp = exp1:remove_agents({string or int, int or string, ...})` |
-
-<br/>
 
 #### Example 1
 {: .no_toc }
@@ -323,13 +377,21 @@ gerter = thermal:load("gerter");
 gerter_t1_and_t2 = gerter:select_agents({"Thermal 1", "Thermal 2"});
 ```
 
+### Remove Agents
+
+| Method                                                                     | Syntax                                                          |
+|:---------------------------------------------------------------------------|:----------------------------------------------------------------|
+| Remove agents by a list of agents names or indices                         | `exp = exp1:remove_agents({string or int, int or string, ...})` |
+
+### Rename Agents
+
 | Method                                                                     | Syntax                                                          |
 |:---------------------------------------------------------------------------|:----------------------------------------------------------------|
 | Rename the agents based on the input vector                                | `exp = exp1:rename_agents({string, string, ...})`               |
 | Rename all the agents names                                                | `exp = exp1:rename_agents(string)`                              |
 | Add a suffix to all agents names                                           | `exp = exp1:rename_agents_with_suffix(string)`                  |
 
-#### Example 2
+#### Example 1
 {: .no_toc }
 
 ``` lua
@@ -339,11 +401,13 @@ gerter = thermal:load("gerter");
 gerter_renamed = gerter:rename_agents({"T1", "T2", "T3"});
 ```
 
+### Concatenate Agents
+
 | Method      | Syntax                                                          |
 |:------------|:----------------------------------------------------------------|
 | Concatenate | `exp = concatenate(exp1, exp2, exp3, ...)`                      |
 
-#### Example 3
+#### Example 1
 {: .no_toc }
 
 ``` lua
@@ -361,3 +425,5 @@ generation = concatenate(gerhid, gerter, gergnd);
 
 [aggregate-functions]: https://psrenergy.github.io/psrio-scripts/dimensions.html#aggregate-functions
 [aggregate-stages]: https://psrenergy.github.io/psrio-scripts/dimensions.html#aggregate-stages
+[collections]: https://psrenergy.github.io/psrio-scripts/dimensions.html#collections
+[profiles]: https://psrenergy.github.io/psrio-scripts/dimensions.html#profiles
