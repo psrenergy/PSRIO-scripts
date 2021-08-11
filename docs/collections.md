@@ -16,37 +16,37 @@ nav_order: 3
 
 ## Loading a Collection
 
-|           Collection          | Syntax                                                           |
-|:------------------------------|:-----------------------------------------------------------------|
-| Area                          | `collection = require("collection/area")`                        |
-| Balancing Area                | `collection = require("collection/balancingarea")`               |
-| Balancing Area Hydro          | `collection = require("collection/balancingareahydro")`          |
-| Balancing Area Thermal        | `collection = require("collection/balancingareathermal")`        |
-| Battery                       | `collection = require("collection/battery")`                     |
-| Bus                           | `collection = require("collection/bus")`                         |
-| Circuit                       | `collection = require("collection/circuit")`                     |
-| Circuits Sum                  | `collection = require("collection/circuitssum")`                 |
-| DC Link                       | `collection = require("collection/dclink")`                      |
-| Demand                        | `collection = require("collection/demand")`                      |
-| Demand Segment                | `collection = require("collection/demandsegment")`               |
-| Expansion Project             | `collection = require("collection/expansionproject")`            |
-| Fuel                          | `collection = require("collection/fuel")`                        |
-| Fuel Consumption              | `collection = require("collection/fuelconsumption")`             |
-| Fuel Contract                 | `collection = require("collection/fuelcontract")`                |
-| Fuel Reservoir                | `collection = require("collection/fuelreservoir")`               |
-| Generator                     | `collection = require("collection/generator")`                   |
-| Generation Constraint         | `collection = require("collection/generationconstraint")`        |
-| Generic                       | `collection = require("collection/generic")`                     |
-| Hydro                         | `collection = require("collection/hydro")`                       |
-| Interconnection               | `collection = require("collection/interconnection")`             |
-| Interconnection Sum           | `collection = require("collection/interconnectionsum")`          |
-| Power Injection               | `collection = require("collection/powerinjection")`              |
-| Renewable                     | `collection = require("collection/renewable")`                   |
-| Renewable Gauging Station     | `collection = require("collection/renewablegaugingstation")`     |
-| Reserve Generation Constraint | `collection = require("collection/reservegenerationconstraint")` |
-| Study                         | `collection = require("collection/study")`                       |
-| System                        | `collection = require("collection/system")`                      |
-| Thermal                       | `collection = require("collection/thermal")`                     |                 
+|           Collection          | Syntax                                                           | Enumerate                                  |
+|:------------------------------|:-----------------------------------------------------------------|:-------------------------------------------|
+| Area                          | `collection = require("collection/area")`                        | `Collection.AREA`                          |
+| Balancing Area                | `collection = require("collection/balancingarea")`               | `Collection.BALANCINGAREA`                 |
+| Balancing Area Hydro          | `collection = require("collection/balancingareahydro")`          | `Collection.BALANCINGAREA_HYDRO`           |
+| Balancing Area Thermal        | `collection = require("collection/balancingareathermal")`        | `Collection.BALANCINGAREA_THERMAL`         |
+| Battery                       | `collection = require("collection/battery")`                     | `Collection.BATTERY`                       |
+| Bus                           | `collection = require("collection/bus")`                         | `Collection.BUS`                           |
+| Circuit                       | `collection = require("collection/circuit")`                     | `Collection.CIRCUIT`                       |
+| Circuits Sum                  | `collection = require("collection/circuitssum")`                 | `Collection.CIRCUITS_SUM`                  |
+| DC Link                       | `collection = require("collection/dclink")`                      | `Collection.DCLINK`                        |
+| Demand                        | `collection = require("collection/demand")`                      | `Collection.DEMAND`                        |
+| Demand Segment                | `collection = require("collection/demandsegment")`               | `Collection.DEMAND_SEGMENT`                |
+| Expansion Project             | `collection = require("collection/expansionproject")`            | `Collection.EXPANSION_PROJECT`             |
+| Fuel                          | `collection = require("collection/fuel")`                        | `Collection.FUEL`                          |
+| Fuel Consumption              | `collection = require("collection/fuelconsumption")`             | `Collection.FUEL_CONSUMPTION`              |
+| Fuel Contract                 | `collection = require("collection/fuelcontract")`                | `Collection.FUEL_CONTRACT`                 |
+| Fuel Reservoir                | `collection = require("collection/fuelreservoir")`               | `Collection.FUEL_RESERVOIR`                |
+| Generator                     | `collection = require("collection/generator")`                   | `Collection.GENERATOR`                     |
+| Generation Constraint         | `collection = require("collection/generationconstraint")`        | `Collection.GENERATION_CONSTRAINT`         |
+| Generic                       | `collection = require("collection/generic")`                     |  ---                                       |
+| Hydro                         | `collection = require("collection/hydro")`                       | `Collection.HYDRO`                         |
+| Interconnection               | `collection = require("collection/interconnection")`             | `Collection.INTERCONNECTION`               |
+| Interconnection Sum           | `collection = require("collection/interconnectionsum")`          | `Collection.INTERCONNECTION_SUM`           |
+| Power Injection               | `collection = require("collection/powerinjection")`              | `Collection.POWERINJECTION`                |
+| Renewable                     | `collection = require("collection/renewable")`                   | `Collection.RENEWABLE`                     |
+| Renewable Gauging Station     | `collection = require("collection/renewablegaugingstation")`     | `Collection.RENEWABLE_GAUGING_STATION`     |
+| Reserve Generation Constraint | `collection = require("collection/reservegenerationconstraint")` | `Collection.RESERVE_GENERATION_CONSTRAINT` |
+| Study                         | `collection = require("collection/study")`                       | `Collection.STUDY`                         |
+| System                        | `collection = require("collection/system")`                      | `Collection.SYSTEM`                        |
+| Thermal                       | `collection = require("collection/thermal")`                     | `Collection.THERMAL`                       |
 
 
 ## Loading an Output

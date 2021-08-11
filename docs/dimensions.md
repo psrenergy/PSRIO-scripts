@@ -76,7 +76,7 @@ cmgdem_max = cmgdem:aggregate_scenarios(BY_MAX(), {1, 2, 3, 4, 5});
 | Method                    | Syntax                                               |
 |:--------------------------|:-----------------------------------------------------|
 | Select one scenario       | `exp = exp1:select_scenario(int)`                    |
-| Select multiple scenarios | `exp = exp1:select_scenarios({int, int, int, ...})`  |
+| Select multiple scenarios | `exp = exp1:select_scenarios({int, int, ...})`       |
 
 #### Example 1
 {: .no_toc }
@@ -132,7 +132,7 @@ cmgdem = system:load("cmgdem");
 cmgdem_block21 = cmgdem:select_block(21);
 ```
 
-## Map Blocks/Hours
+### Map Blocks/Hours
 
 | Method                                                                 | Syntax                           |
 |:-----------------------------------------------------------------------|:---------------------------------|
@@ -161,15 +161,15 @@ TODO to_hour e to_block exemplo
 
 | Profiles                 |
 |:------------------------:|
-| `PROFILE.STAGE`          |
-| `PROFILE.WEEK`           | 
-| `PROFILE.MONTH`          | 
-| `PROFILE.YEAR`           | 
-| `PROFILE.PER_WEEK`       | 
-| `PROFILE.PER_MONTH`      |
-| `PROFILE.PER_YEAR`       | 
+| `Profile.STAGE`          |
+| `Profile.WEEK`           | 
+| `Profile.MONTH`          | 
+| `Profile.YEAR`           | 
+| `Profile.PER_WEEK`       | 
+| `Profile.PER_MONTH`      |
+| `Profile.PER_YEAR`       | 
 
-### Profile: STAGE
+### Profile.STAGE
 {: .no_toc }
 
 | exp1          | exp (profile = STAGE) |
@@ -179,7 +179,10 @@ TODO to_hour e to_block exemplo
 | `n` (monthly) | `1` (monthly)         |
 | `n` (yearly)  | `1` (yearly)          |
 
-### Profile: WEEK and PER_WEEK
+#### Example 1
+{: .no_toc }
+
+### Profile.WEEK and Profile.PER_WEEK
 {: .no_toc }
 
 | exp1          | exp (profile = WEEK) | exp (profile = PER_WEEK) |
@@ -189,7 +192,10 @@ TODO to_hour e to_block exemplo
 | `n` (monthly) | ❌                  |  ❌                      |
 | `n` (yearly)  | ❌                  |  ❌                      |
 
-### Profile: MONTH and PER_MONTH
+#### Example 1
+{: .no_toc }
+
+### Profile.MONTH and Profile.PER_MONTH
 {: .no_toc }
 
 | exp1          | exp (profile = MONTH) | exp (profile = PER_MONTH) |
@@ -199,7 +205,10 @@ TODO to_hour e to_block exemplo
 | `n` (monthly) | `1` (monthly)         | `n` (monthly)             |
 | `n` (yearly)  | ❌                   | ❌                        |
 
-### Profile: YEAR and PER_YEAR
+#### Example 1
+{: .no_toc }
+
+### Profile.YEAR and Profile.PER_YEAR
 {: .no_toc }
 
 | exp1          | exp (profile = YEAR) | exp (profile = PER_YEAR) |
@@ -214,7 +223,10 @@ TODO to_hour e to_block exemplo
 {: .no_toc }
 
 ``` lua
-exp = defcit:aggregate_stages(BY_SUM(), Profile.PER_YEAR);
+system = require("collection/system")
+defcit = system:load("defcit")
+
+defcit_per_year = defcit:aggregate_stages(BY_SUM(), Profile.PER_YEAR);
 ```
 
 ### Select Stages
@@ -222,10 +234,10 @@ exp = defcit:aggregate_stages(BY_SUM(), Profile.PER_YEAR);
 | Method                                                                 | Syntax                                       |
 |:-----------------------------------------------------------------------|:---------------------------------------------|
 | Select stages within case horizon                                      | `exp = exp1:select_stages()`                 |
-| Select stage by only one stage                                         | `exp = exp1:select_stages(int)`              |
-| Select stages by first_stage and last_stage                            | `exp = exp1:select_stages(int, int)`         |
-| Select stages by initial_year and final_year                           | `exp = exp1:select_stages_by_year(int, int)` |
-| Select stages by only one year                                         | `exp = exp1:select_stages_by_year(int)`      |
+| Select a **stage**                                                     | `exp = exp1:select_stages(int)`              |
+| Select stages by **first** and **last stage**                          | `exp = exp1:select_stages(int, int)`         |
+| Select stages by **initial** and **final year**                        | `exp = exp1:select_stages_by_year(int, int)` |
+| Select stages by a **year**                                            | `exp = exp1:select_stages_by_year(int)`      |
 
 #### Example 1
 {: .no_toc }
@@ -245,15 +257,15 @@ exp5 = objcop:select_stages_by_year(2032);
 
 | Method                                                                 | Syntax                                       |
 |:-----------------------------------------------------------------------|:---------------------------------------------|
-| Reshape stages frequency to daily (only works with hourly input)       | `exp = exp1:reshape_stages(PROFILE.DAILY)`   |
+| Reshape stages frequency to daily (only works with hourly input)       | `exp = exp1:reshape_stages(Profile.DAILY)`   |
 
 
-| exp1            | exp             |
-|:---------------:|:---------------:|
-| `n` (daily)     | `n` (daily)     |
-| `n` (weekly)    | `7n` (daily)    |
-| `n` (monthly)   | `~30n` (daily)  |
-| `n` (yearly)    | `365n` (daily)  |
+| exp1                   | exp                    |
+|:----------------------:|:----------------------:|
+| `n` (daily-hourly)     | `n` (daily-hourly)     |
+| `n` (weekly-hourly)    | `7n` (daily-hourly)    |
+| `n` (monthly-hourly)   | `~30n` (daily-hourly)  |
+| `n` (yearly-hourly)    | `365n` (daily-hourly)  |
 
 
 #### Example 1
