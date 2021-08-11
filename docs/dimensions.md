@@ -30,16 +30,16 @@ nav_order: 6
 | `BY_FIRST_VALUE()`         |
 | `BY_LAST_VALUE()`          |
 
-<br/>
 
-## Aggregate Scenarios
+
+## Scenarios
+
+### Aggregate Scenarios
 
 | Method                                                                       | Syntax                                               |
 |:-----------------------------------------------------------------------------|:-----------------------------------------------------|
 | Aggregate scenarios by an [aggregate function][aggregate-functions]          | `exp = exp1:aggregate_scenarios(f)`                  |
 | Aggregate selected scenarios by an [aggregate function][aggregate-functions] | `exp = exp1:aggregate_scenarios(f, {int, int, ...})` |
-
-<br/>
 
 #### Example 1
 {: .no_toc }
@@ -71,14 +71,12 @@ cmgdem = system:load("cmgdem");
 cmgdem_max = cmgdem:aggregate_scenarios(BY_MAX(), {1, 2, 3, 4, 5});
 ```
 
-## Select Scenarios
+### Select Scenarios
 
 | Method                    | Syntax                                               |
 |:--------------------------|:-----------------------------------------------------|
 | Select one scenario       | `exp = exp1:select_scenario(int)`                    |
 | Select multiple scenarios | `exp = exp1:select_scenarios({int, int, int, ...})`  |
-
-<br/>
 
 #### Example 1
 {: .no_toc }
@@ -90,15 +88,13 @@ cmgdem = system:load("cmgdem");
 cmgdem_scenario32 = cmgdem:select_scenario(32);
 ```
 
-<br/>
+## Blocks/Hours
 
-## Aggregate Blocks/Hours
+### Aggregate Blocks/Hours
 
 | Method                                                                 | Syntax                           |
 |:-----------------------------------------------------------------------|:---------------------------------|
 | Aggregate blocks/hours by an [aggregate function][aggregate-functions] | `exp = exp1:aggregate_blocks(f)` |
-
-<br/>
 
 #### Example 1
 {: .no_toc }
@@ -120,13 +116,11 @@ gergnd = renewable:load("gergnd");
 gergnd_agg = gergnd:aggregate_blocks(BY_SUM());
 ```
 
-## Select Block/Hour
+### Select Blocks/Hours
 
 | Method                                                                 | Syntax                           |
 |:-----------------------------------------------------------------------|:---------------------------------|
-| Select one block                                                       | `exp = exp1:select_block(int)`   |
-
-<br/>
+| Select one block/hour                                                  | `exp = exp1:select_block(int)`   |
 
 #### Example 1
 {: .no_toc }
@@ -145,8 +139,6 @@ cmgdem_block21 = cmgdem:select_block(21);
 | Map blocks into hours (`BY_AVERAGE()` or `BY_REPEATING()`)             | `exp = exp1:to_hour(type)`       |
 | Map hour into blocks (`BY_AVERAGE()` or `BY_SUM()`)                    | `exp = exp1:to_block(type)`      |
 
-<br/>
-
 #### Example 1
 {: .no_toc }
 
@@ -155,9 +147,14 @@ TODO to_hour e to_block exemplo
 
 ```
 
-<br/>
+## Stages
 
-## Aggregate Stages
+### Aggregate Stages
+
+| Method                                                                                             | Syntax                                    |
+|:---------------------------------------------------------------------------------------------------|:------------------------------------------|
+| Aggregate stages by an [aggregate function][aggregate-functions]                                   | `exp = exp1:aggregate_stages(f)`          |
+| Aggregate stages by an [aggregate function][aggregate-functions] and a [profile][profiles]         | `exp = exp1:aggregate_stages(f, profile)` |
 
 ### Profiles
 {: .no_toc }
@@ -171,15 +168,6 @@ TODO to_hour e to_block exemplo
 | `PROFILE.PER_WEEK`       | 
 | `PROFILE.PER_MONTH`      |
 | `PROFILE.PER_YEAR`       | 
-
-<br/>
-
-| Method                                                                                             | Syntax                                    |
-|:---------------------------------------------------------------------------------------------------|:------------------------------------------|
-| Aggregate stages by an [aggregate function][aggregate-functions]                                   | `exp = exp1:aggregate_stages(f)`          |
-| Aggregate stages by an [aggregate function][aggregate-functions] and a [profile][profiles]         | `exp = exp1:aggregate_stages(f, profile)` |
-
-<br/>
 
 ### Profile: STAGE
 {: .no_toc }
@@ -229,11 +217,7 @@ TODO to_hour e to_block exemplo
 exp = defcit:aggregate_stages(BY_SUM(), Profile.PER_YEAR);
 ```
 
-<br/>
-
-## Select Stages
-
-<br/>
+### Select Stages
 
 | Method                                                                 | Syntax                                       |
 |:-----------------------------------------------------------------------|:---------------------------------------------|
@@ -242,8 +226,6 @@ exp = defcit:aggregate_stages(BY_SUM(), Profile.PER_YEAR);
 | Select stages by first_stage and last_stage                            | `exp = exp1:select_stages(int, int)`         |
 | Select stages by initial_year and final_year                           | `exp = exp1:select_stages_by_year(int, int)` |
 | Select stages by only one year                                         | `exp = exp1:select_stages_by_year(int)`      |
-
-<br/>
 
 #### Example 1
 {: .no_toc }
@@ -259,15 +241,12 @@ exp4 = objcop:select_stages_by_year(2026, 2050);
 exp5 = objcop:select_stages_by_year(2032);
 ```
 
-## Reshape Stages
-
-<br/>
+### Reshape Stages
 
 | Method                                                                 | Syntax                                       |
 |:-----------------------------------------------------------------------|:---------------------------------------------|
 | Reshape stages frequency to daily (only works with hourly input)       | `exp = exp1:reshape_stages(PROFILE.DAILY)`   |
 
-<br/>
 
 | exp1            | exp             |
 |:---------------:|:---------------:|
@@ -276,9 +255,8 @@ exp5 = objcop:select_stages_by_year(2032);
 | `n` (monthly)   | `~30n` (daily)  |
 | `n` (yearly)    | `365n` (daily)  |
 
-<br/>
 
-#### Example
+#### Example 1
 {: .no_toc }
 
 ``` lua
@@ -317,11 +295,7 @@ exp5 = objcop:select_stages_by_year(2032);
 | System                        | `Collection.SYSTEM`                        |
 | Thermal                       | `Collection.THERMAL`                       |
 
-<br/>
-
 ### Aggregate Agents
-
-<br/>
 
 | Method                                                                                            | Syntax                                         |
 |:--------------------------------------------------------------------------------------------------|:-----------------------------------------------|
