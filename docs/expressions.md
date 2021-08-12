@@ -50,7 +50,7 @@ Here, we use the convert method to act over the generation data of a set of ther
 thermal = require("collection/thermal");
 thermal_gen = circuit:load("gerter");
 
-converted_thermal_gen = thermal_gen:convert("MW")
+converted_thermal_gen = thermal_gen:convert("MW");
 ```
 
 ## Binary Expressions
@@ -103,12 +103,12 @@ useful_storage = hydro.vmax - hydro.vmin;
 
 Comparing the generation of a thermal plant with its maximum capacity:
 ``` lua
-thermal = require("collection/thermal")
+thermal = require("collection/thermal");
 
-thermal_gen = thermal:load("gerter")
-thermal_cap = thermal:load("potter")
+thermal_gen = thermal:load("gerter");
+thermal_cap = thermal:load("potter");
 
-gen_gt_cap = (thermal_gen:convert("MW")):gt(thermal_cap)
+gen_gt_cap = (thermal_gen:convert("MW")):gt(thermal_cap);
 ```
 
 Note that, as the generation data is in GWh and the capacity in MW, a unit conversion is needed in order to make a comparison between them. In this case, we converted the generation, but we could have converted the thermal capacity instead.
@@ -118,17 +118,18 @@ Note that, as the generation data is in GWh and the capacity in MW, a unit conve
 
 Getting the highest total generated energy per type of plant: 
 ``` lua
-thermal = require("collection/thermal")
-hydro = require("collection/hydro")
+thermal = require("collection/thermal");
+hydro = require("collection/hydro");
 
-thermal_gen = thermal:load("gerter")
-hydro_gen = hydro:load("gerhid")
+thermal_gen = thermal:load("gerter");
+hydro_gen = hydro:load("gerhid");
 
-thermal_total_gen=thermal_gen:aggregate_agents(BY_SUM(), "Total Thermal Gen")
-hydro_total_gen=hydro_gen:aggregate_agents(BY_SUM(), "Total Hydro Gen")
+thermal_total_gen=thermal_gen:aggregate_agents(BY_SUM(), "Total Thermal Gen");
+hydro_total_gen=hydro_gen:aggregate_agents(BY_SUM(), "Total Hydro Gen");
 
-max_between =  max(hydro_total_gen, thermal_total_gen)
+max_between =  max(hydro_total_gen, thermal_total_gen);
 ```
+Thermal generation end hydro generation do not directly compare. To do so, we first need to aggregate the agents to obtain only one information of generation per block, scenario and stage in each set of data. Then, we are able to compare them.
 
 <br/>
 
@@ -182,9 +183,21 @@ All the above-mentioned binary expressions follow the same rules to define the s
 
 ## Ternary Expressions
 
+The table below presents the ```ifelse``` operator. If the ```exp1``` is true, operator returns ```exp2```. If not, ```exp3``` is returned.
 | Operator    | Syntax                           |
 |:------------|:---------------------------------|
 | Conditional | `exp = ifelse(exp1, exp2, exp3)` |
+
+
+#### Example 1
+{: .no_toc }
+``` lua
+thermal = require("collection/thermal");
+
+thermal_gen = thermal:load("gerter");
+
+gen_gt_zero = ifelse(thermal_gen:gt(0.0), 1, 0);
+```
 
 ## Unit Conversion
 
