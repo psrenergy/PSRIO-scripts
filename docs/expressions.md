@@ -16,7 +16,7 @@ nav_order: 5
 
 ## Unary Expressions
 
-PSRIO provides four unary operators that only receive one expression and do not modifies any dimension (stages, blocks, scenarios, and agents). The unary minus maps the data values to their additive inverses; the absolute value is the non-negative value of the data without regard to its sign; the round method rounds the data to the specified number of digits after the decimal place; the convert method determines the unit of the data. 
+PSRIO provides four unary operators that only receive one expression and does not modify any dimension (stages, blocks, scenarios, or agents). The unary minus maps the data values to their additive inverses; the absolute value is the non-negative value of the data without regard to its sign; the round method rounds the data to the specified number of digits after the decimal separator; the convert method determines the unit of the data. 
 
 <br/>
 
@@ -29,6 +29,11 @@ PSRIO provides four unary operators that only receive one expression and do not 
 
 <br/>
 
+#### Example 1
+{: .no_toc }
+
+The example below takes the power flow in a circuit and calculates its absolute values.
+
 ``` lua
 circuit = require("collection/circuit");
 cirflw = circuit:load("cirflw");
@@ -36,63 +41,17 @@ cirflw = circuit:load("cirflw");
 abs_cirflw = cirflw:abs();
 ```
 
-### Unit Conversion
-
-<div style="text-align:center">
-    <img src="images/si.svg" width="200"/>
-</div>
-
-The units conversion follows the International System of Units units and syntax, based on the [2019 redefinition](https://www.nist.gov/si-redefinition). The PSRIO will perform a multi-step process with all the expressions inputs, producing a conversion factor with the desired unit.
-
-#### Example 1
-{: .no_toc }
-
-``` lua
-hydro = require("collection/hydro");
-fprodt = hydro:load("fprodt");
-    
-pothid = min(hydro.qmax * fprodt, hydro.capacity_maintenance);
-```
-
-In this example we have two inputs with different units: `hydro.qmax` `[m3/s]` and `fprodt` `[MW/(m3/s)]`. The pothid output will be the multiplication: `[m3/s] × [MW/(m3/s)] = 1.0 × [MW]`.
-
 #### Example 2
-{: .no_toc }
+{: .no_toc}
 
-``` lua
-renewable = require("collection/renewable");
-gergnd = renewable:load("gergnd");
-vergnd = renewable:load("vergnd");
-    
-captured_prices = (gergnd * vergnd) / (gergnd + vergnd);
-```
-
-The unit conversion output of Example 2 is `([GWh] × [GWh]) / ([GWh] + [GWh]) = 1.0 × [GWh]`
-
-#### Example 3
-{: .no_toc }
+Here, we use the convert method to act over the generation data of a set of thermal plants, which is given in GWh, and convert it to MW.
 
 ``` lua
 thermal = require("collection/thermal");
-fuel = require("collection/fuel");
-    
-cinte1 = (thermal.cesp1 * (thermal.transport_cost + fuel.cost) + thermal.omcost);
+thermal_gen = circuit:load("gerter");
+
+converted_thermal_gen = thermal_gen:convert("MW")
 ```
-
-The unit conversion output of Example 3 is `[gal/MWh] × ([$/gal] + [$/gal]) + [$/MWh] = 1.0 × [$/MWh]`
-
-#### Example 4
-{: .no_toc }
-
-``` lua
-hydro = require("collection/hydro");
-volfin = hydro:load("volfin");
-fprodtac = hydro:load("fprodtac");
-    
-eneemb = ((volfin - hydro.vmin) * fprodtac):convert("GWh");
-```
-
-The unit conversion output of Example 4 is `([hm3] - [hm3]) × [MW/(m3/s)] = 0.27 × [GWh]`
 
 ## Binary Expressions
 
@@ -117,7 +76,7 @@ The second table defines the logic/comparison operators: and, or, equality, ineq
 |        Greater-than       |  `exp = exp1:gt(exp2)`  |
 | Greater-than-or-equals to |  `exp = exp1:ge(exp2)`  |
 |            And            |   `exp = exp1 & exp2`   |
-|             Or            |   `exp = exp1 | exp2`   |
+|             Or            |   `exp = exp1 \| exp2`  |
 
 The third table defines two element-wise max and min methods between the two data arguments.
 
@@ -125,6 +84,51 @@ The third table defines two element-wise max and min methods between the two dat
 |:--------------------------|:------------------------|
 |          Maximum          | `exp = max(exp1, exp2)` |
 |          Minimum          | `exp = min(exp1, exp2)` |
+
+Here are some examples of usage of the operators prior explained.
+
+
+#### Example 1
+{: .no_toc }
+
+Calculating the useful storage of a hydro plant:
+``` lua
+hydro = require("collection/hydro");
+useful_storage = hydro.vmax - hydro.vmin;
+```
+
+#### Example 2
+{: .no_toc }
+
+
+Comparing the generation of a thermal plant with its maximum capacity:
+``` lua
+thermal = require("collection/thermal")
+
+thermal_gen = thermal:load("gerter")
+thermal_cap = thermal:load("potter")
+
+gen_gt_cap = (thermal_gen:convert("MW")):gt(thermal_cap)
+```
+
+Note that, as the generation data is in GWh and the capacity in MW, a unit conversion is needed in order to make a comparison between them. In this case, we converted the generation, but we could have converted the thermal capacity instead.
+
+#### Example 3
+{: .no_toc}
+
+Getting the highest total generated energy per type of plant: 
+``` lua
+thermal = require("collection/thermal")
+hydro = require("collection/hydro")
+
+thermal_gen = thermal:load("gerter")
+hydro_gen = hydro:load("gerhid")
+
+thermal_total_gen=thermal_gen:aggregate_agents(BY_SUM(), "Total Thermal Gen")
+hydro_total_gen=hydro_gen:aggregate_agents(BY_SUM(), "Total Hydro Gen")
+
+max_between =  max(hydro_total_gen, thermal_total_gen)
+```
 
 <br/>
 
@@ -181,3 +185,61 @@ All the above-mentioned binary expressions follow the same rules to define the s
 | Operator    | Syntax                           |
 |:------------|:---------------------------------|
 | Conditional | `exp = ifelse(exp1, exp2, exp3)` |
+
+## Unit Conversion
+
+<div style="text-align:center">
+    <img src="images/si.svg" width="200"/>
+</div>
+
+The units conversion follows the International System of Units (SI), based on the [2019 redefinition](https://www.nist.gov/si-redefinition). The PSRIO will perform a multi-step process with all the expressions inputs, producing a conversion factor with the desired unit.
+
+#### Example 1
+{: .no_toc }
+
+``` lua
+hydro = require("collection/hydro");
+fprodt = hydro:load("fprodt");
+    
+pothid = min(hydro.qmax * fprodt, hydro.capacity_maintenance);
+```
+
+In this example we have two inputs with different units: `hydro.qmax` `[m3/s]` and `fprodt` `[MW/(m3/s)]`. The pothid output will be the multiplication: `[m3/s] × [MW/(m3/s)] = 1.0 × [MW]`.
+
+#### Example 2
+{: .no_toc }
+
+``` lua
+renewable = require("collection/renewable");
+gergnd = renewable:load("gergnd");
+vergnd = renewable:load("vergnd");
+    
+captured_prices = (gergnd * vergnd) / (gergnd + vergnd);
+```
+
+The unit conversion output of Example 2 is `([GWh] × [GWh]) / ([GWh] + [GWh]) = 1.0 × [GWh]`
+
+#### Example 3
+{: .no_toc }
+
+``` lua
+thermal = require("collection/thermal");
+fuel = require("collection/fuel");
+    
+cinte1 = (thermal.cesp1 * (thermal.transport_cost + fuel.cost) + thermal.omcost);
+```
+
+The unit conversion output of Example 3 is `[gal/MWh] × ([$/gal] + [$/gal]) + [$/MWh] = 1.0 × [$/MWh]`
+
+#### Example 4
+{: .no_toc }
+
+``` lua
+hydro = require("collection/hydro");
+volfin = hydro:load("volfin");
+fprodtac = hydro:load("fprodtac");
+    
+eneemb = ((volfin - hydro.vmin) * fprodtac):convert("GWh");
+```
+
+The unit conversion output of Example 4 is `([hm3] - [hm3]) × [MW/(m3/s)] = 0.27 × [GWh]`
