@@ -159,7 +159,7 @@ All the above-mentioned binary expressions follow the same rules to define the s
 
 <br/>
 
-### Agents (when order matters)
+<!-- ### Agents (when order matters)
 
 | exp1                | exp2                | exp                 |
 |:-------------------:|:-------------------:|:-------------------:|
@@ -177,9 +177,10 @@ All the above-mentioned binary expressions follow the same rules to define the s
 | `n` (collection a) / `n` (generic b)   | `n` (collection b)  |
 | `n1` (collection a) / `n2` (generic b) | ❌                  |
 | `n` (generic a) / `1` (generic b)      | `n` (generic a)     |
-| `n1` (generic a) / `n2` (generic b)    | ❌                  |
+| `n1` (generic a) / `n2` (generic b)    | ❌                  | -->
 
 <br/>
+
 
 ## Ternary Expressions
 
@@ -191,6 +192,8 @@ The table below presents the ```ifelse``` operator. If the ```exp1``` is true, o
 
 #### Example 1
 {: .no_toc }
+
+In the example below, if the thermal generation is greater than zero, 1 is returned, otherwise, 0 is returned.
 ``` lua
 thermal = require("collection/thermal");
 
