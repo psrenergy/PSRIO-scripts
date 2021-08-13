@@ -47,7 +47,7 @@ nav_order: 8
 {: .no_toc }
 
 ``` lua
-local hydro = require("collection/hydro");
+local hydro = Hydro();
 local gerhid = hydro:load("gerhid"):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE());
 
 local chart = Chart("Hydro Generation");

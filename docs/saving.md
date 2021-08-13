@@ -27,7 +27,7 @@ nav_order: 7
 {: .no_toc }
 
 ``` lua
-hydro = require("collection/hydro");
+hydro = Hydro();
 hydro.qmax:save("mnsout", { horizon = true });
 ```
 

@@ -8,7 +8,7 @@ nav_order: 10
 ## Circuit Loading (usecir)
 
 ``` lua
-circuit = require("collection/circuit");
+circuit = Circuit();
 cirflw = circuit:load("cirflw");
     
 usecir = (cirflw:abs() / circuit.capacity):convert("%");
@@ -23,7 +23,7 @@ usecir():save("usecir");
 ## Deficit Risk per Year
 
 ``` lua
-system = require("collection/system");
+system = System();
 deficit = system:load("defcit");
 
 deficit = deficit:aggregate_blocks(BY_SUM());

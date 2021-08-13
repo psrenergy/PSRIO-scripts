@@ -18,35 +18,36 @@ nav_order: 3
 
 |           Collection          | Syntax                                                           |
 |:------------------------------|:-----------------------------------------------------------------|
-| Area                          | `collection = require("collection/area")`                        |
-| Balancing Area                | `collection = require("collection/balancingarea")`               |
-| Balancing Area Hydro          | `collection = require("collection/balancingareahydro")`          |
-| Balancing Area Thermal        | `collection = require("collection/balancingareathermal")`        |
-| Battery                       | `collection = require("collection/battery")`                     |
-| Bus                           | `collection = require("collection/bus")`                         |
-| Circuit                       | `collection = require("collection/circuit")`                     |
-| Circuits Sum                  | `collection = require("collection/circuitssum")`                 |
-| DC Link                       | `collection = require("collection/dclink")`                      |
-| Demand                        | `collection = require("collection/demand")`                      |
-| Demand Segment                | `collection = require("collection/demandsegment")`               |
-| Expansion Project             | `collection = require("collection/expansionproject")`            |
-| Fuel                          | `collection = require("collection/fuel")`                        |
-| Fuel Consumption              | `collection = require("collection/fuelconsumption")`             |
-| Fuel Contract                 | `collection = require("collection/fuelcontract")`                |
-| Fuel Reservoir                | `collection = require("collection/fuelreservoir")`               |
-| Generator                     | `collection = require("collection/generator")`                   |
-| Generation Constraint         | `collection = require("collection/generationconstraint")`        |
-| Generic                       | `collection = require("collection/generic")`                     |
-| Hydro                         | `collection = require("collection/hydro")`                       |
-| Interconnection               | `collection = require("collection/interconnection")`             |
-| Interconnection Sum           | `collection = require("collection/interconnectionsum")`          |
-| Power Injection               | `collection = require("collection/powerinjection")`              |
-| Renewable                     | `collection = require("collection/renewable")`                   |
-| Renewable Gauging Station     | `collection = require("collection/renewablegaugingstation")`     |
-| Reserve Generation Constraint | `collection = require("collection/reservegenerationconstraint")` |
-| Study                         | `collection = require("collection/study")`                       |
-| System                        | `collection = require("collection/system")`                      |
-| Thermal                       | `collection = require("collection/thermal")`                     |
+| Area                          | `collection = Area()`                        |
+| Balancing Area                | `collection = BalancingArea()`               |
+| Balancing Area Hydro          | `collection = BalancingAreaHydro()`          |
+| Balancing Area Thermal        | `collection = BalancingAreaThermal()`        |
+| Battery                       | `collection = Battery()`                     |
+| Bus                           | `collection = Bus()`                         |
+| Circuit                       | `collection = Circuit()`                     |
+| Circuits Sum                  | `collection = CircuitsSum()`                 |
+| DC Link                       | `collection = DCLink()`                      |
+| Demand                        | `collection = Demand()`                      |
+| Demand Segment                | `collection = DemandSegment()`               |
+| Expansion Capacity            | `collection = ExpansionCapacity()`           |
+| Expansion Project             | `collection = ExpansionProject()`            |
+| Fuel                          | `collection = Fuel()`                        |
+| Fuel Consumption              | `collection = FuelConsumption()`             |
+| Fuel Contract                 | `collection = FuelContract()`                |
+| Fuel Reservoir                | `collection = FuelReservoir()`               |
+| Generator                     | `collection = Generator()`                   |
+| Generation Constraint         | `collection = GenerationConstraint()`        |
+| Generic                       | `collection = Generic()`                     |
+| Hydro                         | `collection = Hydro()`                       |
+| Interconnection               | `collection = Interconnection()`             |
+| Interconnection Sum           | `collection = InterconnectionSum()`          |
+| Power Injection               | `collection = PowerInjection()`              |
+| Renewable                     | `collection = Renewable()`                   |
+| Renewable Gauging Station     | `collection = RenewableGaugingStation()`     |
+| Reserve Generation Constraint | `collection = ReserveGenerationConstraint()` |
+| Study                         | `collection = Study()`                       |
+| System                        | `collection = System()`                      |
+| Thermal                       | `collection = Thermal()`                     |
 
 
 ## Loading an Output
@@ -61,7 +62,7 @@ The following example loads two outputs, gerhid and fprodt, considering the agen
 {: .no_toc }
 
 ``` lua
-hydro = require("collection/hydro");
+hydro = Hydro();
 gerhid = hydro:load("gerhid");
 fprodt = hydro:load("fprodt");
 ```
@@ -72,7 +73,7 @@ fprodt = hydro:load("fprodt");
 The following example loads two outputs, cmgdem and demand, considering the agents as system collection:
 
 ``` lua
-system = require("collection/system");
+system = System();
 cmgdem = system:load("cmgdem");
 demand = system:load("demand");
 ```
@@ -83,7 +84,7 @@ demand = system:load("demand");
 The following example loads two outputs, gerter and coster, considering the agents as thermal plants collection:
 
 ``` lua
-thermal = require("collection/thermal");
+thermal = Thermal();
 gerter = thermal:load("gerter");
 coster = thermal:load("coster");
 ```
@@ -94,7 +95,7 @@ coster = thermal:load("coster");
 The following example loads two outputs, objcop and outdfact, considering the agents as generic:
 
 ``` lua
-generic = require("collection/generic");
+generic = Generic();
 objcop = generic:load("objcop");
 outdfact = generic:load("outdfact");
 ```
@@ -133,7 +134,7 @@ outdfact = generic:load("outdfact");
 {: .no_toc }
 
 ``` lua
-circuit = require("collection/circuit");
+circuit = Circuit();
 exp = circuit.capacity;
 ```
 
@@ -269,7 +270,7 @@ exp = circuit.capacity;
 | TargetStorageTol    | %     | `exp = hydro.target_storage_tolerance`       |
 
 
-Num		INTEGER	1	4
+<!-- Num		INTEGER	1	4
 Nome		STRING	6	17
 Unidades	INTEGER	34	37	AUTOSET
 Existing	INTEGER 39	42	AUTOSET
@@ -287,7 +288,7 @@ TurIn($(P))	REAL	611+(16*$(P)),617+(16*$(P))	AUTOSET
 TotIn($(P))	REAL	619+(16*$(P)),626+(16*$(P))	AUTOSET
 OxT_Tail($(P))        REAL          695+(16*$(P))  701+(16*$(P))  AUTOSET
 OxT_Outflow($(P))     REAL          703+(16*$(P))  709+(16*$(P))  AUTOSET
-Eaflu		INTEGER	791	791	AUTOSET
+Eaflu		INTEGER	791	791	AUTOSET -->
 
 
 #### Example
@@ -429,7 +430,7 @@ Eaflu		INTEGER	791	791	AUTOSET
 {: .no_toc }
 
 ``` lua
-system = require("collection/system");
+system = System();
 duraci = system.duraci;
 ```
 

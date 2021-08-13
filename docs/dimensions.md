@@ -45,7 +45,7 @@ nav_order: 6
 {: .no_toc }
 
 ``` lua
-system = require("collection/system");
+system = System();
 cmgdem = system:load("cmgdem");
 
 cmgdem_average = cmgdem:aggregate_scenarios(BY_AVERAGE());
@@ -55,7 +55,7 @@ cmgdem_average = cmgdem:aggregate_scenarios(BY_AVERAGE());
 {: .no_toc }
 
 ``` lua
-system = require("collection/system");
+system = System();
 cmgdem = system:load("cmgdem");
 
 cmgdem_p90 = cmgdem:aggregate_scenarios(BY_PERCENTILE(90));
@@ -65,7 +65,7 @@ cmgdem_p90 = cmgdem:aggregate_scenarios(BY_PERCENTILE(90));
 {: .no_toc }
 
 ``` lua
-system = require("collection/system");
+system = System();
 cmgdem = system:load("cmgdem");
 
 cmgdem_max = cmgdem:aggregate_scenarios(BY_MAX(), {1, 2, 3, 4, 5});
@@ -82,7 +82,7 @@ cmgdem_max = cmgdem:aggregate_scenarios(BY_MAX(), {1, 2, 3, 4, 5});
 {: .no_toc }
 
 ``` lua
-system = require("collection/system");
+system = System();
 cmgdem = system:load("cmgdem");
 
 cmgdem_scenario32 = cmgdem:select_scenario(32);
@@ -100,7 +100,7 @@ cmgdem_scenario32 = cmgdem:select_scenario(32);
 {: .no_toc }
 
 ``` lua
-system = require("collection/system");
+system = System();
 cmgdem = system:load("cmgdem");
 
 cmgdem_agg = cmgdem:aggregate_blocks(BY_AVERAGE());
@@ -110,7 +110,7 @@ cmgdem_agg = cmgdem:aggregate_blocks(BY_AVERAGE());
 {: .no_toc }
 
 ``` lua
-renewable = require("collection/renewable");
+renewable = Renewable();
 gergnd = renewable:load("gergnd");
 
 gergnd_agg = gergnd:aggregate_blocks(BY_SUM());
@@ -126,7 +126,7 @@ gergnd_agg = gergnd:aggregate_blocks(BY_SUM());
 {: .no_toc }
 
 ``` lua
-system = require("collection/system");
+system = System();
 cmgdem = system:load("cmgdem");
 
 cmgdem_block21 = cmgdem:select_block(21);
@@ -223,7 +223,7 @@ TODO to_hour e to_block exemplo
 {: .no_toc }
 
 ``` lua
-system = require("collection/system")
+system = System()
 defcit = system:load("defcit")
 
 defcit_per_year = defcit:aggregate_stages(BY_SUM(), Profile.PER_YEAR);
@@ -243,7 +243,7 @@ defcit_per_year = defcit:aggregate_stages(BY_SUM(), Profile.PER_YEAR);
 {: .no_toc }
 
 ``` lua
-generic = require("collection/generic");
+generic = Generic();
 objcop = generic:load("objcop");
 
 exp1 = objcop:select_stages();
@@ -318,7 +318,7 @@ exp5 = objcop:select_stages_by_year(2032);
 {: .no_toc }
 
 ``` lua
-hydro = require("collection/hydro");
+hydro = Hydro();
 gerhid = hydro:load("gerhid");
 
 gerhid_sum = gerhid:aggregate_agents(BY_SUM(), "Total Hydro");
@@ -328,7 +328,7 @@ gerhid_sum = gerhid:aggregate_agents(BY_SUM(), "Total Hydro");
 {: .no_toc }
 
 ``` lua
-hydro = require("collection/hydro");
+hydro = Hydro();
 gerhid = hydro:load("gerhid");
 
 gerhid_systems = gerhid:aggregate_agents(BY_SUM(), Collection.SYSTEM);
@@ -338,7 +338,7 @@ gerhid_systems = gerhid:aggregate_agents(BY_SUM(), Collection.SYSTEM);
 {: .no_toc }
 
 ``` lua
-hydro = require("collection/hydro");
+hydro = Hydro();
 gerhid = hydro:load("gerhid");
 
 gerhid_buses = gerhid:aggregate_agents(BY_SUM(), Collection.BUSES);
@@ -357,7 +357,7 @@ gerhid_buses = gerhid:aggregate_agents(BY_SUM(), Collection.BUSES);
 {: .no_toc }
 
 ``` lua
-thermal = require("collection/thermal");
+thermal = Thermal();
 gerter = thermal:load("gerter");
 
 gerter_t1_and_t2 = gerter:select_agents({"Thermal 1", "Thermal 2"});
@@ -381,7 +381,7 @@ gerter_t1_and_t2 = gerter:select_agents({"Thermal 1", "Thermal 2"});
 {: .no_toc }
 
 ``` lua
-thermal = require("collection/thermal");
+thermal = Thermal();
 gerter = thermal:load("gerter");
 
 gerter_renamed = gerter:rename_agents({"T1", "T2", "T3"});
@@ -397,13 +397,13 @@ gerter_renamed = gerter:rename_agents({"T1", "T2", "T3"});
 {: .no_toc }
 
 ``` lua
-hydro = require("collection/hydro");
+hydro = Hydro();
 gerhid = hydro:load("gerhid");
 
-thermal = require("collection/thermal");
+thermal = Thermal();
 gerter = thermal:load("gerter");
     
-renewable = require("collection/renewable");
+renewable = Renewable();
 gergnd = renewable:load("gergnd");
     
 generation = concatenate(gerhid, gerter, gergnd);

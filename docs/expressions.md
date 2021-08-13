@@ -35,7 +35,7 @@ PSRIO provides four unary operators that only receive one expression and does no
 The example below takes the power flow in a circuit and calculates its absolute values.
 
 ``` lua
-circuit = require("collection/circuit");
+circuit = Circuit();
 cirflw = circuit:load("cirflw");
 
 abs_cirflw = cirflw:abs();
@@ -47,7 +47,7 @@ abs_cirflw = cirflw:abs();
 Here, we use the convert method to act over the generation data of a set of thermal plants, which is given in GWh, and convert it to MW.
 
 ``` lua
-thermal = require("collection/thermal");
+thermal = Thermal();
 thermal_gen = circuit:load("gerter");
 
 converted_thermal_gen = thermal_gen:convert("MW");
@@ -93,7 +93,7 @@ Here are some examples of usage of the operators prior explained.
 
 Calculating the useful storage of a hydro plant:
 ``` lua
-hydro = require("collection/hydro");
+hydro = Hydro();
 useful_storage = hydro.vmax - hydro.vmin;
 ```
 
@@ -103,7 +103,7 @@ useful_storage = hydro.vmax - hydro.vmin;
 
 Comparing the generation of a thermal plant with its maximum capacity:
 ``` lua
-thermal = require("collection/thermal");
+thermal = Thermal();
 
 thermal_gen = thermal:load("gerter");
 thermal_cap = thermal:load("potter");
@@ -118,16 +118,16 @@ Note that, as the generation data is in GWh and the capacity in MW, a unit conve
 
 Getting the highest total generated energy per type of plant: 
 ``` lua
-thermal = require("collection/thermal");
-hydro = require("collection/hydro");
+thermal = Thermal();
+hydro = Hydro();
 
-thermal_gen = thermal:load("gerter");
-hydro_gen = hydro:load("gerhid");
+gerter = thermal:load("gerter");
+gerhid = hydro:load("gerhid");
 
-thermal_total_gen=thermal_gen:aggregate_agents(BY_SUM(), "Total Thermal Gen");
-hydro_total_gen=hydro_gen:aggregate_agents(BY_SUM(), "Total Hydro Gen");
+total_gerter = gerter:aggregate_agents(BY_SUM(), "Total Thermal Gen");
+total_gerhid = gerhid:aggregate_agents(BY_SUM(), "Total Hydro Gen");
 
-max_between =  max(hydro_total_gen, thermal_total_gen);
+max_generation =  max(total_gerter, total_gerhid);
 ```
 Thermal generation end hydro generation do not directly compare. To do so, we first need to aggregate the agents to obtain only one information of generation per block, scenario and stage in each set of data. Then, we are able to compare them.
 
@@ -195,11 +195,11 @@ The table below presents the ```ifelse``` operator. If the ```exp1``` is true, o
 
 In the example below, if the thermal generation is greater than zero, 1 is returned, otherwise, 0 is returned.
 ``` lua
-thermal = require("collection/thermal");
+thermal = Thermal();
 
-thermal_gen = thermal:load("gerter");
+gerter = thermal:load("gerter");
 
-gen_gt_zero = ifelse(thermal_gen:gt(0.0), 1, 0);
+gerter_gt_zero = ifelse(gerter:gt(0.0), 1, 0);
 ```
 
 ## Unit Conversion
@@ -214,7 +214,7 @@ The units conversion follows the International System of Units (SI), based on th
 {: .no_toc }
 
 ``` lua
-hydro = require("collection/hydro");
+hydro = Hydro();
 fprodt = hydro:load("fprodt");
     
 pothid = min(hydro.qmax * fprodt, hydro.capacity_maintenance);
@@ -226,7 +226,7 @@ In this example we have two inputs with different units: `hydro.qmax` `[m3/s]` a
 {: .no_toc }
 
 ``` lua
-renewable = require("collection/renewable");
+renewable = Renewable();
 gergnd = renewable:load("gergnd");
 vergnd = renewable:load("vergnd");
     
@@ -239,8 +239,8 @@ The unit conversion output of Example 2 is `([GWh] × [GWh]) / ([GWh] + [GWh]) =
 {: .no_toc }
 
 ``` lua
-thermal = require("collection/thermal");
-fuel = require("collection/fuel");
+thermal = Thermal();
+fuel = Fuel();
     
 cinte1 = (thermal.cesp1 * (thermal.transport_cost + fuel.cost) + thermal.omcost);
 ```
@@ -251,7 +251,7 @@ The unit conversion output of Example 3 is `[gal/MWh] × ([$/gal] + [$/gal]) + [
 {: .no_toc }
 
 ``` lua
-hydro = require("collection/hydro");
+hydro = Hydro();
 volfin = hydro:load("volfin");
 fprodtac = hydro:load("fprodtac");
     
