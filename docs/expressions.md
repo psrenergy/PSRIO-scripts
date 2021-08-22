@@ -129,13 +129,15 @@ total_gerhid = gerhid:aggregate_agents(BY_SUM(), "Total Hydro Gen");
 
 max_generation =  max(total_gerter, total_gerhid);
 ```
-Thermal generation end hydro generation do not directly compare. To do so, we first need to aggregate the agents to obtain only one information of generation per block, scenario and stage in each set of data. Then, we are able to compare them.
+Thermal generation end hydro generation do not directly compare. To do so, we first need to aggregate the agents to obtain only one representative agent containing information of generation per block, scenario and stage in each set of data. Then, we are able to compare them.
 
 <br/>
 
 All the above-mentioned binary expressions follow the same rules to define the stages, scenarios, blocks, and agents of the resulting output.
 
 ### Stages and Scenarios
+
+If one of the operands has `n` stages, or scenarios, and the other has only `1`, the result will have `n` stages or scenarios. In the case the operand on the left, `exp1`, has `n1` stages or scenarios, and operand `exp2`, on the right, has `n2`, the result will have `n3` as the minimum number of stages or scenarios between the two. In other words, `n3 = min(n1, n2)`. If both operands have `1` stage or scenario, the result will naturally have also `1`. The table below summarizes the explanation:
 
 | exp1     | exp2     | exp         |
 |:--------:|:--------:|:-----------:|
@@ -147,6 +149,8 @@ All the above-mentioned binary expressions follow the same rules to define the s
 <br/>
 
 ### Block and Hours
+
+If one of the operands has block representation of its data and the other does not have either block, or hour, representation, the result will have block representation. Same logic applies to operands that have hour representation and the other does not. For the case that one operand has block and the other hour representation, the result is undefined. The table below sums up the explanation: 
 
 | exp1 or exp2     | exp     |
 |:----------------:|:-------:|
