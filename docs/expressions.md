@@ -25,7 +25,6 @@ PSRIO provides four unary operators that only receive one expression and does no
 | Unary Minus     | `exp = -exp1`                |
 | Absolute Value  | `exp = exp1:abs()`           |
 | Round           | `exp = exp1:round(int)`      |
-| Unit Conversion | `exp = exp1:convert("unit")` |
 
 <br/>
 
@@ -44,7 +43,7 @@ abs_cirflw = cirflw:abs();
 #### Example 2
 {: .no_toc}
 
-Here, we use the convert method to act over the generation data of a set of thermal plants, which is given in GWh, and convert it to MW.
+Here, we use the convert method to act over the generation data of a set of thermal plants given in GWh and convert it to MW.
 
 ``` lua
 thermal = Thermal();
@@ -55,7 +54,7 @@ converted_thermal_gen = thermal_gen:convert("MW");
 
 ## Binary Expressions
 
-PSRIO provides binary operators which can change attributes (stages, blocks, scenarios, and agents) depending on inputs. The first table presents the addition, subtraction, multiplication, division, and power arithmetic operators.
+PSRIO provides binary operators which can change attributes (stages, blocks, scenarios, and agents) depending on inputs. The first table presents the supported arithmetic operators.
 
 |          Operator         |          Syntax         |
 |:--------------------------|:------------------------|
@@ -65,7 +64,7 @@ PSRIO provides binary operators which can change attributes (stages, blocks, sce
 |       Right Division      |   `exp = exp1 / exp2`   |
 |           Power           |   `exp = exp1 ^ exp2`   |
 
-The second table defines the logic/comparison operators: and, or, equality, inequality, less than, less than or equal to, greater than, and greater than or equal to.
+The second table defines the logical and comparison operators.
 
 |          Operator         |          Syntax         |
 |:--------------------------|:------------------------|
@@ -100,7 +99,6 @@ useful_storage = hydro.vmax - hydro.vmin;
 #### Example 2
 {: .no_toc }
 
-
 Comparing the generation of a thermal plant with its maximum capacity:
 ``` lua
 thermal = Thermal();
@@ -111,13 +109,13 @@ thermal_cap = thermal:load("potter");
 gen_gt_cap = (thermal_gen:convert("MW")):gt(thermal_cap);
 ```
 
-Note that, as the generation data is in GWh and the capacity in MW, a unit conversion is needed in order to make a comparison between them. In this case, we converted the generation, but we could have converted the thermal capacity instead.
+Note that, since the generation data is in GWh and the capacity in MW, a unit conversion is needed to compare them. 
 
 #### Example 3
 {: .no_toc}
 
 Getting the highest total generated energy per type of plant: 
-``` lua
+```lua
 thermal = Thermal();
 hydro = Hydro();
 
@@ -129,15 +127,16 @@ total_gerhid = gerhid:aggregate_agents(BY_SUM(), "Total Hydro Gen");
 
 max_generation =  max(total_gerter, total_gerhid);
 ```
-Thermal generation end hydro generation do not directly compare. To do so, we first need to aggregate the agents to obtain only one representative agent containing information of generation per block, scenario and stage in each set of data. Then, we are able to compare them.
+
+Thermal and hydro generation are not directly compared. To compare them, we first need to aggregate the agents to obtain only one representative agent containing generation per block, scenario, and stage in each data set. Then, we can compare them.
 
 <br/>
 
-All the above-mentioned binary expressions follow the same rules to define the stages, scenarios, blocks, and agents of the resulting output.
+All the above-mentioned binary expressions follow the same rules to define the resulting output's stages, scenarios, blocks, and agents.
 
 ### Stages and Scenarios
 
-If one of the operands has `n` stages, or scenarios, and the other has only `1`, the result will have `n` stages or scenarios. In the case the operand on the left, `exp1`, has `n1` stages or scenarios, and operand `exp2`, on the right, has `n2`, the result will have `n3` as the minimum number of stages or scenarios between the two. In other words, `n3 = min(n1, n2)`. If both operands have `1` stage or scenario, the result will naturally have also `1`. The table below summarizes the explanation:
+If one expression has n stages, and the other has only `1`, the result will have `n` stages. If the `exp1` has `n1` stages and `exp2` has `n2`, the resulting expression will have `n3` as the minimum number of stages between the two. In other words, `n3 = min{n1, n2}`. If both expressions have `1` stage, the result will naturally have also `1`. The same rule is applied to the scenarios. The table below summarizes the explanation:
 
 | exp1     | exp2     | exp         |
 |:--------:|:--------:|:-----------:|
@@ -150,7 +149,7 @@ If one of the operands has `n` stages, or scenarios, and the other has only `1`,
 
 ### Block and Hours
 
-If one of the operands has block representation of its data and the other does not have either block, or hour, representation, the result will have block representation. Same logic applies to operands that have hour representation and the other does not. For the case that one operand has block and the other hour representation, the result is undefined. The table below sums up the explanation: 
+The following table describes the blocks and hours rules. The only operation that is not allowed is mixing expressions that vary per block and hour. 
 
 | exp1 or exp2     | exp     |
 |:----------------:|:-------:|
@@ -187,7 +186,7 @@ If one of the operands has block representation of its data and the other does n
 
 ## Ternary Expressions
 
-The table below presents the `ifelse` operator. If the `exp1` is true, operator returns `exp2`. If not, `exp3` is returned.
+The table below presents the `ifelse`. Likewise, the above-defined operators, the `ifelse` follow dataframe rules, doing element-wise operations. If the element of `exp1` is true, `exp2` is the result, otherwise, it is exp3.
 
 | Operator    | Syntax                           |
 |:------------|:---------------------------------|
@@ -196,7 +195,7 @@ The table below presents the `ifelse` operator. If the `exp1` is true, operator 
 #### Example 1
 {: .no_toc }
 
-In the example below, if the thermal generation is greater than zero, 1 is returned, otherwise, 0 is returned.
+In the example below, if the thermal generation is greater than zero, 1 is returned; otherwise, 0 is returned.
 
 ``` lua
 thermal = Thermal();
@@ -214,6 +213,11 @@ gerter_gt_zero = ifelse(gerter:gt(0.0), 1, 0);
 
 The units conversion follows the International System of Units (SI), based on the [2019 redefinition](https://www.nist.gov/si-redefinition). The PSRIO will perform a multi-step process with all the expressions inputs, producing a conversion factor with the desired unit.
 
+|     Operator    |            Syntax            |
+|:----------------|:-----------------------------|
+| Unit Conversion | `exp = exp1:convert("unit")` |
+
+
 #### Example 1
 {: .no_toc }
 
@@ -229,7 +233,7 @@ In this example we have two inputs with different units: `hydro.qmax` `[m3/s]` a
 #### Example 2
 {: .no_toc }
 
-``` lua
+```lua
 renewable = Renewable();
 gergnd = renewable:load("gergnd");
 vergnd = renewable:load("vergnd");
