@@ -189,6 +189,7 @@ If one of the operands has block representation of its data and the other does n
 ## Ternary Expressions
 
 The table below presents the ```ifelse``` operator. If the ```exp1``` is true, operator returns ```exp2```. If not, ```exp3``` is returned.
+
 | Operator    | Syntax                           |
 |:------------|:---------------------------------|
 | Conditional | `exp = ifelse(exp1, exp2, exp3)` |

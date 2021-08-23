@@ -51,7 +51,7 @@ Additionally, PSRIO also enables the direct creation of dashboards.
 - Portable and small, written in ANSI C, easy to integrate with C/C++
 - TIOBE Index for March 2021:
   - 1st C; 2nd Java; 3rd Python; 4th C++; 5th C#; 7th JavaScript; 22nd Fortran; 34th Julia; **38th Lua**
-- Widely used in big games and small devices (embedded systems and IoT)
+- Widely used in Triple-A games and small devices (embedded systems and IoT)
 
 ### Scripting + LUA + PSR = PSRIO
 

@@ -18,36 +18,36 @@ nav_order: 3
 
 |           Collection          | Syntax                                                           |
 |:------------------------------|:-----------------------------------------------------------------|
-| Area                          | `collection = Area()`                        |
-| Balancing Area                | `collection = BalancingArea()`               |
-| Balancing Area Hydro          | `collection = BalancingAreaHydro()`          |
-| Balancing Area Thermal        | `collection = BalancingAreaThermal()`        |
-| Battery                       | `collection = Battery()`                     |
-| Bus                           | `collection = Bus()`                         |
-| Circuit                       | `collection = Circuit()`                     |
-| Circuits Sum                  | `collection = CircuitsSum()`                 |
-| DC Link                       | `collection = DCLink()`                      |
-| Demand                        | `collection = Demand()`                      |
-| Demand Segment                | `collection = DemandSegment()`               |
-| Expansion Capacity            | `collection = ExpansionCapacity()`           |
-| Expansion Project             | `collection = ExpansionProject()`            |
-| Fuel                          | `collection = Fuel()`                        |
-| Fuel Consumption              | `collection = FuelConsumption()`             |
-| Fuel Contract                 | `collection = FuelContract()`                |
-| Fuel Reservoir                | `collection = FuelReservoir()`               |
-| Generator                     | `collection = Generator()`                   |
-| Generation Constraint         | `collection = GenerationConstraint()`        |
-| Generic                       | `collection = Generic()`                     |
-| Hydro                         | `collection = Hydro()`                       |
-| Interconnection               | `collection = Interconnection()`             |
-| Interconnection Sum           | `collection = InterconnectionSum()`          |
-| Power Injection               | `collection = PowerInjection()`              |
-| Renewable                     | `collection = Renewable()`                   |
-| Renewable Gauging Station     | `collection = RenewableGaugingStation()`     |
-| Reserve Generation Constraint | `collection = ReserveGenerationConstraint()` |
-| Study                         | `collection = Study()`                       |
-| System                        | `collection = System()`                      |
-| Thermal                       | `collection = Thermal()`                     |
+| Area                          | `area = Area()`                                                  |
+| Balancing Area                | `balancing_area = BalancingArea()`                               |
+| Balancing Area Hydro          | `balancing_area_hydro = BalancingAreaHydro()`                    |
+| Balancing Area Thermal        | `Balancing_area_thermal = BalancingAreaThermal()`                |
+| Battery                       | `battery = Battery()`                                            |
+| Bus                           | `bus = Bus()`                                                    |
+| Circuit                       | `circuit = Circuit()`                                            |
+| Circuits Sum                  | `circuits_sum = CircuitsSum()`                                   |
+| DC Link                       | `dclink = DCLink()`                                              |
+| Demand                        | `demand = Demand()`                                              |
+| Demand Segment                | `demand_segment = DemandSegment()`                               |
+| Expansion Capacity            | `expansion_capacity = ExpansionCapacity()`                       |
+| Expansion Project             | `expansion_project = ExpansionProject()`                         |
+| Fuel                          | `fuel = Fuel()`                                                  |
+| Fuel Consumption              | `fuel_consumption = FuelConsumption()`                           |
+| Fuel Contract                 | `fuel_contract = FuelContract()`                                 |
+| Fuel Reservoir                | `fuel_reservoir = FuelReservoir()`                               |
+| Generator                     | `generator = Generator()`                                        |
+| Generation Constraint         | `generation_constraint = GenerationConstraint()`                 |
+| Generic                       | `generic = Generic()`                                            |
+| Hydro                         | `hydro = Hydro()`                                                |
+| Interconnection               | `interconnection = Interconnection()`                            |
+| Interconnection Sum           | `interconnection_sum = InterconnectionSum()`                     |
+| Power Injection               | `power_injection = PowerInjection()`                             |
+| Renewable                     | `renewable = Renewable()`                                        |
+| Renewable Gauging Station     | `renewable_gauging_station = RenewableGaugingStation()`          |
+| Reserve Generation Constraint | `reserve_generation_constraint = ReserveGenerationConstraint()`  |
+| Study                         | `study = Study()`                                                |
+| System                        | `system = System()`                                              |
+| Thermal                       | `thermal = Thermal()`                                            |
 
 
 ## Loading an Output
@@ -121,49 +121,28 @@ outdfact = generic:load("outdfact");
 
 | Data                                                                | Unit | Syntax                                  |
 |:--------------------------------------------------------------------|:----:|:----------------------------------------|
-| Resistance                                                          | %    | TODO                                    |
-| Reactance                                                           | %    | TODO                                    |
+| Resistance                                                          | %    | `exp = circuit.resistance`              |
+| Reactance                                                           | %    | `exp = circuit.reactance`               |
 | Nominal Flow Limit                                                  | MW   | `exp = circuit.capacity`                |
-| Emergency Flow Limit                                                | MW   | TODO                                    |
-| Circuit Type (existing = 0 or future = 1)                           | ---  | TODO                                    |
-| Selected for monitoring                                             | ---  | `exp = circuit.monitored`               |
-| Selected for monitoring (contingencies)                             | ---  | `exp = circuit.monitored_contingencies` |
+| Emergency Flow Limit                                                | MW   | `exp = circuit.emergency_capacity`      |
 | Circuit Operative Condition (connected = 0 or disconnected = 1)     | ---  | `exp = circuit.status`                  |
-
-#### Example
-{: .no_toc }
-
-``` lua
-circuit = Circuit();
-exp = circuit.capacity;
-```
+| Selected for Monitoring                                             | ---  | `exp = circuit.monitored`               |
+| Selected for Monitoring (contingencies)                             | ---  | `exp = circuit.monitored_contingencies` |
 
 ### Circuits Sum
 
 | Data             | Unit | Syntax                                  |
 |:-----------------|:----:|:----------------------------------------|
-|                  | MW   | `exp = circuitssum.lb`                  |
-|                  | MW   | `exp = circuitssum.ub`                  |
-
-#### Example
-{: .no_toc }
-
-``` lua
-```
+| Lower bound      | MW   | `exp = circuits_sum.lb`                 |
+| Upper bound      | MW   | `exp = circuits_sum.ub`                 |
 
 ### DC Link
 
 | Data                                            | Unit | Syntax                                  |
 |:------------------------------------------------|:----:|:----------------------------------------|
-| DC Link Type (existing = 0 or future = 1)       | ---  | TODO                                    |
+| DC Link Type (existing = 0 or future = 1)       | ---  | `exp = dclink.existing`                 |
 | Nominal Flow Limit in the FROM -> TO direction  | MW   | `exp = dclink.capacity_right`           |
 | Nominal Flow Limit in the FROM <- TO direction  | MW   | `exp = dclink.capacity_left`            |
-
-#### Example
-{: .no_toc }
-
-``` lua
-```
 
 ### Demand
 
@@ -173,24 +152,12 @@ exp = circuit.capacity;
 | Energy to be consumed by inelastic demand (hourly)     | MW   | `exp = demand.inelastic_hour`           |
 | Energy to be consumed by inelastic demand (block)      | GWh  | `exp = demand.inelastic_block`          |
 
-#### Example
-{: .no_toc }
-
-``` lua
-```
-
 ### Demand Segment
 
 | Data                                             | Unit | Syntax                                  |
 |:-------------------------------------------------|:----:|:----------------------------------------|
-| Energy to be consumed by demand segment (hourly) | MW   | `exp = demandsegment.hour`              |
-| Energy to be consumed by demand segment (block)  | GWh  | `exp = demandsegment.block`             |
-
-#### Example
-{: .no_toc }
-
-``` lua
-```
+| Energy to be consumed by demand segment (hourly) | MW   | `exp = demand_segment.hour`             |
+| Energy to be consumed by demand segment (block)  | GWh  | `exp = demand_segment.block`            |
 
 <!-- ### Expansion Project -->
 
@@ -198,42 +165,26 @@ exp = circuit.capacity;
 
 | Data             | Unit  | Syntax                                 |
 |:-----------------|:-----:|:---------------------------------------|
-|                  | $/gal | `exp = fuel.cost`                      |
-
-#### Example
-{: .no_toc }
-
-``` lua
-```
+| Fuel Cost        | $/gal | `exp = fuel.cost`                      |
 
 <!-- ### Fuel Consumption -->
 
 ### Fuel Contract
 
-| Data             | Unit  | Syntax                                  |
-|:-----------------|:-----:|:----------------------------------------|
-|                  | ---   | `exp = fuelcontract.amount`             |
-|                  | ---   | `exp = fuelcontract.take_or_pay`        |
-|                  | ---   | `exp = fuelcontract.max_offtake`        |
-
-#### Example
-{: .no_toc }
-
-``` lua
-```
+| Data                        | Unit  | Syntax                                  |
+|:----------------------------|:-----:|:----------------------------------------|
+| Fuel Cost                   | $/gal | `exp = fuel_contract.cost`              |
+| Contracted Amount           | ---   | `exp = fuel_contract.amount`            |
+| Take-or-Pay Fuel Cost       | $/gal | `exp = fuel_contract.take_or_pay`       |
+| Extra Take-or-Pay Fuel Cost | $/gal | `exp = fuel_contract.extra_take_or_pay` |
+| Maximum Offtake Rate        | ---   | `exp = fuel_contract.max_offtake`       |
 
 ### Fuel Reservoir
 
-| Data             | Unit  | Syntax                                           |
-|:-----------------|:-----:|:-------------------------------------------------|
-|                  | ---   | `exp = fuelreservoir.maxinjection`               |
-|                  | ---   | `exp = fuelreservoir.maxinjection_chronological` |
-
-#### Example
-{: .no_toc }
-
-``` lua
-```
+| Data                                    | Unit  | Syntax                                            |
+|:----------------------------------------|:-----:|:--------------------------------------------------|
+| Maximum Injection Limit                 | ---   | `exp = fuel_reservoir.maxinjection`               |
+| Maximum Injection Limit (chronological) | ---   | `exp = fuel_reservoir.maxinjection_chronological` |
 
 <!-- ### Generator -->
 
@@ -241,13 +192,7 @@ exp = circuit.capacity;
 
 | Data             | Unit  | Syntax                                           |
 |:-----------------|:-----:|:-------------------------------------------------|
-|                  | MW    | `exp = generationconstraint.capacity`            |
-
-#### Example
-{: .no_toc }
-
-``` lua
-```
+|                  | MW    | `exp = generation_constraint.capacity`           |
 
 <!-- ### Generic -->
 
@@ -257,45 +202,17 @@ exp = circuit.capacity;
 |:-------------------------------------------------|:-----:|:---------------------------------------------|
 | Construction Status (existing = 0 or future = 1) | ---   | `exp = hydro.status`                         |
 | Number of Generating Units                       | ---   | `exp = hydro.units`                          |
-| Installed Capacity      | MW    | `exp = hydro.capacity`                       |
-| PotInst             | MW    | `exp = hydro.capacity_maintenance`           |
-| ICP                 | %     | `exp = hydro.icp`                            |
-| IH                  | %     | `exp = hydro.ih`                             |
-| Vmin                | hm3   | `exp = hydro.vmin`                           |
-| Vmax                | hm3   | `exp = hydro.vmax`                           |
-| Minimum Turbining           | m3/s  | `exp = hydro.qmin`                           |
-| Maximum Turbining          | m3/s  | `exp = hydro.qmax`                           |
-| O&M Cost            | $/MWh | `exp = hydro.omcost`                         |
-| Rieg                | m3/s  | `exp = hydro.irrigation`                     |
-| TargetStorageTol    | %     | `exp = hydro.target_storage_tolerance`       |
-
-
-<!-- Num		INTEGER	1	4
-Nome		STRING	6	17
-Unidades	INTEGER	34	37	AUTOSET
-Existing	INTEGER 39	42	AUTOSET
-PotInst		REAL	44	50	AUTOSET
-FPMed		REAL	51	58	AUTOSET
-Qmin		REAL	60	66	AUTOSET
-Qmax		REAL	68	74	AUTOSET
-Vmin		REAL	76	82	AUTOSET
-Vmax		REAL	84	90	AUTOSET
-DfTotMin	REAL	100	106	AUTOSET
-ICP		REAL	116	122	AUTOSET
-IH		REAL	124	130	AUTOSET
-Indicador	INTEGER	625	625	AUTOSET
-TurIn($(P))	REAL	611+(16*$(P)),617+(16*$(P))	AUTOSET
-TotIn($(P))	REAL	619+(16*$(P)),626+(16*$(P))	AUTOSET
-OxT_Tail($(P))        REAL          695+(16*$(P))  701+(16*$(P))  AUTOSET
-OxT_Outflow($(P))     REAL          703+(16*$(P))  709+(16*$(P))  AUTOSET
-Eaflu		INTEGER	791	791	AUTOSET -->
-
-
-#### Example
-{: .no_toc }
-
-``` lua
-```
+| Total Installed Capacity                         | MW    | `exp = hydro.capacity`                       |
+| Total Installed Capacity (maintenance)           | MW    | `exp = hydro.capacity_maintenance`           |
+| Forced Outage Rate                               | %     | `exp = hydro.FOR`                            |
+| Historical Outage Factor                         | %     | `exp = hydro.COR`                            |
+| Minimum Storage                                  | hm3   | `exp = hydro.vmin`                           |
+| Maximum Storage                                  | hm3   | `exp = hydro.vmax`                           |
+| Minimum Turbining Outflow                        | m3/s  | `exp = hydro.qmin`                           |
+| Maximum Turbining Outflow                        | m3/s  | `exp = hydro.qmax`                           |
+| O&M Cost                                         | $/MWh | `exp = hydro.omcost`                         |
+| Irrigation                                       | m3/s  | `exp = hydro.irrigation`                     |
+| Target Storage Tolerance                         | %     | `exp = hydro.target_storage_tolerance`       |
 
 | Data                                                        | Unit  | Syntax                                                       |
 |:------------------------------------------------------------|:-----:|:-------------------------------------------------------------|
@@ -306,93 +223,69 @@ Eaflu		INTEGER	791	791	AUTOSET -->
 | Maximum Total Outflow                                       | m3/s  | `exp = hydro.max_total_outflow`                              |
 | Maximum Total Outflow Historical Scenarios                  | m3/s  | `exp = hydro.max_total_outflow_historical_scenarios`         |
 | Maximum Total Outflow Historical Scenarios (no data)        | ---   | `exp = hydro.max_total_outflow_historical_scenarios_nodata`  |
-| VolumeMinimum                                               | hm3   | `exp = hydro.vmin_chronological`                             |
-| VolumeMinimum                                               | hm3   | `exp = hydro.vmin_chronological_historical_scenarios`        |
-| VolumeMinimum                                               | ---   | `exp = hydro.vmin_chronological_historical_scenarios_nodata` |
-| VolumeMaximum                                               | hm3   | `exp = hydro.vmax_chronological`                             |
-| VolumeMaximum                                               | hm3   | `exp = hydro.vmax_chronological_historical_scenarios`        |
-| VolumeMaximum                                               | ---   | `exp = hydro.vmax_chronological_historical_scenarios_nodata` |
+| Minimum Volume                                              | hm3   | `exp = hydro.vmin_chronological`                             |
+| Minimum Volume Historical Scenarios                         | hm3   | `exp = hydro.vmin_chronological_historical_scenarios`        |
+| Minimum Volume Historical Scenarios (no data)               | ---   | `exp = hydro.vmin_chronological_historical_scenarios_nodata` |
+| Maximum Volume                                              | hm3   | `exp = hydro.vmax_chronological`                             |
+| Maximum Volume Historical Scenarios                         | hm3   | `exp = hydro.vmax_chronological_historical_scenarios`        |
+| Maximum Volume Historical Scenarios (no data)               | ---   | `exp = hydro.vmax_chronological_historical_scenarios_nodata` |
 | Flood Control Storage                                       | hm3   | `exp = hydro.flood_control`                                   |
-| Flood Control Storage  Historical Scenarios                 | hm3   | `exp = hydro.flood_control_historical_scenarios`              |
-| Flood Control Storage  Historical Scenarios (no data)       | ---   | `exp = hydro.flood_control_historical_scenarios_nodata`       |
-| AlertStorage                                                | hm3   | `exp = hydro.alert_storage`                                  |
-| AlertStorage                                                | hm3   | `exp = hydro.alert_storage_historical_scenarios`             |
-| AlertStorage                                                | ---   | `exp = hydro.alert_storage_historical_scenarios_nodata`      |
-| MinSpillage                                                 | m3/s  | `exp = hydro.min_spillage`                                   |
-| MinSpillage                                                 | m3/s  | `exp = hydro.min_spillage_historical_scenarios`              |
-| MinSpillage                                                 | ---   | `exp = hydro.min_spillage_historical_scenarios_nodata`       |
-| MaxSpillage                                                 | m3/s  | `exp = hydro.max_spillage`                                   |
-| MaxSpillage                                                 | m3/s  | `exp = hydro.max_spillage_historical_scenarios`              |
-| MaxSpillage                                                 | ---   | `exp = hydro.max_spillage_historical_scenarios_nodata`       |
-| MinBioSpillage                                              | %     | `exp = hydro.min_bio_spillage`                               |
-| MinBioSpillage                                              | %     | `exp = hydro.min_bio_spillage_historical_scenarios`          |
-| MinBioSpillage                                              | ---   | `exp = hydro.min_bio_spillage_historical_scenarios_nodata`   |
-| TargetStorage                                               | hm3   | `exp = hydro.target_storage`                                 |
-| TargetStorage                                               | hm3   | `exp = hydro.target_storage_historical_scenarios`            |
-| TargetStorage                                               | ---   | `exp = hydro.target_storage_historical_scenarios_nodata`     |
-
-#### Example
-{: .no_toc }
-
-``` lua
-```
+| Flood Control Storage Historical Scenarios                  | hm3   | `exp = hydro.flood_control_historical_scenarios`              |
+| Flood Control Storage Historical Scenarios (no data)        | ---   | `exp = hydro.flood_control_historical_scenarios_nodata`       |
+| Alert Storage                                               | hm3   | `exp = hydro.alert_storage`                                  |
+| Alert Storage Historical Scenarios                          | hm3   | `exp = hydro.alert_storage_historical_scenarios`             |
+| Alert Storage Historical Scenarios (no data)                | ---   | `exp = hydro.alert_storage_historical_scenarios_nodata`      |
+| Min Spillage                                                | m3/s  | `exp = hydro.min_spillage`                                   |
+| Min Spillage Historical Scenarios                           | m3/s  | `exp = hydro.min_spillage_historical_scenarios`              |
+| Min Spillage Historical Scenarios (no data)                 | ---   | `exp = hydro.min_spillage_historical_scenarios_nodata`       |
+| Max Spillage                                                | m3/s  | `exp = hydro.max_spillage`                                   |
+| Max Spillage Historical Scenarios                           | m3/s  | `exp = hydro.max_spillage_historical_scenarios`              |
+| Max Spillage Historical Scenarios (no data)                 | ---   | `exp = hydro.max_spillage_historical_scenarios_nodata`       |
+| Min Bio Spillage                                            | %     | `exp = hydro.min_bio_spillage`                               |
+| Min Bio Spillage Historical Scenarios                       | %     | `exp = hydro.min_bio_spillage_historical_scenarios`          |
+| Min Bio Spillage Historical Scenarios (no data)             | ---   | `exp = hydro.min_bio_spillage_historical_scenarios_nodata`   |
+| Target Storage                                              | hm3   | `exp = hydro.target_storage`                                 |
+| Target Storage Historical Scenarios                         | hm3   | `exp = hydro.target_storage_historical_scenarios`            |
+| Target Storage Historical Scenarios (no data)               | ---   | `exp = hydro.target_storage_historical_scenarios_nodata`     |
 
 ### Interconnection
 
-| Data                | Unit  | Syntax                                                       |
-|:--------------------|:-----:|:-------------------------------------------------------------|
-|                     | MW   | `exp = interconnection.capacity_right`                        |
-|                     | MW   | `exp = interconnection.capacity_left`                         |
-|                     | MW   | `exp = interconnection.cost_right`                            |
-|                     | MW   | `exp = interconnection.cost_left`                             |
+| Data                                 | Unit  | Syntax                                                       |
+|:-------------------------------------|:-----:|:-------------------------------------------------------------|
+| Power Exchange Capacity (FROM -> TO) | MW    | `exp = interconnection.capacity_right`                       |
+| Power Exchange Capacity (TO -> FROM) | MW    | `exp = interconnection.capacity_left`                        |
+| Transmission Cost (TO -> FROM)       | $/MWh | `exp = interconnection.cost_right`                           |
+| Transmission Cost (FROM -> TO)       | $/MWh | `exp = interconnection.cost_left`                            |
 
 ### Interconnection Sum
 
 | Data                | Unit  | Syntax                                                       |
 |:--------------------|:-----:|:-------------------------------------------------------------|
-|                     | MW   | `exp = interconnectionsum.lb`                                 |
-|                     | MW   | `exp = interconnectionsum.ub`                                 |
+| Lower Bound         | MW   | `exp = interconnection_sum.lb`                                |
+| Upper Bound         | MW   | `exp = interconnection_sum.ub`                                |
 
 
 ### Power Injection
 
 | Data                | Unit  | Syntax                                                        |
 |:--------------------|:-----:|:--------------------------------------------------------------|
-| Hourly Capacity     | MW    | `exp = powerinjection.hour_capacity`                          |
-| Hourly Price        | $/MWh | `exp = powerinjection.hour_price`                             |
-
-#### Example
-{: .no_toc }
-
-``` lua
-```
+| Hourly Capacity     | MW    | `exp = power_injection.hour_capacity`                          |
+| Hourly Price        | $/MWh | `exp = power_injection.hour_price`                             |
 
 ### Renewable
 
-| Data                | Unit  | Syntax                                                       |
-|:--------------------|:-----:|:-------------------------------------------------------------|
-|                     | MW    | `exp = renewable.existing`                                   |
-|                     | MW    | `exp = renewable.tech_type`                                  |
-|                     | MW    | `exp = renewable.capacity`                                   |
-|                     | MW    | `exp = renewable.omcost`                                     |
-
-#### Example
-{: .no_toc }
-
-``` lua
-```
+| Data                                             | Unit  | Syntax                                                       |
+|:-------------------------------------------------|:-----:|:-------------------------------------------------------------|
+| Construction Status (existing = 0 or future = 1) |       | `exp = renewable.existing`                                   |
+| Technology Type                                  |       | `exp = renewable.tech_type`                                  |
+| Installed Capacity                               | MW    | `exp = renewable.capacity`                                   |
+| O&M Cost                                         | $/MWh | `exp = renewable.omcost`                                     |
 
 ### Renewable Gauging Station
 
 | Data                | Unit  | Syntax                                                       |
 |:--------------------|:-----:|:-------------------------------------------------------------|
-|                     | MW   | `exp = renewablegaugingstation.hourgeneration`                |
-
-#### Example
-{: .no_toc }
-
-``` lua
-```
+|                     | MW   | `exp = renewable_gauging_station.hourgeneration`                |
 
 <!-- ### Reserve Generation Constraint -->
 
@@ -412,12 +305,6 @@ Eaflu		INTEGER	791	791	AUTOSET -->
 |                     | ---   | `exp = study.stages_per_year`                                |
 |                     | ---   | `exp = study.scenarios`                                      |
 
-#### Example
-{: .no_toc }
-
-``` lua
-```
-
 ### System
 
 | Data                | Unit  | Syntax                                                       |
@@ -425,14 +312,6 @@ Eaflu		INTEGER	791	791	AUTOSET -->
 |                     | ---   | `exp = system.duraci`                                        |
 |                     | ---   | `exp = system.hblock`                                        |
 |                     | ---   | `exp = system.sensitivity`                                   |
-
-#### Example
-{: .no_toc }
-
-``` lua
-system = System();
-duraci = system.duraci;
-```
 
 ### Thermal
 
@@ -445,17 +324,11 @@ duraci = system.duraci;
 | Minimum Generation (maintenance)                 | MW      | `exp = thermal.germin_maintenance`                           |
 | Maximum Generation                               | MW      | `exp = thermal.germax`                                       |
 | Maximum Generation (maintenance)                 | MW      | `exp = thermal.germax_maintenance`                           |
-| Forced Outage Rate                               | %       | `exp = thermal.for`                                          |
-| Composite Outage Rate                            | %       | `exp = thermal.cor`                                          |
+| Forced Outage Rate                               | %       | `exp = thermal.FOR`                                          |
+| Composite Outage Rate                            | %       | `exp = thermal.COR`                                          |
 | Startup Cost                                     | k$      | `exp = thermal.startup_cost`                                 |
 | O&M Variable Cost                                | $/MWh   | `exp = thermal.omcost`                                       |
 | Transportation Cost                              | $/gal   | `exp = thermal.transport_cost`                               |
 | Specific Fuel Consumption (segment 1)            | gal/MWh | `exp = thermal.cesp1`                                        |
 | Specific Fuel Consumption (segment 2)            | gal/MWh | `exp = thermal.cesp2`                                        |
 | Specific Fuel Consumption (segment 3)            | gal/MWh | `exp = thermal.cesp3`                                        |
-
-#### Example
-{: .no_toc }
-
-``` lua
-```
