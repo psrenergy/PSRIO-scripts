@@ -185,20 +185,19 @@ If one of the operands has block representation of its data and the other does n
 
 <br/>
 
-
 ## Ternary Expressions
 
-The table below presents the ```ifelse``` operator. If the ```exp1``` is true, operator returns ```exp2```. If not, ```exp3``` is returned.
+The table below presents the `ifelse` operator. If the `exp1` is true, operator returns `exp2`. If not, `exp3` is returned.
 
 | Operator    | Syntax                           |
 |:------------|:---------------------------------|
 | Conditional | `exp = ifelse(exp1, exp2, exp3)` |
 
-
 #### Example 1
 {: .no_toc }
 
 In the example below, if the thermal generation is greater than zero, 1 is returned, otherwise, 0 is returned.
+
 ``` lua
 thermal = Thermal();
 
