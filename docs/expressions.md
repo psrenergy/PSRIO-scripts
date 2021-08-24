@@ -75,7 +75,7 @@ The second table defines the logical and comparison operators.
 |        Greater-than       |  `exp = exp1:gt(exp2)`  |
 | Greater-than-or-equals to |  `exp = exp1:ge(exp2)`  |
 |            And            |   `exp = exp1 & exp2`   |
-|             Or            |   `exp = exp1 \| exp2`  |
+|             Or            |   `exp = exp1 | exp2`   |
 
 The third table defines two element-wise max and min methods between the two data arguments.
 
@@ -84,8 +84,7 @@ The third table defines two element-wise max and min methods between the two dat
 |          Maximum          | `exp = max(exp1, exp2)` |
 |          Minimum          | `exp = min(exp1, exp2)` |
 
-Here are some examples of usage of the operators prior explained.
-
+Here are some examples of binary expressions.
 
 #### Example 1
 {: .no_toc }
@@ -182,8 +181,6 @@ The following table describes the blocks and hours rules. The only operation tha
 | `n` (generic a) / `1` (generic b)      | `n` (generic a)     |
 | `n1` (generic a) / `n2` (generic b)    | ❌                  | -->
 
-<br/>
-
 ## Ternary Expressions
 
 The table below presents the `ifelse`. Likewise, the above-defined operators, the `ifelse` follow dataframe rules, doing element-wise operations. If the element of `exp1` is true, `exp2` is the result, otherwise, it is exp3.
@@ -197,13 +194,15 @@ The table below presents the `ifelse`. Likewise, the above-defined operators, th
 
 In the example below, if the thermal generation is greater than zero, 1 is returned; otherwise, 0 is returned.
 
-``` lua
+```lua
 thermal = Thermal();
 
 gerter = thermal:load("gerter");
 
 gerter_gt_zero = ifelse(gerter:gt(0.0), 1, 0);
 ```
+
+<br/>
 
 ## Unit Conversion
 
