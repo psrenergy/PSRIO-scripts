@@ -214,8 +214,8 @@ TODO to_hour e to_block exemplo
 | exp1          | exp (profile = YEAR) | exp (profile = PER_YEAR) |
 |:-------------:|:--------------------:|:------------------------:|
 | `n` (daily)   | `365` (daily)        | `n/365` (yearly)         |
-| `n` (weekly)  | ❌                  |  `n/52` (yearly)         |
-| `n` (monthly) | ❌                  |  `n/12` (yearly)        |
+| `n` (weekly)  | `52` (weekly)        | `n/52` (yearly)          |
+| `n` (monthly) | `12` (monthly)       | `n/12` (yearly)          |
 | `n` (yearly)  | `1` (yearly)         | `1` (yearly)             |
 
 
@@ -223,8 +223,8 @@ TODO to_hour e to_block exemplo
 {: .no_toc }
 
 ``` lua
-system = System()
-defcit = system:load("defcit")
+system = System();
+defcit = system:load("defcit");
 
 defcit_per_year = defcit:aggregate_stages(BY_SUM(), Profile.PER_YEAR);
 ```
