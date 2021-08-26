@@ -14,10 +14,10 @@ local last_stage = 4;
 -- READ INPUT FILE
 local toml = study:load_toml("brazil_supply_risk.toml");
 
-tipo_sensib_vazao = 1 -- toml:get_int("tipo_sensib_vazao");
-sensib_vazao2020 = 0 -- toml:get_integer"sensib_vazao2020");
-tipo_sensib_gnd = 1 -- toml:get_int("tipo_sensib_gnd");
-tipo_ssensib_gnd_quantilensib_gnd = 0 --toml:get_double("sensib_gnd_quantil");
+tipo_sensib_vazao = toml:get_int("tipo_sensib_vazao");
+sensib_vazao2020 = toml:get_double("sensib_vazao2020");
+tipo_sensib_gnd = toml:get_int("tipo_sensib_gnd");
+tipo_ssensib_gnd_quantilensib_gnd = toml:get_double("sensib_gnd_quantil");
 
 -- fix parameters
 
@@ -55,10 +55,17 @@ local input_demanda_aumento_anual_sobre_2020 = toml:get_double("ExtraDemand");
 -- local bool_demanda_substituta = toml:get_bool("bool_demanda_substituta"); -- GWh
 
 local bool_potencia = true;
-local bool_operacao_limitada_itaipu = true; -- reduz 5GW de itaipu na análise de suprimento de potência
+local bool_operacao_limitada_itaipu = false; -- reduz 5GW de itaipu na análise de suprimento de potência
 
 local bool_demand_per_block = false; -- toml:get_bool("bool_demand_per_block");
 ------------------------------------------------- INPUT -------------------------------------------------
+
+Inflow_energia_historico_2020 = generic:load("enaflu2020"):select_stages(1,11):convert("GW"):rename_agents({"Histórico 2020 - SU", "Histórico 2020 - SE"});
+Inflow_energia_historico_2021 = generic:load("enaflu2021"):convert("GW"):rename_agents({"Histórico 2021 - SU", "Histórico 2021 - SE"});
+Inflow_energia_mlt = generic:load("enafluMLT"):select_stages(1,11):convert("GW");
+Inflow_energia = system:load("enaf65"):select_stages(1,last_stage):convert("GW"):aggregate_blocks(BY_SUM()); -- rho fixo, 65% do máximo
+ena_de_2020_horizonte = 59672.328 -- GWh -- vem do enaflu2020. To do: automatizar
+ena_de_2020_horizonte_GWm = 20.38 -- GWm
 
 -- LOAD FATOR ENERGIA ARMAZENADA
 -- local fator_energia_armazenada = hydro:load("fatorEnergiaArmazenada", true);
@@ -81,7 +88,31 @@ else
     gerhid = hydro:load(is_sddp and "gerhid" or "gerhid_KTT", true):convert("GWh"):aggregate_blocks(BY_SUM()):select_stages(1,last_stage);
 end
 local hydro_generation = gerhid:aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
-hydro_generation:save("hydro_generation_obrigatorio", {csv=true});
+
+-- proncura alvo através da sensiblidade desejada
+----------------------------------------------
+if tipo_sensib_vazao == 2 then
+    scenarios = Inflow_energia:scenarios();
+    -- calcula alvo usando tipo_ssensib_gnd_quantilensib_gnd
+    alvo = sensib_vazao2020 * ena_de_2020_horizonte; -- multiplicar pela ena de 2020
+    print("Alvo:");
+    print(alvo);
+    cenario_hidro = 1; -- começa com cenário e substituiu usando uma busca linear abaixo
+    valor_cenario_atual = (Inflow_energia:select_scenarios({cenario_hidro}):convert("GWh"):aggregate_stages(BY_SUM()):aggregate_stages(BY_SUM()):aggregate_agents(BY_SUM(), "ENA_2021"):to_list())[1];
+    local distancia_alvo = max(valor_cenario_atual - alvo, -valor_cenario_atual + alvo):to_list()[1];
+    for scenario = 1,scenarios,1 do
+        valor_cenario_atual = Inflow_energia:select_scenarios({scenario}):convert("GWh"):aggregate_stages(BY_SUM()):aggregate_stages(BY_SUM()):aggregate_agents(BY_SUM(), "ENA_2021"):to_list()[1];
+        distancia_alvo_corrente = max(valor_cenario_atual - alvo, -valor_cenario_atual + alvo):to_list()[1];
+        if distancia_alvo_corrente < distancia_alvo then
+            distancia_alvo = distancia_alvo_corrente;
+            cenario_hidro = scenario;
+        end
+    end
+    print("Cenário hidro:");
+    print(cenario_hidro);
+    hydro_generation = hydro_generation:select_scenarios({cenario_hidro});
+end
+hydro_generation = hydro_generation:save_and_load("hydro_generation_obrigatorio", {csv=true});
 
 -- LOAD RENEWABLE GENERATION
 local gergnd = nil;
@@ -92,6 +123,36 @@ else
 end
 local renewable_generation = gergnd:aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
 
+
+-- proncura alvo através do percentil desejado
+-- se desejamos usar o percentil de 2021, poderíamos simplificar, ...
+-- mas o código abaixo é mais genérico e pode ser extendido facilmente para outros alvos ...
+-- como um percentil de 2020 alterando o alvo
+----------------------------------------------
+if tipo_sensib_gnd == 2 then
+    scenarios = renewable_generation:scenarios();
+    -- calcula alvo usando tipo_ssensib_gnd_quantilensib_gnd
+    alvo = renewable_generation:aggregate_stages(BY_SUM()):aggregate_scenarios(BY_PERCENTILE(tipo_ssensib_gnd_quantilensib_gnd)):to_list()[1];
+    print("Alvo:");
+    print(alvo);
+    cenario_renovavel = 1; -- começa com cenário e substituiu usando uma busca linear abaixo
+    valor_cenario_atual = (renewable_generation:select_scenarios({cenario_renovavel}):aggregate_stages(BY_SUM()):to_list())[1];
+    local distancia_alvo = max(valor_cenario_atual - alvo, -valor_cenario_atual + alvo):to_list()[1];
+    for scenario = 1,scenarios,1 do
+        valor_cenario_atual = renewable_generation:select_scenarios({scenario}):aggregate_stages(BY_SUM()):to_list()[1];
+        distancia_alvo_corrente = max(valor_cenario_atual - alvo, -valor_cenario_atual + alvo):to_list()[1];
+        if distancia_alvo_corrente < distancia_alvo then
+            distancia_alvo = distancia_alvo_corrente;
+            cenario_renovavel = scenario;
+        end
+    end
+    print("Cenário renovável:");
+    print(cenario_renovavel);
+    renewable_generation = renewable_generation:select_scenarios({cenario_renovavel});
+end
+renewable_generation = renewable_generation:save_and_load("renovaveis_selecionadas", {csv=true});
+
+
 -- LOAD THERMAL GENERATION
 local potter = nil;
 if bool_demand_per_block then
@@ -101,8 +162,9 @@ else
     potter = thermal:load("potter", true):convert("GWh"):aggregate_blocks(BY_SUM()):select_stages(1,last_stage);
 end
 local potter_block = thermal:load("potter", true):convert("GWh"):select_stages(1,last_stage);
-local thermal_generation = potter:aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
-local thermal_generation_block = potter_block:aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
+local thermal_generation = potter:aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
+local thermal_generation_block = potter_block:aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
+thermal_generation = thermal_generation:save_and_load("thermal_generation_temp", {tmp=true, csv=false});
 
 -- LOAD INTERCONNECTION
 local capint2 = nil;
@@ -149,10 +211,10 @@ capint2_SE = min(capint2_SE, interc_sum_2);
 local capint2_SE_extra = capint2_SE * input_int_extra;
 local capint2_SE_extra_block  = capint2_SE_block  * input_int_extra;
 -- local capint2_SE_extra_block = capint2_SE_block * input_int_extra;
-capint2_SE_extra = capint2_SE_extra * ifelse(study.stage:gt(1), 1, 0);
-capint2_SE_extra_block = capint2_SE_extra_block * ifelse(study.stage:gt(1), 1, 0);
+capint2_SE_extra = capint2_SE_extra * ifelse(study.stage:select_stages(1,last_stage):gt(1), 1, 0);
+capint2_SE_extra_block = capint2_SE_extra_block * ifelse(study.stage:select_stages(1,last_stage):gt(1), 1, 0);
 
-capint2_SE:save("capin2_se_min_risk");
+capint2_SE = capint2_SE:save_and_load("capin2_se_min_risk");
 
 -- DEBUG
 if is_debug then 
@@ -161,6 +223,10 @@ end
 
 -- LOAD RHO
 local rho = hydro:load("rho", true):select_stages(1,1):reset_stages();
+if tipo_sensib_vazao == 2 then
+    rho = rho:select_scenarios({cenario_hidro});
+end
+rho = rho:save_and_load("rho_selecionados", {csv=true});
 
 -- LOAD RHO MAX
 local rhomax = hydro:load("rhomax", true):select_stages(1,1):reset_stages();
@@ -171,13 +237,16 @@ if is_sddp then
     volfin = hydro:load("volfin", true):select_stages(1,last_stage):reset_stages();
 else
     volfin = hydro:load("volini_KTT", true):select_stages(2,last_stage+1):reset_stages();
+    if tipo_sensib_vazao == 2 then
+        volfin = volfin:select_scenarios({cenario_hidro}):save_and_load("volfin_selecionados", {csv=true});
+    end
 end
 local enearm = (max(0, volfin - hydro.vmin) *  rho):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):convert("GWh");
 
 -- LOAD EARMZM
 local earmzm = nil;
 if is_sddp then
-    earmzm = ((hydro.vmax - hydro.vmin):select_stages(last_stage):reset_stages() *  rho):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"});
+    earmzm = ((hydro.vmax - hydro.vmin):select_stages(last_stage):reset_stages() *  rhomax):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"});
 else
     earmzm = ((hydro.vmax - hydro.vmin) * rhomax):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"});
     earmzm = earmzm:select_stages(1,1):reset_stages():convert("GWh");
@@ -209,7 +278,7 @@ else
     local acontecido_2021_1_semestre = 362948.856; --GWh - 362825.462
     local previsao_atual_2021_2_semetre = 266021.554; --GWh
 
-    local nova_demanda_2021_total = input_demanda_aumento_anual_sobre_2020 * acontecido_2020_total;
+    local nova_demanda_2021_total = (1+input_demanda_aumento_anual_sobre_2020/100) * acontecido_2020_total;
     local nova_demanda_2021_2_semestre = nova_demanda_2021_total - acontecido_2021_1_semestre;
     input_demanda_extra = nova_demanda_2021_2_semestre / previsao_atual_2021_2_semetre - 1;
     -- input_demanda_extra:save("input_demanda_extra", {csv=true});
@@ -225,6 +294,11 @@ end
 demand = demand:select_stages(1,last_stage);
 
 -- MAX GENERATION
+print("Cenarios por input");
+print(hydro_generation:scenarios());
+print(renewable_generation:scenarios());
+print(thermal_generation:scenarios());
+print(capint2_SE:scenarios());
 local generation = hydro_generation + renewable_generation + thermal_generation + capint2_SE;
 if bool_int_extra then
     generation = generation + capint2_SE_extra;
@@ -237,6 +311,7 @@ if bool_oferta_extra then
     generation = generation + oferta_extra:aggregate_agents(BY_SUM(), "SE + SU");
 end
 generation = generation:select_stages(1,last_stage);
+generation:save("generation", {tmp = true, csv=false});
 
 -- MISMATCH
 local deficit = ifelse((demand - generation):gt(0), demand - generation, 0);
@@ -245,7 +320,7 @@ local demanda_residual = (demand - generation):select_stages(1,last_stage):conve
 -- DEFICIT SOMA DE MAIO A NOVEMBRO
 local mismatch_stages = deficit:select_stages(1,last_stage):rename_agents({"Mismatch - balanço hídrico"}):convert("GW"):save_and_load("mismatch_stages");
 local deficit_sum = deficit:select_stages(1,last_stage):aggregate_blocks(BY_SUM()):aggregate_stages(BY_SUM());
-local mismatch = deficit_sum:save_and_load("mismatch");
+local mismatch = deficit_sum:save_and_load("mismatch", {csv=true});
 
 ifelse(deficit_sum:gt(1), 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"Mismatch - balanço hídrico"}):save("mismatch_risk");
 
@@ -448,7 +523,8 @@ deficit_stages = deficit_stages:convert("GW");
 
 local deficit_percentual = (deficit_sum/(demand:aggregate_blocks(BY_SUM()):select_stages(last_stage-2,last_stage):reset_stages():aggregate_stages(BY_SUM()))):convert("%"):save_and_load("deficit_percentual");
 
-local has_deficit = ifelse(deficit_sum:gt(1), 1, 0);
+local minimum_deficit_threshold = 1;
+local has_deficit = ifelse(deficit_sum:gt(minimum_deficit_threshold), 1, 0);
 (1 - ifelse(has_SU_level1_violation | has_SE_level1_violation, 1, 0)):save("cenarios_normal");
 cenarios_atencao = (ifelse(has_SU_level1_violation | has_SE_level1_violation, 1, 0) - has_deficit):save_and_load("cenarios_atencao");
 has_deficit:save("cenarios_racionamento");
@@ -507,7 +583,10 @@ end
 ---------- dashboard -----------------
 --------------------------------------
 
-local function add_percentile_layers(chart, output, force_unit)    
+local function add_percentile_layers(chart, output, force_unit, to_round)    
+    if to_round
+        output = output:round(number_of_digits_round)
+    end
     local p_min = output:aggregate_scenarios(BY_PERCENTILE(5)):rename_agents({"Intervalo de confiança de 90%"});
     local p_max = output:aggregate_scenarios(BY_PERCENTILE(95)):rename_agents({""});
     local avg = output:aggregate_scenarios(BY_AVERAGE()):rename_agents({"Média"});
@@ -530,8 +609,8 @@ md = Markdown();
 md:add("# Energia");
 md:add("## Suprimento de Energia")
 md:add("Aqui, apresentamos os gráficos dos Energy Reports de Junho e Julho, mas, agora, com as hipóteses selecionadas pelo usuário do Dashboard.");
-md:add("A figura a seguir mostra o balanço médio de demanda e geração obrigatória. A linha contínua representa a demanda média mensal e as colunas indicam os componentes da oferta. Quando as colunas estão abaixo da linha continua temos um “gap” que chamamos demanda residual que dever ser atendida por geração despachável hídrica do Sul e Sudeste, esvaziando os reservatórios. Portanto, quanto maior a diferença, maior o esvaziamento dos reservatórios, e maior o risco de problemas de suprimento. O contrário também é verdadeiro: a redução da diferença através de um aumento da oferta permite preservar os reservatórios e reduzir o risco de suprimento.");
-md:add("");
+md:add("A figura a seguir mostra o balanço médio de demanda e geração obrigatória. A linha contínua representa a demanda média mensal e as colunas indicam os componentes da oferta. Quando as colunas estão abaixo da linha continua temos um “gap” que chamamos demanda residual que deve ser atendida por geração despachável hídrica do Sul e Sudeste, esvaziando os reservatórios. Portanto, quanto maior a diferença, maior o esvaziamento dos reservatórios, e maior o risco de problemas de suprimento. O contrário também é verdadeiro: a redução da diferença através de um aumento da oferta permite preservar os reservatórios e reduzir o risco de suprimento.");
+md:add("\n");
 md:add("Os componentes de geração são:");
     md:add("- Geração térmica máxima nas regiões Sudeste e Sul;");
     md:add("- Capacidade máxima de importação das regiões Nordeste e Norte para a região Sudeste. A situação das regiões Nordeste e Norte é relativamente confortável. Como consequência, as regiões Nordeste e Norte estão transferindo o máximo possível de energia para a região Sudeste;");
@@ -539,8 +618,9 @@ md:add("Os componentes de geração são:");
     md:add("- Geração hidroelétrica obrigatória resultante das defluências mínimas por uso múltiplo. É calculada multiplicando as defluências resultantes da operação probabilística com o modelo de simulação de usos múltiplos (SUM) desenvolvido pela PSR (ver edição anterior do ER) pelos coeficientes de produção das usinas ajustados pelo respectivo armazenamento (variação não linear do coeficiente com a altura de queda) em cada cenário hidrológico;");
     md:add("- As demais componentes são as hipóteses selecionadas pelo usuário na tabela interface.");
     md:add("- Valor esperado da geração renovável não controlável no Sudeste e Sul (eólica, solar, biomassa e PCHs não controladas pelo ONS);");
-md:add("");
+md:add("\n");
 dashboard2:push(md);
+dashboard2:push("\n");
 
 local chart2_1 = Chart("Oferta x Demanda – Sul e Sudeste (valores médios)");
 if bool_termica_extra then
@@ -551,8 +631,20 @@ end
 local chart2_1 = Chart("Oferta x Demanda – Sul e Sudeste (valores médios)");
 if bool_oferta_extra then
     chart2_1:add_column_stacking(
-        oferta_extra:aggregate_scenarios(BY_AVERAGE()):convert("GW"):round(number_of_digits_round), 
-    {yUnit="GWm"}); -- to do: checar cor
+        oferta_extra:select_agents({"Gas"}):aggregate_scenarios(BY_AVERAGE()):convert("GW"):round(number_of_digits_round), 
+        {color="#800020", yUnit="GWm"}); -- to do: checar cor
+    chart2_1:add_column_stacking(
+        oferta_extra:select_agents({"Argentina"}):aggregate_scenarios(BY_AVERAGE()):convert("GW"):round(number_of_digits_round), 
+        {color="#74ACDF", yUnit="GWm"}); -- to do: checar cor
+    chart2_1:add_column_stacking(
+        oferta_extra:select_agents({"Uruguai"}):aggregate_scenarios(BY_AVERAGE()):convert("GW"):round(number_of_digits_round), 
+        {color="#FCD116", yUnit="GWm"}); -- to do: checar cor
+    chart2_1:add_column_stacking(
+        oferta_extra:select_agents({"Oleo"}):aggregate_scenarios(BY_AVERAGE()):convert("GW"):round(number_of_digits_round), 
+        {color="black", yUnit="GWm"}); -- to do: checar cor
+    chart2_1:add_column_stacking(
+        oferta_extra:select_agents({"Extras"}):aggregate_scenarios(BY_AVERAGE()):convert("GW"):round(number_of_digits_round), 
+        {color="purple", yUnit="GWm"}); -- to do: checar cor
 end 
 
 if bool_int_extra then
@@ -569,10 +661,10 @@ local importacao_NO_NE = generic:load("capin2_se_min_risk", true):aggregate_scen
 chart2_1:add_column_stacking(importacao_NO_NE, {color="#e9e9e9", yUnit="GWm"});
 
 local geracao_renovavel_media = renewable_generation:aggregate_scenarios(BY_AVERAGE()):rename_agents({"Geração renovável + biomassa"}):convert("GW"):round(number_of_digits_round);
-chart2_1:add_column_stacking(geracao_renovavel_media, {color="#ADD8E6", yUnit="GWm"});
+chart2_1:add_column_stacking(geracao_renovavel_media, {color="#40E0D0", yUnit="GWm"}); --#40E0D0 #ADD8E6
 
 local geracao_hidrica_obrigatoria = hydro_generation:aggregate_scenarios(BY_AVERAGE()):rename_agents({"Geração hídrica obrigatória"}):convert("GW"):round(number_of_digits_round);
-chart2_1:add_column_stacking(geracao_hidrica_obrigatoria, {color="#4c4cff", yUnit="GWm"}); -- #0000ff
+chart2_1:add_column_stacking(geracao_hidrica_obrigatoria, {color="#0038A8", yUnit="GWm"}); -- #0000ff 0038A8 4c4cff
 
 -- CUIDADO MUDAR NOME - demand e demanda!
 local demanda = demand:aggregate_scenarios(BY_AVERAGE()):rename_agents({"Demanda"}):convert("GW"):round(number_of_digits_round);
@@ -592,21 +684,26 @@ end
 local enearm_final_risk_level0_SE_or_SU = generic:load("enearm_final_risk_level0_SE_or_SU", true):rename_agents({"SE+SU"});
 local enearm_final_risk_level1_SE_or_SU = generic:load("enearm_final_risk_level1_SE_or_SU", true):rename_agents({"SE+SU"});
 
-local enearm_final_risk_level0_SE_or_SU_pie = 100 - enearm_final_risk_level1_SE_or_SU;
-local enearm_final_risk_level1_SE_or_SU_pie = enearm_final_risk_level1_SE_or_SU - deficit_final_risk;
-local enearm_final_risk_level2_SE_or_SU_pie = deficit_final_risk;
+enearm_final_risk_level0_SE_or_SU_pie = 100 - enearm_final_risk_level1_SE_or_SU;
+enearm_final_risk_level1_SE_or_SU_pie = enearm_final_risk_level1_SE_or_SU - deficit_final_risk;
+enearm_final_risk_level2_SE_or_SU_pie = deficit_final_risk;
 
 md = Markdown();
 md:add("## Risco de suprimento de energia");
-md:add("A análise operativa é realizada para uma amostra de 1200 cenários que representam condições operativas do sistema até o final do ano, associadas a uma combinação de realização hidrologia, vento e sol.");
-md:add("Essa amostra permite calcular o risco de suprimento de energia, medido pelo percentual de cenários, dentre os 1200, nos quais ocorre algum problema. Os riscos foram classificados em três segmentos:");
-    md:add("- Verde: percentual (%) dos cenários simulados nos quais a energia armazenada das regiões Sudeste e Sul ficou acima das metas determinadas pelo ONS para o final de novembro (% de energia armazenada): 10% para a região Sudeste e 30% para a região Sul. Para estes cenários a situação de suprimento é considerada normal, pois não há problemas de suprimento de energia ou de atendimento à demanda de ponta.");
-    md:add("- Amarelo: % dos cenários simulados nos quais o armazenamento das regiões Sudeste e/ou Sul ficou abaixo das respectivas metas, mas não houve racionamento de energia. Estes cenários requerem atenção uma vez que, em alguns deles, pode ocorrer problemas de suprimento à demanda de ponta.");
-    md:add("- Vermelho: % dos cenários simulados nos quais foi necessário corte de consumo de energia, indicando a necessidade de um racionamento. Além da probabilidade, apresentamos também uma medida da severidade do racionamento: valor esperado do corte de carga nestes cenários (isto é, condicionado aos eventos de corte de carga) e expresso como o corte constante de uma percentagem das demandas do Sudeste e Sul de setembro a novembro (em outras palavras, o simulador operativo só permite cortes de carga a partir de setembro).");
+md:add("A análise operativa é realizada para uma amostra de 1200 cenários (ou seleção do usuário) que representam condições operativas do sistema até o final do ano, associadas a uma combinação de realização hidrologia, vento e sol.");
+md:add("Essa amostra permite calcular o risco de suprimento de energia, medido pelo percentual de cenários, nos quais ocorre algum problema. Os riscos foram classificados em três segmentos:");
+    md:add("- \"Normal\" (Verde): percentual (%) dos cenários simulados nos quais a energia armazenada das regiões Sudeste e Sul ficou acima das metas determinadas pelo ONS para o final de novembro (% de energia armazenada): 10% para a região Sudeste e 30% para a região Sul. Para estes cenários a situação de suprimento é considerada normal, pois não há problemas de suprimento de energia ou de atendimento à demanda de ponta.");
+    md:add("- \"Atenção\" (Amarelo): % dos cenários simulados nos quais o armazenamento das regiões Sudeste e/ou Sul ficou abaixo das respectivas metas, mas não houve racionamento de energia. Estes cenários requerem atenção uma vez que, em alguns deles, pode ocorrer problemas de suprimento à demanda de ponta.");
+    md:add("- \"Racionamento\" (Vermelho): % dos cenários simulados nos quais foi necessário corte de consumo de energia, indicando a necessidade de um racionamento.");
+dashboard2:push(md);
+dashboard2:push("\n");
+md = Markdown();
+md:add("Além da probabilidade, apresentamos também uma medida da severidade do racionamento: valor esperado do corte de carga nestes cenários (isto é, condicionado aos eventos de corte de carga) e expresso como o corte constante de uma percentagem das demandas do Sudeste e Sul de setembro a novembro (em outras palavras, o simulador operativo só permite cortes de carga a partir de setembro).");
+md:add("\n");
 dashboard2:push(md);
 
 local chart2_3 = Chart("Análise de suprimento");
-chart2_3:add_pie(enearm_final_risk_level0_SE_or_SU_pie:rename_agents({"Normal"}):round(number_of_digits_round), {color="green"});
+chart2_3:add_pie(enearm_final_risk_level0_SE_or_SU_pie:rename_agents({"Normal"}):round(number_of_digits_round), {color="green", yMax="100"});
 chart2_3:add_pie(enearm_final_risk_level1_SE_or_SU_pie:rename_agents({"Atenção"}):round(number_of_digits_round), {color="yellow"});
 chart2_3:add_pie(enearm_final_risk_level2_SE_or_SU_pie:rename_agents({"Racionamento"}):round(number_of_digits_round), {color="red"});
 dashboard2:push(chart2_3);
@@ -615,7 +712,7 @@ dashboard2:push(chart2_3);
 -- dashboard2:push("**Atenção**: Sudeste abaixo de 10% ou Sul abaixo de 30%. Sem deficit.");
 -- dashboard2:push("**Racionamento**: Deficit.");
 
-dashboard2:push("RISCO DO Sudeste ficar entre 10% e 15%: **" .. string.format("%.1f", (enearm_final_risk_level0_SE_or_SU-enearm_final_risk_level1_SE_or_SU):to_list()[1]) .. "**");
+dashboard2:push("Probabilidade do armazenamento do Sudeste ficar entre 10% e 15% e não ter deficit (incluído nos cenários normais): **" .. string.format("%.1f", (enearm_final_risk_level0_SE_or_SU-enearm_final_risk_level1_SE_or_SU):to_list()[1]) .. "%**");
 
 local chart2_4 = Chart("Deficit - histograma");
 local violation_minimum_value = 0.1;
@@ -631,7 +728,8 @@ if is_debug then
 end
 
 dashboard2:push("Violação média: **" .. string.format("%.1f", media_violacoes:to_list()[1]) .. "%** da demanda");
-dashboard2:push("Violação média é a média condicional do deficit dos sobre a demanda dos últimos 3 estágios (Setembro, Outubro e Novembro) dado que ocorreu um cenário de racionamento (vermelho).")
+dashboard2:push("Violação média é a média condicional do deficit dos sobre a demanda dos últimos 3 estágios (Setembro, Outubro e Novembro) dado que ocorreu um cenário de racionamento (vermelho).");
+-- dashboard2:push("\n");
 if is_complete then
     dashboard2:push("Violação máxima: **" .. string.format("%.1f", maxima_violacao:to_list()[1]) .. "%** da demanda"); 
     chart2_4:add_histogram(deficit_percentual, {color="#d3d3d3", xtickPositions="[0, 20, 40, 60, 80, 100]"}); -- grey
@@ -649,14 +747,16 @@ if is_complete then
 end
 
 md = Markdown();
-md:add("\\")
+md:add("\n\n")
 md:add("## Déficit por etapa");
-md:add("Por fim, apresentamos a média do déficit para cada mês no conjunto de 1200 cenários simulados pela PSR. Apresentamos também o intervalo de confiança de 90%, no qual a linha inferior corresponde ao quantil de 5% e a linha superior corresponde ao quantil de 95%. ");
+md:add("Por fim, apresentamos a média do déficit para cada mês no conjunto de 1200 cenários simulados pela PSR (ou selecionado pelo usuário). Apresentamos também o intervalo de confiança de 90%, no qual a linha inferior corresponde ao quantil de 5% e a linha superior corresponde ao quantil de 95%. ");
 md:add("Observação: Se menos de 5% dos cenários tiverem déficit, o intervalor de confiança de 90% vai ser igual a zero");
+md:add("\n\n");
 dashboard2:push(md);
 
 local chart2_6 = Chart("Deficit");
-chart2_6 = add_percentile_layers(chart2_6, deficit_stages, "GWm");
+deficit_stages_chart2_6 = ifelse(deficit_stages:convert("GW"):gt(0.1), deficit_stages:convert("GW"), 0.0):round(number_of_digits_round);
+chart2_6 = add_percentile_layers(chart2_6, deficit_stages_chart2_6, "GWm", true);
 dashboard2:push(chart2_6);
 
 if is_complete then
@@ -683,35 +783,32 @@ end
 local dashboard7 = Dashboard("Hidrologia (ENA)");
 
 local md = Markdown();
-md:add("# Hidronoloa ENA");
+md:add("# Hidrologia ENA");
 md:add("## Energia Natural Afluente das regiões Sul e Sudeste");
-md:add("Nesta primeira aba apresentamos dados da Energia Natural Afluente (ENA) dos subsistemas Sul e Sudeste. Para ambos apresentamos dados históricos:");
+md:add("Nesta primeira aba apresentamos os dados da Energia Natural Afluente (ENA) dos subsistemas Sul e Sudeste/Centro-Oeste. Para ambos apresentamos dados históricos:");
     md:add("- \"Histórico 2020\": a ENA realizada em 2020");
     md:add("- \"Histórico 2021\": a ENA realizada até Julho para 2021");
     md:add("- \"MLT\": a média de longo termo");
-md:add("");
+md:add("\n");
 md:add("E dados utilizados nas simulações probabilísticas da PSR:");
     md:add("- \"Média\": média dos cenários gerados pela PSR com modelo Time Series Lab (TSL)");
     md:add("- \"Intervalo de confiança de 90%\": Intervalo de confiança de 90% dos cenários gerados pelo TSL da PSR. A linha inferior representa o quantil de 5% e a linha superior representar o quantil de 95%.");
+md:add("\n");
 dashboard7:push(md);
+dashboard7:push("\n");
 
-Inflow_energia_historico_2020 = generic:load("enaflu2020"):convert("GW"):rename_agents({"Histórico 2020 - SU", "Histórico 2020 - SE"});
-Inflow_energia_historico_2021 = generic:load("enaflu2021"):convert("GW"):rename_agents({"Histórico 2021 - SU", "Histórico 2021 - SE"});
-Inflow_energia_mlt = generic:load("enafluMLT"):convert("GW");
-
-Inflow_energia = system:load("enaf65"):select_stages(1,last_stage):convert("GW"):aggregate_blocks(BY_SUM()); -- rho fixo, 65% do máximo
-local chart7_2 = Chart("Energia afluente - Sudeste");
+local chart7_2 = Chart("Energia natural afluente - Sudeste e Centro-Oeste");
 
 -- local inflow_energia_se_historico_2020_09 = Inflow_energia_historico_2020:select_agents({"Histórico 2020 - SE"}):rename_agents({"Histórico 2020 - SE x 90%"}) * 0.9; -- 2020 * 0.9
 -- chart7_2:add_line(inflow_energia_se_historico_2020_09, {yUnit="GWm"});
 
-local inflow_energia_se_historico_2020 = Inflow_energia_historico_2020:select_agents({"Histórico 2020 - SE"}):rename_agents({"Histórico 2020 - SE"}) -- 2020
+local inflow_energia_se_historico_2020 = Inflow_energia_historico_2020:select_agents({"Histórico 2020 - SE"}):rename_agents({"Histórico 2020"}); -- 2020
 chart7_2:add_line(inflow_energia_se_historico_2020, {yUnit="GWm"});
 
-local inflow_energia_se_historico_2021 = Inflow_energia_historico_2021:select_agents({"Histórico 2021 - SE"});
+local inflow_energia_se_historico_2021 = Inflow_energia_historico_2021:select_agents({"Histórico 2021 - SE"}):rename_agents({"Histórico 2021"});
 chart7_2:add_line(inflow_energia_se_historico_2021, {yUnit="GWm"});
 
-local inflow_energia_mlt_se = Inflow_energia_mlt:select_agents({"SE-MLT"});
+local inflow_energia_mlt_se = Inflow_energia_mlt:select_agents({"SE-MLT"}):rename_agents({"MLT"});
 chart7_2:add_line(inflow_energia_mlt_se, {yUnit="GWm"});
 
 local inflow_energia_se = Inflow_energia:select_agents({"SUDESTE"});
@@ -725,17 +822,17 @@ if is_debug then
     inflow_energia_se_historico_2020_09:save("Inflow_energia_se_historico_2020_09");
 end
 
-local chart7_3 = Chart("Energia afluente - Sul");
+local chart7_3 = Chart("Energia natural afluente - Sul");
 -- local inflow_energia_su_historico_2020_09 = Inflow_energia_historico_2020:select_agents({"Histórico 2020 - SU"}):rename_agents({"Histórico 2020 - SU x 90%"}) * 0.9; -- 2020 * 0.9
 -- chart7_3:add_line(inflow_energia_su_historico_2020_09, {yUnit="GWm"});
 
-local inflow_energia_su_historico_2020 = Inflow_energia_historico_2020:select_agents({"Histórico 2020 - SU"}):rename_agents({"Histórico 2020 - SU"}); -- 2020
+local inflow_energia_su_historico_2020 = Inflow_energia_historico_2020:select_agents({"Histórico 2020 - SU"}):rename_agents({"Histórico 2020"}); -- 2020
 chart7_3:add_line(inflow_energia_su_historico_2020, {yUnit="GWm"});
 
-local inflow_energia_su_historico_2021 = Inflow_energia_historico_2021:select_agents({"Histórico 2021 - SU"});
+local inflow_energia_su_historico_2021 = Inflow_energia_historico_2021:select_agents({"Histórico 2021 - SU"}):rename_agents({"Histórico 2021"});
 chart7_3:add_line(inflow_energia_su_historico_2021, {yUnit="GWm"});
 
-local inflow_energia_mlt_su = Inflow_energia_mlt:select_agents({"SU-MLT"});
+local inflow_energia_mlt_su = Inflow_energia_mlt:select_agents({"SU-MLT"}):rename_agents({"MLT"});
 chart7_3:add_line(inflow_energia_mlt_su, {yUnit="GWm"})
 
 local inflow_energia_su = Inflow_energia:select_agents({"SUL"});
@@ -750,19 +847,25 @@ if is_debug then
 end
 
 local media_mlt_horizonte = Inflow_energia_mlt:convert("GW"):select_stages(11-last_stage+1,11):aggregate_stages(BY_AVERAGE()):reset_stages():aggregate_agents(BY_SUM(), "SE+SU");
--- media_mlt_horizonte = 35.29 GWm
+-- media_mlt_horizonte = 34.95 GWm
 
-local chart7_4 = Chart("Energia afluente - histograma");
--- xLine = ena media de 2020 entre julho e novembro em GWm
-chart7_4:add_histogram((Inflow_energia:select_stages(1,last_stage):convert("GW"):aggregate_stages(BY_AVERAGE()):select_agents({"SUDESTE", "SUL"}):aggregate_agents(BY_SUM(), "SE+SU")/media_mlt_horizonte):convert("%"));
+local md = Markdown();
+md:add("\n");
+md:add("A seguir apresentamos um histograma com os cenários de Energia Natural Afluente (ENA), soma de Sul e Sudeste para os meses em análise (Julho a Novembro). Por simplicidade apresentamos valores de ENA em percentual da média de longo termo (MLT), ou seja, um valor de 120 no eixo horizontal representa uma ENA de 120% da MLT.");
+md:add("\n");
+dashboard7:push(md);
+
+local chart7_4 = Chart("Energia natural afluente - histograma");
+-- xLine = ena media de 2020 entre Agosto e novembro em GWm
+chart7_4:add_histogram((Inflow_energia:select_stages(1,last_stage):convert("GW"):aggregate_stages(BY_AVERAGE()):select_agents({"SUDESTE", "SUL"}):aggregate_agents(BY_SUM(), "SE+SU")/media_mlt_horizonte):convert("%"), {yUnit = "Percentual (%) da MLT"});
 dashboard7:push(chart7_4);
 (Inflow_energia:select_stages(1,last_stage):convert("GW"):aggregate_stages(BY_AVERAGE()):select_agents({"SUDESTE", "SUL"}):aggregate_agents(BY_SUM(), "SE+SU")/media_mlt_horizonte):convert("%"):save("ena_historgram_data");
 
-local ena_media_horizonte_2020_relativo_mlt = 23.07 / media_mlt_horizonte:to_list()[1] * 100; -- %.
+local ena_media_horizonte_2020_relativo_mlt = ena_de_2020_horizonte_GWm / media_mlt_horizonte:to_list()[1] * 100; -- %.
 local Inflow_energia_2021 = (Inflow_energia:select_stages(1,last_stage):convert("GW"):aggregate_stages(BY_AVERAGE()):select_agents({"SUDESTE", "SUL"}):aggregate_agents(BY_SUM(), "SE+SU")/media_mlt_horizonte):convert("%");
 local inflows_acima_ena_2020 = ifelse(Inflow_energia_2021:gt(ena_media_horizonte_2020_relativo_mlt), 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%");
-dashboard7:push("Probabilidade de ena ser maior que média de 2020 para horizonte: **" .. string.format("%.1f", inflows_acima_ena_2020:to_list()[1]) .. "%**");
-dashboard7:push("Ena mlt media: **" .. string.format("%.1f", media_mlt_horizonte:to_list()[1]) .. "** GWm");
+dashboard7:push("Probabilidade da ENA acumulada entre agosto e novembro de 2021 superar correspondente valor do ano de 2020: **" .. string.format("%.1f", inflows_acima_ena_2020:to_list()[1]) .. "%**");
+dashboard7:push("MLT da ENA, média do horizonte de Agosto a Novembro: **" .. string.format("%.1f", media_mlt_horizonte:to_list()[1]) .. "** GWm");
 
 local dashboard8 = Dashboard("Hidrologia (usinas)");
 --inflow_min_selected
@@ -773,9 +876,11 @@ md:add("# Hidrologia (usinas)");
 md:add("## Vazão de usinas selecionadas");
 md:add("Apresentamos o mesmo template de gráfico para usinas que merecem atenção especial selecionadas pela PSR.");
 md:add("Para cada usina apresentamos dados:");
-    md:add("- \"Vazão mínima\": para cada mês apresentamos a menor vazão ocorrida desde 1930");
+    md:add("- \"Vazão mínima\": para cada mês apresentamos a menor vazão ocorrida desde 1931");
     md:add("- \"2021\": Vazão realizada até Junho de 2021");
     md:add("- \"Defluência mínima\": Restrição de defluência apresentada no PMO de Julho");
+dashboard8:push(md);
+local md = Markdown();
 md:add("E também apresentamos um resumo dos cenários gerados pelo modelo Time Series Lab (TSL) da PSR utilizados nas demais análises.");
     md:add("- \"Intervalo de 90% das vazões naturais\": Sobra com linha inferior representando o quantil de 5% e linha superior representando o quantil de 95%.");
     md:add("- \"Vazão média\": média dos cenários simulados para cada mês.");
@@ -870,15 +975,17 @@ local md = Markdown();
 md:add("# Violações");
 md:add("## Violações nas restrições de uso múltiplo da água");
 md:add("Nesta seção apresentamos uma tabela com o resumo dos resultados do nosso Simulador de Usos Múltiplos da água (SUM), ver Energy Report de Julho.");
-md:add("Assim como na seção anterior, consideramos um subconjunto das usinas do PMO para avaliar detalhes.");
+md:add("Assim como na seção anterior, consideramos um subconjunto das usinas do PMO para avaliar em detalhe.");
 md:add("Na tabela a seguir apresentamos cinco valores para cada uma das usinas selecionadas:");
     md:add("- \"Mínimo Histórico (m3/s)\": Média no horizonte para menor vazão observada no histórico de dados");
     md:add("- \"Uso múltiplo da água\": Média no horizonte do somatório das restrições de Irrigação e de defluência mínima que incluem uso consuntivo, restrições de navegabilidade...");
-    md:add("- \"Probabilidade Violação\": percentual dos 1200 cenários de vazão onde houve violação das restrições. Observe que o modelo que tem como função objetivo minimizar violações e contêm apenas restrições de balanço hídrico.");
+    md:add("- \"Probabilidade Violação\": percentual dos 1200 cenários de vazão onde houve violação das restrições. Observe que o modelo que tem como função objetivo minimizar violações e contem apenas restrições de balanço hídrico.");
     md:add("- \"Violação Média\": Média das violações condicionada aos cenários onde houve violação em porcentagem da restrição de uso múltiplo.");
     md:add("- \"Defluência mínima\":  Média no horizonte das restrição de defluência apresentada no PMO de Julho");
     md:add("- \"Violação Máxima\":  Média no horizonte da maior violação observada nas simulações em porcentagem da restrição de uso múltiplo");
+    md:add("\n");
 dashboard10:push(md);
+dashboard10:push("\n");
 
 dashboard10:push(md_tabela_violacoes);
 dashboard10:push("\n");
@@ -930,19 +1037,29 @@ if bool_potencia then
     md:add("# Potência");
     md:add("Nesta última sequência de análises apresentamos um detalhamento da situação do suprimento de potência considerando as premissas escolhidas na interface.");
     md:add("Avaliamos 3 métricas principais:");
-        md:add("- Risco de problemas de suprimento");
+        md:add("- Risco de problemas de suprimento de potência");
         md:add("- Frequência de problemas de suprimento de ponta");
         md:add("- Severidade do corte de carga ao longo do dia");
+    dashboard9:push(md);
+    local md = Markdown();
     md:add("É fundamental lembrar que as **análises a seguir são condicionadas aos cenários de Atenção** (amarelos). Ou seja, apenas um subconjunto dos 1200 cenários considerados pela PSR é levado em conta para calcular as métricas que apresentaremos. Note que os cenários Normais (verdes) têm água suficiente nos reservatórios para manter controlabilidade e nos cenários Racionamento (vermelhos), já precisam de medidas de controle agressivas.");
     md:add("Tivemos um percentual de " .. string.format("%.1f", enearm_final_risk_level1_SE_or_SU_pie:to_list()[1]) .. "% de casos de atenção, ou seja, " .. tostring(numero_cenarios_potencia) .. " cenários que merecem análise detalhada de potência.");
     md:add("Lembre-se que tivemos um percentual de " .. string.format("%.1f", enearm_final_risk_level2_SE_or_SU_pie:to_list()[1]) .. "% (" .. tostring(numero_cenarios_vermelhos) .. " cenários) de cenários com déficit, ou seja, nesses casos já existe corte de carga, de modo que não é necessária análise mais detalhada para eles.");
     md:add("Assim como no caso do balanço de energia, o resultado do balanço de oferta × demanda horário é classificado em três grupos:");
-        md:add("- Azul: oferta total excede demanda + reserva -> situação operativa normal");
-        md:add("- Laranja: oferta total entre demanda e demanda + reserva -> situação operativa de alerta");
-        md:add("- Roxo: oferta total inferior à demanda -> corte de carga (blecaute rotativo)");
-        -- "O RiskBoard produz três índices de suprimento de potência:");
+        md:add("- \"Normal\" (Azul): oferta total excede demanda + reserva -> situação operativa normal");
+        md:add("- \"Violação da reserva\" (Laranja): oferta total entre demanda e demanda + reserva -> situação operativa de alerta");
+        md:add("- \"Corte de carga\" (Roxo): oferta total inferior à demanda -> corte de carga (blecaute rotativo)");
+        -- md:add("O RiskBoard produz três índices de suprimento de potência:");
     -- md:add("A análise de potência é **condicional** a acontecer algum **cenário de atenção** na análise de suprimento de energia (" .. string.format("%.1f", enearm_final_risk_level1_SE_or_SU_pie:to_list()[1]) .. "% dos cenários)");
     -- dashboard2:push("Violação média: **" .. string.format("%.1f", enearm_final_risk_level1_SE_or_SU_pie:to_list()[1]) .. "%** da demanda");
+    dashboard9:push(md);
+    local md = Markdown();
+    md:add("Repetimos aqui comentários sobre as premissas do dashboard, feito no Energy Report de Julho.");
+    md:add("A diferença entre as hidrelétricas com reservatório e fio d'água em termos de atendimento à ponta é que para a maioria das usinas a fio d’água não é possível produzir a potência máxima quando necessário. Foi então aplicado um fator de modulação sobre a geração média de cada usina a fio d'água em cada cenário e cada mês para representar sua capacidade efetiva de contribuir para o atendimento à ponta. Este fator de modulação foi estimado pela PSR de forma empírica a partir de resultados de simulações operativas horárias." ..
+        "Um tema relevante para as análises de suprimento de ponta é a hipótese de que as hidrelétricas com reservatório podem modular livremente sua operação, isto é, produzir a potência máxima disponível quando necessário (naturalmente, ajustadas pelo nível do reservatório e equipamentos em manutenção). As informações públicas sobre estas usinas não indicam que há restrições em sua flexibilidade operativa. No entanto, se estas restrições existirem para hidrelétricas de porte significativo, o risco de suprimento de potência pode ser maior do que o apresentado a seguir." ..
+        "Além da incerteza sobre a flexibilidade de modulação das hidrelétricas, não nos parece claro como a Geração Distribuída é representada nas previsões de demanda oficiais nos estudos de planejamento da operação. Como grande parte dessa geração é solar, os balanços de energia e potência podem ser bastante influenciados pelo ritmo do seu crescimento. A PSR está analisando ambos os temas.")
+    md:add("\n\n");
+    
     dashboard9:push(md);
 end;
 
@@ -956,8 +1073,13 @@ if bool_potencia and numero_cenarios_potencia > 0 then
     end
     demand_hr:save("demand_hr_tmp", {csv=true})
 
+    
     gergnd_hr = renewable:load("gergnd_hr"):select_stages(1,last_stage):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "SE + SU");
-    gergnd_hr = gergnd_hr:select_scenarios(cenarios_potencia);
+    if tipo_sensib_gnd == 2 then
+        gergnd_hr = gergnd_hr:select_scenarios({cenario_renovavel});
+    else
+        gergnd_hr = gergnd_hr:select_scenarios(cenarios_potencia);
+    end
 
     -- hydro max_power computation
     -- hydro_max_power = hydro:load("potencia_maxima_volume_minimo_minimorum");
@@ -1027,11 +1149,14 @@ if bool_potencia and numero_cenarios_potencia > 0 then
 
     local md = Markdown();
     md:add("## Risco de problemas de suprimento");
-    md:add("Porcentagem (%) dos cenários em que não houve nenhuma hora classificada como laranja ou roxo; % dos cenários em que houve ao menos 1% das horas classificadas como laranja, porém nenhuma hora classificada como roxo; e % dos cenários em que houve ao menos 1% das hora classificada como roxo.");
+    -- md:add("Porcentagem (%) dos cenários em que não houve nenhuma hora classificada como laranja ou roxo; % dos cenários em que houve ao menos 1% das horas classificadas como laranja, porém nenhuma hora classificada como roxo; e % dos cenários em que houve ao menos 1% das hora classificada como roxo.");
+    md:add("- \"Normal\" (Azul): Porcentagem dos cenários em que a oferta ficou maior que a demanda em pelo menos 99% das horas");
+    md:add("- \"Violação da reserva\" (Laranja): Porcentagem dos cenários em que a oferta ficou entre que a demanda e a reserva pelo menos 1% das horas e não houve corte de carga");
+    md:add("- \"Corte de carga\" (Roxo): Porcentagem dos cenários em que a oferta ficou maior que a demanda mais a reserva pelo menos 1% das horas");
     dashboard9:push(md);
 
     local chart9_1 = Chart("Suprimento de ponta");
-    chart9_1:add_column_stacking(risco_apagao_severo:rename_agents({"Corte de carga"}), {color="purple"});
+    chart9_1:add_column_stacking(risco_apagao_severo:rename_agents({"Corte de carga"}), {color="purple", yMax="100"});
     chart9_1:add_column_stacking(risco_apagao_reserva:rename_agents({"Violação da reserva"}), {color="orange"});
     chart9_1:add_column_stacking(sem_risco_apagao:rename_agents({"Normal"}), {color="blue"});
     dashboard9:push(chart9_1);
@@ -1051,7 +1176,12 @@ if bool_potencia and numero_cenarios_potencia > 0 then
 
     local md = Markdown();
     md:add("## Frequência de problemas de suprimento de ponta");
-    md:add("Porcentagem (%) dos dias do mês em que em pelo menos uma hora houve problemas de reserva, porém não houve corte de carga; % dos dias em que em pelo menos uma hora houve corte de carga.");
+    -- md:add("Porcentagem (%) dos dias do mês em que em pelo menos uma hora houve problemas de reserva, porém não houve corte de carga;% dos dias em que em pelo menos uma hora houve corte de carga.");
+    -- dashboard9:push(md);
+    -- md:add("Porcentagem (%) dos cenários em que não houve nenhuma hora classificada como laranja ou roxo; % dos cenários em que houve ao menos 1% das horas classificadas como laranja, porém nenhuma hora classificada como roxo; e % dos cenários em que houve ao menos 1% das hora classificada como roxo.");
+    md:add("- \"Normal\" (Azul): Frequenência média dos cenários em que a oferta ficou maior que a demanda");
+    md:add("- \"Violação da reserva\" (Laranja): Frequenência média  dos cenários em que a oferta ficou entre que a demanda e a reserva não houve corte de carga");
+    md:add("- \"Corte de carga\" (Roxo): Frequenência média dos cenários em que a oferta ficou maior que a demanda mais a reserva");
     dashboard9:push(md);
 
     local chart9_2 = Chart("Blecaute - frequência");
@@ -1083,7 +1213,7 @@ if bool_potencia and numero_cenarios_potencia > 0 then
 
     local md = Markdown();
     md:add("## Severidade do corte de carga ao longo do dia");
-    md:add("Para cada hora do ciclo diário, o RiskBoard informa o valor esperado dos 5% piores cortes de carga (pode incluir situações com zero corte) dentre os " .. tostring(numero_cenarios_potencia)  ..  " cenários de atenção. O objetivo desta medida, que equivale a um “Conditioned Value at Risk” (CVaR), é dar uma visão sobre a hora do dia em que podem ocorrer interrupções. Observa-se que esta hora pode não corresponder à demanda máxima por causa do efeito da geração eólica e solar.");
+    md:add("Para cada hora do ciclo diário, o RiskBoard informa o valor esperado dos 5% piores cortes de carga (pode incluir situações com zero corte) dentre os " .. tostring(numero_cenarios_potencia)  ..  " cenários de atenção vezes o número de dias do mês. O objetivo desta medida, que equivale a um “Conditioned Value at Risk” (CVaR), é dar uma visão sobre a hora do dia em que podem ocorrer interrupções. Observa-se que esta hora pode não corresponder à demanda máxima por causa do efeito da geração eólica e solar.");
     dashboard9:push(md);
 
     -- cvar
@@ -1112,7 +1242,45 @@ if bool_potencia and numero_cenarios_potencia > 0 then
         end
     end
 end
+if bool_potencia and numero_cenarios_potencia == 0 then
+    local md = Markdown();
+    md:add("### Não apresentamos resultados de análise de suprimento de potência porque não há cenários de atenção.");
+    dashboard9:push(md);
+end
 
+
+local dashboard11 = Dashboard("Resumo");
+if bool_potencia then
+    local md = Markdown();
+    md:add("# Resumo");
+    md:add("## Resumo do risco de suprimento de Energia e Potência");
+    md:add("O gráfico a seguir mostra resultados consolidados apresentados nas abas \"Energia\" e \"Potência\":");
+        md:add("- \"Normal\" (Verde): Percentual (%) dos cenários simulados nos quais não foram detectados problemas no suprimento de Energia e de Potência.");
+        md:add("- \"Violação da reserva\" (Laranja): Percentual (%) dos cenários  onde não houve corte preventivo de energia, contudo houve problemas de potência. Mais especificamente, em mais de 1% das horas a oferta total foi superior à demanda, porém inferior a reserva: situação operativa de alerta.");
+        md:add("- \"Corte de carga\" (Roxo): Percentual (%) dos cenários  onde não houve corte preventivo de energia, contudo houve problemas de potência. Mais especificamente, em mais de 1% doas horas a oferta total inferior à demanda: corte de carga (blecaute rotativo).");
+        md:add("- \"Racionamento\" (Vermelho): Percentual (%) dos cenários simulados nos quais foi necessário corte de consumo de energia, indicando a necessidade de um racionamento.");
+        dashboard11:push(md);
+        dashboard11:push("  ");
+end
+if bool_potencia then
+
+    risco_racionamento = ifelse(study.stage:select_stages(1,last_stage):gt(1), enearm_final_risk_level2_SE_or_SU_pie, 0);
+    if numero_cenarios_potencia > 0 then
+        risco_apagao_severo = (risco_apagao_severo * enearm_final_risk_level1_SE_or_SU_pie):convert("%");
+        risco_apagao_reserva = (risco_apagao_reserva * enearm_final_risk_level1_SE_or_SU_pie):convert("%");
+    else
+        risco_apagao_severo = study.stage:select_stages(1,last_stage) * 0.0;
+        risco_apagao_reserva =  study.stage:select_stages(1,last_stage) * 0.0;
+    end
+    sem_risco_apagao_ou_energia = 100 - (risco_racionamento + risco_apagao_severo + risco_apagao_reserva);
+
+    local chart11_1 = Chart("Suprimento de energia e potência");
+    chart11_1:add_column_stacking(risco_racionamento:rename_agents({"Racionamento"}), {color="red", yMax="100"});
+    chart11_1:add_column_stacking(risco_apagao_severo:rename_agents({"Corte de carga"}), {color="purple"});
+    chart11_1:add_column_stacking(risco_apagao_reserva:rename_agents({"Violação da reserva"}), {color="orange"});
+    chart11_1:add_column_stacking(sem_risco_apagao_ou_energia:rename_agents({"Normal"}), {color="Green"});
+    dashboard11:push(chart11_1);
+end
 
 
 
@@ -1126,7 +1294,7 @@ end
 -- ( pothid:convert("GW") - hydro_max_power:select_scenarios(1):convert("GW")):save("cache_dif_pothid", {tmp = true, csv = false});
 
 if bool_potencia then
-    (dashboard7 + dashboard8 + dashboard10 + dashboard2 + dashboard9):save("risk");
+    (dashboard7 + dashboard8 + dashboard10 + dashboard2 + dashboard9 + dashboard11):save("risk");
 else
     (dashboard7 + dashboard8 + dashboard10 + dashboard2):save("risk");
 end
