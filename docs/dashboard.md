@@ -43,6 +43,21 @@ nav_order: 8
 | Add Area Range                 | `chart:add_area_range(exp1, exp2)`                              |
 | Add Pie                        | `chart:add_pie(exp1)`                                           |
 
+### Chart attributes
+
+Some methods accept arguments to customize your chart, i.e., change its color, define the limits on the y axis, etc.
+
+The arguments are declared in tables inside the methods as shown in the following example.
+`chart:add_line(exp, {yMin= 0})`. The user an also define multiple arguments as follows ``chart:add_line(exp, {yMin= 0, color = "#8583ff"})``
+
+The following table describe the available chart arguments
+
+| Argument| Default Value | Description|
+|:--|:--|:--|
+|yMin| - | The starting value of the y axis |
+|yMax| - | The ending value of the y axis |
+|color| - | The color of the line or histogram |
+
 #### Example 1
 {: .no_toc }
 
@@ -52,6 +67,23 @@ local gerhid = hydro:load("gerhid"):aggregate_blocks(BY_SUM()):aggregate_scenari
 
 local chart = Chart("Hydro Generation");
 chart:add_line(gerhid);
+
+local dashboard = Dashboard("SDDP");
+dashboard:push(chart);
+dashboard:save("sddp-dashboard");
+```
+
+#### Example 2
+{: .no_toc }
+
+``` lua
+local hydro = Hydro();
+local gerhid = hydro:load("gerhid"):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE());
+
+local light_blue = "#8583ff";
+
+local chart = Chart("Hydro Generation");
+chart:add_line(gerhid, {yMin = 0, color = light_blue});
 
 local dashboard = Dashboard("SDDP");
 dashboard:push(chart);
