@@ -16,26 +16,29 @@ nav_order: 6
 
 ## Aggregate Functions
 
-| Aggregate Functions        |
-|:--------------------------:|
-| `BY_SUM()`                 |
-| `BY_AVERAGE()`             |
-| `BY_MAX()`                 |
-| `BY_MIN()`                 |
-| `BY_CVAR_L(number)`        |
-| `BY_CVAR_R(number)`        |
-| `BY_PERCENTILE(number)`    |
-| `BY_NTH_ELEMENT(number)`   |
-| `BY_STDDEV()`              |
-| `BY_FIRST_VALUE()`         |
-| `BY_LAST_VALUE()`          |
+When analysing simulation outputs, we are often interested in finding one single value that represents a set. PSRIO provides a set of methods to accomplish this kind of task with a high level of abstration, the [aggregate functions][aggregate-functions]. One can choose many forms of how the values of an output will be aggregated. The table below shows the options offered by PSRIO:
 
+| Aggregate Functions        | Description  |
+|:-------------------------- |:-------------|
+| `BY_SUM()`                 |Sums the elements of a set                       |                     
+| `BY_AVERAGE()`             |Takes the average of the elements of a set       |   
+| `BY_MAX()`                 |Selects the maximum value of a set               |   
+| `BY_MIN()`                 |Selects the minimum value of a set               |   
+| `BY_CVAR_L(number)`        |Calculates the expected shortfall for the left-tail case  with the specified probability in %|   
+| `BY_CVAR_R(number)`        |Calculates the expected shortfall for the right-tail case with the specified probability in %|   
+| `BY_PERCENTILE(number)`    |Returns the score associated with the specified percentile              |   
+| `BY_NTH_ELEMENT(number)`   |Takes the specified n<sup>th</sup> value of a set|   
+| `BY_STDDEV()`              |Calculates standard deviation of a set           |   
+| `BY_FIRST_VALUE()`         |Takes the first value of a set                   |   
+| `BY_LAST_VALUE()`          |Takes the last value of a set                    |   
 
+The methods above are only specifying how the aggregations will be executed. The aggregation itself is carried out by other methods, which are described in the sections below.
 
 ## Scenarios
 
 ### Aggregate Scenarios
 
+To aggregate scenarios of an specific output, the following methods should be used:
 | Method                                                                       | Syntax                                               |
 |:-----------------------------------------------------------------------------|:-----------------------------------------------------|
 | Aggregate scenarios by an [aggregate function][aggregate-functions]          | `exp = exp1:aggregate_scenarios(f)`                  |
@@ -73,6 +76,8 @@ cmgdem_max = cmgdem:aggregate_scenarios(BY_MAX(), {1, 2, 3, 4, 5});
 
 ### Select Scenarios
 
+It is possible to select a scenario or a set of specific scenarios using the following functions:
+
 | Method                    | Syntax                                               |
 |:--------------------------|:-----------------------------------------------------|
 | Select one scenario       | `exp = exp1:select_scenario(int)`                    |
@@ -92,6 +97,7 @@ cmgdem_scenario32 = cmgdem:select_scenario(32);
 
 ### Aggregate Blocks/Hours
 
+To aggregate blocks/hours of an output, the function below can be used:
 | Method                                                                 | Syntax                           |
 |:-----------------------------------------------------------------------|:---------------------------------|
 | Aggregate blocks/hours by an [aggregate function][aggregate-functions] | `exp = exp1:aggregate_blocks(f)` |
@@ -118,6 +124,7 @@ gergnd_agg = gergnd:aggregate_blocks(BY_SUM());
 
 ### Select Blocks/Hours
 
+In order to select a specific block/hour, use:
 | Method                                                                 | Syntax                           |
 |:-----------------------------------------------------------------------|:---------------------------------|
 | Select one block/hour                                                  | `exp = exp1:select_block(int)`   |
@@ -134,6 +141,7 @@ cmgdem_block21 = cmgdem:select_block(21);
 
 ### Map Blocks/Hours
 
+The relationship between blocks and hours can be explored with the methods in the table below.
 | Method                                                                 | Syntax                           |
 |:-----------------------------------------------------------------------|:---------------------------------|
 | Map blocks into hours (`BY_AVERAGE()` or `BY_REPEATING()`)             | `exp = exp1:to_hour(type)`       |
@@ -150,6 +158,8 @@ TODO to_hour e to_block exemplo
 ## Stages
 
 ### Aggregate Stages
+
+Stages can be aggregated with the functions below. It is possible to clusterize the stages in weeks, months or years, for example and aggregate them regarding their respective groups, as explained in the section [profiles][profiles].
 
 | Method                                                                                             | Syntax                                    |
 |:---------------------------------------------------------------------------------------------------|:------------------------------------------|
