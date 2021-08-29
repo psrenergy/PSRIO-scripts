@@ -171,7 +171,7 @@ Stages can be aggregated with the functions below. It is possible to clusterize 
 
 | Profiles                 |
 |:------------------------:|
-| `Profile.STAGE`          |
+| `Profile.STAGE`          | 
 | `Profile.WEEK`           | 
 | `Profile.MONTH`          | 
 | `Profile.YEAR`           | 
@@ -181,6 +181,8 @@ Stages can be aggregated with the functions below. It is possible to clusterize 
 
 ### Profile.STAGE
 {: .no_toc }
+
+By default, when no profile is informed, the `profile.STAGE` is used to characterize the aggregation. The data associated to each stage of the study horizon is aggregated.
 
 | exp1          | exp (profile = STAGE) |
 |:-------------:|:---------------------:|
@@ -195,6 +197,12 @@ Stages can be aggregated with the functions below. It is possible to clusterize 
 ### Profile.WEEK and Profile.PER_WEEK
 {: .no_toc }
 
+When the data has a daily resolution and the aggregation profile is `profile.WEEK`, the data will be aggregated for each day of the weeks in the study period, i.e, that data regarding all mondays in the data set will aggregated into one value and the same for tuesday, wednesday and so on. With a daily resolution and an aggregation profile `profile.PER_WEEK`, the data related to each week of the study will be aggregated. 
+
+When the data a week level discretization and the profile is `profile.WEEK`, the data associated to each week in the study period is aggregated. When the selected aggregation profile is `profile.PER_WEEK`, nothing is done and the data remains the same.
+
+**These aggregation profiles are not defined for monthly and yearly resolution data**.  
+
 | exp1          | exp (profile = WEEK) | exp (profile = PER_WEEK) |
 |:-------------:|:--------------------:|:------------------------:|
 | `n` (daily)   | `7` (daily)          | `n/7` (weekly)           |
@@ -205,8 +213,31 @@ Stages can be aggregated with the functions below. It is possible to clusterize 
 #### Example 1
 {: .no_toc }
 
+```lua
+system = System();
+cmgdem = system:load("cmgdem");
+
+cmgdem_agg = cmgdem:aggregate_blocks(BY_AVERAGE(), profile.WEEK);
+```
+
+#### Example 2
+{: .no_toc }
+
+```lua
+system = System();
+cmgdem = system:load("cmgdem");
+
+cmgdem_agg = cmgdem:aggregate_blocks(BY_AVERAGE(), profile.PER_WEEK);
+```
+
 ### Profile.MONTH and Profile.PER_MONTH
 {: .no_toc }
+
+Similar to `profile.WEEK` and `profile.PER_WEEK` when the data has daily discretization and the profile is `profile.MONTH`, the data will be aggregated for each day of the months in the study period. For example, all 1<sup>st</sup> day of the months in the study period will be aggregated, and same for the others. If the selected profile is `profile.PER_MONTH`, the data related to each month will be aggregated.
+
+When the data has month level discretization and the profile is `profile.MONTH`, the data associated to each month will be aggregated. If the profile is `profile.PER_MONTH`, nothing is done to the data. 
+
+**These aggregation profiles are not defined for weekly and yearly resolution data**.  
 
 | exp1          | exp (profile = MONTH) | exp (profile = PER_MONTH) |
 |:-------------:|:---------------------:|:-------------------------:|
@@ -218,8 +249,31 @@ Stages can be aggregated with the functions below. It is possible to clusterize 
 #### Example 1
 {: .no_toc }
 
+```lua
+system = System();
+cmgdem = system:load("cmgdem");
+
+cmgdem_agg = cmgdem:aggregate_blocks(BY_AVERAGE(), profile.MONTH);
+```
+
+#### Example 2
+{: .no_toc }
+
+```lua
+system = System();
+cmgdem = system:load("cmgdem");
+
+cmgdem_agg = cmgdem:aggregate_blocks(BY_AVERAGE(), profile.PER_MONTH);
+```
+
 ### Profile.YEAR and Profile.PER_YEAR
 {: .no_toc }
+
+When the data has a daily resolution and the profile is `profile.YEAR` the data related to each day of years in the study period is aggregated. For example, all january 1<sup>st</sup> days in the study period will be aggregated and the same is done for the other days of the year. When the `profile.PER_YEAR` is used, the data associated to each year is aggregated. The same happens when the data has week, month and year level resolution if `profile_PER_YEAR` is selected.
+
+If the data has a year resolution and `profile.YEAR` is selected. the data related to the same year is aggregated.
+
+**The `profile.YEAR` profile is not defined for weekly and monthly resolution data**.  
 
 | exp1          | exp (profile = YEAR) | exp (profile = PER_YEAR) |
 |:-------------:|:--------------------:|:------------------------:|
@@ -228,13 +282,22 @@ Stages can be aggregated with the functions below. It is possible to clusterize 
 | `n` (monthly) | `12` (monthly)       | `n/12` (yearly)          |
 | `n` (yearly)  | `1` (yearly)         | `1` (yearly)             |
 
-
 #### Example 1
 {: .no_toc }
 
 ``` lua
 system = System();
 defcit = system:load("defcit");
+
+defcit_per_year = defcit:aggregate_stages(BY_SUM(), Profile.YEAR);
+```
+
+#### Example 2
+{: .no_toc }
+
+``` lua
+system = System()
+defcit = system:load("defcit")
 
 defcit_per_year = defcit:aggregate_stages(BY_SUM(), Profile.PER_YEAR);
 ```
