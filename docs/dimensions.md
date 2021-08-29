@@ -304,6 +304,8 @@ defcit_per_year = defcit:aggregate_stages(BY_SUM(), Profile.PER_YEAR);
 
 ### Select Stages
 
+The stages of a study period can be select by its indexes or by their associated years. Single or contiguous interval of stages can be selected with the methods showed in the table below.
+
 | Method                                                                 | Syntax                                       |
 |:-----------------------------------------------------------------------|:---------------------------------------------|
 | Select stages within case horizon                                      | `exp = exp1:select_stages()`                 |
@@ -382,6 +384,7 @@ exp5 = objcop:select_stages_by_year(2032);
 
 ### Aggregate Agents
 
+Just like the stages, the agents of a study can be aggregate with the following methods.
 | Method                                                                                            | Syntax                                         |
 |:--------------------------------------------------------------------------------------------------|:-----------------------------------------------|
 | Aggregate all agents by an [aggregate function][aggregate-functions]                              | `exp = exp1:aggregate_agents(f, label)`        |
@@ -418,13 +421,12 @@ gerhid_buses = gerhid:aggregate_agents(BY_SUM(), Collection.BUSES);
 ```
 
 ### Select Agents
-
+The agents in a study can be select by their names, collection or query according to the methods below:
 | Method                                                                     | Syntax                                                          |
 |:---------------------------------------------------------------------------|:----------------------------------------------------------------|
 | Select agents by a list of agents names or indices                         | `exp = exp1:select_agents({string or int, int or string, ...})` |
 | Select agents by a [collection][collections]                               | `exp = exp1:select_agents(collection)`                          |
 | Select agents by a query                                                   | `exp = exp1:select_agents(query)`                               |
-| Remove agents by a list of agents names or indices                         | `exp = exp1:remove_agents({string or int, int or string, ...})` |
 
 #### Example 1
 {: .no_toc }
@@ -438,12 +440,14 @@ gerter_t1_and_t2 = gerter:select_agents({"Thermal 1", "Thermal 2"});
 
 ### Remove Agents
 
+To remove agents from a data set, the following method can be used:
 | Method                                                                     | Syntax                                                          |
 |:---------------------------------------------------------------------------|:----------------------------------------------------------------|
 | Remove agents by a list of agents names or indices                         | `exp = exp1:remove_agents({string or int, int or string, ...})` |
 
 ### Rename Agents
 
+To rename agents of a data set, the methods below must be used:
 | Method                                                                     | Syntax                                                          |
 |:---------------------------------------------------------------------------|:----------------------------------------------------------------|
 | Rename the agents based on the input vector                                | `exp = exp1:rename_agents({string, string, ...})`               |
