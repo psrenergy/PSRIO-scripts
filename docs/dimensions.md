@@ -442,6 +442,7 @@ gerter_t1_and_t2 = gerter:select_agents({"Thermal 1", "Thermal 2"});
 ### Remove Agents
 
 To remove agents from a data set, the following method can be used:
+
 | Method                                                                     | Syntax                                                          |
 |:---------------------------------------------------------------------------|:----------------------------------------------------------------|
 | Remove agents by a list of agents names or indices                         | `exp = exp1:remove_agents({string or int, int or string, ...})` |
@@ -449,6 +450,7 @@ To remove agents from a data set, the following method can be used:
 ### Rename Agents
 
 To rename agents of a data set, the methods below must be used:
+
 | Method                                                                     | Syntax                                                          |
 |:---------------------------------------------------------------------------|:----------------------------------------------------------------|
 | Rename the agents based on the input vector                                | `exp = exp1:rename_agents({string, string, ...})`               |
