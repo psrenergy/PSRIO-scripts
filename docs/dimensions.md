@@ -16,29 +16,30 @@ nav_order: 6
 
 ## Aggregate Functions
 
-When analysing simulation outputs, we are often interested in finding one single value that represents a set. PSRIO provides a set of methods to accomplish this kind of task with a high level of abstration, the [aggregate functions][aggregate-functions]. One can choose many forms of how the values of an output will be aggregated. The table below shows the options offered by PSRIO:
+When analyzing simulation outputs, we are often interested in finding one single value that represents a set. PSRIO provides a set of methods to accomplish this kind of task with a high level of abstraction, the [aggregate functions][aggregate-functions]. One can choose many forms of how the output values will be aggregated. The table below shows the options offered by PSRIO:
 
 | Aggregate Functions        | Description  |
-|:-------------------------- |:-------------|
-| `BY_SUM()`                 |Sums the elements of a set                       |                     
-| `BY_AVERAGE()`             |Takes the average of the elements of a set       |   
-| `BY_MAX()`                 |Selects the maximum value of a set               |   
-| `BY_MIN()`                 |Selects the minimum value of a set               |   
-| `BY_CVAR_L(number)`        |Calculates the expected shortfall for the left-tail case  with the specified probability in %|   
-| `BY_CVAR_R(number)`        |Calculates the expected shortfall for the right-tail case with the specified probability in %|   
-| `BY_PERCENTILE(number)`    |Returns the score associated with the specified percentile              |   
-| `BY_NTH_ELEMENT(number)`   |Takes the specified n<sup>th</sup> value of a set|   
-| `BY_STDDEV()`              |Calculates standard deviation of a set           |   
-| `BY_FIRST_VALUE()`         |Takes the first value of a set                   |   
-| `BY_LAST_VALUE()`          |Takes the last value of a set                    |   
+|:-------------------------- |:-----------------------------------------------------------------------------------------------|
+| `BY_SUM()`                 | Sums the elements of a set                                                                     |                     
+| `BY_AVERAGE()`             | Takes the average of the elements of a set                                                     |   
+| `BY_MAX()`                 | Selects the maximum value of a set                                                             |   
+| `BY_MIN()`                 | Selects the minimum value of a set                                                             |   
+| `BY_CVAR_L(number)`        | Calculates the expected shortfall for the left-tail case with the specified probability in %   |   
+| `BY_CVAR_R(number)`        | Calculates the expected shortfall for the right-tail case with the specified probability in %  |   
+| `BY_PERCENTILE(number)`    | Returns the score associated with the specified percentile                                     |   
+| `BY_NTH_ELEMENT(number)`   | Takes the specified n<sup>th</sup> value of a set                                              |   
+| `BY_STDDEV()`              | Calculates standard deviation of a set                                                         |   
+| `BY_FIRST_VALUE()`         | Takes the first value of a set                                                                 |   
+| `BY_LAST_VALUE()`          | Takes the last value of a set                                                                  |   
 
-The methods above are only specifying how the aggregations will be executed. The aggregation itself is carried out by other methods, which are described in the sections below.
+The methods above are only specifying how the methods will execute the aggregations. The aggregation itself is carried out by other methods, which are described in the sections below.
 
 ## Scenarios
 
 ### Aggregate Scenarios
 
 To aggregate scenarios of an specific output, the following methods should be used:
+
 | Method                                                                       | Syntax                                               |
 |:-----------------------------------------------------------------------------|:-----------------------------------------------------|
 | Aggregate scenarios by an [aggregate function][aggregate-functions]          | `exp = exp1:aggregate_scenarios(f)`                  |
@@ -76,7 +77,7 @@ cmgdem_max = cmgdem:aggregate_scenarios(BY_MAX(), {1, 2, 3, 4, 5});
 
 ### Select Scenarios
 
-It is possible to select a scenario or a set of specific scenarios using the following functions:
+To aggregate scenarios of a specific output, we use the following methods:
 
 | Method                    | Syntax                                               |
 |:--------------------------|:-----------------------------------------------------|
@@ -97,7 +98,8 @@ cmgdem_scenario32 = cmgdem:select_scenario(32);
 
 ### Aggregate Blocks/Hours
 
-To aggregate blocks/hours of an output, the function below can be used:
+To aggregate blocks or hours of an output, we can use the functions below:
+
 | Method                                                                 | Syntax                           |
 |:-----------------------------------------------------------------------|:---------------------------------|
 | Aggregate blocks/hours by an [aggregate function][aggregate-functions] | `exp = exp1:aggregate_blocks(f)` |
@@ -124,7 +126,8 @@ gergnd_agg = gergnd:aggregate_blocks(BY_SUM());
 
 ### Select Blocks/Hours
 
-In order to select a specific block/hour, use:
+In order to select a specific block or hour, use:
+
 | Method                                                                 | Syntax                           |
 |:-----------------------------------------------------------------------|:---------------------------------|
 | Select one block/hour                                                  | `exp = exp1:select_block(int)`   |
@@ -141,7 +144,8 @@ cmgdem_block21 = cmgdem:select_block(21);
 
 ### Map Blocks/Hours
 
-The relationship between blocks and hours can be explored with the methods in the table below.
+PSRIO can explore the relationship between blocks and hours with the methods in the table below.
+
 | Method                                                                 | Syntax                           |
 |:-----------------------------------------------------------------------|:---------------------------------|
 | Map blocks into hours (`BY_AVERAGE()` or `BY_REPEATING()`)             | `exp = exp1:to_hour(type)`       |
@@ -159,7 +163,7 @@ TODO to_hour e to_block exemplo
 
 ### Aggregate Stages
 
-Stages can be aggregated with the functions below. It is possible to clusterize the stages in weeks, months or years, for example and aggregate them regarding their respective groups, as explained in the section [profiles][profiles].
+Stages can be aggregated with the functions below. For example, it is possible to cluster the stages in weeks, months, or years and aggregate them regarding their respective groups, as explained in the section [profiles][profiles].
 
 | Method                                                                                             | Syntax                                    |
 |:---------------------------------------------------------------------------------------------------|:------------------------------------------|
@@ -182,14 +186,14 @@ Stages can be aggregated with the functions below. It is possible to clusterize 
 ### Profile.STAGE
 {: .no_toc }
 
-By default, when no profile is informed, the `profile.STAGE` is used to characterize the aggregation. The data associated to each stage of the study horizon is aggregated.
+The `Profile.STAGE` is the default value to characterize the aggregation if the user does not inform any profile. The data associated with each stage of the study horizon is aggregated.
 
-| exp1          | exp (profile = STAGE) |
-|:-------------:|:---------------------:|
-| `n` (daily)   | `1` (daily)           |
-| `n` (weekly)  | `1` (weekly)          |
-| `n` (monthly) | `1` (monthly)         |
-| `n` (yearly)  | `1` (yearly)          |
+| exp1          | exp (`Profile.STAGE`) |
+|:-------------:|:-------------------:|
+| `n` (daily)   | `1` (daily)         |
+| `n` (weekly)  | `1` (weekly)        |
+| `n` (monthly) | `1` (monthly)       |
+| `n` (yearly)  | `1` (yearly)        |
 
 #### Example 1
 {: .no_toc }
@@ -197,18 +201,18 @@ By default, when no profile is informed, the `profile.STAGE` is used to characte
 ### Profile.WEEK and Profile.PER_WEEK
 {: .no_toc }
 
-When the data has a daily resolution and the aggregation profile is `profile.WEEK`, the data will be aggregated for each day of the weeks in the study period, i.e, that data regarding all mondays in the data set will aggregated into one value and the same for tuesday, wednesday and so on. With a daily resolution and an aggregation profile `profile.PER_WEEK`, the data related to each week of the study will be aggregated. 
+When the data has a daily resolution and the aggregation profile is `Profile.WEEK`, PSRIO will aggregate the data for each day of the weeks in the study period, i.e., that data regarding all Mondays in the data set will be aggregated into one value and the same for Tuesday, Wednesday, and so on. With a daily resolution and the aggregation `Profile.PER_WEEK`, PSRIO will aggregate the data related to each week of the study. 
 
-When the data a week level discretization and the profile is `profile.WEEK`, the data associated to each week in the study period is aggregated. When the selected aggregation profile is `profile.PER_WEEK`, nothing is done and the data remains the same.
+When the data is weekly and we request is `Profile.WEEK`, the data associated with each week is aggregated in one week. If the request is the aggregation `Profile.PER_WEEK`, PSRIO will do nothing and the data will remains the same.
 
 **These aggregation profiles are not defined for monthly and yearly resolution data**.  
 
-| exp1          | exp (profile = WEEK) | exp (profile = PER_WEEK) |
-|:-------------:|:--------------------:|:------------------------:|
-| `n` (daily)   | `7` (daily)          | `n/7` (weekly)           |
-| `n` (weekly)  | `1` (weekly)         | `n` (weekly)             |
-| `n` (monthly) | ❌                  |  ❌                      |
-| `n` (yearly)  | ❌                  |  ❌                      |
+| exp1          | exp (`Profile.WEEK`) | exp (`Profile.PER_WEEK`) |
+|:-------------:|:------------------:|:----------------------:|
+| `n` (daily)   | `7` (daily)        | `n/7` (weekly)         |
+| `n` (weekly)  | `1` (weekly)       | `n` (weekly)           |
+| `n` (monthly) | ❌                |  ❌                    |
+| `n` (yearly)  | ❌                |  ❌                    |
 
 #### Example 1
 {: .no_toc }
@@ -233,13 +237,13 @@ cmgdem_agg = cmgdem:aggregate_blocks(BY_AVERAGE(), profile.PER_WEEK);
 ### Profile.MONTH and Profile.PER_MONTH
 {: .no_toc }
 
-Similar to `profile.WEEK` and `profile.PER_WEEK` when the data has daily discretization and the profile is `profile.MONTH`, the data will be aggregated for each day of the months in the study period. For example, all 1<sup>st</sup> day of the months in the study period will be aggregated, and same for the others. If the selected profile is `profile.PER_MONTH`, the data related to each month will be aggregated.
+Similar to `Profile.WEEK` and `Profile.PER_WEEK`, when the data has daily discretization and we request `Profile.MONTH`, PSRIO will aggregate the data for each day of the months in the study period. For example, PSRIO will aggregate all 1<sup>st</sup> days of each month and the same for the others months. If we request the `Profile.PER_MONTH`, PSRIO will aggregate the data related to each month.
 
-When the data has month level discretization and the profile is `profile.MONTH`, the data associated to each month will be aggregated. If the profile is `profile.PER_MONTH`, nothing is done to the data. 
+When the data has month-level discretization and we request `Profile.MONTH`, PSRIO will aggregate the data associated with each month. If we request `Profile.PER_MONTH`, nothing is done to the data. 
 
 **These aggregation profiles are not defined for weekly and yearly resolution data**.  
 
-| exp1          | exp (profile = MONTH) | exp (profile = PER_MONTH) |
+| exp1          | exp (`Profile.MONTH`) | exp (`Profile.PER_MONTH`) |
 |:-------------:|:---------------------:|:-------------------------:|
 | `n` (daily)   | `31` (daily)          | `n/~30` (monthly)         |
 | `n` (weekly)  | ❌                   | ❌                        |
@@ -269,13 +273,13 @@ cmgdem_agg = cmgdem:aggregate_blocks(BY_AVERAGE(), profile.PER_MONTH);
 ### Profile.YEAR and Profile.PER_YEAR
 {: .no_toc }
 
-When the data has a daily resolution and the profile is `profile.YEAR` the data related to each day of years in the study period is aggregated. For example, all january 1<sup>st</sup> days in the study period will be aggregated and the same is done for the other days of the year. When the `profile.PER_YEAR` is used, the data associated to each year is aggregated. The same happens when the data has week, month and year level resolution if `profile_PER_YEAR` is selected.
+When the data has a daily resolution and we request a `Profile.YEAR`, the data related to each day of years is aggregated. For example, PSRIO will aggregate all January 1<sup>st</sup> days in the study period, which is done for the other days of the year. If we request a` Profile.PER_YEAR`, the data associated with each year is aggregated. The same happens when the data has week, month, or year-level resolution if `Profile.PER_YEAR` is selected.
 
 If the data has a year resolution and `profile.YEAR` is selected. the data related to the same year is aggregated.
 
 **The `profile.YEAR` profile is not defined for weekly and monthly resolution data**.  
 
-| exp1          | exp (profile = YEAR) | exp (profile = PER_YEAR) |
+| exp1          | exp (`Profile.YEAR`) | exp (`Profile.PER_YEAR`) |
 |:-------------:|:--------------------:|:------------------------:|
 | `n` (daily)   | `365` (daily)        | `n/365` (yearly)         |
 | `n` (weekly)  | `52` (weekly)        | `n/52` (yearly)          |
@@ -304,7 +308,7 @@ defcit_per_year = defcit:aggregate_stages(BY_SUM(), Profile.PER_YEAR);
 
 ### Select Stages
 
-The stages of a study period can be select by its indexes or by their associated years. Single or contiguous interval of stages can be selected with the methods showed in the table below.
+The stages of a study period can be select by its indexes or by their associated years. PSRIO can select a single or contiguous interval of stages with the methods shown in the table below:
 
 | Method                                                                 | Syntax                                       |
 |:-----------------------------------------------------------------------|:---------------------------------------------|
@@ -385,6 +389,7 @@ exp5 = objcop:select_stages_by_year(2032);
 ### Aggregate Agents
 
 Just like the stages, the agents of a study can be aggregated with the following methods:
+
 | Method                                                                                            | Syntax                                         |
 |:--------------------------------------------------------------------------------------------------|:-----------------------------------------------|
 | Aggregate all agents by an [aggregate function][aggregate-functions]                              | `exp = exp1:aggregate_agents(f, label)`        |
@@ -422,7 +427,7 @@ gerhid_buses = gerhid:aggregate_agents(BY_SUM(), Collection.BUSES);
 
 ### Select Agents
 
-The selection methods can be used to filter the agents that contain some desired information. The data can be filtered by the names, or indexes, and collections of the agents, as well as by logical expressions when selecting agents by queries.
+We can use the selection methods to filter the agents that contain some desired information. The names or indexes can filter data, collections of the agents, and logical expressions when selecting agents by queries.
 
 | Method                                                                     | Syntax                                                          |
 |:---------------------------------------------------------------------------|:----------------------------------------------------------------|
@@ -462,7 +467,7 @@ non_zero_gerter = gerter:select_agents(gerter:ne(0));
 
 ### Remove Agents
 
-To remove agents from a data set, the following method can be used:
+We should use the following methods to remove the agents from a data set:
 
 | Method                                                                     | Syntax                                                          |
 |:---------------------------------------------------------------------------|:----------------------------------------------------------------|
@@ -470,7 +475,7 @@ To remove agents from a data set, the following method can be used:
 
 ### Rename Agents
 
-To rename agents of a data set, the methods below must be used:
+We should use the following methods to rename the agents from a data set:
 
 | Method                                                                     | Syntax                                                          |
 |:---------------------------------------------------------------------------|:----------------------------------------------------------------|
