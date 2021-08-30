@@ -48,19 +48,17 @@ nav_order: 8
 Some methods accept arguments to customize your chart, i.e., change its color, define the limits on the y axis, etc.
 
 The arguments are declared in tables inside the methods as shown in the following example.
-`chart:add_line(exp, {yMin= 0})`. The user an also define multiple arguments as follows ``chart:add_line(exp, {yMin= 0, color = "#8583ff"})``
+`chart:add_line(exp, {yMin=0})`. The user an also define multiple arguments as follows `chart:add_line(exp, {yMin=0, color="#8583ff"})`. The following table describe the available chart arguments:
 
-The following table describe the available chart arguments
-
-| Argument | Default Value | Description|
-|:---------|:------------------------------------|:------------------------------------------------------------|
-| color    | automatically calculated            | The color of the chart (e.g. `#ff0000` or `red`)            |
-| yMin     | automatically calculated            | The minimum value of the y axis                             |
-| yMax     | automatically calculated            | The maximum value of the y axis                             |
-| yLine    | ---                                 | Draw a horizontal line on the y axis at the provided value  |
-| xMin     | automatically calculated            | The minimum value of the x axis                             |
-| xMax     | automatically calculated            | The maximum value of the x axis                             |
-| xLine    | ---                                 | Draw a vertical line on the x axis at the provided value    |
+| Argument | Default Value   | Description                                                 |
+|:---------|:--------------- |:------------------------------------------------------------|
+| `color`  | auto            | The color of the chart (e.g. `#ff0000` or `red`)            |
+| `yMin`   | auto            | The minimum value of the y axis                             |
+| `yMax`   | auto            | The maximum value of the y axis                             |
+| `yLine`  | ---             | Draw a horizontal line on the y axis at the provided value  |
+| `xMin`   | auto            | The minimum value of the x axis                             |
+| `xMax`   | auto            | The maximum value of the x axis                             |
+| `xLine`  | ---             | Draw a vertical line on the x axis at the provided value    |
 
 #### Example 1
 {: .no_toc }
