@@ -384,7 +384,7 @@ exp5 = objcop:select_stages_by_year(2032);
 
 ### Aggregate Agents
 
-Just like the stages, the agents of a study can be aggregate with the following methods.
+Just like the stages, the agents of a study can be aggregated with the following methods:
 | Method                                                                                            | Syntax                                         |
 |:--------------------------------------------------------------------------------------------------|:-----------------------------------------------|
 | Aggregate all agents by an [aggregate function][aggregate-functions]                              | `exp = exp1:aggregate_agents(f, label)`        |
@@ -421,13 +421,14 @@ gerhid_buses = gerhid:aggregate_agents(BY_SUM(), Collection.BUSES);
 ```
 
 ### Select Agents
-The agents in a study can be select by their names, collection or query according to the methods below:
 
-| Method                                                 | Syntax                                                          |
-|:-------------------------------------------------------|:----------------------------------------------------------------|
-| Select agents by a list of agents names or indices     | `exp = exp1:select_agents({string or int, int or string, ...})` |
-| Select agents by a [collection][collections]           | `exp = exp1:select_agents(collection)`                          |
-| Select agents by a query                               | `exp = exp1:select_agents(query)`                               |
+The selection methods can be used to filter the agents that contain some desired information. The data can be filtered by the names, or indexes, and collections of the agents, as well as by logical expressions when selecting agents by queries.
+
+| Method                                                                     | Syntax                                                          |
+|:---------------------------------------------------------------------------|:----------------------------------------------------------------|
+| Select agents by a list of agents names or indices                         | `exp = exp1:select_agents({string or int, int or string, ...})` |
+| Select agents by a [collection][collections]                               | `exp = exp1:select_agents(collection)`                          |
+| Select agents by a query                                                   | `exp = exp1:select_agents(query)`                               |
 
 #### Example 1
 {: .no_toc }
@@ -437,6 +438,26 @@ thermal = Thermal();
 gerter = thermal:load("gerter");
 
 gerter_t1_and_t2 = gerter:select_agents({"Thermal 1", "Thermal 2"});
+```
+
+#### Example 2
+{: .no_toc }
+
+``` lua
+expansion_project = ExpansionProject()
+outidec = expansion_project:load("outidec");
+
+outidec_dclinks = outidec:select_agents(Collection.DCLINK);
+```
+
+#### Example 3
+{: .no_toc }
+
+``` lua
+thermal = Thermal();
+gerter = thermal:load("gerter");
+
+non_zero_gerter = gerter:select_agents(gerter:ne(0));
 ```
 
 ### Remove Agents
@@ -468,6 +489,8 @@ gerter_renamed = gerter:rename_agents({"T1", "T2", "T3"});
 ```
 
 ### Concatenate Agents
+
+The concanation method allows the unification of data from different files. To concatenate data, use the method below:
 
 | Method      | Syntax                                                          |
 |:------------|:----------------------------------------------------------------|
