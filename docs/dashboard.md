@@ -52,15 +52,15 @@ The arguments are declared in tables inside the methods as shown in the followin
 
 The following table describe the available chart arguments
 
-| Argument| Default Value | Description|
-|:--|:--|:--|
-|yMin| default value choosen by highcharts | The starting value of the y axis |
-|yMax| default value choosen by highcharts | The ending value of the y axis |
-|yLine| `nil` | Draw a horizontal line on the y axis at the provided value. |
-|xMin| default value choosen by highcharts | The starting value of the x axis |
-|xMax| default value choosen by highcharts | The ending value of the x axis |
-|xLine| `nil` | Draw a vertical line on the x axis at the provided value. |
-|color| default value choosen by highcharts | The color of the line or histogram in RGB (#xxxxxx)|
+| Argument | Default Value | Description|
+|:---------|:------------------------------------|:------------------------------------------------------------|
+| color    | default value choosen by highcharts | The color of the chart (e.g. `#ff0000` or `red`)            |
+| yMin     | automatically calculated            | The minimum value of the y axis                             |
+| yMax     | automatically calculated            | The maximum value of the y axis                             |
+| yLine    | `nil`                               | Draw a horizontal line on the y axis at the provided value  |
+| xMin     | automatically calculated            | The minimum value of the x axis                             |
+| xMax     | automatically calculated            | The maximum value of the x axis                             |
+| xLine    | `nil`                               | Draw a vertical line on the x axis at the provided value    |
 
 #### Example 1
 {: .no_toc }
@@ -101,7 +101,7 @@ Markdown is a lightweight and easy-to-use syntax for styling your writing. For m
 #### Example 1
 
 ```lua
-dashboard = Dashboard("Hydro Generation"); 
+local dashboard = Dashboard("Hydro Generation"); 
 dashboard:push("# Hydro Generation Dashboard");
 dashboard:push("#### This dashboard shows the hydro generation of the main hydropower plants in Brazil.");
 dashboard:save("dashboard_hydros");
