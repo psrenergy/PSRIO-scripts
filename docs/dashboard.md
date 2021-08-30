@@ -54,13 +54,13 @@ The following table describe the available chart arguments
 
 | Argument | Default Value | Description|
 |:---------|:------------------------------------|:------------------------------------------------------------|
-| color    | default value choosen by highcharts | The color of the chart (e.g. `#ff0000` or `red`)            |
+| color    | automatically calculated            | The color of the chart (e.g. `#ff0000` or `red`)            |
 | yMin     | automatically calculated            | The minimum value of the y axis                             |
 | yMax     | automatically calculated            | The maximum value of the y axis                             |
-| yLine    | `nil`                               | Draw a horizontal line on the y axis at the provided value  |
+| yLine    | ---                                 | Draw a horizontal line on the y axis at the provided value  |
 | xMin     | automatically calculated            | The minimum value of the x axis                             |
 | xMax     | automatically calculated            | The maximum value of the x axis                             |
-| xLine    | `nil`                               | Draw a vertical line on the x axis at the provided value    |
+| xLine    | ---                                 | Draw a vertical line on the x axis at the provided value    |
 
 #### Example 1
 {: .no_toc }
