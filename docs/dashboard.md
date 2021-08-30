@@ -54,9 +54,13 @@ The following table describe the available chart arguments
 
 | Argument| Default Value | Description|
 |:--|:--|:--|
-|yMin| - | The starting value of the y axis |
-|yMax| - | The ending value of the y axis |
-|color| - | The color of the line or histogram |
+|yMin| default value choosen by highcharts | The starting value of the y axis |
+|yMax| default value choosen by highcharts | The ending value of the y axis |
+|yLine| `nil` | Draw a horizontal line on the y axis at the provided value. |
+|xMin| default value choosen by highcharts | The starting value of the x axis |
+|xMax| default value choosen by highcharts | The ending value of the x axis |
+|xLine| `nil` | Draw a vertical line on the x axis at the provided value. |
+|color| default value choosen by highcharts | The color of the line or histogram in RGB (#xxxxxx)|
 
 #### Example 1
 {: .no_toc }
@@ -94,6 +98,14 @@ dashboard:save("sddp-dashboard");
 
 Markdown is a lightweight and easy-to-use syntax for styling your writing. For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
 
+#### Example 1
+
+```lua
+dashboard = Dashboard("Hydro Generation"); 
+dashboard:push("# Hydro Generation Dashboard");
+dashboard:push("#### This dashboard shows the hydro generation of the main hydropower plants in Brazil.");
+dashboard:save("dashboard_hydros");
+```
 <!-- ```markdown
 Syntax highlighted code block
 

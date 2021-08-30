@@ -25,6 +25,7 @@ PSRIO provides four unary operators that only receive one expression and does no
 | Unary Minus     | `exp = -exp1`                |
 | Absolute Value  | `exp = exp1:abs()`           |
 | Round           | `exp = exp1:round(int)`      |
+| Convert         | `exp = exp1:convert(string)`   |
 
 <br/>
 
