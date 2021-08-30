@@ -422,11 +422,12 @@ gerhid_buses = gerhid:aggregate_agents(BY_SUM(), Collection.BUSES);
 
 ### Select Agents
 The agents in a study can be select by their names, collection or query according to the methods below:
-| Method                                                                     | Syntax                                                          |
-|:---------------------------------------------------------------------------|:----------------------------------------------------------------|
-| Select agents by a list of agents names or indices                         | `exp = exp1:select_agents({string or int, int or string, ...})` |
-| Select agents by a [collection][collections]                               | `exp = exp1:select_agents(collection)`                          |
-| Select agents by a query                                                   | `exp = exp1:select_agents(query)`                               |
+
+| Method                                                 | Syntax                                                          |
+|:-------------------------------------------------------|:----------------------------------------------------------------|
+| Select agents by a list of agents names or indices     | `exp = exp1:select_agents({string or int, int or string, ...})` |
+| Select agents by a [collection][collections]           | `exp = exp1:select_agents(collection)`                          |
+| Select agents by a query                               | `exp = exp1:select_agents(query)`                               |
 
 #### Example 1
 {: .no_toc }
