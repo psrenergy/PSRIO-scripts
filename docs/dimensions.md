@@ -334,6 +334,8 @@ exp5 = objcop:select_stages_by_year(2032);
 
 ### Reshape Stages
 
+For an hourly represented data, the stage resolution can changed from a week, month or year level to a daily one using the method below:
+
 | Method                                                                 | Syntax                                       |
 |:-----------------------------------------------------------------------|:---------------------------------------------|
 | Reshape stages frequency to daily (only works with hourly input)       | `exp = exp1:reshape_stages(Profile.DAILY)`   |
@@ -351,9 +353,15 @@ exp5 = objcop:select_stages_by_year(2032);
 {: .no_toc }
 
 ``` lua
+thermal = Thermal();
+gerter = thermal:load("gerter");
+
+gerter_daily = gerter:reshape_stages(Profile.DAILY)
 ```
 
 ## Agents
+
+Agents are the entities associated with the output results. For example, Hydro Generation is a variable that applies to hydro plants, which are agents. Analogously, Fuel Consumption is variable that applies to fuels, which are agents. The table below lists all agent collections available in PSRIO:
 
 ### Collections
 
