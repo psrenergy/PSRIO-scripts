@@ -154,9 +154,21 @@ PSRIO can explore the relationship between blocks and hours with the methods in 
 #### Example 1
 {: .no_toc }
 
-TODO to_hour e to_block exemplo
 ``` lua
+system = System();
+cmgdem_block = thermal:load("cmgdem");
 
+cmgdem_hourly = cmgdem_block:to_hour(BY_REPEATING());
+```
+
+#### Example 2
+{: .no_toc }
+
+``` lua
+thermal = Thermal();
+gerter_hourly = thermal:load("gerter");
+
+gerter_block = gerter_hourly:to_block(BY_SUM());
 ```
 
 ## Stages
