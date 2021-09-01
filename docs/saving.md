@@ -5,6 +5,7 @@ nav_order: 7
 
 # Saving
 
+After processing the data, it is convenient to save it to a file in order to store the information and pass it around. 
 | Method                                                                      | Syntax                                              |
 |:----------------------------------------------------------------------------|:----------------------------------------------------|
 | Save with filename                                                          | `exp1:save("filename")`                             |
@@ -15,6 +16,8 @@ nav_order: 7
 
 ## Saving Options
 
+Saving options specify how the data will be saved in a file. By default, when no option is provided for the method, file format will be binary, yielding `.hdr` and `bin` files.
+
 | Description                                                     | Syntax                                     |
 |:----------------------------------------------------------------|:-------------------------------------------|
 | Save output as CSV                                              | `csv = true`                               |
@@ -24,6 +27,17 @@ nav_order: 7
 | Delete file at the end of execution                             | `tmp = true`                               |
 
 #### Example 1
+{: .no_toc }
+
+``` lua
+thermal = Hydro();
+gerter = thermal:load("gerter")
+
+agg_gerter = gerter:aggregate_stages(BY_AVERAGE())
+agg_gerter:save("AggregatedGerter", { csv = true });
+```
+
+#### Example 2
 {: .no_toc }
 
 ``` lua
