@@ -51,23 +51,6 @@ After creating the chart object, we can start to push the data in it. PSRIO give
 | Add Area Range                 | `chart:add_area_range(exp1, exp2)`                              |
 | Add Pie                        | `chart:add_pie(exp1)`                                           |
 
-### Chart attributes
-
-Some methods accept arguments to customize your chart, i.e., change its color, define the limits on the y axis, etc.
-
-The arguments are declared in tables inside the methods, as shown in the following example:
-`chart:add_line(exp, {yMin=0})`. The user can also define multiple arguments as follows `chart:add_line(exp, {yMin=0, color="#8583ff"})`. The following table describes the available chart arguments:
-
-| Argument | Default Value   | Description                                                 |
-|:---------|:--------------- |:------------------------------------------------------------|
-| `color`  | auto            | The color of the chart (e.g. `#ff0000` or `red`)            |
-| `yMin`   | auto            | The minimum value of the y axis                             |
-| `yMax`   | auto            | The maximum value of the y axis                             |
-| `yLine`  | ---             | Draw a horizontal line on the y axis at the provided value  |
-| `xMin`   | auto            | The minimum value of the x axis                             |
-| `xMax`   | auto            | The maximum value of the x axis                             |
-| `xLine`  | ---             | Draw a vertical line on the x axis at the provided value    |
-
 The basic workflow in PSRIO to create a dashboard is:
 
 1. Load the collections and data
@@ -107,6 +90,23 @@ local dashboard = Dashboard("SDDP");
 dashboard:push(chart);
 dashboard:save("sddp-dashboard");
 ```
+
+### Chart attributes
+
+Some methods accept arguments to customize your chart, i.e., change its color, define the limits on the y axis, etc.
+
+The arguments are declared in tables inside the methods, as shown in the following example:
+`chart:add_line(exp, {yMin=0})`. The user can also define multiple arguments as follows `chart:add_line(exp, {yMin=0, color="#8583ff"})`. The following table describes the available chart arguments:
+
+| Argument | Default Value   | Description                                                 |
+|:---------|:--------------- |:------------------------------------------------------------|
+| `color`  | auto            | The color of the chart (e.g. `#ff0000` or `red`)            |
+| `yMin`   | auto            | The minimum value of the y axis                             |
+| `yMax`   | auto            | The maximum value of the y axis                             |
+| `yLine`  | ---             | Draw a horizontal line on the y axis at the provided value  |
+| `xMin`   | auto            | The minimum value of the x axis                             |
+| `xMax`   | auto            | The maximum value of the x axis                             |
+| `xLine`  | ---             | Draw a vertical line on the x axis at the provided value    |
 
 ## Markdown
 
