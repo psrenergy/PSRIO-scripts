@@ -5,7 +5,8 @@ nav_order: 7
 
 # Saving
 
-After processing the data, it is convenient to save it to a file in order to store the information and pass it around. 
+After processing the data, it is convenient to save it to a file to store it and pass it around. 
+
 | Method                                                                      | Syntax                                              |
 |:----------------------------------------------------------------------------|:----------------------------------------------------|
 | Save with filename                                                          | `exp1:save("filename")`                             |
@@ -16,7 +17,7 @@ After processing the data, it is convenient to save it to a file in order to sto
 
 ## Saving Options
 
-Saving options specify how the data will be saved in a file. By default, when no option is provided for the method, file format will be binary, yielding `.hdr` and `bin` files.
+Saving options specify how PSRIO will save the data in a file. By default, when no option is provided for the method, the file format will be binary, yielding `.hdr` and `.bin` files.
 
 | Description                                                     | Syntax                                     |
 |:----------------------------------------------------------------|:-------------------------------------------|
