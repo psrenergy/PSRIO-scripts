@@ -74,23 +74,6 @@ dashboard:push(chart);
 dashboard:save("sddp-dashboard");
 ```
 
-#### Example 2
-{: .no_toc }
-
-``` lua
-local hydro = Hydro();
-local gerhid = hydro:load("gerhid"):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE());
-
-local light_blue = "#8583ff";
-
-local chart = Chart("Hydro Generation");
-chart:add_line(gerhid, {yMin = 0, color = light_blue});
-
-local dashboard = Dashboard("SDDP");
-dashboard:push(chart);
-dashboard:save("sddp-dashboard");
-```
-
 ### Chart attributes
 
 Some methods accept arguments to customize your chart, i.e., change its color, define the limits on the y axis, etc.
@@ -107,6 +90,23 @@ The arguments are declared in tables inside the methods, as shown in the followi
 | `xMin`   | auto            | The minimum value of the x axis                             |
 | `xMax`   | auto            | The maximum value of the x axis                             |
 | `xLine`  | ---             | Draw a vertical line on the x axis at the provided value    |
+
+#### Example 1
+{: .no_toc }
+
+``` lua
+local hydro = Hydro();
+local gerhid = hydro:load("gerhid"):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE());
+
+local light_blue = "#8583ff";
+
+local chart = Chart("Hydro Generation");
+chart:add_line(gerhid, {yMin = 0, color = light_blue});
+
+local dashboard = Dashboard("SDDP");
+dashboard:push(chart);
+dashboard:save("sddp-dashboard");
+```
 
 ## Markdown
 
