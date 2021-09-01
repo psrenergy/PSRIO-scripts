@@ -113,6 +113,7 @@ dashboard:save("sddp-dashboard");
 Markdown is a lightweight and easy-to-use syntax for styling your writing. For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
 
 #### Example 1
+{: .no_toc }
 
 ```lua
 local dashboard = Dashboard("Hydro Generation"); 
