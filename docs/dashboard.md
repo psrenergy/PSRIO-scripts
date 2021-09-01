@@ -63,13 +63,13 @@ The basic workflow in PSRIO to create a dashboard is:
 {: .no_toc }
 
 ``` lua
-local hydro = Hydro();
-local gerhid = hydro:load("gerhid"):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE());
+hydro = Hydro();
+gerhid = hydro:load("gerhid"):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE());
 
-local chart = Chart("Hydro Generation");
+chart = Chart("Hydro Generation");
 chart:add_line(gerhid);
 
-local dashboard = Dashboard("SDDP");
+dashboard = Dashboard("SDDP");
 dashboard:push(chart);
 dashboard:save("sddp-dashboard");
 ```
@@ -95,15 +95,15 @@ The arguments are declared in tables inside the methods, as shown in the followi
 {: .no_toc }
 
 ``` lua
-local hydro = Hydro();
-local gerhid = hydro:load("gerhid"):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE());
+hydro = Hydro();
+gerhid = hydro:load("gerhid"):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE());
 
-local light_blue = "#8583ff";
+light_blue = "#8583ff";
 
-local chart = Chart("Hydro Generation");
+chart = Chart("Hydro Generation");
 chart:add_line(gerhid, {yMin = 0, color = light_blue});
 
-local dashboard = Dashboard("SDDP");
+dashboard = Dashboard("SDDP");
 dashboard:push(chart);
 dashboard:save("sddp-dashboard");
 ```
@@ -116,7 +116,7 @@ Markdown is a lightweight and easy-to-use syntax for styling your writing. For m
 {: .no_toc }
 
 ```lua
-local dashboard = Dashboard("Hydro Generation"); 
+dashboard = Dashboard("Hydro Generation"); 
 dashboard:push("# Hydro Generation Dashboard");
 dashboard:push("#### This dashboard shows the hydro generation of the main hydropower plants in Brazil.");
 dashboard:save("dashboard_hydros");
