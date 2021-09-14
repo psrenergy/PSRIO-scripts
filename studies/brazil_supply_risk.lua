@@ -9,7 +9,7 @@ local thermal = require("collection/thermal");
 
 local number_of_digits_round = 2;
 
-local last_stage = 4;
+local last_stage = 3;
 
 -- READ INPUT FILE
 local toml = study:load_toml("brazil_supply_risk.toml");
@@ -33,8 +33,11 @@ local input_termica_extra = false; -- toml:get_double("input_termica_extra");
 local bool_oferta_extra = true; -- toml:get_bool("bool_oferta_extra");
 -- bool_oferta_extra = toml:get_double("ExtraInterc");
 
-local bool_int_extra = true; -- toml:get_bool("bool_int_extra");
+local bool_int_extra = false; -- toml:get_bool("bool_int_extra");
 local input_int_extra = toml:get_double("ExtraInterc")/100;
+
+local bool_int_add_GW = false;
+local input_int_add_GW_extra = -4; --GWm
 
 local bool_demanda_reduzida = false;
 -- local bool_demanda_reduzida = toml:get_bool("bool_demanda_reduzida");
@@ -55,10 +58,14 @@ local input_demanda_aumento_anual_sobre_2020 = toml:get_double("ExtraDemand");
 -- local bool_demanda_substituta = toml:get_bool("bool_demanda_substituta"); -- GWh
 
 local bool_potencia = true;
-local bool_operacao_limitada_itaipu = false; -- reduz 5GW de itaipu na análise de suprimento de potência
+local bool_operacao_limitada_itaipu = true; -- reduz 5GW de itaipu na análise de suprimento de potência
+local perda_itaipu_e_extras  = 2.5; --GW
 
 local bool_demand_per_block = false; -- toml:get_bool("bool_demand_per_block");
 ------------------------------------------------- INPUT -------------------------------------------------
+
+Inflow_energia_mlt = generic:load("enafluMLT"):select_stages(1,11);
+Inflow_energia_mlt:save("enafluMLT_", {csv = true});
 
 Inflow_energia_historico_2020 = generic:load("enaflu2020"):select_stages(1,11):convert("GW"):rename_agents({"Histórico 2020 - SU", "Histórico 2020 - SE"});
 Inflow_energia_historico_2021 = generic:load("enaflu2021"):convert("GW"):rename_agents({"Histórico 2021 - SU", "Histórico 2021 - SE"});
@@ -207,6 +214,10 @@ end
 
 capint2_SE = min(capint2_SE, interc_sum);
 capint2_SE = min(capint2_SE, interc_sum_2);
+if bool_int_add_GW then
+    capint2_SE = capint2_SE:convert("GW") + input_int_add_GW_extra;
+    capint2_SE = capint2_SE:convert("GWh");
+end
 -- capint2_SE_block = min(capint2_SE_block, interc_sum_block):select_stages(1,last_stage);
 local capint2_SE_extra = capint2_SE * input_int_extra;
 local capint2_SE_extra_block  = capint2_SE_block  * input_int_extra;
@@ -278,6 +289,10 @@ else
     local acontecido_2021_1_semestre = 362948.856; --GWh - 362825.462
     local previsao_atual_2021_2_semetre = 266021.554; --GWh
 
+    local realizado_agosto = 51213.24; -- atualizar depois, numero provisório usando a previsão + ande
+    acontecido_2021_1_semestre = acontecido_2021_1_semestre + realizado_agosto;
+    previsao_atual_2021_2_semetre = previsao_atual_2021_2_semetre - realizado_agosto;
+
     local nova_demanda_2021_total = (1+input_demanda_aumento_anual_sobre_2020/100) * acontecido_2020_total;
     local nova_demanda_2021_2_semestre = nova_demanda_2021_total - acontecido_2021_1_semestre;
     input_demanda_extra = nova_demanda_2021_2_semestre / previsao_atual_2021_2_semetre - 1;
@@ -308,6 +323,7 @@ if bool_termica_extra then
 end
 if bool_oferta_extra then
     oferta_extra = generic:load("extra_generation", true):convert("GWh");
+    -- oferta_extra = generic:load("extra_generation_2", true):convert("GWh");
     generation = generation + oferta_extra:aggregate_agents(BY_SUM(), "SE + SU");
 end
 generation = generation:select_stages(1,last_stage);
@@ -512,22 +528,34 @@ ifelse(has_SU_level2_violation | has_SE_level2_violation, 1, 0):aggregate_scenar
 
 local deficit_final_risk = ifelse(deficit_sum:gt(1), 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):rename_agents({"Deficit risk"}):reset_stages():save_and_load("deficit_final_risk");
 
+-- local deficit_stages = ifelse(mismatch:ne(0), mismatch_stages * (deficit_sum / mismatch), 0.0)
+-- -- deficit apenas nos 3 ultimos estágios
+-- deficit_first_stages = deficit_stages:select_stages(1,last_stage-3):reset_stages():aggregate_stages(BY_SUM());
+-- deficit_last_stages = deficit_stages:select_stages(last_stage-2,last_stage):reset_stages():aggregate_stages(BY_SUM());
+-- -- local deficit_stages = ifelse(deficit_last_stages:ne(0), deficit_stages * (deficit_last_stages + deficit_first_stages)/deficit_last_stages, 0.0);
+-- deficit_stages = deficit_stages + deficit_first_stages/3; -- divide igualmente os deficit dos dois primeiros estágios nos últimos
+-- deficit_stages = deficit_stages * ifelse(study.stage:gt(last_stage-3), 1, 0); -- zera o deficit dos 2 primerios estágios, já foram redistribuídos nos demais
+-- deficit_stages = deficit_stages:convert("GW");
+
+
+-- divide deficit total proporcional ao mismatch_stages entre todos os estagios
 local deficit_stages = ifelse(mismatch:ne(0), mismatch_stages * (deficit_sum / mismatch), 0.0)
--- deficit apenas nos 3 ultimos estágios
-deficit_first_stages = deficit_stages:select_stages(1,last_stage-3):reset_stages():aggregate_stages(BY_SUM());
-deficit_last_stages = deficit_stages:select_stages(last_stage-2,last_stage):reset_stages():aggregate_stages(BY_SUM());
--- local deficit_stages = ifelse(deficit_last_stages:ne(0), deficit_stages * (deficit_last_stages + deficit_first_stages)/deficit_last_stages, 0.0);
-deficit_stages = deficit_stages + deficit_first_stages/3; -- divide igualmente os deficit dos dois primeiros estágios nos últimos
-deficit_stages = deficit_stages * ifelse(study.stage:gt(last_stage-3), 1, 0); -- zera o deficit dos 2 primerios estágios, já foram redistribuídos nos demais
+-- aloca o deficit apenas nos 3 ultimos estágios, dividingo igualmente o deficit dos primeiros estagios nos 3 últimos
+if last_stage > 3 then
+    deficit_first_stages = deficit_stages:select_stages(1,last_stage-3):reset_stages():aggregate_stages(BY_SUM());
+    deficit_last_stages = deficit_stages:select_stages(last_stage-2,last_stage):reset_stages():aggregate_stages(BY_SUM());
+    deficit_stages = deficit_stages + deficit_first_stages/3; -- divide igualmente os deficit dos dois primeiros estágios nos últimos
+    deficit_stages = deficit_stages * ifelse(study.stage:gt(last_stage-3), 1, 0); -- zera o deficit dos 2 primerios estágios, já foram redistribuídos nos demais
+end
 deficit_stages = deficit_stages:convert("GW");
 
 local deficit_percentual = (deficit_sum/(demand:aggregate_blocks(BY_SUM()):select_stages(last_stage-2,last_stage):reset_stages():aggregate_stages(BY_SUM()))):convert("%"):save_and_load("deficit_percentual");
 
 local minimum_deficit_threshold = 1;
 local has_deficit = ifelse(deficit_sum:gt(minimum_deficit_threshold), 1, 0);
-(1 - ifelse(has_SU_level1_violation | has_SE_level1_violation, 1, 0)):save("cenarios_normal");
+cenarios_normal = (1 - ifelse(has_SU_level1_violation | has_SE_level1_violation, 1, 0)):save_and_load("cenarios_normal");
 cenarios_atencao = (ifelse(has_SU_level1_violation | has_SE_level1_violation, 1, 0) - has_deficit):save_and_load("cenarios_atencao");
-has_deficit:save("cenarios_racionamento");
+cenarios_racionamento = has_deficit:save_and_load("cenarios_racionamento");
 
 deficit_stages:save("deficit_stages", {csv = true});
 
@@ -584,7 +612,7 @@ end
 --------------------------------------
 
 local function add_percentile_layers(chart, output, force_unit, to_round)    
-    if to_round
+    if to_round then
         output = output:round(number_of_digits_round)
     end
     local p_min = output:aggregate_scenarios(BY_PERCENTILE(5)):rename_agents({"Intervalo de confiança de 90%"});
@@ -1129,10 +1157,11 @@ if bool_potencia and numero_cenarios_potencia > 0 then
     end
     if bool_oferta_extra then
         oferta_extra = generic:load("extra_generation", true):convert("GW");
+        -- oferta_extra = generic:load("extra_generation_2", true):convert("GW");
         power_hr = power_hr + oferta_extra:aggregate_agents(BY_SUM(), "SE + SU");
     end
     if bool_operacao_limitada_itaipu then
-        power_hr = max(0, power_hr - 5);
+        power_hr = max(0, power_hr - perda_itaipu_e_extras);
     end
     power_hr = power_hr:save_and_load("cache_power_hr", {tmp = true, csv = false});
     mismatch_power = (demand_hr - power_hr):save_and_load("cache_mismatch_power", {tmp = true, csv = false});
@@ -1264,7 +1293,7 @@ if bool_potencia then
 end
 if bool_potencia then
 
-    risco_racionamento = ifelse(study.stage:select_stages(1,last_stage):gt(1), enearm_final_risk_level2_SE_or_SU_pie, 0);
+    risco_racionamento = ifelse(study.stage:select_stages(1,last_stage):gt(last_stage-3), enearm_final_risk_level2_SE_or_SU_pie, 0);
     if numero_cenarios_potencia > 0 then
         risco_apagao_severo = (risco_apagao_severo * enearm_final_risk_level1_SE_or_SU_pie):convert("%");
         risco_apagao_reserva = (risco_apagao_reserva * enearm_final_risk_level1_SE_or_SU_pie):convert("%");
@@ -1293,9 +1322,128 @@ end
 
 -- ( pothid:convert("GW") - hydro_max_power:select_scenarios(1):convert("GW")):save("cache_dif_pothid", {tmp = true, csv = false});
 
+-- SU-MLT	SE-MLT	NE-MLT	NO-MLT
+Inflow_energia_mlt_total = Inflow_energia_mlt:select_stages(11-last_stage+1,11):aggregate_stages(BY_AVERAGE()):aggregate_agents(BY_SUM(), "ENA_TOTAL");
+Inflow_energia_mlt_sul = Inflow_energia_mlt:select_stages(11-last_stage+1,11):aggregate_stages(BY_AVERAGE()):select_agents({"SU-MLT"}):aggregate_agents(BY_SUM(), "ENA_SUL");
+Inflow_energia_mlt_sudeste = Inflow_energia_mlt:select_stages(11-last_stage+1,11):aggregate_stages(BY_AVERAGE()):select_agents({"SE-MLT"}):aggregate_agents(BY_SUM(), "ENA_TOTAL");
+Inflow_energia_mlt_sul_e_sudeste = Inflow_energia_mlt:select_stages(11-last_stage+1,11):aggregate_stages(BY_AVERAGE()):select_agents({"SU-MLT", "SE-MLT"}):aggregate_agents(BY_SUM(), "ENA_TOTAL");
+print(Inflow_energia_mlt_total);
+print(Inflow_energia_mlt_sul);
+print(Inflow_energia_mlt_sudeste);
+print(Inflow_energia_mlt_sul_e_sudeste);
+local dashboard12 = nil;
+if true then
+    dashboard12 = Dashboard("ENA - cenários");
+    local md_tabela_enas = Markdown();
+    local cenarios_ena = {};
+    local numero_cenarios_ena = 0;
+    cenarios_normal_list = cenarios_normal:to_int_list();
+    for cenario, value in ipairs( cenarios_normal_list ) do
+        if value == 1 then
+            table.insert(cenarios_ena, cenario);
+            numero_cenarios_ena = numero_cenarios_ena + 1;
+        end
+    end
+    cenarios_atencao_list = cenarios_atencao:to_int_list();
+    for cenario, value in ipairs( cenarios_atencao_list ) do
+        if value == 1 then
+            table.insert(cenarios_ena, cenario);
+            numero_cenarios_ena = numero_cenarios_ena + 1;
+        end
+    end
+    cenarios_racionamento_list = cenarios_racionamento:to_int_list();
+    for cenario, value in ipairs( cenarios_racionamento_list ) do
+        if value == 1 then
+            table.insert(cenarios_ena, cenario);
+            numero_cenarios_ena = numero_cenarios_ena + 1;
+        end
+    end
+    scenarios = Inflow_energia:select_scenarios(cenarios_ena):scenarios();
+    md_tabela_enas:add("# Tabela de ENAs");
+    md_tabela_enas:add("Cenario | Normal (0/1) | Atencao (0/1) | Deficit (0/1) | ENA total (%) | ENA Sul (%) | ENA Sudeste (%) | ENA Sul + Sudeste (%)");
+    md_tabela_enas:add("-:|-:|-:|-:|-:|-:|-:|-:");
+    for scenario = 1,numero_cenarios_ena,1 do
+        -- print(scenario);
+        Inflow_energia_mlt = generic:load("enafluMLT"):select_stages(1,11):convert("GW");
+        ena_total = Inflow_energia:aggregate_stages(BY_AVERAGE()):select_scenarios(cenarios_ena):select_scenarios({scenario}):aggregate_agents(BY_SUM(), "ENA_TOTAL");
+        ena_sul = Inflow_energia:aggregate_stages(BY_AVERAGE()):select_scenarios(cenarios_ena):select_scenarios({scenario}):select_agents({"SUL"}):aggregate_agents(BY_SUM(), "ENA_SUL");
+        ena_sudeste = Inflow_energia:aggregate_stages(BY_AVERAGE()):select_scenarios(cenarios_ena):select_scenarios({scenario}):select_agents({"SUDESTE"}):aggregate_agents(BY_SUM(), "ENA_SUDESTE");
+        ena_sul_e_sudeste = Inflow_energia:aggregate_stages(BY_AVERAGE()):select_scenarios(cenarios_ena):select_scenarios({scenario}):select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "ENA_SUDESTE");
+        md_tabela_enas:add(cenarios_ena[scenario]
+                                    .. " | " .. string.format("%.1f", tostring(cenarios_normal:select_scenarios(cenarios_ena):select_scenarios({scenario}):to_list()[1]))
+                                    .. " | " .. string.format("%.1f", tostring(cenarios_atencao:select_scenarios(cenarios_ena):select_scenarios({scenario}):to_list()[1]))
+                                    .. " | " .. string.format("%.1f", tostring(cenarios_racionamento:select_scenarios(cenarios_ena):select_scenarios({scenario}):to_list()[1]))
+                                    .. " | " .. string.format("%.1f", tostring((ena_total/Inflow_energia_mlt_total):convert("%"):to_list()[1]))
+                                    .. " | " .. string.format("%.1f", tostring((ena_sul/Inflow_energia_mlt_sul):convert("%"):to_list()[1]))
+                                    .. " | " .. string.format("%.1f", tostring((ena_sudeste/Inflow_energia_mlt_sudeste):convert("%"):to_list()[1]))
+                                    .. " | " .. string.format("%.1f", tostring((ena_sul_e_sudeste/Inflow_energia_mlt_sul_e_sudeste):convert("%"):to_list()[1]))
+                                );
+    end
+    dashboard12:push(md_tabela_enas);
+end
+
+earmzm_sul = earmzm:select_agents({"SUL"}):aggregate_agents(BY_SUM(), "EARM_SUL");
+earmzm_sudeste = earmzm:select_agents({"SUDESTE"}):aggregate_agents(BY_SUM(), "EARM_TOTAL");
+earmzm_sul_e_sudeste = earmzm:select_agents({"SUL", "SUDESTE"}):aggregate_agents(BY_SUM(), "EARM_TOTAL");
+print(earmzm_sul);
+print(earmzm_sudeste);
+print(earmzm_sul_e_sudeste);
+local dashboard13 = nil;
+if true then
+    dashboard13 = Dashboard("EARM - cenários");
+    local md_tabela_earm = Markdown();
+    local cenarios_earm = {};
+    local numero_cenarios_earm = 0;
+    cenarios_normal_list = cenarios_normal:to_int_list();
+    for cenario, value in ipairs( cenarios_normal_list ) do
+        if value == 1 then
+            table.insert(cenarios_earm, cenario);
+            numero_cenarios_earm = numero_cenarios_earm + 1;
+        end
+    end
+    cenarios_atencao_list = cenarios_atencao:to_int_list();
+    for cenario, value in ipairs( cenarios_atencao_list ) do
+        if value == 1 then
+            table.insert(cenarios_earm, cenario);
+            numero_cenarios_earm = numero_cenarios_earm + 1;
+        end
+    end
+    cenarios_racionamento_list = cenarios_racionamento:to_int_list();
+    for cenario, value in ipairs( cenarios_racionamento_list ) do
+        if value == 1 then
+            table.insert(cenarios_earm, cenario);
+            numero_cenarios_earm = numero_cenarios_earm + 1;
+        end
+    end
+    md_tabela_earm:add("# Tabela de EARMs");
+    md_tabela_earm:add("Cenario | Normal (0/1) | Atencao (0/1) | Deficit (0/1) | EARM Sul (%) | EARM Sudeste (%) | EARM Sul + Sudeste (%)");
+    md_tabela_earm:add("-:|-:|-:|-:|-:|-:|-:");
+    for scenario = 1,numero_cenarios_earm,1 do
+        enearm_SU_final_scenario = enearm_SU_final:select_scenarios(cenarios_earm):select_scenarios({scenario});
+        enearm_SE_final_scenario = enearm_SE_final:select_scenarios(cenarios_earm):select_scenarios({scenario});
+        enearm_SE_E_SU_final_scenario = enearm_SU_final_scenario + enearm_SE_final_scenario;
+        -- print(scenario);
+        -- print(enearm_SU_final_scenario);
+        -- print(enearm_SE_final_scenario);
+        -- print(enearm_SE_E_SU_final_scenario);
+        -- print(earmzm_sul);
+        -- print(earmzm_sudeste);
+        -- print(earmzm_sul_e_sudeste);
+        md_tabela_earm:add(cenarios_earm[scenario]
+                                    .. " | " .. string.format("%.1f", tostring(cenarios_normal:select_scenarios(cenarios_earm):select_scenarios({scenario}):to_list()[1]))
+                                    .. " | " .. string.format("%.1f", tostring(cenarios_atencao:select_scenarios(cenarios_earm):select_scenarios({scenario}):to_list()[1]))
+                                    .. " | " .. string.format("%.1f", tostring(cenarios_racionamento:select_scenarios(cenarios_earm):select_scenarios({scenario}):to_list()[1]))
+                                    .. " | " .. string.format("%.1f", tostring((enearm_SU_final_scenario/earmzm_sul):convert("%"):to_list()[1]))
+                                    .. " | " .. string.format("%.1f", tostring((enearm_SE_final_scenario/earmzm_sudeste):convert("%"):to_list()[1]))
+                                    .. " | " .. string.format("%.1f", tostring((enearm_SE_E_SU_final_scenario/earmzm_sul_e_sudeste):convert("%"):to_list()[1]))
+                                );
+    end
+    dashboard13:push(md_tabela_earm);
+end
+
 if bool_potencia then
-    (dashboard7 + dashboard8 + dashboard10 + dashboard2 + dashboard9 + dashboard11):save("risk");
+    (dashboard7 + dashboard8 + dashboard10 + dashboard2 + dashboard9 + dashboard11 + dashboard12 + dashboard13):save("risk");
 else
-    (dashboard7 + dashboard8 + dashboard10 + dashboard2):save("risk");
+    (dashboard7 + dashboard8 + dashboard10 + dashboard2 + dashboard12 + dashboard13):save("risk");
 end
 -- (dashboard9):save("risk");
