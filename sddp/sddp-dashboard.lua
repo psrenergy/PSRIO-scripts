@@ -12,11 +12,15 @@ costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):save("sddp_da
 costs:aggregate_scenarios(BY_AVERAGE()):save("sddp_dashboard_cost_avg", {remove_zeros = true});
 
 -- sddp_dashboard_cost_disp
-concatenate(
+disp = concatenate(
     costs:aggregate_agents(BY_SUM(), "P10"):aggregate_scenarios(BY_PERCENTILE(10)),
     costs:aggregate_agents(BY_SUM(), "Average"):aggregate_scenarios(BY_AVERAGE()),
     costs:aggregate_agents(BY_SUM(), "P90"):aggregate_scenarios(BY_PERCENTILE(90))
-):save("sddp_dashboard_cost_disp");
+);
+x = disp:aggregate_agents(BY_SUM(), "CheckZeros"):aggregate_stages(BY_SUM()):to_list()[1];
+if x > 0.0 then
+    disp:save("sddp_dashboard_cost_disp");
+end
 
 -----------------------------------------------------------------------------------------------
 -- REVENUES
@@ -30,8 +34,12 @@ revenues:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):save("sddp
 revenues:aggregate_scenarios(BY_AVERAGE()):save("sddp_dashboard_rev_avg", {remove_zeros = true});
 
 -- sddp_dashboard_rev_disp
-concatenate(
+disp = concatenate(
     revenues:aggregate_agents(BY_SUM(), "P10"):aggregate_scenarios(BY_PERCENTILE(10)),
     revenues:aggregate_agents(BY_SUM(), "Average"):aggregate_scenarios(BY_AVERAGE()),
     revenues:aggregate_agents(BY_SUM(), "P90"):aggregate_scenarios(BY_PERCENTILE(90))
-):save("sddp_dashboard_rev_disp");
+);
+x = disp:aggregate_agents(BY_SUM(), "CheckZeros"):aggregate_stages(BY_SUM()):to_list()[1];
+if x > 0.0 then
+    disp:save("sddp_dashboard_rev_disp");
+end
