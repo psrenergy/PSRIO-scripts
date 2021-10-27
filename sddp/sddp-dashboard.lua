@@ -96,3 +96,7 @@ violation_max("vsarhd");
 violation_max("vsarhden");
 violation_max("viocar");
 violation_max("vgmint");
+violation_max("vioemiq");
+violation_max("vsecset");
+violation_max("valeset");
+violation_max("vespset");
