@@ -91,7 +91,7 @@ violation_max("vturmn");
 violation_max("vimnsp");
 violation_max("rampvio");
 violation_max("vreseg");
-violation_max("vsarct");
+violation_max("vfeact");
 violation_max("vsarhd");
 violation_max("vsarhden");
 violation_max("viocar");
