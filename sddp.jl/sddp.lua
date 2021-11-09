@@ -1,5 +1,5 @@
 function save_inputs()
-    local hydro = require("collection/hydro");
+    local hydro = Hydro();
 
     -- QMAXIM
     local qmaxim = require("sddp/qmaxim");
@@ -32,7 +32,7 @@ function save_inputs()
 end
 
 function save_outputs()
-    local study = require("collection/study");
+    local study = Study();
     local suffixes = {""};
     if study:is_genesys() then
         suffixes = {"__day", "__week", "__hour", "__trueup"};
