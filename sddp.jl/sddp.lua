@@ -41,26 +41,31 @@ function save_outputs()
     local labels = {
         "vturmn", 
         "qtoutf", 
-        "minimum_spillage_percentage_violation_cost",
-        "minimum_spillage_violation_cost",
-        "minimum_total_outflow_violation_cost",
-        "minimum_turbine_violation_cost",
-        "maximum_spillage_unit_violation_cost",
-        "discharge_rate_violation_cost",
-        "maximum_total_outflow_violation_cost",
-        "maximum_operative_storage_violation_cost",
-        "irrigation_violation_cost",
         "defcit_risk", 
         "usecir", 
         "usedcl", 
         "useful_storage_initial", 
         "useful_storage_final",
+        -- POWERVIEW OUTPUTS
         "gerhid_per_bus", 
         "gerfuel_per_bus", 
         "gerter2_per_bus", 
         "gergnd_per_bus", 
         "gerbat_per_bus", 
-        "powinj_per_bus"
+        "powinj_per_bus",
+        -- VIOLATION OUTPUTS
+        "alert_storage_violation_cost",
+        "discharge_rate_violation_cost",
+        "irrigation_violation_cost",
+        "maximum_operative_storage_violation_cost",
+        "maximum_spillage_violation_cost",
+        "maximum_total_outflow_violation_cost",
+        "minimum_operative_storage_violation_cost",
+        "minimum_spillage_percentage_violation_cost",
+        "minimum_spillage_violation_cost",
+        "minimum_total_outflow_violation_cost",
+        "minimum_turbine_violation_cost",
+        "target_storage_violation_cost"
     };
 
     for _, label in ipairs(labels) do 
