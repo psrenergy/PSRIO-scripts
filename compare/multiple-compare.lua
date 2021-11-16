@@ -66,7 +66,7 @@ local function compare_outputs_agent(dashboard, filename, agent, blocks_aggregat
 
         local chart = Chart(agent);
         for i=1,N do
-            chart:add_line(output[i]:aggregate_scenarios(BY_AVERAGE()):select_agents{agent}:rename_agents{labels[i]});
+            chart:add_line(output[i]:aggregate_blocks(blocks_aggregation):aggregate_scenarios(BY_AVERAGE()):select_agents{agent}:rename_agents{labels[i]});
         end
         dashboard:push(chart);
     end
