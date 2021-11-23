@@ -1,4 +1,4 @@
-function save_inputs()
+local function save_inputs()
     local hydro = Hydro();
 
     -- QMAXIM
@@ -31,7 +31,19 @@ function save_inputs()
     hydro.vmax_chronological_historical_scenarios:save("max_storage_historical_scenarios", { horizon = true }); 
 end
 
-function save_outputs()
+local function save_hydro_violation(violation, suffixes)
+    for _, suffix in ipairs(suffixes) do 
+        local unit_violation_cost = hydro:load(violation .. "_unit_violation_cost_" .. suffix);
+        local violation = hydro:load(violation .. "_violation_" .. suffix);
+
+        if violation:is_hourly() then
+            unit_violation_cost = unit_violation_cost:to_hour(BY_REPEATING());
+        end
+        (unit_violation_cost * violation):save(violation .. "_violation_cost" .. suffix)
+    end
+end
+
+local function save_outputs()
     local study = Study();
     local suffixes = {""};
     if study:is_genesys() then
@@ -52,20 +64,7 @@ function save_outputs()
         "gerter2_per_bus", 
         "gergnd_per_bus", 
         "gerbat_per_bus", 
-        "powinj_per_bus",
-        -- VIOLATION OUTPUTS
-        "alert_storage_violation_cost",
-        "discharge_rate_violation_cost",
-        "irrigation_violation_cost",
-        "maximum_operative_storage_violation_cost",
-        "maximum_spillage_violation_cost",
-        "maximum_total_outflow_violation_cost",
-        "minimum_operative_storage_violation_cost",
-        "minimum_spillage_percentage_violation_cost",
-        "minimum_spillage_violation_cost",
-        "minimum_total_outflow_violation_cost",
-        "minimum_turbine_violation_cost",
-        "target_storage_violation_cost"
+        "powinj_per_bus"
     };
 
     for _, label in ipairs(labels) do 
@@ -73,6 +72,25 @@ function save_outputs()
         for _, suffix in ipairs(suffixes) do 
             output(suffix):save(label .. suffix);
         end
+    end
+
+    local violations = {
+        "alert_storage",
+        "discharge_rate",
+        "irrigation",
+        "maximum_operative_storage",
+        "maximum_spillage",
+        "maximum_total_outflow",
+        "minimum_operative_storage",
+        "minimum_spillage_percentage",
+        "minimum_spillage",
+        "minimum_total_outflow",
+        "minimum_turbine",
+        "target_storage"
+    };
+
+    for _, violation in ipairs(violations) do 
+        save_hydro_violation(violation, suffixes)
     end
 end
 
