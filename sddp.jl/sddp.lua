@@ -31,15 +31,18 @@ local function save_inputs()
     hydro.vmax_chronological_historical_scenarios:save("max_storage_historical_scenarios", { horizon = true }); 
 end
 
-local function save_hydro_violation(violation, suffixes)
-    for _, suffix in ipairs(suffixes) do 
-        local unit_violation_cost = hydro:load(violation .. "_unit_violation_cost_" .. suffix);
-        local violation = hydro:load(violation .. "_violation_" .. suffix);
+local function save_hydro_violation(label, suffixes)
+    local hydro = Hydro();
 
-        if violation:is_hourly() then
-            unit_violation_cost = unit_violation_cost:to_hour(BY_REPEATING());
+    for _, suffix in ipairs(suffixes) do 
+        local unit_violation_cost = hydro:load(label .. "_unit_violation_cost" .. suffix);
+        local violation = hydro:load(label .. "_violation" .. suffix);
+
+        if not unit_violation_cost:loaded() and violation:is_hourly() then
+            unit_violation_cost = hydro:load(label .. "_unit_violation_cost__week"):to_hour(BY_REPEATING());
         end
-        (unit_violation_cost * violation):save(violation .. "_violation_cost" .. suffix)
+        
+        (unit_violation_cost * violation):save(label .. "_violation_cost" .. suffix)
     end
 end
 
