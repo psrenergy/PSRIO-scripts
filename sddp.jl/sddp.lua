@@ -42,7 +42,7 @@ local function save_hydro_violation(label, suffixes)
             unit_violation_cost = hydro:load(label .. "_unit_violation_cost__week"):to_hour(BY_REPEATING());
         end
         
-        (unit_violation_cost * violation):save(label .. "_violation_cost" .. suffix)
+        (unit_violation_cost * violation):save(label .. "_violation_cost" .. suffix, { variable_by_block = 2 });
     end
 end
 
@@ -101,23 +101,23 @@ end
 function save_reports()
     -- SDDPCOPE
     local sddpcope = require("sddp-reports/sddpcope");
-    sddpcope():save("sddpcope_psrio", {csv=true, remove_zeros=true});
+    sddpcope():save("sddpcope_psrio", { csv = true, remove_zeros = true });
 
     -- SDDPCOPED
     local sddpcoped = require("sddp-reports/sddpcoped");
-    sddpcoped():save("sddpcoped_psrio", {csv=true, remove_zeros=true});
+    sddpcoped():save("sddpcoped_psrio", { csv = true, remove_zeros = true });
 
     -- SDDPGRXXD
     local sddpgrxxd = require("sddp-reports/sddpgrxxd");
-    sddpgrxxd():save("sddpgrxxd_psrio", {csv=true});
+    sddpgrxxd():save("sddpgrxxd_psrio", { csv = true });
 
     -- SDDPCMGD
     local sddpcmgd = require("sddp-reports/sddpcmgd");
-    sddpcmgd():save("sddpcmgd_psrio", {csv=true});
+    sddpcmgd():save("sddpcmgd_psrio", { csv = true });
 
     -- SDDPCMGA
     local sddpcmga = require("sddp-reports/sddpcmga");
-    sddpcmga():save("sddpcmga_psrio", {csv=true});
+    sddpcmga():save("sddpcmga_psrio", { csv = true });
 end
 
 save_inputs();
