@@ -18,11 +18,10 @@ local function get_percentiles_chart(output, title)
     return chart;
 end
 
-local function push_market_dashboard(iteration, dashboard_cmgdem, dashboard_generation)
+local function push_market_dashboard(iteration, demand, dashboard_cmgdem, dashboard_generation, dashboard_volume)
     local generic = Generic();
 
     local cmgdem = generic:load(iteration .. "/cmgdem");
-    local demand = generic:load(iteration .. "/demand");
     local defcit = generic:load(iteration .. "/defcit");
     local gerter = generic:load(iteration .. "/gerter");
     local gerhid = generic:load(iteration .. "/gerhid");
@@ -47,11 +46,11 @@ local function push_market_dashboard(iteration, dashboard_cmgdem, dashboard_gene
     local volinis_concatenated = concatenate(volinis):save_and_load("volini-" .. iteration);
 
     local chart = Chart(iteration);
-    chart:add_area_stacking(thermals_concatenated:aggregate_agents(BY_SUM(), "Thermal"):aggregate_scenarios(BY_AVERAGE()));
-    chart:add_area_stacking(hydros_concatenated:aggregate_agents(BY_SUM(), "Hydro"):aggregate_scenarios(BY_AVERAGE()));
+    chart:add_area_stacking(thermals_concatenated:aggregate_agents(BY_SUM(), "Thermal"):aggregate_scenarios(BY_AVERAGE()), {color="red"});
+    chart:add_area_stacking(hydros_concatenated:aggregate_agents(BY_SUM(), "Hydro"):aggregate_scenarios(BY_AVERAGE()), {color="blue"});
 
-    chart:add_line(demand:rename_agents({"Demand"}));
-    chart:add_line(defcit:aggregate_scenarios(BY_AVERAGE()):rename_agents({"Deficit"}));
+    chart:add_line(demand, {color="purple"});
+    chart:add_line(defcit:aggregate_scenarios(BY_AVERAGE()):rename_agents({"Deficit"}), {color="black"});
     dashboard_generation:push(chart);
 
     local chart = get_percentiles_chart(volinis_concatenated:aggregate_agents(BY_SUM(), "Initial Volume"), iteration);
@@ -68,13 +67,14 @@ dashboard_volume = Dashboard("Initial Volume");
 dashboard_volume:set_icon("cloud-drizzle");
 
 generic = Generic();
+demand = generic:load("iter_init/demand"):rename_agents({"Demand"});
+
+push_market_dashboard("iter_init", demand, dashboard_cmgdem, dashboard_generation, dashboard_volume);
+
 iterations = generic:get_directories("(iter_[0-9]*)");
-
-push_market_dashboard("iter_init", dashboard_cmgdem, dashboard_generation);
-
 for i = 1, #iterations do 
     local iteration = iterations[i];
-    push_market_dashboard(iteration, dashboard_cmgdem, dashboard_generation, dashboard_volume);
+    push_market_dashboard(iteration, demand, dashboard_cmgdem, dashboard_generation, dashboard_volume);
 end
 
 (dashboard_cmgdem + dashboard_generation + dashboard_volume):save("dashboard_market");
