@@ -41,19 +41,18 @@ local function push_market_dashboard(iteration, demand, dashboard_cmgdem, dashbo
         table.insert(hydros, generic:load(iteration .. "/" .. agent .. "/gerhid"):aggregate_agents(BY_SUM(), agent));
         table.insert(volinis, generic:load(iteration .. "/" .. agent .. "/volini"):aggregate_agents(BY_SUM(), agent));
     end
-    local thermals_concatenated = concatenate(thermals):save_and_load("gerter-" .. iteration);
-    local hydros_concatenated = concatenate(hydros):save_and_load("gerhid-" .. iteration);
-    local volinis_concatenated = concatenate(volinis):save_and_load("volini-" .. iteration);
+    concatenate(thermals):save("gerter-" .. iteration);
+    concatenate(hydros):save("gerhid-" .. iteration);
+    concatenate(volinis):save("volini-" .. iteration);
 
     local chart = Chart(iteration);
-    chart:add_area_stacking(thermals_concatenated:aggregate_agents(BY_SUM(), "Thermal"):aggregate_scenarios(BY_AVERAGE()), {color="red"});
-    chart:add_area_stacking(hydros_concatenated:aggregate_agents(BY_SUM(), "Hydro"):aggregate_scenarios(BY_AVERAGE()), {color="blue"});
-
+    chart:add_area_stacking(concatenate(thermals):aggregate_scenarios(BY_AVERAGE()):add_prefix("Thermal "), {color="red"});
+    chart:add_area_stacking(concatenate(hydros):aggregate_scenarios(BY_AVERAGE()):add_prefix("Hydro "), {color="blue"});
     chart:add_line(demand, {color="purple"});
     chart:add_line(defcit:aggregate_scenarios(BY_AVERAGE()):rename_agents({"Deficit"}), {color="black"});
     dashboard_generation:push(chart);
 
-    local chart = get_percentiles_chart(volinis_concatenated:aggregate_agents(BY_SUM(), "Initial Volume"), iteration);
+    local chart = get_percentiles_chart(concatenate(volinis):aggregate_agents(BY_SUM(), "Initial Volume"), iteration);
     dashboard_volume:push(chart);
 end
 
