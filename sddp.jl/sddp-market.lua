@@ -18,7 +18,45 @@ local function get_percentiles_chart(output, title)
     return chart;
 end
 
-iterations = PSR.studies();
+local function push_market_dashboard(iteration, dashboard_cmgdem, dashboard_generation)
+    local generic = Generic();
+
+    local cmgdem = generic:load(iteration .. "/cmgdem"):set_stage_type(1);
+    local demand = generic:load(iteration .. "/demand"):set_stage_type(1);
+    local defcit = generic:load(iteration .. "/defcit"):set_stage_type(1);
+    local gerter = generic:load(iteration .. "/gerter"):set_stage_type(1);
+    local gerhid = generic:load(iteration .. "/gerhid"):set_stage_type(1);
+    local volini = generic:load(iteration .. "/volini"):set_stage_type(1);
+
+    local chart = get_percentiles_chart(cmgdem, iteration);
+    dashboard_cmgdem:push(chart);
+
+    local thermals = { gerter:aggregate_agents(BY_SUM(), "ag0") };
+    local hydros = { gerhid:aggregate_agents(BY_SUM(), "ag0") };
+    local volinis = { volini:aggregate_agents(BY_SUM(), "ag0") };
+
+    local agents = generic:get_directories(iteration, "(ag_.*)");
+    for i = 1, #agents do 
+        local agent = agents[i];
+        table.insert(thermals, generic:load(iteration .. "/" .. agent .. "/gerter"):set_stage_type(1):aggregate_agents(BY_SUM(), agent));
+        table.insert(hydros, generic:load(iteration .. "/" .. agent .. "/gerhid"):set_stage_type(1):aggregate_agents(BY_SUM(), agent));
+        table.insert(volinis, generic:load(iteration .. "/" .. agent .. "/volini"):set_stage_type(1):aggregate_agents(BY_SUM(), agent));
+    end
+    local thermals_concatenated = concatenate(thermals):save_and_load("gerter-" .. iteration);
+    local hydros_concatenated = concatenate(hydros):save_and_load("gerhid-" .. iteration);
+    local volinis_concatenated = concatenate(volinis):save_and_load("volini-" .. iteration);
+
+    local chart = Chart(iteration);
+    chart:add_area_stacking(thermals_concatenated:aggregate_agents(BY_SUM(), "Thermal"):aggregate_scenarios(BY_AVERAGE()));
+    chart:add_area_stacking(hydros_concatenated:aggregate_agents(BY_SUM(), "Hydro"):aggregate_scenarios(BY_AVERAGE()));
+
+    chart:add_line(demand:rename_agents({"Demand"}));
+    chart:add_line(defcit:aggregate_scenarios(BY_AVERAGE()):rename_agents({"Deficit"}));
+    dashboard_generation:push(chart);
+
+    local chart = get_percentiles_chart(volinis_concatenated:aggregate_agents(BY_SUM(), "Initial Volume"), iteration);
+    dashboard_volume:push(chart);
+end
 
 dashboard_cmgdem = Dashboard("Load Marginal Cost");
 dashboard_cmgdem:set_icon("dollar-sign");
@@ -29,47 +67,14 @@ dashboard_generation:set_icon("activity");
 dashboard_volume = Dashboard("Initial Volume");
 dashboard_volume:set_icon("cloud-drizzle");
 
-dashboard_volume = Dashboard("Initial Volume");
+generic = Generic();
+iterations = generic:get_directories("(iter_[0-9]*)");
 
-for iteration = 1, iterations do 
-    local iteration_label = "Iteration " .. (iteration - 2);
-    local generic = Generic(iteration);
+push_market_dashboard("iter_init", dashboard_cmgdem, dashboard_generation);
 
-    local cmgdem = generic:load("cmgdem"):set_stage_type(1);
-    local demand = generic:load("demand"):set_stage_type(1);
-    local defcit = generic:load("defcit"):set_stage_type(1);
-    local gerter = generic:load("gerter"):set_stage_type(1);
-    local gerhid = generic:load("gerhid"):set_stage_type(1);
-    local volini = generic:load("volini"):set_stage_type(1);
-
-    local chart = get_percentiles_chart(cmgdem, iteration_label);
-    dashboard_cmgdem:push(chart);
-
-    local thermals = { gerter:aggregate_agents(BY_SUM(), "ag0") };
-    local hydros = { gerhid:aggregate_agents(BY_SUM(), "ag0") };
-    local volinis = { volini:aggregate_agents(BY_SUM(), "ag0") };
-
-    local agents = generic:get_directories("(ag_.*)");
-    for i = 1, #agents do 
-        local agent = agents[i];
-        table.insert(thermals, generic:load(agent .. "/gerter"):set_stage_type(1):aggregate_agents(BY_SUM(), agent));
-        table.insert(hydros, generic:load(agent .. "/gerhid"):set_stage_type(1):aggregate_agents(BY_SUM(), agent));
-        table.insert(volinis, generic:load(agent .. "/volini"):set_stage_type(1):aggregate_agents(BY_SUM(), agent));
-    end
-    local thermals_concatenated = concatenate(thermals):save_and_load("gerter-iter_" .. iteration);
-    local hydros_concatenated = concatenate(hydros):save_and_load("gerhid-iter_" .. iteration);
-    local volinis_concatenated = concatenate(volinis):save_and_load("volini-iter_" .. iteration);
-
-    local chart = Chart(iteration_label);
-    chart:add_area_stacking(thermals_concatenated:aggregate_agents(BY_SUM(), "Thermal"):aggregate_scenarios(BY_AVERAGE()));
-    chart:add_area_stacking(hydros_concatenated:aggregate_agents(BY_SUM(), "Hydro"):aggregate_scenarios(BY_AVERAGE()));
-
-    chart:add_line(demand:rename_agents({"Demand"}));
-    chart:add_line(defcit:aggregate_scenarios(BY_AVERAGE()):rename_agents({"Deficit"}));
-    dashboard_generation:push(chart);
-
-    local chart = get_percentiles_chart(volinis_concatenated:aggregate_agents(BY_SUM(), "Initial Volume"), iteration_label);
-    dashboard_volume:push(chart);
+for i = 1, #iterations do 
+    local iteration = iterations[i];
+    push_market_dashboard(iteration, dashboard_cmgdem, dashboard_generation, dashboard_volume);
 end
 
 (dashboard_cmgdem + dashboard_generation + dashboard_volume):save("dashboard_market");
