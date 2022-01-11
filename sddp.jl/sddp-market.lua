@@ -21,12 +21,12 @@ end
 local function push_market_dashboard(iteration, dashboard_cmgdem, dashboard_generation)
     local generic = Generic();
 
-    local cmgdem = generic:load(iteration .. "/cmgdem"):set_stage_type(1);
-    local demand = generic:load(iteration .. "/demand"):set_stage_type(1);
-    local defcit = generic:load(iteration .. "/defcit"):set_stage_type(1);
-    local gerter = generic:load(iteration .. "/gerter"):set_stage_type(1);
-    local gerhid = generic:load(iteration .. "/gerhid"):set_stage_type(1);
-    local volini = generic:load(iteration .. "/volini"):set_stage_type(1);
+    local cmgdem = generic:load(iteration .. "/cmgdem");
+    local demand = generic:load(iteration .. "/demand");
+    local defcit = generic:load(iteration .. "/defcit");
+    local gerter = generic:load(iteration .. "/gerter");
+    local gerhid = generic:load(iteration .. "/gerhid");
+    local volini = generic:load(iteration .. "/volini");
 
     local chart = get_percentiles_chart(cmgdem, iteration);
     dashboard_cmgdem:push(chart);
@@ -38,9 +38,9 @@ local function push_market_dashboard(iteration, dashboard_cmgdem, dashboard_gene
     local agents = generic:get_directories(iteration, "(ag_.*)");
     for i = 1, #agents do 
         local agent = agents[i];
-        table.insert(thermals, generic:load(iteration .. "/" .. agent .. "/gerter"):set_stage_type(1):aggregate_agents(BY_SUM(), agent));
-        table.insert(hydros, generic:load(iteration .. "/" .. agent .. "/gerhid"):set_stage_type(1):aggregate_agents(BY_SUM(), agent));
-        table.insert(volinis, generic:load(iteration .. "/" .. agent .. "/volini"):set_stage_type(1):aggregate_agents(BY_SUM(), agent));
+        table.insert(thermals, generic:load(iteration .. "/" .. agent .. "/gerter"):aggregate_agents(BY_SUM(), agent));
+        table.insert(hydros, generic:load(iteration .. "/" .. agent .. "/gerhid"):aggregate_agents(BY_SUM(), agent));
+        table.insert(volinis, generic:load(iteration .. "/" .. agent .. "/volini"):aggregate_agents(BY_SUM(), agent));
     end
     local thermals_concatenated = concatenate(thermals):save_and_load("gerter-" .. iteration);
     local hydros_concatenated = concatenate(hydros):save_and_load("gerhid-" .. iteration);
