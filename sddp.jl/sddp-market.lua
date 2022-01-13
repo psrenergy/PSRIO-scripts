@@ -34,7 +34,7 @@ local function push_market_dashboard(iteration, demand, dashboard_cmgdem, dashbo
     local hydros = { gerhid:aggregate_agents(BY_SUM(), "ag0") };
     local volinis = { volini:aggregate_agents(BY_SUM(), "ag0") };
 
-    local agents = generic:get_directories(iteration, "(ag_.*)");
+    local agents = generic:get_directories(iteration, "(ag_[0-9]+$)");
     for i = 1, #agents do 
         local agent = agents[i];
         table.insert(thermals, generic:load(iteration .. "/" .. agent .. "/gerter"):aggregate_agents(BY_SUM(), agent));
