@@ -26,6 +26,7 @@ local function push_market_dashboard(iteration, demand, dashboard_cmgdem, dashbo
     local gerter = generic:load(iteration .. "/gerter");
     local gerhid = generic:load(iteration .. "/gerhid");
     local volini = generic:load(iteration .. "/volini");
+    local eneemb = generic:load(iteration .. "/eneemb");
 
     local chart = get_percentiles_chart(cmgdem, iteration);
     dashboard_cmgdem:push(chart);
@@ -33,6 +34,7 @@ local function push_market_dashboard(iteration, demand, dashboard_cmgdem, dashbo
     local thermals = { gerter:aggregate_agents(BY_SUM(), "ag0") };
     local hydros = { gerhid:aggregate_agents(BY_SUM(), "ag0") };
     local volinis = { volini:aggregate_agents(BY_SUM(), "ag0") };
+	local eneembs = { eneemb:aggregate_agents(BY_SUM(), "ag0") };
 
     local agents = generic:get_directories(iteration, "(ag_[0-9]+$)");
     for i = 1, #agents do 
@@ -40,10 +42,13 @@ local function push_market_dashboard(iteration, demand, dashboard_cmgdem, dashbo
         table.insert(thermals, generic:load(iteration .. "/" .. agent .. "/gerter"):aggregate_agents(BY_SUM(), agent));
         table.insert(hydros, generic:load(iteration .. "/" .. agent .. "/gerhid"):aggregate_agents(BY_SUM(), agent));
         table.insert(volinis, generic:load(iteration .. "/" .. agent .. "/volini"):aggregate_agents(BY_SUM(), agent));
+		table.insert(eneembs, generic:load(iteration .. "/" .. agent .. "/eneemb"):aggregate_agents(BY_SUM(), agent));
+
     end
     concatenate(thermals):save("gerter-" .. iteration);
     concatenate(hydros):save("gerhid-" .. iteration);
     concatenate(volinis):save("volini-" .. iteration);
+	concatenate(eneembs):save("eneemb-" .. iteration);
 
     local chart = Chart(iteration);
     chart:add_area_stacking(concatenate(thermals):aggregate_scenarios(BY_AVERAGE()):add_prefix("Thermal "), {color="red"});
@@ -52,7 +57,11 @@ local function push_market_dashboard(iteration, demand, dashboard_cmgdem, dashbo
     chart:add_line(defcit:aggregate_scenarios(BY_AVERAGE()):rename_agents({"Deficit"}), {color="black"});
     dashboard_generation:push(chart);
 
-    local chart = get_percentiles_chart(concatenate(volinis):aggregate_agents(BY_SUM(), "Initial Volume"), iteration);
+    --local chart = get_percentiles_chart(concatenate(volinis):aggregate_agents(BY_SUM(), "Initial Volume"), iteration);
+    local chart = get_percentiles_chart(concatenate(eneembs):aggregate_agents(BY_SUM(), "Initial Volume"), iteration);
+	dashboard_volume:push(chart);
+    
+    local chart = get_percentiles_chart(concatenate(eneembs), iteration);
     dashboard_volume:push(chart);
 end
 
