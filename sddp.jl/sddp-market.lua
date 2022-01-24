@@ -79,7 +79,12 @@ demand = generic:load("iter_init/demand"):rename_agents({"Demand"});
 
 push_market_dashboard("iter_init", demand, dashboard_cmgdem, dashboard_generation, dashboard_volume);
 
+-- get the directories of the iterations
 iterations = generic:get_directories("(iter_[0-9]*)");
+
+-- sorting the iterations based on their number
+table.sort(iterations, function (a, b) return (tonumber(string.match(a, "%d+")) < tonumber(string.match(b, "%d+"))) end)
+
 for i = 1, #iterations do 
     local iteration = iterations[i];
     push_market_dashboard(iteration, demand, dashboard_cmgdem, dashboard_generation, dashboard_volume);
