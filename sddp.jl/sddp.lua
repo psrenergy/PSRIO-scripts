@@ -97,8 +97,7 @@ local function save_outputs()
     end
 end
 
--- REPORTS --
-function save_reports()
+local function save_reports()
     -- SDDPCOPE
     local sddpcope = require("sddp-reports/sddpcope");
     sddpcope():save("sddpcope_psrio", { csv = true, remove_zeros = true });
