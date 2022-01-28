@@ -80,7 +80,6 @@
         "Dashboard",
         "Chart",
         "Report",
-        "Compare",
-        "require_collection"
+        "Compare"
     ]
 }
