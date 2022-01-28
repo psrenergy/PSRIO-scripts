@@ -1,4 +1,4 @@
-local hydro = require("collection/hydro");
+local hydro = Hydro();
 
 function add_aggregated_chart(dashboard, output)
     local label = output .. "_aggregated";

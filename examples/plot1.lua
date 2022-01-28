@@ -1,4 +1,4 @@
-local generic = require("collection/generic");
+local generic = Generic();
 
 local gerhid = generic:load("gerhid"):select_agents({"ITAIPU"}):aggregate_blocks(BY_SUM());
 

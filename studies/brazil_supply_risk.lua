@@ -1,11 +1,11 @@
-local hydro = require("collection/hydro");
-local generic = require("collection/generic");
-local interconnection = require("collection/interconnection");
-local interconnection_sum = require("collection/interconnectionsum");
-local renewable = require("collection/renewable");
-local study = require("collection/study");
-local system = require("collection/system");
-local thermal = require("collection/thermal");
+local hydro = Hydro();
+local generic = Generic();
+local interconnection = Interconnection();
+local interconnection_sum = InterconnectionSum();
+local renewable = Renewable();
+local study = Study();
+local system = System();
+local thermal = Thermal();
 
 local number_of_digits_round = 2;
 

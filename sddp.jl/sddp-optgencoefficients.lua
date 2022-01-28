@@ -1,4 +1,4 @@
-local generic = require("collection/generic");
+local generic = Generic();
 
 generic:load("optgscen00"):aggregate_scenarios(BY_AVERAGE()):convert("M$"):save("optg00", {csv = true});
 generic:load("optgscen01"):aggregate_scenarios(BY_AVERAGE()):convert("M$"):save("optg01", {csv = true});

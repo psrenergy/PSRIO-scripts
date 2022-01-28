@@ -1,10 +1,10 @@
-local bus_collection = require("collection/bus");
+local bus_collection = Bus();
 local cmgbus = bus_collection:load("cmgbus");
 
-local dclink_collection = require("collection/dclink");
+local dclink_collection = DClink()
 local dclink = dclink_collection:load("dclink");
 
-local study = require("collection/study");
+local study = Study();
 local discount_rate = study.discount_rate:to_list()[1];
 
 local ingreso_tarifario = (cmgbus:select_agents({"AND"}) - cmgbus:select_agents({"NOA"})) * dclink:select_agents({"Andes-Cobos"});

@@ -1,5 +1,5 @@
-local study = require("collection/study");
-local hydro = require("collection/hydro");
+local study = Study();
+local hydro = Hydro();
 
 local scenario_constraint = study:is_genesys()
 local suffix_ = study:is_genesys() and "__week" or ""
