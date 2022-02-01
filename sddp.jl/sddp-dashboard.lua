@@ -19,23 +19,35 @@ end
 
 local function get_dashboard_costs(title, suffix)
     local system = System();
+    local cmgdem = system:load("cmgdem" .. (suffix or ""));
 
     local dashboard = Dashboard(title);
     dashboard:set_icon("dollar-sign");
     dashboard:push("# " .. title);
 
-    local cmgdem = system:load("cmgdem" .. (suffix or ""));
+    -- LOAD MARGINAL COST PER YEAR --
+    local chart = Chart("Load Marginal Cost per Year");
+    chart:add_column(
+        cmgdem:aggregate_scenarios(BY_AVERAGE()):aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_AVERAGE(), Profile.PER_YEAR)
+    );
+    dashboard:push(chart);
+
+    -- LOAD MARGINAL COST --
     if not cmgdem:is_hourly() then
         cmgdem = cmgdem:aggregate_blocks(BY_AVERAGE());
     end
-    local cmgdem_per_year = cmgdem:aggregate_stages(BY_AVERAGE(), Profile.PER_YEAR);
-
-    local chart = Chart("Load Marginal Cost per Year");
-    chart:add_column(cmgdem_per_year:aggregate_scenarios(BY_AVERAGE()));
+    local chart = get_percentiles_chart(cmgdem:aggregate_agents(BY_SUM(), "All systems"), "Load Marginal Cost");
     dashboard:push(chart);
 
-    local chart = get_percentiles_chart(cmgdem, "Load Marginal Cost");
-    dashboard:push(chart);
+    -- LOAD MARGINAL COST PER SYSTEM --
+    local agents_size = cmgdem:agents_size();
+    if agents_size > 1 then
+        for i = 1,agents_size do
+            local agent = cmgdem:agent(i);
+            local chart = get_percentiles_chart(cmgdem:select_agent(agent), "Load Marginal Cost - " .. agent);
+            dashboard:push(chart);
+        end
+    end
 
     return dashboard;
 end
@@ -80,6 +92,7 @@ local function get_dashboard_generation(title, suffix)
         demand = demand:aggregate_blocks(BY_SUM());
     end
 
+    -- GENERATION --
     local chart = Chart("Total Generation");
     chart:add_area_stacking(gerter:aggregate_agents(BY_SUM(), "Total thermal"), {color="red"});
     chart:add_area_stacking(gerhid:aggregate_agents(BY_SUM(), "Total hydro"), {color="blue"});
@@ -88,16 +101,19 @@ local function get_dashboard_generation(title, suffix)
     chart:add_line(demand:aggregate_agents(BY_SUM(), "Demand"), {color="purple"});
     dashboard:push(chart);
 
+    -- GENERATION PER SYSTEM --
     local agents_size = demand:agents_size();
-    for i = 1,agents_size do
-        local agent = demand:agent(i);
-        local chart = Chart("Generation - " .. agent);
-        chart:add_area_stacking(gerter_per_system:select_agent(agent):rename_agent("Thermal"), {color="red"});
-        chart:add_area_stacking(gerhid_per_system:select_agent(agent):rename_agent("Hydro"), {color="blue"});
-        chart:add_area_stacking(gergnd_per_system:select_agent(agent):rename_agent("Renewables"), {color="green"});
-        chart:add_area_stacking(gerbat_per_system:select_agent(agent):rename_agent("Battery"), {color="orange"});
-        chart:add_line(demand:select_agent(agent):rename_agent("Demand"), {color="purple"});
-        dashboard:push(chart);
+    if agents_size > 1 then
+        for i = 1,agents_size do
+            local agent = demand:agent(i);
+            local chart = Chart("Generation - " .. agent);
+            chart:add_area_stacking(gerter_per_system:select_agent(agent):rename_agent("Thermal"), {color="red"});
+            chart:add_area_stacking(gerhid_per_system:select_agent(agent):rename_agent("Hydro"), {color="blue"});
+            chart:add_area_stacking(gergnd_per_system:select_agent(agent):rename_agent("Renewables"), {color="green"});
+            chart:add_area_stacking(gerbat_per_system:select_agent(agent):rename_agent("Battery"), {color="orange"});
+            chart:add_line(demand:select_agent(agent):rename_agent("Demand"), {color="purple"});
+            dashboard:push(chart);
+        end
     end
 
     return dashboard;
