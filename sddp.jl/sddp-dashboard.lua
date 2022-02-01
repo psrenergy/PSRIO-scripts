@@ -92,11 +92,11 @@ local function get_dashboard_generation(title, suffix)
     for i = 1,agents_size do
         local agent = demand:agent(i);
         local chart = Chart("Generation - " .. agent);
-        chart:add_area_stacking(gerter_per_system:select_agent(i):rename_agent("Thermal"), {color="red"});
-        chart:add_area_stacking(gerhid_per_system:select_agent(i):rename_agent("Hydro"), {color="blue"});
-        chart:add_area_stacking(gergnd_per_system:select_agent(i):rename_agent("Renewables"), {color="green"});
-        chart:add_area_stacking(gerbat_per_system:select_agent(i):rename_agent("Battery"), {color="orange"});
-        chart:add_line(demand:select_agent(i):rename_agent("Demand"), {color="purple"});
+        chart:add_area_stacking(gerter_per_system:select_agent(agent):rename_agent("Thermal"), {color="red"});
+        chart:add_area_stacking(gerhid_per_system:select_agent(agent):rename_agent("Hydro"), {color="blue"});
+        chart:add_area_stacking(gergnd_per_system:select_agent(agent):rename_agent("Renewables"), {color="green"});
+        chart:add_area_stacking(gerbat_per_system:select_agent(agent):rename_agent("Battery"), {color="orange"});
+        chart:add_line(demand:select_agent(agent):rename_agent("Demand"), {color="purple"});
         dashboard:push(chart);
     end
 
