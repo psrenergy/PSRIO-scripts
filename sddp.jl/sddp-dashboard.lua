@@ -60,6 +60,11 @@ local function save_dashboard()
             demand = demand:aggregate_blocks(BY_SUM());
         end
 
+        local demandel = system:load("demandel" .. item.suffix):aggregate_scenarios(BY_AVERAGE());
+        if not demandel:is_hourly() then
+            demandel = demandel:aggregate_blocks(BY_SUM());
+        end
+
         local deficit = system:load("defcit" .. item.suffix):aggregate_scenarios(BY_AVERAGE());
         if not deficit:is_hourly() then
             deficit = deficit:aggregate_blocks(BY_SUM());
@@ -73,6 +78,7 @@ local function save_dashboard()
             chart:add_area_stacking(gergnd:aggregate_agents(BY_SUM(), "Total renewables"), {color="green"});
             chart:add_area_stacking(gerbat:aggregate_agents(BY_SUM(), "Total battery"), {color="orange"});
             chart:add_area_stacking(powinj:aggregate_agents(BY_SUM(), "Total power injection"), {colr = "teal"});
+            chart:add_line(demand:aggregate_agents(BY_SUM(), "Demand (elastic)"), {color="deeppink"});
             chart:add_line(demand:aggregate_agents(BY_SUM(), "Demand"), {color="purple"});
         else
             chart:add_column_stacking(deficit:aggregate_agents(BY_SUM(), "Deficit"), {color="black"});
@@ -81,6 +87,7 @@ local function save_dashboard()
             chart:add_column_stacking(gergnd:aggregate_agents(BY_SUM(), "Total renewables"), {color="green"});
             chart:add_column_stacking(gerbat:aggregate_agents(BY_SUM(), "Total battery"), {color="orange"});
             chart:add_column_stacking(powinj:aggregate_agents(BY_SUM(), "Total power injection"), {colr = "teal"});
+            chart:add_column(demand:aggregate_agents(BY_SUM(), "Demand (elastic)"), {color="deeppink"});
             chart:add_column(demand:aggregate_agents(BY_SUM(), "Demand"), {color="purple"});
         end
         tab_generation:push(chart);
