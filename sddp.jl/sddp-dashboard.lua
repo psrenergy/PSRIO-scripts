@@ -1,16 +1,3 @@
-local function get_percentiles_chart(output, title)
-    local chart = Chart(title);
-
-    chart:add_area_range(
-        output:aggregate_scenarios(BY_PERCENTILE(10)):rename_agents({"p10"}),
-        output:aggregate_scenarios(BY_PERCENTILE(90)):rename_agents({"p90"}),
-        {color="lightblue"}
-    );
-    chart:add_line(output:aggregate_scenarios(BY_AVERAGE()), {color="red"});
-
-    return chart;
-end
-
 local function save_dashboard()
     local battery = Battery();
     local hydro = Hydro();
@@ -42,21 +29,6 @@ local function save_dashboard()
     tab_generation:push("# Generation");
  
     for _,item in pairs(suffixes) do
-        -- COSTS --
-        local cmgdem = system:load("cmgdem" .. item.suffix);
-
-        local chart = Chart("Load Marginal Cost per Year" .. item.title);
-        chart:add_column(
-            cmgdem:aggregate_scenarios(BY_AVERAGE()):aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_AVERAGE(), Profile.PER_YEAR)
-        );
-        tab_costs:push(chart);
-
-        if not cmgdem:is_hourly() then
-            cmgdem = cmgdem:aggregate_blocks(BY_AVERAGE());
-        end
-        local chart = get_percentiles_chart(cmgdem:aggregate_agents(BY_SUM(), "Total"), "Load Marginal Cost" .. item.title);
-        tab_costs:push(chart);
-
         -- GENERATION --
         local gerter = thermal:load("gerter2" .. item.suffix):aggregate_scenarios(BY_AVERAGE());
         if not gerter:is_hourly() then
@@ -93,18 +65,55 @@ local function save_dashboard()
             deficit = deficit:aggregate_blocks(BY_SUM());
         end
 
-        local chart = Chart("Stacked Generation" .. item.suffix);
-        chart:add_area_stacking(gerter:aggregate_agents(BY_SUM(), "Total thermal"), {color = "red"});
-        chart:add_area_stacking(gerhid:aggregate_agents(BY_SUM(), "Total hydro"), {color = "blue"});
-        chart:add_area_stacking(gergnd:aggregate_agents(BY_SUM(), "Total renewables"), {color = "green"});
-        chart:add_area_stacking(gerbat:aggregate_agents(BY_SUM(), "Total battery"), {color = "orange"});
-        chart:add_area_stacking(powinj:aggregate_agents(BY_SUM(), "Total power injection"), {color = "pink"});
-        chart:add_line(demand:aggregate_agents(BY_SUM(), "Demand"), {color="purple"});
-        chart:add_line(deficit:aggregate_agents(BY_SUM(), "Deficit"), {color="yellow"});
+        local chart = Chart("Generation" .. item.suffix);
+        if gerter:stages() > 2 then
+            chart:add_area_stacking(deficit:aggregate_agents(BY_SUM(), "Deficit"), {color="black"});
+            chart:add_area_stacking(gerter:aggregate_agents(BY_SUM(), "Total thermal"), {color="red"});
+            chart:add_area_stacking(gerhid:aggregate_agents(BY_SUM(), "Total hydro"), {color="blue"});
+            chart:add_area_stacking(gergnd:aggregate_agents(BY_SUM(), "Total renewables"), {color="green"});
+            chart:add_area_stacking(gerbat:aggregate_agents(BY_SUM(), "Total battery"), {color="orange"});
+            chart:add_area_stacking(powinj:aggregate_agents(BY_SUM(), "Total power injection"), {colr = "teal"});
+            chart:add_line(demand:aggregate_agents(BY_SUM(), "Demand"), {color="purple"});
+        else
+            chart:add_column_stacking(deficit:aggregate_agents(BY_SUM(), "Deficit"), {color="black"});
+            chart:add_column_stacking(gerter:aggregate_agents(BY_SUM(), "Total thermal"), {color="red"});
+            chart:add_column_stacking(gerhid:aggregate_agents(BY_SUM(), "Total hydro"), {color="blue"});
+            chart:add_column_stacking(gergnd:aggregate_agents(BY_SUM(), "Total renewables"), {color="green"});
+            chart:add_column_stacking(gerbat:aggregate_agents(BY_SUM(), "Total battery"), {color="orange"});
+            chart:add_column_stacking(powinj:aggregate_agents(BY_SUM(), "Total power injection"), {colr = "teal"});
+            chart:add_column(demand:aggregate_agents(BY_SUM(), "Demand"), {color="purple"});
+        end
         tab_generation:push(chart);
+
+        -- COSTS --
+        local cmgdem = system:load("cmgdem" .. item.suffix);
+
+        local chart = Chart("Load Marginal Cost per Year" .. item.title);
+        chart:add_column(
+            cmgdem:aggregate_scenarios(BY_AVERAGE()):aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_AVERAGE(), Profile.PER_YEAR)
+        );
+        tab_costs:push(chart);
+
+        if not cmgdem:is_hourly() then
+            cmgdem = cmgdem:aggregate_blocks(BY_AVERAGE());
+        end
+        cmgdem = cmgdem:aggregate_agents(BY_SUM(), "Total");
+
+        local chart = Chart("Load Marginal Cost" .. item.title);
+        if cmgdem:stages() > 2 then
+            chart:add_area_range(
+                cmgdem:aggregate_scenarios(BY_PERCENTILE(10)):rename_agents({"p10"}),
+                cmgdem:aggregate_scenarios(BY_PERCENTILE(90)):rename_agents({"p90"}),
+                {color="lightblue"}
+            );
+            chart:add_line(cmgdem:aggregate_scenarios(BY_AVERAGE()), {color="red"});
+        else
+            chart:add_column(cmgdem:aggregate_scenarios(BY_AVERAGE()), {color="red"});
+        end
+        tab_costs:push(chart);
     end
 
-    local dashboard = tab_costs + tab_generation;
+    local dashboard = tab_generation + tab_costs;
     dashboard:save("dashboard");
 end
 
