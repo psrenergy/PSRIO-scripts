@@ -47,17 +47,51 @@ end
 -----------------------------------------------------------------------------------------------
 -- VIOLATIONS
 -----------------------------------------------------------------------------------------------
-local function violation_max(name)
+names_viol = {
+	"defcit",
+	"defcitp",
+	"nedefc",
+	"defbus",
+	"defbusp",
+	"gncivio",
+	"gncvio",
+	"vrestg",
+	"excbus",
+	"excsis",
+	"vvaler",
+	"vioguide",
+	"vriego",
+	"vmxost",
+	"vimxsp",
+	"vdefmx",
+	"vvolmn",
+	"vdefmn",
+	"vturmn",
+	"vimnsp",
+	"rampvio",
+	"vreseg",
+	"vfeact",
+	"vsarhd",
+	"vsarhden",
+	"viocar",
+	"vgmint",
+	"vioemiq",
+	"vsecset",
+	"valeset",
+	"vespset"
+}
+
+local function violation_aggregation(name,aggregation,suffix)
     n_agents = 5;
 
     generic = Generic();
     violation = generic:load(name);
     if violation:loaded() then
-        violation = violation:aggregate_scenarios(BY_MAX()):aggregate_blocks(BY_MAX());
+        violation = violation:aggregate_scenarios(aggregation):aggregate_blocks(aggregation);
 
         n = violation:agents_size();
         if n > n_agents then
-            aux = violation:aggregate_stages(BY_MAX());
+            aux = violation:aggregate_stages(aggregation);
             largest_agents = aux:select_largest_agents(n_agents):agents();
 
             violation = concatenate(
@@ -65,38 +99,18 @@ local function violation_max(name)
                 violation:remove_agents(largest_agents):aggregate_agents(BY_SUM(), "Others")
             );
         end
-        violation:save("sddp_dashboard_viol_" .. name, {remove_zeros = true});
+        violation:save("sddp_dashboard_viol_" .. suffix .. "_" .. name, {remove_zeros = true});
     end
 end
 
-violation_max("defcit");
-violation_max("defcitp");
-violation_max("nedefc");
-violation_max("defbus");
-violation_max("defbusp");
-violation_max("gncivio");
-violation_max("gncvio");
-violation_max("vrestg");
-violation_max("excbus");
-violation_max("excsis");
-violation_max("vvaler");
-violation_max("vioguide");
-violation_max("vriego");
-violation_max("vmxost");
-violation_max("vimxsp");
-violation_max("vdefmx");
-violation_max("vvolmn");
-violation_max("vdefmn");
-violation_max("vturmn");
-violation_max("vimnsp");
-violation_max("rampvio");
-violation_max("vreseg");
-violation_max("vfeact");
-violation_max("vsarhd");
-violation_max("vsarhden");
-violation_max("viocar");
-violation_max("vgmint");
-violation_max("vioemiq");
-violation_max("vsecset");
-violation_max("valeset");
-violation_max("vespset");
+local function violation_output(names)
+
+	for i, name in ipairs(names) do
+--		Aggregation by Max
+		violation_aggregation(name,BY_MAX(),"max")
+--		Aggregation by Average
+		violation_aggregation(name,BY_AVERAGE(),"avg")
+	end
+end
+
+violation_output(names_viol)
