@@ -6,10 +6,10 @@ local objcop = require("sddp/costs");
 local costs = ifelse(objcop():ge(0), objcop(), 0);
 
 -- sddp_dashboard_cost_tot
-costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):save("sddp_dashboard_cost_tot", {remove_zeros = true});
+costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):save("sddp_dashboard_cost_tot", {remove_zeros = true, csv=true});
 
 -- sddp_dashboard_cost_avg
-costs:aggregate_scenarios(BY_AVERAGE()):save("sddp_dashboard_cost_avg", {remove_zeros = true});
+costs:aggregate_scenarios(BY_AVERAGE()):save("sddp_dashboard_cost_avg", {remove_zeros = true, csv=true});
 
 -- sddp_dashboard_cost_disp
 disp = concatenate(
@@ -19,7 +19,7 @@ disp = concatenate(
 );
 x = disp:aggregate_agents(BY_SUM(), "CheckZeros"):aggregate_stages(BY_SUM()):to_list()[1];
 if x > 0.0 then
-    disp:save("sddp_dashboard_cost_disp");
+    disp:save("sddp_dashboard_cost_disp", {csv=true});
 end
 
 -----------------------------------------------------------------------------------------------
@@ -28,10 +28,10 @@ end
 local revenues = ifelse(objcop():le(0), -objcop(), 0);
 
 -- sddp_dashboard_rev_tot
-revenues:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):save("sddp_dashboard_rev_tot", {remove_zeros = true});
+revenues:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):save("sddp_dashboard_rev_tot", {remove_zeros = true, csv=true});
 
 -- sddp_dashboard_rev_avg
-revenues:aggregate_scenarios(BY_AVERAGE()):save("sddp_dashboard_rev_avg", {remove_zeros = true});
+revenues:aggregate_scenarios(BY_AVERAGE()):save("sddp_dashboard_rev_avg", {remove_zeros = true, csv=true});
 
 -- sddp_dashboard_rev_disp
 disp = concatenate(
@@ -41,5 +41,5 @@ disp = concatenate(
 );
 x = disp:aggregate_agents(BY_SUM(), "CheckZeros"):aggregate_stages(BY_SUM()):to_list()[1];
 if x > 0.0 then
-    disp:save("sddp_dashboard_rev_disp");
+    disp:save("sddp_dashboard_rev_disp", {csv=true});
 end
