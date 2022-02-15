@@ -8,4 +8,4 @@ end
 
 -- USERNW - Renewable dispatch factor
 local usernw = require("sddp/usernw");
-usernw():save("usernw", {variable_by_block=2});
+usernw():select_stages():save("usernw", {variable_by_block=2});
