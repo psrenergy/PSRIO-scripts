@@ -48,32 +48,35 @@ end
 
 local function save_outputs()
     local study = Study();
+    local is_genesys = study:is_genesys();
+
+    -- SUFFIXES
     local suffixes = {""};
-    if study:is_genesys() then
+    if is_genesys then
         suffixes = {"__day", "__week", "__hour", "__trueup"};
     end
 
-    local labels = {
-        "vturmn", 
-        "qtoutf", 
-        "defcit_risk", 
-        "usecir", 
-        "usedcl", 
-        "useful_storage_initial", 
-        "useful_storage_final",
+    local outputs = {
+        { label = "vturmn", force = false },
+        { label = "qtoutf", force = false },
+        { label = "defcit_risk", force = false },
+        { label = "usecir", force = false },
+        { label = "usedcl", force = false },
+        { label = "useful_storage_initial", force = false },
+        { label = "useful_storage_final", force = false },
         -- POWERVIEW OUTPUTS
-        "gerhid_per_bus", 
-        "gerfuel_per_bus", 
-        "gerter2_per_bus", 
-        "gergnd_per_bus", 
-        "gerbat_per_bus", 
-        "powinj_per_bus"
+        { label = "gerhid_per_bus", force = is_genesys },
+        { label = "gerfuel_per_bus", force = is_genesys },
+        { label = "gerter2_per_bus", force = is_genesys },
+        { label = "gergnd_per_bus", force = is_genesys },
+        { label = "gerbat_per_bus", force = is_genesys },
+        { label = "powinj_per_bus", force = is_genesys }
     };
 
-    for _, label in ipairs(labels) do 
-        local output = require("sddp/" .. label);
+    for _, output in ipairs(outputs) do
+        local f = require("sddp/" .. output.label);
         for _, suffix in ipairs(suffixes) do 
-            output(suffix):save(label .. suffix);
+            f(suffix):save(output.label .. suffix, { force = output.force });
         end
     end
 
@@ -92,8 +95,8 @@ local function save_outputs()
         "target_storage"
     };
 
-    for _, violation in ipairs(violations) do 
-        save_hydro_violation(violation, suffixes)
+    for _, label in ipairs(violations) do 
+        save_hydro_violation(label, suffixes)
     end
 end
 
