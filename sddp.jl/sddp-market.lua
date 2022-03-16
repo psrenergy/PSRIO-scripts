@@ -23,9 +23,15 @@ end
 -- load collections
 local generic = Generic();
 local hydro = Hydro();
+local thermal = Thermal();
+local renewable = Renewable();
+local cinte1 = require("sddp/cinte1");
 
 -- create dashboard tabs
-local dashboard_costs = Dashboard("Marginal Costs");
+local dashboard_marginal_costs = Dashboard("Marginal Costs");
+dashboard_marginal_costs:set_icon("dollar-sign");
+
+local dashboard_costs = Dashboard("Costs");
 dashboard_costs:set_icon("dollar-sign");
 
 local dashboard_generation = Dashboard("Generation");
@@ -70,29 +76,66 @@ for i = 1, #iterations do
     local defcit = generic:load(iteration .. "/defcit"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Deficit"});
 
     local chart = get_percentiles_chart(cmgdem, iteration);
-    dashboard_costs:push(chart);
+    dashboard_marginal_costs:push(chart);
 
-    local gerter = { generic:load(iteration .. "/gerter"):aggregate_agents(BY_SUM(), "ag0") };
-    local gerhid = { generic:load(iteration .. "/gerhid"):aggregate_agents(BY_SUM(), "ag0") };
-    local gergnd = { generic:load(iteration .. "/gergnd"):aggregate_agents(BY_SUM(), "ag0") };
-    local volini = { generic:load(iteration .. "/volini"):aggregate_agents(BY_SUM(), "ag0") };
-	local eneemb = { generic:load(iteration .. "/eneemb"):aggregate_agents(BY_SUM(), "ag0") };
-	local bid_accepted = { generic:load(iteration .. "/bid_accepted_0"):aggregate_agents(BY_SUM(), "ag0") };
-	local bid_price = { generic:load(iteration .. "/bid_price_0"):aggregate_agents(BY_SUM(), "ag0") };
+    local chart_costs = Chart(iteration);
 
-    local agents = generic:get_directories(iteration, "(ag_[0-9]+$)");
-    for j = 1, #agents do
-        local agent = agents[j];
-        local index = string.match(agent, "%d+");
+    local gerter = {};
+    local gerhid = {};
+    local gergnd = {};
+    local volini = {};
+	local eneemb = {};
+	local bid_accepted = {};
+	local bid_price = {};
 
-        table.insert(gerter, generic:load(iteration .. "/" .. agent .. "/gerter"):aggregate_agents(BY_SUM(), agent));
-        table.insert(gerhid, generic:load(iteration .. "/" .. agent .. "/gerhid"):aggregate_agents(BY_SUM(), agent));
-        table.insert(gergnd, generic:load(iteration .. "/" .. agent .. "/gergnd"):aggregate_agents(BY_SUM(), agent));
-        table.insert(volini, generic:load(iteration .. "/" .. agent .. "/volini"):aggregate_agents(BY_SUM(), agent));
-		table.insert(eneemb, generic:load(iteration .. "/" .. agent .. "/eneemb"):aggregate_agents(BY_SUM(), agent));
-		table.insert(bid_accepted, generic:load(iteration .. "/bid_accepted_" .. index):aggregate_agents(BY_SUM(), agent));
+    -- list the directories ag_X
+    local directories = generic:get_directories(iteration, "(ag_[0-9]+$)");
+
+    -- insert the ag0 directory at the beginning of the list
+    table.insert(directories, 1, "");
+
+    for j = 1, #directories do
+        local directory = directories[j];
+
+        local index; local agent;
+        if directory == "" then
+            index = "0";
+            agent = "ag0";
+        else
+            index = string.match(directory, "%d+");
+            agent = directory;
+        end
+
+        table.insert(gerter, generic:load(iteration .. "/" .. directory .. "/gerter"):aggregate_agents(BY_SUM(), agent));
+        table.insert(gerhid, generic:load(iteration .. "/" .. directory .. "/gerhid"):aggregate_agents(BY_SUM(), agent));
+        table.insert(gergnd, generic:load(iteration .. "/" .. directory .. "/gergnd"):aggregate_agents(BY_SUM(), agent));
+        table.insert(volini, generic:load(iteration .. "/" .. directory .. "/volini"):aggregate_agents(BY_SUM(), agent));
+		table.insert(eneemb, generic:load(iteration .. "/" .. directory .. "/eneemb"):aggregate_agents(BY_SUM(), agent));
+        table.insert(bid_accepted, generic:load(iteration .. "/bid_accepted_" .. index):aggregate_agents(BY_SUM(), agent));
 		table.insert(bid_price, generic:load(iteration .. "/bid_price_" .. index):aggregate_agents(BY_SUM(), agent));
+
+        local thermal_cost = thermal:load(iteration .. "/" .. directory .. "/gerter") * cinte1();
+        chart_costs:add_line(
+            thermal_cost:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), "Thermal " .. agent):aggregate_scenarios(BY_AVERAGE()),
+            {color="red"}
+        );
+
+        local hydro_cost = hydro:load(iteration .. "/" .. directory .. "/gerhid") * hydro.omcost;
+        chart_costs:add_line(
+            hydro_cost:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), "Hydro " .. agent):aggregate_scenarios(BY_AVERAGE()),
+            {color="blue"}
+        );
+
+        renewable.omcost:save(iteration .. "/" .. directory .. "/renewable.omcost", {csv=true});
+
+        local renewable_cost = renewable:load(iteration .. "/" .. directory .. "/gergnd") * renewable.omcost;
+        chart_costs:add_line(
+            renewable_cost:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), "Renewable " .. agent):aggregate_scenarios(BY_AVERAGE()),
+            {color="green"}
+        );
     end
+
+    dashboard_costs:push(chart_costs);
 
     local concatenated_gerter = concatenate(gerter):save_and_load("gerter-" .. iteration):add_prefix("Thermal ");
     local concatenated_gerhid = concatenate(gerhid):save_and_load("gerhid-" .. iteration):add_prefix("Hydro ");
@@ -150,7 +193,7 @@ local defcit = aggregate_and_concatenate_stages(all_defcit, BY_SUM()):save_cache
 
 local chart = Chart("Aggregated Load Marginal Cost");
 chart:add_column_stacking(cmgdem);
-dashboard_costs:push(chart);
+dashboard_marginal_costs:push(chart);
 
 local chart = Chart("Aggregated Generation");
 for _, v in pairs(all_gerter) do
@@ -177,4 +220,4 @@ dashboard_revenue:push(chart);
 -- chart:add_line(concatenate_stages(aggregated_generation):set_stage_type(0) * concatenate_stages(aggregated_load_marginal_cost):set_stage_type(0));
 -- dashboard_revenue:push(chart);
 
-(dashboard_costs + dashboard_generation + dashboard_revenue + dashboard_volume):save("dashboard_market");
+(dashboard_marginal_costs + dashboard_costs +dashboard_generation + dashboard_revenue + dashboard_volume):save("dashboard_market");
