@@ -45,6 +45,12 @@ local function dispersion(output,file_name)
     end
 end
 
+-- Local function for discount rate calculation
+local function discount_rate()
+    local study = Study();
+    return (1 + study.discount_rate) ^ ((study.stage - 1) / study:stages_per_year());
+end
+
 -----------------------------------------------------------------------------------------------
 -- INPUT DATA
 -----------------------------------------------------------------------------------------------
@@ -136,3 +142,13 @@ names_viol = {
 }
 
 violation_output(names_viol)
+
+-----------------------------------------------------------------------------------------------
+-- RENEWABLES
+-----------------------------------------------------------------------------------------------
+local rnw = Renewable();
+
+-- Get renewable generation spillage
+rnw_spill = rnw:load("vergnd");
+
+rnw_spill:aggregate_scenarios(BY_AVERAGE()):save("sddp_dashboard_result_avg_vergnd",{remove_zeros=true, csv=true});
