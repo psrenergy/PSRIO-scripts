@@ -2,34 +2,45 @@
 -- LOCAL FUNCTIONS
 -----------------------------------------------------------------------------------------------
 
-local function violation_aggregation(name,aggregation,suffix)
+local function violation_aggregation(name,aggregation,suffix,tol)
     n_agents = 5;
 
     generic = Generic();
     violation = generic:load(name);
+    
     if violation:loaded() then
-        violation = violation:aggregate_scenarios(aggregation):aggregate_blocks(aggregation);
+    	violation_aux = violation:aggregate_scenarios(aggregation):aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(),"Total");
+    	list = violation_aux:to_list();
+    	has_values = false;
+    	for i = 1,#list do
+    		if list[i] > tol then
+    			has_values = true
+    		end
+    	end
+    	if has_values then
+        	violation = violation:aggregate_scenarios(aggregation):aggregate_blocks(BY_SUM());
 
-        n = violation:agents_size();
-        if n > n_agents then
-            aux = violation:aggregate_stages(aggregation);
-            largest_agents = aux:select_largest_agents(n_agents):agents();
+        	n = violation:agents_size();
+        	if n > n_agents then
+            	aux = violation:aggregate_stages(aggregation);
+            	largest_agents = aux:select_largest_agents(n_agents):agents();
 
-            violation = concatenate(
-                violation:select_agents(largest_agents),
-                violation:remove_agents(largest_agents):aggregate_agents(BY_SUM(), "Others")
-            );
+            	violation = concatenate(
+                	violation:select_agents(largest_agents),
+                	violation:remove_agents(largest_agents):aggregate_agents(BY_SUM(), "Others")
+            	);
+        	end
+        	violation:save("sddp_dashboard_viol_" .. suffix .. "_" .. name, {remove_zeros = true, csv=true});
         end
-        violation:save("sddp_dashboard_viol_" .. suffix .. "_" .. name, {remove_zeros = true, csv=true});
     end
 end
 
-local function violation_output(names)
+local function violation_output(names,tol)
     for i, name in ipairs(names) do
 --      Aggregation by Max
-        violation_aggregation(name,BY_MAX(),"max")
+        violation_aggregation(name,BY_MAX(),"max",tol)
 --      Aggregation by Average
-        violation_aggregation(name,BY_AVERAGE(),"avg")
+        violation_aggregation(name,BY_AVERAGE(),"avg",tol)
     end
 end
 
@@ -130,7 +141,6 @@ names_viol = {
 	"vimnsp",
 	"rampvio",
 	"vreseg",
-	"vfeact",
 	"vsarhd",
 	"vsarhden",
 	"viocar",
@@ -139,6 +149,10 @@ names_viol = {
 	"vsecset",
 	"valeset",
 	"vespset"
+}
+
+names_viol_debug = {
+	"vfeact"
 }
 
 violation_output(names_viol)
