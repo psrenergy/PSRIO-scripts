@@ -9,15 +9,8 @@ local function violation_aggregation(name,aggregation,suffix,tol)
     violation = generic:load(name);
     
     if violation:loaded() then
-    	violation_aux = violation:aggregate_scenarios(aggregation):aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(),"Total");
-    	list = violation_aux:to_list();
-    	has_values = false;
-    	for i = 1,#list do
-    		if list[i] > tol then
-    			has_values = true
-    		end
-    	end
-    	if has_values then
+    	x = violation:aggregate_scenarios(aggregation):aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(),"Total"):aggregate_stages(BY_SUM()):to_list()[1];
+    	if x > tol then
         	violation = violation:aggregate_scenarios(aggregation):aggregate_blocks(BY_SUM());
 
         	n = violation:agents_size();
@@ -155,7 +148,7 @@ names_viol_debug = {
 	"vfeact"
 }
 
-violation_output(names_viol)
+violation_output(names_viol, 0.01)
 
 -----------------------------------------------------------------------------------------------
 -- RENEWABLES
