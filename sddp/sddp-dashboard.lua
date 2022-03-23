@@ -24,7 +24,10 @@ local function violation_aggregation(name,aggregation,suffix,tol)
             	);
         	end
         	violation:save("sddp_dashboard_viol_" .. suffix .. "_" .. name, {remove_zeros = true, csv=true});
-        end
+			info("Violation dashboard for " .. name .. "created successfully.")
+		else
+			info("Violation values aren't significatives. Skipping save... ")
+		end
     end
 end
 
