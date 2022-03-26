@@ -58,15 +58,46 @@ table.insert(iterations, 1, "iter_init");
 -- local aggregated_generation = {};
 local all_gerter = {};
 local all_gerhid = {};
+
+local all_coster = {};
+local all_coshid = {};
+
+local all_revter = {};
+local all_revhid = {};
+
 local all_defcit = {};
 local all_cmgdem = {};
 
-local function aggregate_and_concatenate_stages(v, f)
+local function aggregate_and_concatenate_as_stages(v, f)
     local new_v = {};
     for key, value in pairs(v) do
         table.insert(new_v, value:aggregate_stages(f));
     end
     return concatenate_stages(new_v):set_stage_type(0);
+end
+
+local function load_all_collection(i, all, inner)
+    for j = 1, inner:agents_size() do
+        local agent = inner:agent(j);
+        if all[agent] == nil then
+            all[agent] = {};
+        end
+        if i > 1 then
+            -- and table.getn(all[agent]) == 0 then
+            local val = 0
+            for _, _ in pairs(all[agent]) do
+                val =  val + 1;
+            end
+            -- print(table.getn(all[agent]));
+            if val == 0 then
+                exp = (inner:select_agent(agent)*0):save_cache();
+                table.insert(all[agent], exp);
+            end
+        end
+        exp2 = inner:select_agent(agent):save_cache();
+        table.insert(all[agent], exp2);
+    end
+    return all
 end
 
 for i = 1, #iterations do
@@ -83,15 +114,22 @@ for i = 1, #iterations do
     local gerter = {};
     local gerhid = {};
     local gergnd = {};
-    local volini = {};
-	local eneemb = {};
-	local bid_accepted = {};
-	local bid_price = {};
+    local coster = {};
+    local coshid = {};
+    local cosgnd = {};
+    local revter = {};
+    local revhid = {};
+    local revgnd = {};
+    -- local volini = {};
+    local eneemb = {};
+    local enever2 = {};
+    local bid_accepted = {};
+    local bid_price = {};
 
     -- list the directories ag_X
     local directories = generic:get_directories(iteration, "(ag_[0-9]+$)");
 
-    -- insert the ag0 directory at the beginning of the list
+    -- insert the ag_0 directory at the beginning of the list
     table.insert(directories, 1, "");
 
     for j = 1, #directories do
@@ -100,7 +138,7 @@ for i = 1, #iterations do
         local index; local agent;
         if directory == "" then
             index = "0";
-            agent = "ag0";
+            agent = "ag_0";
         else
             index = string.match(directory, "%d+");
             agent = directory;
@@ -109,30 +147,29 @@ for i = 1, #iterations do
         table.insert(gerter, generic:load(iteration .. "/" .. directory .. "/gerter"):aggregate_agents(BY_SUM(), agent));
         table.insert(gerhid, generic:load(iteration .. "/" .. directory .. "/gerhid"):aggregate_agents(BY_SUM(), agent));
         table.insert(gergnd, generic:load(iteration .. "/" .. directory .. "/gergnd"):aggregate_agents(BY_SUM(), agent));
-        table.insert(volini, generic:load(iteration .. "/" .. directory .. "/volini"):aggregate_agents(BY_SUM(), agent));
-		table.insert(eneemb, generic:load(iteration .. "/" .. directory .. "/eneemb"):aggregate_agents(BY_SUM(), agent));
+        -- table.insert(volini, generic:load(iteration .. "/" .. directory .. "/volini"):aggregate_agents(BY_SUM(), agent));
+        table.insert(eneemb, generic:load(iteration .. "/" .. directory .. "/eneemb"):aggregate_agents(BY_SUM(), agent));
+        table.insert(enever2, generic:load(iteration .. "/" .. directory .. "/enever2"):aggregate_agents(BY_SUM(), agent));
         table.insert(bid_accepted, generic:load(iteration .. "/bid_accepted_" .. index):aggregate_agents(BY_SUM(), agent));
-		table.insert(bid_price, generic:load(iteration .. "/bid_price_" .. index):aggregate_agents(BY_SUM(), agent));
+        table.insert(bid_price, generic:load(iteration .. "/bid_price_" .. index):aggregate_agents(BY_SUM(), agent));
 
         local thermal_cost = thermal:load(iteration .. "/" .. directory .. "/gerter") * cinte1();
-        chart_costs:add_line(
-            thermal_cost:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), "Thermal " .. agent):aggregate_scenarios(BY_AVERAGE()),
-            {color="red"}
-        );
-
+        exp = thermal_cost:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), "Thermal " .. agent):aggregate_scenarios(BY_AVERAGE())
+        table.insert(coster, exp);
+        chart_costs:add_area_stacking(exp, {color="red"});
+        
         local hydro_cost = hydro:load(iteration .. "/" .. directory .. "/gerhid") * hydro.omcost;
-        chart_costs:add_line(
-            hydro_cost:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), "Hydro " .. agent):aggregate_scenarios(BY_AVERAGE()),
-            {color="blue"}
-        );
+        exp = hydro_cost:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), "Hydro " .. agent):aggregate_scenarios(BY_AVERAGE())
+        table.insert(coshid, exp);
+        chart_costs:add_area_stacking(exp, {color="blue"});
 
-        renewable.omcost:save(iteration .. "/" .. directory .. "/renewable.omcost", {csv=true});
-
+        -- renewable.omcost:save(iteration .. "/" .. directory .. "/renewable.omcost", {csv=true});
         local renewable_cost = renewable:load(iteration .. "/" .. directory .. "/gergnd") * renewable.omcost;
-        chart_costs:add_line(
+        chart_costs:add_area_stacking(
             renewable_cost:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), "Renewable " .. agent):aggregate_scenarios(BY_AVERAGE()),
             {color="green"}
         );
+
     end
 
     dashboard_costs:push(chart_costs);
@@ -140,56 +177,89 @@ for i = 1, #iterations do
     local concatenated_gerter = concatenate(gerter):save_and_load("gerter-" .. iteration):add_prefix("Thermal ");
     local concatenated_gerhid = concatenate(gerhid):save_and_load("gerhid-" .. iteration):add_prefix("Hydro ");
     local concatenated_gergnd = concatenate(gergnd):save_and_load("gergnd-" .. iteration):add_prefix("Renewable ");
-    local concatenated_volini = concatenate(volini):save_and_load("volini-" .. iteration);
-	local concatenated_eneemb = concatenate(eneemb):save_and_load("eneemb-" .. iteration);
-	local concatenated_bid_accepted = concatenate(bid_accepted):save_and_load("bid_accepted-" .. iteration);
-	local concatenated_bid_price = concatenate(bid_price):save_and_load("bid_price-" .. iteration);
+    -- local concatenated_volini = concatenate(volini):save_and_load("volini-" .. iteration);
+    local concatenated_eneemb = concatenate(eneemb):save_and_load("eneemb-" .. iteration);
+    local concatenated_enever2 = concatenate(enever2):save_and_load("enever2-" .. iteration);
+    local concatenated_bid_accepted = concatenate(bid_accepted):save_and_load("bid_accepted-" .. iteration);
+    local concatenated_bid_price = concatenate(bid_price):save_and_load("bid_price-" .. iteration);
 
-    local chart = Chart(iteration);
+    local chart = Chart("Generation: " .. iteration);
     chart:add_area_stacking(concatenated_gerter:aggregate_scenarios(BY_AVERAGE()), {color="red"});
     chart:add_area_stacking(concatenated_gerhid:aggregate_scenarios(BY_AVERAGE()), {color="blue"});
     chart:add_area_stacking(concatenated_gergnd:aggregate_scenarios(BY_AVERAGE()), {color="green"});
     chart:add_line(demand, {color="purple"});
-    chart:add_line(defcit, {color="black"});
+    chart:add_area_stacking(defcit, {color="black"});
     dashboard_generation:push(chart);
 
-    for j = 1, concatenated_gerter:agents_size() do
-        local agent = concatenated_gerter:agent(j);
-        if all_gerter[agent] == nil then
-            all_gerter[agent] = {};
-        end
-        table.insert(all_gerter[agent], concatenated_gerter:select_agent(agent));
-    end
+    load_all_collection(i, all_gerter, concatenated_gerter)
+
+    -- for j = 1, concatenated_gerter:agents_size() do
+    --     local agent = concatenated_gerter:agent(j);
+    --     if all_gerter[agent] == nil then
+    --         all_gerter[agent] = {};
+    --     end
+    --     if i > 1 then
+    --         -- and table.getn(all_gerter[agent]) == 0 then
+    --         local val = 0
+    --         for _, _ in pairs(all_gerter[agent]) do
+    --             val =  val + 1;
+    --         end
+    --         -- print(table.getn(all_gerter[agent]));
+    --         if val == 0 then
+    --             exp = (concatenated_gerter:select_agent(agent)*0):save_cache();
+    --             table.insert(all_gerter[agent], exp);
+    --         end
+    --     end
+    --     exp2 = concatenated_gerter:select_agent(agent):save_cache();
+    --     table.insert(all_gerter[agent], exp2);
+    -- end
 
     for j = 1, concatenated_gerhid:agents_size() do
         local agent = concatenated_gerhid:agent(j);
         if all_gerhid[agent] == nil then
             all_gerhid[agent] = {};
         end
-        table.insert(all_gerhid[agent], concatenated_gerhid:select_agent(agent));
+        if i > 1 then
+            -- and table.getn(all_gerhid[agent]) == 0 then
+            local val = 0
+            for _, _ in pairs(all_gerhid[agent]) do
+                val =  val + 1;
+            end
+            -- print(table.getn(all_gerhid[agent]));
+            if val == 0 then
+                exp = (concatenated_gerhid:select_agent(agent)*0):save_cache();
+                table.insert(all_gerhid[agent], exp);
+            end
+        end
+        exp2 = concatenated_gerhid:select_agent(agent):save_cache();
+        table.insert(all_gerhid[agent], exp2);
     end
 
     table.insert(all_defcit, defcit);
 
     table.insert(all_cmgdem, cmgdem:aggregate_scenarios(BY_AVERAGE()));
 
-    local chart = Chart(iteration);
+    local chart = Chart("Revenue: " .. iteration);
     chart:add_area_stacking((concatenated_gerter * cmgdem):aggregate_scenarios(BY_AVERAGE()), {color="red"});
     chart:add_area_stacking((concatenated_gerhid * cmgdem):aggregate_scenarios(BY_AVERAGE()), {color="blue"});
     chart:add_area_stacking((concatenated_gergnd * cmgdem):aggregate_scenarios(BY_AVERAGE()), {color="green"});
+    chart:add_area_stacking((defcit * cmgdem):aggregate_scenarios(BY_AVERAGE()), {color="black"});
     chart:add_line((demand * cmgdem):aggregate_scenarios(BY_AVERAGE()), {color="purple"});
-    chart:add_line((defcit * cmgdem):aggregate_scenarios(BY_AVERAGE()), {color="black"});
     dashboard_revenue:push(chart);
 
-    local chart = get_percentiles_chart(concatenated_eneemb:aggregate_agents(BY_SUM(), "Initial Volume"), iteration);
-	dashboard_volume:push(chart);
+    local chart = get_percentiles_chart(concatenated_eneemb:aggregate_agents(BY_SUM(), "All"), "Stored Energy: " .. iteration);
+    dashboard_volume:push(chart);
+    local chart = get_percentiles_chart(concatenated_enever2:aggregate_agents(BY_SUM(), "All"), "Spilled Energy: " .. iteration);
+    dashboard_volume:push(chart);
 
-    local chart = get_percentiles_chart(concatenated_eneemb, iteration);
+    local chart = get_percentiles_chart(concatenated_eneemb, "Stored Energy: " .. iteration);
+    dashboard_volume:push(chart);
+    local chart = get_percentiles_chart(concatenated_enever2, "Spilled Energy: " .. iteration);
     dashboard_volume:push(chart);
 end
 
-local cmgdem = aggregate_and_concatenate_stages(all_cmgdem, BY_AVERAGE()):save_cache();
-local defcit = aggregate_and_concatenate_stages(all_defcit, BY_SUM()):save_cache();
+local cmgdem = aggregate_and_concatenate_as_stages(all_cmgdem, BY_AVERAGE()):save_cache();
+local defcit = aggregate_and_concatenate_as_stages(all_defcit, BY_SUM()):save_cache();
 
 local chart = Chart("Aggregated Load Marginal Cost");
 chart:add_column_stacking(cmgdem);
@@ -197,20 +267,20 @@ dashboard_marginal_costs:push(chart);
 
 local chart = Chart("Aggregated Generation");
 for _, v in pairs(all_gerter) do
-    chart:add_column_stacking(aggregate_and_concatenate_stages(v, BY_SUM()):aggregate_scenarios(BY_AVERAGE()), {color="red"});
+    chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_SUM()):aggregate_scenarios(BY_AVERAGE()), {color="red"});
 end
 for _, v in pairs(all_gerhid) do
-    chart:add_column_stacking(aggregate_and_concatenate_stages(v, BY_SUM()):aggregate_scenarios(BY_AVERAGE()), {color="blue"});
+    chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_SUM()):aggregate_scenarios(BY_AVERAGE()), {color="blue"});
 end
 chart:add_column_stacking(defcit, {color="black"});
 dashboard_generation:push(chart);
 
 local chart = Chart("Aggregated Revenue");
 for _, v in pairs(all_gerter) do
-    chart:add_column_stacking((aggregate_and_concatenate_stages(v, BY_SUM()) * cmgdem):aggregate_scenarios(BY_AVERAGE()), {color="red"});
+    chart:add_column_stacking((aggregate_and_concatenate_as_stages(v, BY_SUM()) * cmgdem):aggregate_scenarios(BY_AVERAGE()), {color="red"});
 end
 for _, v in pairs(all_gerhid) do
-    chart:add_column_stacking((aggregate_and_concatenate_stages(v, BY_SUM()) * cmgdem):aggregate_scenarios(BY_AVERAGE()), {color="blue"});
+    chart:add_column_stacking((aggregate_and_concatenate_as_stages(v, BY_SUM()) * cmgdem):aggregate_scenarios(BY_AVERAGE()), {color="blue"});
 end
 chart:add_column_stacking((defcit * cmgdem), {color="black"});
 dashboard_revenue:push(chart);
@@ -220,4 +290,4 @@ dashboard_revenue:push(chart);
 -- chart:add_line(concatenate_stages(aggregated_generation):set_stage_type(0) * concatenate_stages(aggregated_load_marginal_cost):set_stage_type(0));
 -- dashboard_revenue:push(chart);
 
-(dashboard_marginal_costs + dashboard_costs +dashboard_generation + dashboard_revenue + dashboard_volume):save("dashboard_market");
+(dashboard_marginal_costs + dashboard_costs + dashboard_generation + dashboard_revenue + dashboard_volume):save("dashboard_market");
