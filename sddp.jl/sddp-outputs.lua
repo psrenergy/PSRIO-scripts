@@ -21,14 +21,14 @@ local function save_inputs()
     local volmno = require("sddp/volmno");
     volmno():save("volmno", { horizon = true });
 
-    -- FLOOD_CONTROL_HISTORICAL_SCENARIOS
-    hydro.flood_control_historical_scenarios:save("flood_control_historical_scenarios", { horizon = true });
+    -- -- FLOOD_CONTROL_HISTORICAL_SCENARIOS
+    -- hydro.flood_control_historical_scenarios:save("flood_control_historical_scenarios", { horizon = true });
 
-    -- MIN_STORAGE_HISTORICAL_SCENARIOS
-    hydro.vmin_chronological_historical_scenarios:save("min_storage_historical_scenarios", { horizon = true });
+    -- -- MIN_STORAGE_HISTORICAL_SCENARIOS
+    -- hydro.vmin_chronological_historical_scenarios:save("min_storage_historical_scenarios", { horizon = true });
 
-    -- MAX_STORAGE_HISTORICAL_SCENARIOS
-    hydro.vmax_chronological_historical_scenarios:save("max_storage_historical_scenarios", { horizon = true }); 
+    -- -- MAX_STORAGE_HISTORICAL_SCENARIOS
+    -- hydro.vmax_chronological_historical_scenarios:save("max_storage_historical_scenarios", { horizon = true });
 end
 
 local function save_hydro_violation(label, suffixes)
@@ -58,7 +58,7 @@ local function save_outputs()
 
     local outputs = {
         { label = "vturmn", force = false },
-        { label = "qtoutf", force = false },
+        { label = "qtoutf", force = false, variable_by_block = 2 },
         { label = "defcit_risk", force = false },
         { label = "usecir", force = false },
         { label = "usedcl", force = false },
@@ -75,8 +75,12 @@ local function save_outputs()
 
     for _, output in ipairs(outputs) do
         local f = require("sddp/" .. output.label);
-        for _, suffix in ipairs(suffixes) do 
-            f(suffix):save(output.label .. suffix, { force = output.force });
+        for _, suffix in ipairs(suffixes) do
+            if output.variable_by_block == nil then
+                f(suffix):save(output.label .. suffix, { force = output.force });
+            else
+                f(suffix):save(output.label .. suffix, { force = output.force, variable_by_block = output.variable_by_block });
+            end
         end
     end
 
