@@ -73,6 +73,8 @@ local thermal = Thermal();
 local renewable = Renewable();
 local cinte1 = require("sddp/cinte1");
 
+cinte1():save_and_load("cinte1-psrio");
+
 -- create dashboard tabs
 local dashboard_marginal_costs = Dashboard("Spot Price");
 dashboard_marginal_costs:set_icon("dollar-sign");
@@ -199,7 +201,7 @@ for i = 1, #iterations do
         local _bid_pr = generic:load(iteration .. "/bid_price_" .. index);
         table.insert(bid_price, _bid_pr:aggregate_blocks(BY_AVERAGE()):aggregate_agents(BY_SUM(), index));
 
-        local thermal_gen = generic:load(iteration .. "/" .. directory .. "/gerter");
+        local thermal_gen = thermal:load(iteration .. "/" .. directory .. "/gerter");
         table.insert(gerter, thermal_gen:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index));
         local hydro_gen = generic:load(iteration .. "/" .. directory .. "/gerhid");
         table.insert(gerhid, hydro_gen:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index));
