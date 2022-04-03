@@ -1,3 +1,21 @@
+-- TODO pass vector of colors
+-- today doable adding line by line
+-- https://colorswall.com/palette/73
+local agent_colors = {
+    "#e81123", -- rgb(232, 17, 35)   Red 185
+    "#00188f", -- rgb(0, 24, 143)    Blue 286
+    "#009e49", -- rgb(0, 158, 73)    Green 355
+    "#ff8c00", -- rgb(255, 140, 0)   Orange 144
+    "#68217a", -- rgb(104, 33, 122)  Purple 526
+    "#00b294", -- rgb(0, 178, 148)   Teal 3275
+    "#fff100", -- rgb(255, 241, 0)   Process Yellow
+    "#ec008c", -- rgb(236, 0, 140)   Process Magenta
+    "#00bcf2", -- rgb(0, 188, 242)   Process Cyan
+    "#bad80a", -- rgb(186, 216, 10)  Lime 382
+};
+-- TODO: add interpolation
+-- colors = PSR.interpolate_colors("#ff0000", "#00ff00", 4)
+
 local function get_percentiles_chart(output, title)
     local light_blue = "#ADD8E6";
     local orange = "#FFA500";
@@ -29,18 +47,18 @@ local function aggregate_and_concatenate_as_stages(v, f)
 end
 
 local function load_all_collection(i, all, inner)
-    local study = Study()
-    local generic = Generic()
+    local study = Study();
+    local generic = Generic();
     for j = 1, inner:agents_size() do
         local agent = inner:agent(j);
         if all[agent] == nil then
             all[agent] = {};
         end
         if i > 1 then
-            local vec = {}
-            for i = 1,study:stages() do
-                table.insert(vec, 0)
-            end
+            -- local vec = {}
+            -- for k = 1,study:stages() do
+            --     table.insert(vec, 0);
+            -- end
             if #(all[agent]) == 0 then
                 -- TODO 1:
                 -- testar sem save cache
@@ -54,26 +72,28 @@ local function load_all_collection(i, all, inner)
         local exp2 = inner:select_agent(agent):save_cache();
         table.insert(all[agent], exp2);
     end
-    return all
+    return all;
 end
 
 local function cvar_scenario(exp, lambda, alpha)
     local preexp = exp:aggregate_blocks(BY_SUM())
-    return lambda * preexp:aggregate_scenarios(BY_AVERAGE()) +
-        (1-lambda) * preexp:aggregate_scenarios(BY_CVAR_L(alpha))
+    return (1-lambda) * preexp:aggregate_scenarios(BY_AVERAGE()) +
+        lambda * preexp:aggregate_scenarios(BY_CVAR_L(alpha))
 end
-
-local alpha = 0.2
-local lambda = 0.5
 
 -- load collections
 local generic = Generic();
 local hydro = Hydro();
 local thermal = Thermal();
 local renewable = Renewable();
+local system = System();
 local cinte1 = require("sddp/cinte1");
 
 cinte1():save_and_load("cinte1-psrio");
+
+-- TODO use discount
+-- local discount_rate = require("sddp/discount_rate");
+-- discount_rate():save_and_load("discount_rate-psrio");
 
 -- create dashboard tabs
 local dashboard_marginal_costs = Dashboard("Spot Price");
@@ -118,7 +138,6 @@ table.sort(iterations, function (a, b) return (tonumber(string.match(a, "%d+")) 
 -- insert the "iter_init" directory at the beginning of the list
 table.insert(iterations, 1, "iter_init");
 
--- local aggregated_generation = {};
 local all_gerter = {};
 local all_gerhid = {};
 local all_gergnd = {};
@@ -139,19 +158,73 @@ local all_rskter = {};
 local all_rskhid = {};
 local all_rskgnd = {};
 
+local all_revcon = {};
+local all_coscon = {};
+local all_netcon = {};
+local all_rskcon = {};
+
+local all_nettot = {};
+local all_rsktot = {};
+
 local all_defcit = {};
 local all_cmgdem = {};
 
--- TODO: read discount rate
+local all_eneemb = {};
+local all_enever2 = {};
+
+local chart_avg_volume     = Chart("Average stored energy all");
+local chart_avg_volume_ind = Chart("Average stored energy all");
+local chart_avg_spill      = Chart("Average spilled energy agents");
+local chart_avg_spill_ind  = Chart("Average spilled energy agents");
+local chart_avg_spot       = Chart("Average spot price - iterations");
+
+local chart_avg_gerter = Chart("Average generation thermal - iterations");
+local chart_avg_gerhid = Chart("Average generation hydro - iterations");
+local chart_avg_gergnd = Chart("Average generation renewable - iterations");
+
+local chart_avg_cos = Chart("Average cost - iterations");
+local chart_avg_rev = Chart("Average revenue - iterations");
+local chart_avg_net = Chart("Average net revenue - iterations");
+local chart_avg_rsk = Chart("Risk adjusted revenue - iterations");
+
+
+-- read data for risk aversion parameter from additionl file
+-- TODO consider reading CCTA and CCTL from sddp.dat
+local all_lambda = {};
+local all_alpha = {};
+
+local toml = generic:load_toml("sddpconfig.dat");
+local alpha = toml:get_int("CCTA", 0);
+all_alpha["0"] = alpha;
+local lambda = toml:get_int("CCTL", 0)/100;
+all_lambda["0"] = lambda;
+
+-- min (1 - λ) * E[x] + λ * CVaR_alpha[x] (alpha highest - right)
+-- internal alpha == 1.0 means worst case = highest (alpha read is the opposite)
+local toml = generic:load_toml("agents.dat");
+local size = toml:get_array_size("AGENT");
+for a = 1, size do
+    local agent = toml:get_array("AGENT", a);
+    -- this is alpha used in sddp for cost min, where 1 is worst (high cost)
+    -- local alpha = 100 - agent:get_int("alpha", 0);
+    -- for revenue (max) its the opposite, where 0 is the worst (low return)
+    local alpha = agent:get_int("alpha", 0);
+    all_alpha[tostring(a)] = alpha;
+    local lambda = agent:get_int("lambda", 0)/100;
+    all_lambda[tostring(a)] = lambda;
+end
 
 for i = 1, #iterations do
     local iteration = iterations[i];
 
-    local cmgdem = generic:load(iteration .. "/cmgdem");
-    local defcit = generic:load(iteration .. "/defcit"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Deficit"});
+    local cmgdem = system:load(iteration .. "/cmgdem"):aggregate_blocks(BY_AVERAGE());
+    local defcit = system:load(iteration .. "/defcit"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Deficit"});
 
     local chart = get_percentiles_chart(cmgdem, iteration);
     dashboard_marginal_costs:push(chart);
+
+    chart_avg_spot:add_line(
+        cmgdem:aggregate_scenarios(BY_AVERAGE()):add_prefix("i " .. tostring(i-2) .. " - "), {color="red"});
 
     local gerter = {};
     local gerhid = {};
@@ -172,6 +245,14 @@ for i = 1, #iterations do
     local enever2 = {};
     local bid_accepted = {};
     local bid_price = {};
+    local revcon = {};
+    local coscon = {};
+    local netcon = {};
+    local rskcon = {};
+    -- costot
+    -- revtot
+    local nettot = {};
+    local rsktot = {};
 
     -- list the directories ag_X (then sort)
     local directories = generic:get_directories(iteration, "(ag_[0-9]+$)");
@@ -190,11 +271,9 @@ for i = 1, #iterations do
             index = string.match(directory, "%d+");
         end
 
-        -- TODO: generations for iter -1
-
-        local _eneemb = generic:load(iteration .. "/" .. directory .. "/eneemb");
+        local _eneemb = hydro:load(iteration .. "/" .. directory .. "/eneemb");
         table.insert(eneemb, _eneemb:aggregate_blocks(BY_LAST_VALUE()):aggregate_agents(BY_SUM(), index));
-        local _enever2 = generic:load(iteration .. "/" .. directory .. "/enever2");
+        local _enever2 = hydro:load(iteration .. "/" .. directory .. "/enever2");
         table.insert(enever2, _enever2:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index));
         local _bid_ac = generic:load(iteration .. "/bid_accepted_" .. index);
         table.insert(bid_accepted, _bid_ac:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index));
@@ -203,9 +282,9 @@ for i = 1, #iterations do
 
         local thermal_gen = thermal:load(iteration .. "/" .. directory .. "/gerter");
         table.insert(gerter, thermal_gen:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index));
-        local hydro_gen = generic:load(iteration .. "/" .. directory .. "/gerhid");
+        local hydro_gen = hydro:load(iteration .. "/" .. directory .. "/gerhid");
         table.insert(gerhid, hydro_gen:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index));
-        local renew_gen = generic:load(iteration .. "/" .. directory .. "/gergnd");
+        local renew_gen = renewable:load(iteration .. "/" .. directory .. "/gergnd");
         table.insert(gergnd, renew_gen:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index));
 
         local thermal_cost = thermal_gen * cinte1();
@@ -222,6 +301,17 @@ for i = 1, #iterations do
         local renew_rev = renew_gen * cmgdem;
         table.insert(revgnd, renew_rev:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index));
 
+        -- revenue: P*Q - pi*Q + pi*g - c*g
+        local contractsys_pq = system:load("contractsys_pq_" .. tostring(index));
+        print(contractsys_pq)
+        table.insert(revcon, contractsys_pq:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index));
+        local contractsys_q = system:load("contractsys_q_" .. tostring(index));
+        table.insert(coscon, contractsys_q:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index));
+        local contract_net = (contractsys_pq - contractsys_q*cmgdem);
+        table.insert(netcon, contract_net:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index));
+        local contract_rsk = contract_net:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index);
+        table.insert(rskcon, cvar_scenario(contract_rsk, all_lambda[index], all_alpha[index]));
+
         local thermal_net = thermal_rev - thermal_cost;
         table.insert(netter, thermal_net:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index));
         local hydro_net = hydro_rev - hydro_cost;
@@ -229,14 +319,22 @@ for i = 1, #iterations do
         local renew_net = renew_rev - renew_cost;
         table.insert(netgnd, renew_net:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index));
 
-        -- TODO read alpha and lambda of each agent
-        local thermal_rsk = thermal_net:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index);
-        table.insert(rskter, cvar_scenario(thermal_rsk, lambda, alpha));
-        local hydro_rsk = hydro_net:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index);
-        table.insert(rskhid, cvar_scenario(hydro_rsk, lambda, alpha));
-        local renew_rsk = renew_net:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index);
-        table.insert(rskgnd, cvar_scenario(renew_rsk, lambda, alpha));
+        local total = thermal_net:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index) +
+            hydro_net:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index) +
+            renew_net:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index) +
+            contract_net:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index);
+        table.insert(nettot,
+            total
+        );
 
+        local thermal_rsk = thermal_net:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index);
+        table.insert(rskter, cvar_scenario(thermal_rsk, all_lambda[index], all_alpha[index]));
+        local hydro_rsk = hydro_net:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index);
+        table.insert(rskhid, cvar_scenario(hydro_rsk, all_lambda[index], all_alpha[index]));
+        local renew_rsk = renew_net:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index);
+        table.insert(rskgnd, cvar_scenario(renew_rsk, all_lambda[index], all_alpha[index]));
+
+        table.insert(rsktot, cvar_scenario(total, all_lambda[index], all_alpha[index]));
     end
 
     -- TODO: save in separate folder (might need to create a folder)
@@ -263,6 +361,14 @@ for i = 1, #iterations do
     local cat_rskhid = concatenate(rskhid):save_and_load("rskhid-" .. iteration):add_prefix("Hydro ");
     local cat_rskgnd = concatenate(rskgnd):save_and_load("rskgnd-" .. iteration):add_prefix("Renewable ");
 
+    local cat_coscon = concatenate(coscon):save_and_load("coscon-" .. iteration):add_prefix("Contract ");
+    local cat_revcon = concatenate(revcon):save_and_load("revcon-" .. iteration):add_prefix("Contract ");
+    local cat_netcon = concatenate(netcon):save_and_load("netcon-" .. iteration):add_prefix("Contract ");
+    local cat_rskcon = concatenate(rskcon):save_and_load("rskcon-" .. iteration):add_prefix("Contract ");
+
+    local cat_nettot = concatenate(nettot):save_and_load("nettot-" .. iteration):add_prefix("Ag ");
+    local cat_rsktot = concatenate(rsktot):save_and_load("rsktot-" .. iteration):add_prefix("Ag ");
+
     local cat_eneemb = concatenate(eneemb):save_and_load("eneemb-" .. iteration);
     local cat_enever2 = concatenate(enever2):save_and_load("enever2-" .. iteration);
     local cat_bid_accepted = concatenate(bid_accepted):save_and_load("bid_accepted-" .. iteration);
@@ -280,52 +386,77 @@ for i = 1, #iterations do
     chart:add_area_stacking(cat_revter:aggregate_scenarios(BY_AVERAGE()), {color="red"});
     chart:add_area_stacking(cat_revhid:aggregate_scenarios(BY_AVERAGE()), {color="blue"});
     chart:add_area_stacking(cat_revgnd:aggregate_scenarios(BY_AVERAGE()), {color="green"});
+    chart:add_area_stacking(cat_revcon:aggregate_scenarios(BY_AVERAGE()), {color="purple"});
     chart:add_area_stacking((defcit * cmgdem):aggregate_scenarios(BY_AVERAGE()):aggregate_blocks(BY_SUM()), {color="black"});
-    chart:add_line((demand * cmgdem):aggregate_scenarios(BY_AVERAGE()):aggregate_blocks(BY_SUM()), {color="purple"});
+    chart:add_line((demand * cmgdem):aggregate_scenarios(BY_AVERAGE()):aggregate_blocks(BY_SUM()), {color="pink"});
     dashboard_revenue:push(chart);
 
     local chart = Chart("Cost: " .. iteration);
     chart:add_area_stacking(cat_coster:aggregate_scenarios(BY_AVERAGE()), {color="red"});
     chart:add_area_stacking(cat_coshid:aggregate_scenarios(BY_AVERAGE()), {color="blue"});
     chart:add_area_stacking(cat_cosgnd:aggregate_scenarios(BY_AVERAGE()), {color="green"});
+    chart:add_area_stacking(cat_coscon:aggregate_scenarios(BY_AVERAGE()), {color="purple"});
     -- TODO read deficit cost
     -- chart:add_area_stacking((defcit * defcos):aggregate_scenarios(BY_AVERAGE()), {color="black"});
     dashboard_costs:push(chart);
 
-    local chart = Chart("Net Revenue: " .. iteration);
+    local chart = Chart("Net Revenue (per tech): " .. iteration);
     chart:add_area_stacking(cat_netter:aggregate_scenarios(BY_AVERAGE()), {color="red"});
     chart:add_area_stacking(cat_nethid:aggregate_scenarios(BY_AVERAGE()), {color="blue"});
     chart:add_area_stacking(cat_netgnd:aggregate_scenarios(BY_AVERAGE()), {color="green"});
+    chart:add_area_stacking(cat_netcon:aggregate_scenarios(BY_AVERAGE()), {color="purple"});
     -- chart:add_area_stacking((defcit * cmgdem):aggregate_scenarios(BY_AVERAGE()), {color="black"});
     -- chart:add_line((demand * cmgdem):aggregate_scenarios(BY_AVERAGE()), {color="purple"});
     dashboard_netrev:push(chart);
 
     -- these already have 1 single scenario
-    local chart = Chart("Risk Adjusted Net Revenue: " .. iteration);
+    local chart = Chart("Risk Adjusted Net Revenue (per tech): " .. iteration);
     chart:add_area_stacking(cat_rskter, {color="red"});
     chart:add_area_stacking(cat_rskhid, {color="blue"});
     chart:add_area_stacking(cat_rskgnd, {color="green"});
+    chart:add_area_stacking(cat_rskcon, {color="purple"});
     dashboard_rskrev:push(chart);
 
-    load_all_collection(i, all_gerter, cat_gerter:aggregate_scenarios(BY_AVERAGE()))
-    load_all_collection(i, all_gerhid, cat_gerhid:aggregate_scenarios(BY_AVERAGE()))
-    load_all_collection(i, all_gergnd, cat_gergnd:aggregate_scenarios(BY_AVERAGE()))
+    -- TODO add loop here
+    local chart = Chart("Net Revenue: " .. iteration);
+    chart:add_area_stacking(cat_nettot:aggregate_scenarios(BY_AVERAGE()), {color=agent_colors[1+1]});
+    dashboard_netrev:push(chart);
 
-    load_all_collection(i, all_coster, cat_coster:aggregate_scenarios(BY_AVERAGE()))
-    load_all_collection(i, all_coshid, cat_coshid:aggregate_scenarios(BY_AVERAGE()))
-    load_all_collection(i, all_cosgnd, cat_cosgnd:aggregate_scenarios(BY_AVERAGE()))
+    local chart = Chart("Risk Adjusted Net Revenue: " .. iteration);
+    chart:add_area_stacking(cat_rsktot, {color=agent_colors[i+1]});
+    dashboard_rskrev:push(chart);
 
-    load_all_collection(i, all_revter, cat_revter:aggregate_scenarios(BY_AVERAGE()))
-    load_all_collection(i, all_revhid, cat_revhid:aggregate_scenarios(BY_AVERAGE()))
-    load_all_collection(i, all_revgnd, cat_revgnd:aggregate_scenarios(BY_AVERAGE()))
+    load_all_collection(i, all_gerter, cat_gerter:aggregate_scenarios(BY_AVERAGE()));
+    load_all_collection(i, all_gerhid, cat_gerhid:aggregate_scenarios(BY_AVERAGE()));
+    load_all_collection(i, all_gergnd, cat_gergnd:aggregate_scenarios(BY_AVERAGE()));
 
-    load_all_collection(i, all_netter, cat_netter:aggregate_scenarios(BY_AVERAGE()))
-    load_all_collection(i, all_nethid, cat_nethid:aggregate_scenarios(BY_AVERAGE()))
-    load_all_collection(i, all_netgnd, cat_netgnd:aggregate_scenarios(BY_AVERAGE()))
+    load_all_collection(i, all_coster, cat_coster:aggregate_scenarios(BY_AVERAGE()));
+    load_all_collection(i, all_coshid, cat_coshid:aggregate_scenarios(BY_AVERAGE()));
+    load_all_collection(i, all_cosgnd, cat_cosgnd:aggregate_scenarios(BY_AVERAGE()));
 
-    load_all_collection(i, all_rskter, cat_rskter)
-    load_all_collection(i, all_rskhid, cat_rskhid)
-    load_all_collection(i, all_rskgnd, cat_rskgnd)
+    load_all_collection(i, all_revter, cat_revter:aggregate_scenarios(BY_AVERAGE()));
+    load_all_collection(i, all_revhid, cat_revhid:aggregate_scenarios(BY_AVERAGE()));
+    load_all_collection(i, all_revgnd, cat_revgnd:aggregate_scenarios(BY_AVERAGE()));
+
+    load_all_collection(i, all_netter, cat_netter:aggregate_scenarios(BY_AVERAGE()));
+    load_all_collection(i, all_nethid, cat_nethid:aggregate_scenarios(BY_AVERAGE()));
+    load_all_collection(i, all_netgnd, cat_netgnd:aggregate_scenarios(BY_AVERAGE()));
+
+    load_all_collection(i, all_coscon, cat_coscon:aggregate_scenarios(BY_AVERAGE()));
+    load_all_collection(i, all_revcon, cat_revcon:aggregate_scenarios(BY_AVERAGE()));
+    load_all_collection(i, all_netcon, cat_netcon:aggregate_scenarios(BY_AVERAGE()));
+    load_all_collection(i, all_rskcon, cat_rskcon)
+
+    load_all_collection(i, all_nettot, cat_nettot:aggregate_scenarios(BY_AVERAGE()));
+    load_all_collection(i, all_rsktot, cat_rsktot);
+
+    -- these are already aggregated by risk
+    load_all_collection(i, all_rskter, cat_rskter);
+    load_all_collection(i, all_rskhid, cat_rskhid);
+    load_all_collection(i, all_rskgnd, cat_rskgnd);
+
+    load_all_collection(i, all_eneemb, cat_eneemb:aggregate_scenarios(BY_AVERAGE()));
+    load_all_collection(i, all_enever2, cat_enever2:aggregate_scenarios(BY_AVERAGE()));
 
     table.insert(all_defcit, defcit:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()));
 
@@ -335,6 +466,64 @@ for i = 1, #iterations do
     dashboard_volume:push(chart);
     local chart = get_percentiles_chart(cat_enever2:aggregate_agents(BY_SUM(), "All"), "Spilled Energy: " .. iteration);
     dashboard_spill:push(chart);
+
+    chart_avg_spill:add_line(cat_enever2:aggregate_agents(BY_SUM(), "i " .. tostring(i-2) .. " - ")
+        :aggregate_scenarios(BY_AVERAGE()), {color="orange"});
+    chart_avg_volume:add_line(cat_eneemb:aggregate_agents(BY_SUM(), "i " .. tostring(i-2) .. " - ")
+        :aggregate_scenarios(BY_AVERAGE()), {color="orange"});
+
+    for a = 1,cat_enever2:agents_size() do 
+        chart_avg_spill_ind:add_line(
+            cat_enever2:select_agent(a):aggregate_scenarios(BY_AVERAGE())
+            :add_prefix("i " .. tostring(i-2) .. " - "), {color=agent_colors[a]});
+        chart_avg_volume_ind:add_line(
+            cat_eneemb:select_agent(a):aggregate_scenarios(BY_AVERAGE())
+            :add_prefix("i " .. tostring(i-2) .. " - "), {color=agent_colors[a]});
+
+        chart_avg_gerter:add_line(
+            cat_gerter:select_agent(a):aggregate_scenarios(BY_AVERAGE())
+            :add_prefix("i " .. tostring(i-2) .. " - "), {color=agent_colors[a]});
+        chart_avg_gerhid:add_line(
+            cat_gerhid:select_agent(a):aggregate_scenarios(BY_AVERAGE())
+            :add_prefix("i " .. tostring(i-2) .. " - "), {color=agent_colors[a]});
+        chart_avg_gergnd:add_line(
+            cat_gergnd:select_agent(a):aggregate_scenarios(BY_AVERAGE())
+            :add_prefix("i " .. tostring(i-2) .. " - "), {color=agent_colors[a]});
+
+        chart_avg_cos:add_line(
+            (
+              cat_coster:select_agent(a):aggregate_scenarios(BY_AVERAGE())
+            + cat_coshid:select_agent(a):aggregate_scenarios(BY_AVERAGE())
+            + cat_cosgnd:select_agent(a):aggregate_scenarios(BY_AVERAGE())
+            + cat_coscon:select_agent(a):aggregate_scenarios(BY_AVERAGE())
+            ):aggregate_agents(BY_SUM(), "i " .. tostring(i-2) .. "- ag" .. tostring(a-1)), {color=agent_colors[a]});
+
+        chart_avg_rev:add_line(
+            (
+                cat_revter:select_agent(a):aggregate_scenarios(BY_AVERAGE())
+            + cat_revhid:select_agent(a):aggregate_scenarios(BY_AVERAGE())
+            + cat_revgnd:select_agent(a):aggregate_scenarios(BY_AVERAGE())
+            + cat_revcon:select_agent(a):aggregate_scenarios(BY_AVERAGE())
+            ):aggregate_agents(BY_SUM(), "i " .. tostring(i-2) .. "- ag" .. tostring(a-1)), {color=agent_colors[a]});
+
+        chart_avg_net:add_line(
+            (
+                cat_netter:select_agent(a):aggregate_scenarios(BY_AVERAGE())
+            + cat_nethid:select_agent(a):aggregate_scenarios(BY_AVERAGE())
+            + cat_netgnd:select_agent(a):aggregate_scenarios(BY_AVERAGE())
+            + cat_netcon:select_agent(a):aggregate_scenarios(BY_AVERAGE())
+            ):aggregate_agents(BY_SUM(), "i " .. tostring(i-2) .. "- ag" .. tostring(a-1)), {color=agent_colors[a]});
+
+        chart_avg_rsk:add_line(
+            (
+            --     cat_rskter:select_agent(a)
+            -- + cat_rskhid:select_agent(a)
+            -- + cat_rskgnd:select_agent(a)
+            -- + cat_rskcon:select_agent(a)
+            cat_rsktot:select_agent(a)
+            ):aggregate_agents(BY_SUM(), "i " .. tostring(i-2) .. "- ag" .. tostring(a-1)), {color=agent_colors[a]});
+    end
+
 
     local chart = get_percentiles_chart(cat_eneemb, "Stored Energy: " .. iteration);
     dashboard_volume_ind:push(chart);
@@ -372,6 +561,9 @@ end
 for _, v in pairs(all_cosgnd) do
     chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_SUM()), {color="green"});
 end
+for _, v in pairs(all_coscon) do
+    chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_SUM()), {color="purple"});
+end
 -- chart:add_column_stacking(defcit * cmgdem), {color="black"});
 dashboard_costs:push(chart);
 
@@ -385,10 +577,13 @@ end
 for _, v in pairs(all_revgnd) do
     chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_SUM()), {color="green"});
 end
+for _, v in pairs(all_revcon) do
+    chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_SUM()), {color="purple"});
+end
 -- chart:add_column_stacking(defcit * cmgdem, {color="black"});
 dashboard_revenue:push(chart);
 
-local chart = Chart("Aggregated Net Revenue");
+local chart = Chart("Aggregated Net Revenue (per tech)");
 for _, v in pairs(all_netter) do
     chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_SUM()), {color="red"});
 end
@@ -398,10 +593,19 @@ end
 for _, v in pairs(all_netgnd) do
     chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_SUM()), {color="green"});
 end
+for _, v in pairs(all_netcon) do
+    chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_SUM()), {color="purple"});
+end
 -- chart:add_column_stacking((defcit * cmgdem), {color="black"});
 dashboard_netrev:push(chart);
 
-local chart = Chart("Aggregated Risk Adjusted Net Revenue");
+local chart = Chart("Aggregated Net Revenue");
+for i, v in pairs(all_nettot) do
+    chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_SUM()), {color=agent_colors[i]});
+end
+dashboard_netrev:push(chart);
+
+local chart = Chart("Aggregated Risk Adjusted Net Revenue (per tech)");
 for _, v in pairs(all_rskter) do
     chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_SUM()), {color="red"});
 end
@@ -411,13 +615,50 @@ end
 for _, v in pairs(all_rskgnd) do
     chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_SUM()), {color="green"});
 end
+for _, v in pairs(all_rskcon) do
+    chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_SUM()), {color="purple"});
+end
 -- chart:add_column_stacking((defcit * cmgdem), {color="black"});
 dashboard_rskrev:push(chart);
+
+local chart = Chart("Aggregated Risk Adjusted Net Revenue");
+for i, v in pairs(all_rsktot) do
+    chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_SUM()), {color=agent_colors[i]});
+end
+dashboard_rskrev:push(chart);
+
+local chart = Chart("Average stored energy");
+for _, v in pairs(all_eneemb) do
+    chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_AVERAGE()), {color="blue"});
+end
+dashboard_volume_ind:push(chart);
+
+local chart = Chart("Total spilled energy");
+for _, v in pairs(all_enever2) do
+    chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_SUM()), {color="blue"});
+end
+dashboard_spill_ind:push(chart);
+
 
 
 -- local chart = Chart("Revenue");
 -- chart:add_line(concatenate_stages(aggregated_generation):set_stage_type(0) * concatenate_stages(aggregated_load_marginal_cost):set_stage_type(0));
 -- dashboard_revenue:push(chart);
+
+dashboard_spill_ind:push(chart_avg_spill_ind);
+dashboard_volume_ind:push(chart_avg_volume_ind);
+dashboard_spill:push(chart_avg_spill);
+dashboard_volume:push(chart_avg_volume);
+dashboard_marginal_costs:push(chart_avg_spot);
+
+dashboard_generation:push(chart_avg_gerter);
+dashboard_generation:push(chart_avg_gerhid);
+dashboard_generation:push(chart_avg_gergnd);
+
+dashboard_costs:push(chart_avg_cos);
+dashboard_revenue:push(chart_avg_rev);
+dashboard_netrev:push(chart_avg_net);
+dashboard_rskrev:push(chart_avg_rsk);
 
 (
     dashboard_generation +
