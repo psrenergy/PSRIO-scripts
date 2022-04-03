@@ -64,7 +64,7 @@ local function save_outputs()
         { label = "usedcl", force = false },
         { label = "useful_storage_initial", force = false },
         { label = "useful_storage_final", force = false },
-        { label = "hydro_spillage_cost", force = false }
+        { label = "hydro_spillage_cost", force = false },
         -- POWERVIEW OUTPUTS
         { label = "gerhid_per_bus", force = is_genesys },
         { label = "gerfuel_per_bus", force = is_genesys },
