@@ -303,7 +303,6 @@ for i = 1, #iterations do
 
         -- revenue: P*Q - pi*Q + pi*g - c*g
         local contractsys_pq = system:load("contractsys_pq_" .. tostring(index));
-        print(contractsys_pq)
         table.insert(revcon, contractsys_pq:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index));
         local contractsys_q = system:load("contractsys_q_" .. tostring(index));
         table.insert(coscon, contractsys_q:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index));
