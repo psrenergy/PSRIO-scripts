@@ -1,3 +1,5 @@
+--psrio.exe -v 0 -r <scrip> <case>
+
 -- TODO pass vector of colors
 -- today doable adding line by line
 -- https://colorswall.com/palette/73
@@ -13,6 +15,49 @@ local agent_colors = {
     "#00bcf2", -- rgb(0, 188, 242)   Process Cyan
     "#bad80a", -- rgb(186, 216, 10)  Lime 382
 };
+
+local light_colors = {
+"#6495ED",
+"#EC9C9C",
+"#32CD32",
+"#9370DB",
+"#F4A460",
+"#9ACD32",
+"#836FFF",
+"#ED6DEA",
+"#48D1CC",
+"#FFB6C1",
+"#A9A9A9",
+};
+
+local medium_colors = {
+"#4169E1",
+"#DC4848",
+"#228E2F",
+"#8A2BE2",
+"#CD853F",
+"#6F9424",
+"#6959CD",
+"#DE1CD9",
+"#20B2AA",
+"#DC7EA2",
+"#808080",
+};
+
+local dark_colors = {
+"#00008B",
+"#B22222",
+"#165A1E",
+"#4B0082",
+"#A0522D",
+"#556B2F",
+"#483D8B",
+"#8B008B",
+"#008080",
+"#B03060",
+"#4F4F4F",
+};
+
 -- TODO: add interpolation
 -- colors = PSR.interpolate_colors("#ff0000", "#00ff00", 4)
 
@@ -214,6 +259,11 @@ for a = 1, size do
     all_lambda[tostring(a)] = lambda;
 end
 
+local interp_colors = {};
+for i = 1, 10 do
+    interp_colors[i] = PSR.interpolate_colors(light_colors[i], dark_colors[i], #iterations);
+end
+
 for i = 1, #iterations do
     local iteration = iterations[i];
 
@@ -339,39 +389,39 @@ for i = 1, #iterations do
     -- TODO: save in separate folder (might need to create a folder)
     -- local folder = "market_results_psrio/"
     -- local cat_gerter = concatenate(gerter):save_and_load(folder .. "gerter-" .. iteration):add_prefix("Thermal ");
-    local cat_gerter = concatenate(gerter):save_and_load("gerter-" .. iteration):add_prefix("Thermal ");
-    local cat_gerhid = concatenate(gerhid):save_and_load("gerhid-" .. iteration):add_prefix("Hydro ");
-    local cat_gergnd = concatenate(gergnd):save_and_load("gergnd-" .. iteration):add_prefix("Renewable ");
+    local cat_gerter = concatenate(gerter):add_prefix("Thermal ");
+    local cat_gerhid = concatenate(gerhid):add_prefix("Hydro ");
+    local cat_gergnd = concatenate(gergnd):add_prefix("Renewable ");
 
-    local cat_coster = concatenate(coster):save_and_load("coster-" .. iteration):add_prefix("Thermal ");
-    local cat_coshid = concatenate(coshid):save_and_load("coshid-" .. iteration):add_prefix("Hydro ");
-    local cat_cosgnd = concatenate(cosgnd):save_and_load("cosgnd-" .. iteration):add_prefix("Renewable ");
+    local cat_coster = concatenate(coster):add_prefix("Thermal ");
+    local cat_coshid = concatenate(coshid):add_prefix("Hydro ");
+    local cat_cosgnd = concatenate(cosgnd):add_prefix("Renewable ");
 
-    local cat_revter = concatenate(revter):save_and_load("revter-" .. iteration):add_prefix("Thermal ");
-    local cat_revhid = concatenate(revhid):save_and_load("revhid-" .. iteration):add_prefix("Hydro ");
-    local cat_revgnd = concatenate(revgnd):save_and_load("revgnd-" .. iteration):add_prefix("Renewable ");
+    local cat_revter = concatenate(revter):add_prefix("Thermal ");
+    local cat_revhid = concatenate(revhid):add_prefix("Hydro ");
+    local cat_revgnd = concatenate(revgnd):add_prefix("Renewable ");
 
-    local cat_netter = concatenate(netter):save_and_load("netter-" .. iteration):add_prefix("Thermal ");
-    local cat_nethid = concatenate(nethid):save_and_load("nethid-" .. iteration):add_prefix("Hydro ");
-    local cat_netgnd = concatenate(netgnd):save_and_load("netgnd-" .. iteration):add_prefix("Renewable ");
+    local cat_netter = concatenate(netter):add_prefix("Thermal ");
+    local cat_nethid = concatenate(nethid):add_prefix("Hydro ");
+    local cat_netgnd = concatenate(netgnd):add_prefix("Renewable ");
 
     -- this one has only 1 scenario (the above have all)
-    local cat_rskter = concatenate(rskter):save_and_load("rskter-" .. iteration):add_prefix("Thermal ");
-    local cat_rskhid = concatenate(rskhid):save_and_load("rskhid-" .. iteration):add_prefix("Hydro ");
-    local cat_rskgnd = concatenate(rskgnd):save_and_load("rskgnd-" .. iteration):add_prefix("Renewable ");
+    local cat_rskter = concatenate(rskter):add_prefix("Thermal ");
+    local cat_rskhid = concatenate(rskhid):add_prefix("Hydro ");
+    local cat_rskgnd = concatenate(rskgnd):add_prefix("Renewable ");
 
-    local cat_coscon = concatenate(coscon):save_and_load("coscon-" .. iteration):add_prefix("Contract ");
-    local cat_revcon = concatenate(revcon):save_and_load("revcon-" .. iteration):add_prefix("Contract ");
-    local cat_netcon = concatenate(netcon):save_and_load("netcon-" .. iteration):add_prefix("Contract ");
-    local cat_rskcon = concatenate(rskcon):save_and_load("rskcon-" .. iteration):add_prefix("Contract ");
+    local cat_coscon = concatenate(coscon):add_prefix("Contract ");
+    local cat_revcon = concatenate(revcon):add_prefix("Contract ");
+    local cat_netcon = concatenate(netcon):add_prefix("Contract ");
+    local cat_rskcon = concatenate(rskcon):add_prefix("Contract ");
 
-    local cat_nettot = concatenate(nettot):save_and_load("nettot-" .. iteration):add_prefix("Ag ");
-    local cat_rsktot = concatenate(rsktot):save_and_load("rsktot-" .. iteration):add_prefix("Ag ");
+    local cat_nettot = concatenate(nettot):add_prefix("Ag ");
+    local cat_rsktot = concatenate(rsktot):add_prefix("Ag ");
 
-    local cat_eneemb = concatenate(eneemb):save_and_load("eneemb-" .. iteration);
-    local cat_enever2 = concatenate(enever2):save_and_load("enever2-" .. iteration);
-    local cat_bid_accepted = concatenate(bid_accepted):save_and_load("bid_accepted-" .. iteration);
-    local cat_bid_price = concatenate(bid_price):save_and_load("bid_price-" .. iteration);
+    local cat_eneemb = concatenate(eneemb);
+    local cat_enever2 = concatenate(enever2);
+    -- local cat_bid_accepted = concatenate(bid_accepted):save_and_load("bid_accepted-" .. iteration);
+    -- local cat_bid_price = concatenate(bid_price):save_and_load("bid_price-" .. iteration);
 
     local chart = Chart("Generation: " .. iteration);
     chart:add_area_stacking(cat_gerter:aggregate_scenarios(BY_AVERAGE()), {color="red"});
@@ -418,11 +468,11 @@ for i = 1, #iterations do
 
     -- TODO add loop here
     local chart = Chart("Net Revenue: " .. iteration);
-    chart:add_area_stacking(cat_nettot:aggregate_scenarios(BY_AVERAGE()), {color=agent_colors[1+1]});
+    chart:add_area_stacking(cat_nettot:aggregate_scenarios(BY_AVERAGE()), {color=medium_colors[1+1]});
     dashboard_netrev:push(chart);
 
     local chart = Chart("Risk Adjusted Net Revenue: " .. iteration);
-    chart:add_area_stacking(cat_rsktot, {color=agent_colors[i+1]});
+    chart:add_area_stacking(cat_rsktot, {color=medium_colors[i+1]});
     dashboard_rskrev:push(chart);
 
     load_all_collection(i, all_gerter, cat_gerter:aggregate_scenarios(BY_AVERAGE()));
@@ -474,20 +524,20 @@ for i = 1, #iterations do
     for a = 1,cat_enever2:agents_size() do 
         chart_avg_spill_ind:add_line(
             cat_enever2:select_agent(a):aggregate_scenarios(BY_AVERAGE())
-            :add_prefix("i " .. tostring(i-2) .. " - "), {color=agent_colors[a]});
+            :add_prefix("i " .. tostring(i-2) .. " - "), {color=interp_colors[a][i]});
         chart_avg_volume_ind:add_line(
             cat_eneemb:select_agent(a):aggregate_scenarios(BY_AVERAGE())
-            :add_prefix("i " .. tostring(i-2) .. " - "), {color=agent_colors[a]});
+            :add_prefix("i " .. tostring(i-2) .. " - "), {color=interp_colors[a][i]});
 
         chart_avg_gerter:add_line(
             cat_gerter:select_agent(a):aggregate_scenarios(BY_AVERAGE())
-            :add_prefix("i " .. tostring(i-2) .. " - "), {color=agent_colors[a]});
+            :add_prefix("i " .. tostring(i-2) .. " - "), {color=interp_colors[a][i]});
         chart_avg_gerhid:add_line(
             cat_gerhid:select_agent(a):aggregate_scenarios(BY_AVERAGE())
-            :add_prefix("i " .. tostring(i-2) .. " - "), {color=agent_colors[a]});
+            :add_prefix("i " .. tostring(i-2) .. " - "), {color=interp_colors[a][i]});
         chart_avg_gergnd:add_line(
             cat_gergnd:select_agent(a):aggregate_scenarios(BY_AVERAGE())
-            :add_prefix("i " .. tostring(i-2) .. " - "), {color=agent_colors[a]});
+            :add_prefix("i " .. tostring(i-2) .. " - "), {color=interp_colors[a][i]});
 
         chart_avg_cos:add_line(
             (
@@ -495,7 +545,7 @@ for i = 1, #iterations do
             + cat_coshid:select_agent(a):aggregate_scenarios(BY_AVERAGE())
             + cat_cosgnd:select_agent(a):aggregate_scenarios(BY_AVERAGE())
             + cat_coscon:select_agent(a):aggregate_scenarios(BY_AVERAGE())
-            ):aggregate_agents(BY_SUM(), "i " .. tostring(i-2) .. "- ag" .. tostring(a-1)), {color=agent_colors[a]});
+            ):aggregate_agents(BY_SUM(), "i " .. tostring(i-2) .. "- ag" .. tostring(a-1)), {color=interp_colors[a][i]});
 
         chart_avg_rev:add_line(
             (
@@ -503,7 +553,7 @@ for i = 1, #iterations do
             + cat_revhid:select_agent(a):aggregate_scenarios(BY_AVERAGE())
             + cat_revgnd:select_agent(a):aggregate_scenarios(BY_AVERAGE())
             + cat_revcon:select_agent(a):aggregate_scenarios(BY_AVERAGE())
-            ):aggregate_agents(BY_SUM(), "i " .. tostring(i-2) .. "- ag" .. tostring(a-1)), {color=agent_colors[a]});
+            ):aggregate_agents(BY_SUM(), "i " .. tostring(i-2) .. "- ag" .. tostring(a-1)), {color=interp_colors[a][i]});
 
         chart_avg_net:add_line(
             (
@@ -511,7 +561,7 @@ for i = 1, #iterations do
             + cat_nethid:select_agent(a):aggregate_scenarios(BY_AVERAGE())
             + cat_netgnd:select_agent(a):aggregate_scenarios(BY_AVERAGE())
             + cat_netcon:select_agent(a):aggregate_scenarios(BY_AVERAGE())
-            ):aggregate_agents(BY_SUM(), "i " .. tostring(i-2) .. "- ag" .. tostring(a-1)), {color=agent_colors[a]});
+            ):aggregate_agents(BY_SUM(), "i " .. tostring(i-2) .. "- ag" .. tostring(a-1)), {color=interp_colors[a][i]});
 
         chart_avg_rsk:add_line(
             (
@@ -520,7 +570,7 @@ for i = 1, #iterations do
             -- + cat_rskgnd:select_agent(a)
             -- + cat_rskcon:select_agent(a)
             cat_rsktot:select_agent(a)
-            ):aggregate_agents(BY_SUM(), "i " .. tostring(i-2) .. "- ag" .. tostring(a-1)), {color=agent_colors[a]});
+            ):aggregate_agents(BY_SUM(), "i " .. tostring(i-2) .. "- ag" .. tostring(a-1)), {color=interp_colors[a][i]});
     end
 
 
@@ -600,7 +650,7 @@ dashboard_netrev:push(chart);
 
 local chart = Chart("Aggregated Net Revenue");
 for i, v in pairs(all_nettot) do
-    chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_SUM()), {color=agent_colors[i]});
+    chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_SUM()), {color=medium_colors[i]});
 end
 dashboard_netrev:push(chart);
 
@@ -622,7 +672,7 @@ dashboard_rskrev:push(chart);
 
 local chart = Chart("Aggregated Risk Adjusted Net Revenue");
 for i, v in pairs(all_rsktot) do
-    chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_SUM()), {color=agent_colors[i]});
+    chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_SUM()), {color=medium_colors[i]});
 end
 dashboard_rskrev:push(chart);
 
