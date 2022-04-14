@@ -1,3 +1,13 @@
+local function save_outputs_to_s3()
+    local generic = Generic();
+    local outputs = generic:load_table_without_header("modeloutput.out");
+
+    for i=1,#outputs do
+        local output = outputs[i];
+        generic:load(output):save(output);
+    end
+end
+
 local function save_inputs()
     local hydro = Hydro();
 
@@ -127,6 +137,7 @@ local function save_reports()
     sddpcmga():save("sddpcmga_psrio", { csv = true });
 end
 
+save_outputs_to_s3();
 save_inputs();
 save_outputs();
 save_reports();
