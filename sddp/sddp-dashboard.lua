@@ -136,3 +136,15 @@ names_viol = {
 }
 
 violation_output(names_viol)
+
+-----------------------------------------------------------------------------------------------
+-- LGC
+-----------------------------------------------------------------------------------------------
+local lgcgen = Hydro():load("lgcgen");
+local lgcrev = Hydro():load("lgcrev");
+
+-- sddp_dashboard_lgc_gen
+lgcgen:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM(), Profile.PER_YEAR):save("sddp_dashboard_lgc_gen", {remove_zeros = true, csv=true});
+
+-- sddp_dashboard_lgc_rev
+lgcrev:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM(), Profile.PER_YEAR):save("sddp_dashboard_lgc_rev", {remove_zeros = true, csv=true});
