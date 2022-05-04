@@ -2,20 +2,20 @@
 -- LOCAL FUNCTIONS
 -----------------------------------------------------------------------------------------------
 
-local function violation_aggregation(name,aggregation,suffix,tol)
+local function violation_aggregation(viol_struct,aggregation,suffix,tol)
     n_agents = 5;
 
     generic = Generic();
-    violation = generic:load(name);
+    violation = generic:load(viol_struct.name);
     
     if violation:loaded() then
-    	x = violation:aggregate_scenarios(aggregation):aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(),"Total"):aggregate_stages(BY_SUM()):to_list()[1];
+    	x = violation:aggregate_scenarios(aggregation):aggregate_blocks(viol_struct.aggregation):aggregate_agents(BY_SUM(),"Total"):aggregate_stages(BY_SUM()):to_list()[1];
     	if x > tol then
-        	violation = violation:aggregate_scenarios(aggregation):aggregate_blocks(BY_SUM());
+        	violation = violation:aggregate_scenarios(aggregation):aggregate_blocks(viol_struct.aggregation);
 
         	n = violation:agents_size();
         	if n > n_agents then
-            	aux = violation:aggregate_stages(aggregation);
+            	aux = violation:aggregate_stages(BY_SUM());
             	largest_agents = aux:select_largest_agents(n_agents):agents();
 
             	violation = concatenate(
@@ -23,20 +23,20 @@ local function violation_aggregation(name,aggregation,suffix,tol)
                 	violation:remove_agents(largest_agents):aggregate_agents(BY_SUM(), "Others")
             	);
         	end
-        	violation:save("sddp_dashboard_viol_" .. suffix .. "_" .. name, {remove_zeros = true, csv=true});
-			info("Violation dashboard for " .. name .. " created successfully.")
+        	violation:save("sddp_dashboard_viol_" .. suffix .. "_" .. viol_struct.name, {remove_zeros = true, csv=true});
+			info("Violation dashboard for " .. viol_struct.name .. " created successfully.")
 		else
-			info("Violation values for" .. name .. " aren't significatives. Skipping save... ")
+			info("Violation values for " .. viol_struct.name .. " aren't significatives. Skipping save... ")
 		end
     end
 end
 
-local function violation_output(names,tol)
-    for i, name in ipairs(names) do
+local function violation_output(viol_structs,tol)
+    for i, viol_struct in ipairs(viol_structs) do
 --      Aggregation by Max
-        violation_aggregation(name,BY_MAX(),"max",tol)
+        violation_aggregation(viol_struct,BY_MAX(),"max",tol)
 --      Aggregation by Average
-        violation_aggregation(name,BY_AVERAGE(),"avg",tol)
+        violation_aggregation(viol_struct,BY_AVERAGE(),"avg",tol)
     end
 end
 
@@ -114,44 +114,44 @@ end
 -----------------------------------------------------------------------------------------------
 -- VIOLATIONS
 -----------------------------------------------------------------------------------------------
-names_viol = {
-	"defcit",
-	"defcitp",
-	"nedefc",
-	"defbus",
-	"defbusp",
-	"gncivio",
-	"gncvio",
-	"vrestg",
-	"excbus",
-	"excsis",
-	"vvaler",
-	"vioguide",
-	"vriego",
-	"vmxost",
-	"vimxsp",
-	"vdefmx",
-	"vvolmn",
-	"vdefmn",
-	"vturmn",
-	"vimnsp",
-	"rampvio",
-	"vreseg",
-	"vsarhd",
-	"vsarhden",
-	"viocar",
-	"vgmint",
-	"vioemiq",
-	"vsecset",
-	"valeset",
-	"vespset"
+viol_structs = {
+	{name = "defcit", aggregation = BY_SUM()},
+	{name = "defcitp", aggregation = BY_AVERAGE()},
+	{name = "nedefc", aggregation = BY_AVERAGE()},
+	{name = "defbus", aggregation = BY_SUM()},
+	{name = "defbusp", aggregation = BY_AVERAGE()},
+	{name = "gncivio", aggregation = BY_SUM()},
+	{name = "gncvio", aggregation = BY_SUM()},
+	{name = "vrestg", aggregation = BY_AVERAGE()},
+	{name = "excbus", aggregation = BY_SUM()},
+	{name = "excsis", aggregation = BY_SUM()},
+	{name = "vvaler", aggregation = BY_AVERAGE()},
+	{name = "vioguide", aggregation = BY_SUM()},
+	{name = "vriego", aggregation = BY_AVERAGE()},
+	{name = "vmxost", aggregation = BY_AVERAGE()},
+	{name = "vimxsp", aggregation = BY_AVERAGE()},
+	{name = "vdefmx", aggregation = BY_AVERAGE()},
+	{name = "vvolmn", aggregation = BY_AVERAGE()},
+	{name = "vdefmn", aggregation = BY_AVERAGE()},
+	{name = "vturmn", aggregation = BY_AVERAGE()},
+	{name = "vimnsp", aggregation = BY_AVERAGE()},
+	{name = "rampvio", aggregation = BY_SUM()},
+	{name = "vreseg", aggregation = BY_AVERAGE()},
+	{name = "vsarhd", aggregation = BY_AVERAGE()},
+	{name = "vsarhden", aggregation = BY_AVERAGE()},
+	{name = "viocar", aggregation = BY_AVERAGE()},
+	{name = "vgmint", aggregation = BY_AVERAGE()},
+	{name = "vioemiq", aggregation = BY_AVERAGE()},
+	{name = "vsecset", aggregation = BY_SUM()},
+	{name = "valeset", aggregation = BY_SUM()},
+	{name = "vespset", aggregation = BY_SUM()}
 }
 
-names_viol_debug = {
-	"vfeact"
+viol_structs_debug = {
+	{name = "vfeact", aggregation = BY_AVERAGE()}
 }
 
-violation_output(names_viol, 0.01)
+violation_output(viol_structs, 0.01)
 
 -----------------------------------------------------------------------------------------------
 -- RENEWABLES
