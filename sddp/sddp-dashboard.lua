@@ -116,10 +116,8 @@ end
 -----------------------------------------------------------------------------------------------
 viol_structs = {
 	{name = "defcit", aggregation = BY_SUM()},
-	{name = "defcitp", aggregation = BY_AVERAGE()},
 	{name = "nedefc", aggregation = BY_AVERAGE()},
 	{name = "defbus", aggregation = BY_SUM()},
-	{name = "defbusp", aggregation = BY_AVERAGE()},
 	{name = "gncivio", aggregation = BY_SUM()},
 	{name = "gncvio", aggregation = BY_SUM()},
 	{name = "vrestg", aggregation = BY_AVERAGE()},
@@ -148,6 +146,8 @@ viol_structs = {
 }
 
 viol_structs_debug = {
+	{name = "defcitp", aggregation = BY_AVERAGE()},
+	{name = "defbusp", aggregation = BY_AVERAGE()},
 	{name = "vfeact", aggregation = BY_AVERAGE()}
 }
 
