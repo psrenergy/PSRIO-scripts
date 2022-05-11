@@ -77,7 +77,7 @@ local function save_dashboard()
             chart:add_area_stacking(gerhid:aggregate_agents(BY_SUM(), "Total hydro"), {color="blue"});
             chart:add_area_stacking(gergnd:aggregate_agents(BY_SUM(), "Total renewables"), {color="green"});
             chart:add_area_stacking(gerbat:aggregate_agents(BY_SUM(), "Total battery"), {color="orange"});
-            chart:add_area_stacking(powinj:aggregate_agents(BY_SUM(), "Total power injection"), {colr = "teal"});
+            chart:add_area_stacking(powinj:aggregate_agents(BY_SUM(), "Total power injection"), {color="teal"});
             chart:add_line(demandel:aggregate_agents(BY_SUM(), "Demand (elastic)"), {color="deeppink"});
             chart:add_line(demand:aggregate_agents(BY_SUM(), "Demand"), {color="purple"});
         else
@@ -86,7 +86,7 @@ local function save_dashboard()
             chart:add_column_stacking(gerhid:aggregate_agents(BY_SUM(), "Total hydro"), {color="blue"});
             chart:add_column_stacking(gergnd:aggregate_agents(BY_SUM(), "Total renewables"), {color="green"});
             chart:add_column_stacking(gerbat:aggregate_agents(BY_SUM(), "Total battery"), {color="orange"});
-            chart:add_column_stacking(powinj:aggregate_agents(BY_SUM(), "Total power injection"), {colr = "teal"});
+            chart:add_column_stacking(powinj:aggregate_agents(BY_SUM(), "Total power injection"), {color="teal"});
             chart:add_column(demandel:aggregate_agents(BY_SUM(), "Demand (elastic)"), {color="deeppink"});
             chart:add_column(demand:aggregate_agents(BY_SUM(), "Demand"), {color="purple"});
         end
