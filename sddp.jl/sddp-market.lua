@@ -159,16 +159,16 @@ dashboard_netrev:set_icon("activity");
 local dashboard_rskrev = Dashboard("Risk Net Revenue");
 dashboard_rskrev:set_icon("activity");
 
-local dashboard_volume = Dashboard("Stored Energy");
+local dashboard_volume = Dashboard("Stored Energy (System)");
 dashboard_volume:set_icon("battery-charging");
 
-local dashboard_volume_ind = Dashboard("Stored Energy (Ind)");
+local dashboard_volume_ind = Dashboard("Stored Energy (Agents)");
 dashboard_volume_ind:set_icon("battery-charging");
 
-local dashboard_spill = Dashboard("Spilled Energy");
+local dashboard_spill = Dashboard("Spilled Energy (System)");
 dashboard_spill:set_icon("trash-2");
 
-local dashboard_spill_ind = Dashboard("Spilled Energy (Ind)");
+local dashboard_spill_ind = Dashboard("Spilled Energy (Agents)");
 dashboard_spill_ind:set_icon("trash-2");
 
 -- load demand
@@ -218,8 +218,8 @@ local all_eneemb = {};
 local all_enever2 = {};
 
 local chart_avg_volume     = Chart("Average stored energy all");
-local chart_avg_volume_ind = Chart("Average stored energy all");
-local chart_avg_spill      = Chart("Average spilled energy agents");
+local chart_avg_volume_ind = Chart("Average stored energy agents");
+local chart_avg_spill      = Chart("Average spilled energy all");
 local chart_avg_spill_ind  = Chart("Average spilled energy agents");
 local chart_avg_spot       = Chart("Average spot price - iterations");
 
@@ -274,7 +274,7 @@ for i = 1, #iterations do
     dashboard_marginal_costs:push(chart);
 
     chart_avg_spot:add_line(
-        cmgdem:aggregate_scenarios(BY_AVERAGE()):add_prefix("i " .. tostring(i-2) .. " - "), {color="red"});
+        cmgdem:aggregate_scenarios(BY_AVERAGE()):add_prefix("i " .. tostring(i-2) .. " - "), {color=interp_colors[2][i]});
 
     local gerter = {};
     local gerhid = {};
@@ -355,7 +355,7 @@ for i = 1, #iterations do
         local contractsys_pq = system:load("contractsys_pq_" .. tostring(index));
         table.insert(revcon, contractsys_pq:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index));
         local contractsys_q = system:load("contractsys_q_" .. tostring(index));
-        table.insert(coscon, contractsys_q:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index));
+        table.insert(coscon, (contractsys_q*cmgdem):aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index));
         local contract_net = (contractsys_pq - contractsys_q*cmgdem);
         table.insert(netcon, contract_net:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index));
         local contract_rsk = contract_net:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index);
@@ -517,9 +517,9 @@ for i = 1, #iterations do
     dashboard_spill:push(chart);
 
     chart_avg_spill:add_line(cat_enever2:aggregate_agents(BY_SUM(), "i " .. tostring(i-2) .. " - ")
-        :aggregate_scenarios(BY_AVERAGE()), {color="orange"});
+        :aggregate_scenarios(BY_AVERAGE()), {color=interp_colors[1][i]});
     chart_avg_volume:add_line(cat_eneemb:aggregate_agents(BY_SUM(), "i " .. tostring(i-2) .. " - ")
-        :aggregate_scenarios(BY_AVERAGE()), {color="orange"});
+        :aggregate_scenarios(BY_AVERAGE()), {color=interp_colors[1][i]});
 
     for a = 1,cat_enever2:agents_size() do 
         chart_avg_spill_ind:add_line(
@@ -711,8 +711,8 @@ dashboard_rskrev:push(chart_avg_rsk);
 
 (
     dashboard_generation +
-    dashboard_costs +
     dashboard_marginal_costs +
+    dashboard_costs +
     dashboard_revenue +
     dashboard_netrev +
     dashboard_rskrev +
