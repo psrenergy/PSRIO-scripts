@@ -144,6 +144,9 @@ cinte1():save_and_load("cinte1-psrio");
 local dashboard_marginal_costs = Dashboard("Spot Price");
 dashboard_marginal_costs:set_icon("dollar-sign");
 
+local dashboard_netrev_captured = Dashboard("Normalized Net Revenue");
+dashboard_netrev_captured:set_icon("dollar-sign");
+
 local dashboard_costs = Dashboard("Costs");
 dashboard_costs:set_icon("dollar-sign");
 
@@ -209,6 +212,7 @@ local all_netcon = {};
 local all_rskcon = {};
 
 local all_nettot = {};
+local all_nettot_captured = {};
 local all_rsktot = {};
 
 local all_defcit = {};
@@ -302,6 +306,7 @@ for i = 1, #iterations do
     -- costot
     -- revtot
     local nettot = {};
+    local nettot_captured = {};
     local rsktot = {};
 
     -- list the directories ag_X (then sort)
@@ -376,6 +381,19 @@ for i = 1, #iterations do
             total
         );
 
+        local total_captured = ((
+            thermal_net:aggregate_agents(BY_SUM(), index) +
+            hydro_net:aggregate_agents(BY_SUM(), index) +
+            renew_net:aggregate_agents(BY_SUM(), index)
+        ):aggregate_blocks(BY_SUM()):aggregate_stages(BY_SUM()) / (
+            thermal_gen:aggregate_agents(BY_SUM(), index) +
+            hydro_gen:aggregate_agents(BY_SUM(), index) +
+            renew_gen:aggregate_agents(BY_SUM(), index)
+        ):aggregate_blocks(BY_SUM()):aggregate_stages(BY_SUM()));
+        table.insert(nettot_captured,
+            total_captured
+        );
+
         local thermal_rsk = thermal_net:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index);
         table.insert(rskter, cvar_scenario(thermal_rsk, all_lambda[index], all_alpha[index]));
         local hydro_rsk = hydro_net:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index);
@@ -415,6 +433,7 @@ for i = 1, #iterations do
     local cat_netcon = concatenate(netcon):add_prefix("Contract ");
     local cat_rskcon = concatenate(rskcon):add_prefix("Contract ");
 
+    local cat_nettot_captured = concatenate(nettot_captured):add_prefix("Ag ");
     local cat_nettot = concatenate(nettot):add_prefix("Ag ");
     local cat_rsktot = concatenate(rsktot):add_prefix("Ag ");
 
@@ -471,6 +490,10 @@ for i = 1, #iterations do
     chart:add_area_stacking(cat_nettot:aggregate_scenarios(BY_AVERAGE()), {color=medium_colors[1+1]});
     dashboard_netrev:push(chart);
 
+    -- local chart = Chart("Normalized Net Revenue: " .. iteration);
+    -- chart:add_area_stacking(cat_nettot_captured:aggregate_scenarios(BY_AVERAGE()), {color=medium_colors[1+1]});
+    -- dashboard_netrev:push(chart);
+
     local chart = Chart("Risk Adjusted Net Revenue: " .. iteration);
     chart:add_area_stacking(cat_rsktot, {color=medium_colors[i+1]});
     dashboard_rskrev:push(chart);
@@ -496,6 +519,7 @@ for i = 1, #iterations do
     load_all_collection(i, all_netcon, cat_netcon:aggregate_scenarios(BY_AVERAGE()));
     load_all_collection(i, all_rskcon, cat_rskcon)
 
+    load_all_collection(i, all_nettot_captured, cat_nettot_captured:aggregate_scenarios(BY_AVERAGE()));
     load_all_collection(i, all_nettot, cat_nettot:aggregate_scenarios(BY_AVERAGE()));
     load_all_collection(i, all_rsktot, cat_rsktot);
 
@@ -654,6 +678,12 @@ for i, v in pairs(all_nettot) do
 end
 dashboard_netrev:push(chart);
 
+local chart = Chart("Normalized Aggregated Net Revenue");
+for i, v in pairs(all_nettot_captured) do
+    chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_SUM()), {color=medium_colors[i]});
+end
+dashboard_netrev_captured:push(chart);
+
 local chart = Chart("Aggregated Risk Adjusted Net Revenue (per tech)");
 for _, v in pairs(all_rskter) do
     chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_SUM()), {color="red"});
@@ -712,6 +742,7 @@ dashboard_rskrev:push(chart_avg_rsk);
 (
     dashboard_generation +
     dashboard_marginal_costs +
+    dashboard_netrev_captured +
     dashboard_costs +
     dashboard_revenue +
     dashboard_netrev +
