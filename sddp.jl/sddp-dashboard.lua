@@ -70,7 +70,7 @@ local function save_dashboard()
             deficit = deficit:aggregate_blocks(BY_SUM());
         end
 
-        local chart = Chart("Generation" .. item.suffix);
+        local chart = Chart("Generation" .. item.title);
         if gerter:stages() > 2 then
             chart:add_area_stacking(deficit:aggregate_agents(BY_SUM(), "Deficit"), { color = "black" });
             chart:add_area_stacking(gerter:aggregate_agents(BY_SUM(), "Total thermal"), { color = "red" });
