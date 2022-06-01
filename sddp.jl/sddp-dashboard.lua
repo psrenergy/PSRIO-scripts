@@ -104,18 +104,17 @@ local function save_dashboard()
         if not cmgdem:is_hourly() then
             cmgdem = cmgdem:aggregate_blocks(BY_AVERAGE());
         end
-        cmgdem = cmgdem:aggregate_agents(BY_SUM(), "Total");
-
+        
+        local cmgdem_avg = cmgdem:aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_AVERAGE(), "avg");
+        local cmgdem_p10 = cmgdem:aggregate_scenarios(BY_PERCENTILE(10)):aggregate_agents(BY_AVERAGE(), "p10");
+        local cmgdem_p90 = cmgdem:aggregate_scenarios(BY_PERCENTILE(90)):aggregate_agents(BY_AVERAGE(), "p90");
+        
         local chart = Chart("Load Marginal Cost" .. item.title);
         if cmgdem:stages() > 2 then
-            chart:add_area_range(
-                cmgdem:aggregate_scenarios(BY_PERCENTILE(10)):rename_agents({ "p10" }),
-                cmgdem:aggregate_scenarios(BY_PERCENTILE(90)):rename_agents({ "p90" }),
-                { color = "lightblue" }
-            );
-            chart:add_line(cmgdem:aggregate_scenarios(BY_AVERAGE()), { color = "red" });
+            chart:add_area_range(cmgdem_p10, cmgdem_p90, { color = "lightblue" });
+            chart:add_line(cmgdem_avg, { color = "red" });
         else
-            chart:add_column(cmgdem:aggregate_scenarios(BY_AVERAGE()), { color = "red" });
+            chart:add_column(cmgdem_avg, { color = "red" });
         end
         tab_costs:push(chart);
     end
