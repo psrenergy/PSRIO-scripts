@@ -34,14 +34,14 @@ end
 local function save_hydro_violation(label, suffixes)
     local hydro = Hydro();
 
-    for _, suffix in ipairs(suffixes) do 
+    for _, suffix in ipairs(suffixes) do
         local unit_violation_cost = hydro:load(label .. "_unit_violation_cost" .. suffix);
         local violation = hydro:load(label .. "_violation" .. suffix);
 
         if not unit_violation_cost:loaded() and violation:is_hourly() then
             unit_violation_cost = hydro:load(label .. "_unit_violation_cost__week"):to_hour(BY_REPEATING());
         end
-        
+
         (unit_violation_cost * violation):save(label .. "_violation_cost" .. suffix, { variable_by_block = 2 });
     end
 end
@@ -51,9 +51,9 @@ local function save_outputs()
     local is_genesys = study:is_genesys();
 
     -- SUFFIXES
-    local suffixes = {""};
+    local suffixes = { "" };
     if is_genesys then
-        suffixes = {"__day", "__week", "__hour", "__trueup"};
+        suffixes = { "__day", "__week", "__hour", "__trueup" };
     end
 
     local outputs = {
@@ -100,7 +100,7 @@ local function save_outputs()
         "target_storage"
     };
 
-    for _, label in ipairs(violations) do 
+    for _, label in ipairs(violations) do
         save_hydro_violation(label, suffixes)
     end
 end
