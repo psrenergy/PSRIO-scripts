@@ -249,14 +249,12 @@ local lambda = toml:get_int("CCTL", 0)/100;
 all_lambda["0"] = lambda;
 
 -- min (1 - λ) * E[x] + λ * CVaR_alpha[x] (alpha highest - right)
--- internal alpha == 1.0 means worst case = highest (alpha read is the opposite)
+-- internal alpha == 0.0 means worst case = highest
 local toml = generic:load_toml("agents.dat");
 local size = toml:get_array_size("AGENT");
 for a = 1, size do
     local agent = toml:get_array("AGENT", a);
-    -- this is alpha used in sddp for cost min, where 1 is worst (high cost)
-    -- local alpha = 100 - agent:get_int("alpha", 0);
-    -- for revenue (max) its the opposite, where 0 is the worst (low return)
+    -- this is alpha used in sddp for cost min, where 0 is worst (high cost)
     local alpha = agent:get_int("alpha", 0);
     all_alpha[tostring(a)] = alpha;
     local lambda = agent:get_int("lambda", 0)/100;
@@ -364,7 +362,16 @@ for i = 1, #iterations do
         local contract_net = (contractsys_pq - contractsys_q*cmgdem);
         table.insert(netcon, contract_net:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index));
         local contract_rsk = contract_net:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index);
-        table.insert(rskcon, cvar_scenario(contract_rsk, all_lambda[index], all_alpha[index]));
+
+        local _lambda = all_lambda[index]
+        if _lambda == nil then
+            _lambda = 0.0
+        end
+        local _alpha = all_alpha[index]
+        if _alpha == nil then
+            _alpha = 1.0
+        end
+        table.insert(rskcon, cvar_scenario(contract_rsk, _lambda, _alpha));
 
         local thermal_net = thermal_rev - thermal_cost;
         table.insert(netter, thermal_net:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index));
@@ -395,13 +402,13 @@ for i = 1, #iterations do
         );
 
         local thermal_rsk = thermal_net:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index);
-        table.insert(rskter, cvar_scenario(thermal_rsk, all_lambda[index], all_alpha[index]));
+        table.insert(rskter, cvar_scenario(thermal_rsk, _lambda, _alpha));
         local hydro_rsk = hydro_net:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index);
-        table.insert(rskhid, cvar_scenario(hydro_rsk, all_lambda[index], all_alpha[index]));
+        table.insert(rskhid, cvar_scenario(hydro_rsk, _lambda, _alpha));
         local renew_rsk = renew_net:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index);
-        table.insert(rskgnd, cvar_scenario(renew_rsk, all_lambda[index], all_alpha[index]));
+        table.insert(rskgnd, cvar_scenario(renew_rsk, _lambda, _alpha));
 
-        table.insert(rsktot, cvar_scenario(total, all_lambda[index], all_alpha[index]));
+        table.insert(rsktot, cvar_scenario(total, _lambda, _alpha));
     end
 
     -- TODO: save in separate folder (might need to create a folder)
