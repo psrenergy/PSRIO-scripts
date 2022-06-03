@@ -162,3 +162,15 @@ local rnw = Renewable();
 rnw_spill = rnw:load("vergnd");
 
 rnw_spill:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_scenarios(BY_AVERAGE()):save("sddp_dashboard_result_avg_vergnd",{remove_zeros=true, csv=true});
+
+-----------------------------------------------------------------------------------------------
+-- LGC
+-----------------------------------------------------------------------------------------------
+local lgcgen = Hydro():load("lgcgen");
+local lgcrev = Hydro():load("lgcrev");
+
+-- sddp_dashboard_lgc_gen
+lgcgen:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM(), Profile.PER_YEAR):save("sddp_dashboard_lgc_gen", {remove_zeros = true, csv=true});
+
+-- sddp_dashboard_lgc_rev
+lgcrev:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM(), Profile.PER_YEAR):save("sddp_dashboard_lgc_rev", {remove_zeros = true, csv=true});
