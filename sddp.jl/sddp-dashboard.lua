@@ -7,6 +7,7 @@ local function save_dashboard()
     local system = System();
     local thermal = Thermal();
     local interconnection = Interconnection();
+    local dclink = DCLink();
 
     local suffixes = {
         { title = "", suffix = "" }
@@ -39,6 +40,11 @@ local function save_dashboard()
         local losint = interconnection:load("losint" .. item.suffix):convert("GWh"):aggregate_scenarios(BY_AVERAGE());
         if not losint:is_hourly() then
             losint = losint:aggregate_blocks(BY_SUM());
+        end
+
+        local loslnk = dclink:load("loslnk" .. item.suffix):convert("GWh"):aggregate_scenarios(BY_AVERAGE());
+        if not loslnk:is_hourly() then
+            loslnk = loslnk:aggregate_blocks(BY_SUM());
         end
 
         local gerhid = hydro:load("gerhid" .. item.suffix):aggregate_scenarios(BY_AVERAGE());
@@ -87,6 +93,7 @@ local function save_dashboard()
             chart:add_line(demandel:aggregate_agents(BY_SUM(), "Demand (elastic)"), { color = "deeppink" });
             chart:add_line(demand:aggregate_agents(BY_SUM(), "Demand"), { color = "purple" });
             chart:add_line(losint:aggregate_agents(BY_SUM(), "Interconnection losses"), { color = "grey" });
+            chart:add_line(loslnk:aggregate_agents(BY_SUM(), "DC link losses"), { color = "lightgrey" });
         else
             chart:add_column_stacking(deficit:aggregate_agents(BY_SUM(), "Deficit"), { color = "black" });
             chart:add_column_stacking(gerter:aggregate_agents(BY_SUM(), "Total thermal"), { color = "red" });
@@ -97,6 +104,7 @@ local function save_dashboard()
             chart:add_column(demandel:aggregate_agents(BY_SUM(), "Demand (elastic)"), { color = "deeppink" });
             chart:add_column(demand:aggregate_agents(BY_SUM(), "Demand"), { color = "purple" });
             chart:add_column(losint:aggregate_agents(BY_SUM(), "Interconnection losses"), { color = "grey" });
+            chart:add_column(loslnk:aggregate_agents(BY_SUM(), "DC link losses"), { color = "lightgrey" });
         end
         tab_generation:push(chart);
 
