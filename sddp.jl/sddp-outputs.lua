@@ -2,8 +2,6 @@ local function save_inputs()
     local demand = Demand();
     local hydro = Hydro();
 
-    local flexible_demand = require("sddp/flexible_demand");
-
     -- QMAXIM
     local qmaxim = require("sddp/qmaxim");
     qmaxim():save("qmaxim", { horizon = true });
@@ -25,6 +23,7 @@ local function save_inputs()
     volmno():save("volmno", { horizon = true });
 
     -- LSHREF
+    local flexible_demand = require("sddp/flexible_demand");
     flexible_demand():save("lshref");
 
     -- LSHMAX
