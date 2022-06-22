@@ -1,5 +1,8 @@
 local function save_inputs()
+    local demand = Demand();
     local hydro = Hydro();
+
+    local flexible_demand = require("sddp/flexible_demand");
 
     -- QMAXIM
     local qmaxim = require("sddp/qmaxim");
@@ -20,6 +23,17 @@ local function save_inputs()
     -- VOLMNO
     local volmno = require("sddp/volmno");
     volmno():save("volmno", { horizon = true });
+
+    -- LSHREF
+    flexible_demand():save("lshref");
+
+    -- LSHMAX
+    local lshmax = flexible_demand() * (1 + demand.maximum_increase:select_agents(demand.is_flexible));
+    lshmax:save("lshmax");
+
+    -- LSHMIN
+    local lshmin = flexible_demand() * (1 - demand.maximum_decrease:select_agents(demand.is_flexible));
+    lshmin:save("lshmin");
 
     -- -- FLOOD_CONTROL_HISTORICAL_SCENARIOS
     -- hydro.flood_control_historical_scenarios:save("flood_control_historical_scenarios", { horizon = true });
