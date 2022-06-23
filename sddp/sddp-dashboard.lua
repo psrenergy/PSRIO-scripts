@@ -139,6 +139,7 @@ viol_structs = {
 	{name = "vsarhden", aggregation = BY_AVERAGE()},
 	{name = "viocar", aggregation = BY_AVERAGE()},
 	{name = "vgmint", aggregation = BY_AVERAGE()},
+	{name = "vgmntt", aggregation = BY_AVERAGE()},
 	{name = "vioemiq", aggregation = BY_AVERAGE()},
 	{name = "vsecset", aggregation = BY_SUM()},
 	{name = "valeset", aggregation = BY_SUM()},
