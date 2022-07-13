@@ -143,7 +143,8 @@ viol_structs = {
 	{name = "vioemiq", aggregation = BY_AVERAGE()},
 	{name = "vsecset", aggregation = BY_SUM()},
 	{name = "valeset", aggregation = BY_SUM()},
-	{name = "vespset", aggregation = BY_SUM()}
+	{name = "vespset", aggregation = BY_SUM()},
+    {name = "offviol", aggregation = BY_SUM()}
 }
 
 viol_structs_debug = {
