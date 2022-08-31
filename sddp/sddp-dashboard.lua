@@ -41,15 +41,17 @@ local function violation_output(viol_structs,tol)
 end
 
 local function dispersion(output,file_name)
-    disp = concatenate(
-        output:aggregate_agents(BY_SUM(), "P10"):aggregate_scenarios(BY_PERCENTILE(10)),
-        output:aggregate_agents(BY_SUM(), "Average"):aggregate_scenarios(BY_AVERAGE()),
-        output:aggregate_agents(BY_SUM(), "P90"):aggregate_scenarios(BY_PERCENTILE(90))
-    );
-    x = disp:aggregate_agents(BY_SUM(), "CheckZeros"):aggregate_stages(BY_SUM()):to_list()[1];
-    if x > 0.0 then
-        disp:save(file_name, {csv=true});
-    end
+    if output:loaded() then
+        disp = concatenate(
+            output:aggregate_agents(BY_SUM(), "P10"):aggregate_scenarios(BY_PERCENTILE(10)),
+            output:aggregate_agents(BY_SUM(), "Average"):aggregate_scenarios(BY_AVERAGE()),
+            output:aggregate_agents(BY_SUM(), "P90"):aggregate_scenarios(BY_PERCENTILE(90))
+        );
+        x = disp:aggregate_agents(BY_SUM(), "CheckZeros"):aggregate_stages(BY_SUM()):to_list()[1];
+        if x > 0.0 then
+            disp:save(file_name, {csv=true});
+        end
+    end 
 end
 
 -- Local function for discount rate calculation
