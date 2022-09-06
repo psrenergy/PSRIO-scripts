@@ -138,6 +138,10 @@ local function save_reports()
     -- SDDPCMGA
     local sddpcmga = require("sddp-reports/sddpcmga");
     sddpcmga():save("sddpcmga_psrio", { csv = true });
+
+    -- SDDPRISK
+    local sddprisk = require("sddp-reports/sddprisk");
+    sddprisk():save("sddprisk_psrio", { csv = true });
 end
 
 save_inputs();
