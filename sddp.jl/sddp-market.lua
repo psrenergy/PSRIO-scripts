@@ -1,4 +1,4 @@
---psrio.exe -v 0 -r <scrip> <case>
+PSR.assert_version(">0.16.0");
 
 -- TODO pass vector of colors
 -- today doable adding line by line
@@ -122,8 +122,7 @@ end
 
 local function cvar_scenario(exp, lambda, alpha)
     local preexp = exp:aggregate_blocks(BY_SUM())
-    return (1-lambda) * preexp:aggregate_scenarios(BY_AVERAGE()) +
-        lambda * preexp:aggregate_scenarios(BY_CVAR_L(alpha))
+    return (1-lambda) * preexp:aggregate_scenarios(BY_AVERAGE()) + lambda * preexp:aggregate_scenarios(BY_CVAR_L(alpha))
 end
 
 -- load collections
@@ -141,38 +140,38 @@ cinte1():save_and_load("cinte1-psrio");
 -- discount_rate():save_and_load("discount_rate-psrio");
 
 -- create dashboard tabs
-local dashboard_marginal_costs = Dashboard("Spot Price");
-dashboard_marginal_costs:set_icon("dollar-sign");
+local tab_marginal_costs = Tab("Spot Price");
+tab_marginal_costs:set_icon("dollar-sign");
 
-local dashboard_netrev_captured = Dashboard("Normalized Net Revenue");
-dashboard_netrev_captured:set_icon("dollar-sign");
+local tab_netrev_captured = Tab("Normalized Net Revenue");
+tab_netrev_captured:set_icon("dollar-sign");
 
-local dashboard_costs = Dashboard("Costs");
-dashboard_costs:set_icon("dollar-sign");
+local tab_costs = Tab("Costs");
+tab_costs:set_icon("dollar-sign");
 
-local dashboard_generation = Dashboard("Generation");
-dashboard_generation:set_icon("zap");
+local tab_generation = Tab("Generation");
+tab_generation:set_icon("zap");
 
-local dashboard_revenue = Dashboard("Revenue");
-dashboard_revenue:set_icon("activity");
+local tab_revenue = Tab("Revenue");
+tab_revenue:set_icon("activity");
 
-local dashboard_netrev = Dashboard("Net Revenue");
-dashboard_netrev:set_icon("activity");
+local tab_netrev = Tab("Net Revenue");
+tab_netrev:set_icon("activity");
 
-local dashboard_rskrev = Dashboard("Risk Net Revenue");
-dashboard_rskrev:set_icon("activity");
+local tab_rskrev = Tab("Risk Net Revenue");
+tab_rskrev:set_icon("activity");
 
-local dashboard_volume = Dashboard("Stored Energy (System)");
-dashboard_volume:set_icon("battery-charging");
+local tab_volume = Tab("Stored Energy (System)");
+tab_volume:set_icon("battery-charging");
 
-local dashboard_volume_ind = Dashboard("Stored Energy (Agents)");
-dashboard_volume_ind:set_icon("battery-charging");
+local tab_volume_ind = Tab("Agents");
+tab_volume_ind:set_icon("minus");
 
-local dashboard_spill = Dashboard("Spilled Energy (System)");
-dashboard_spill:set_icon("trash-2");
+local tab_spill = Tab("Spilled Energy (System)");
+tab_spill:set_icon("trash-2");
 
-local dashboard_spill_ind = Dashboard("Spilled Energy (Agents)");
-dashboard_spill_ind:set_icon("trash-2");
+local tab_spill_ind = Tab("Agents");
+tab_spill_ind:set_icon("minus");
 
 -- load demand
 local demand = generic:load("iter_init/demand"):rename_agents({"Demand"});
@@ -273,7 +272,7 @@ for i = 1, #iterations do
     local defcit = system:load(iteration .. "/defcit"):aggregate_scenarios(BY_AVERAGE()):rename_agents({"Deficit"});
 
     local chart = get_percentiles_chart(cmgdem, iteration);
-    dashboard_marginal_costs:push(chart);
+    tab_marginal_costs:push(chart);
 
     chart_avg_spot:add_line(
         cmgdem:aggregate_scenarios(BY_AVERAGE()):add_prefix("i " .. tostring(i-2) .. " - "), {color=interp_colors[2][i]});
@@ -369,7 +368,7 @@ for i = 1, #iterations do
         end
         local _alpha = all_alpha[index]
         if _alpha == nil then
-            _alpha = 1.0
+            _alpha = 1
         end
         table.insert(rskcon, cvar_scenario(contract_rsk, _lambda, _alpha));
 
@@ -455,7 +454,7 @@ for i = 1, #iterations do
     chart:add_area_stacking(cat_gergnd:aggregate_scenarios(BY_AVERAGE()), {color="green"});
     chart:add_line(demand:aggregate_scenarios(BY_AVERAGE()):aggregate_blocks(BY_SUM()), {color="purple"});
     chart:add_area_stacking(defcit:aggregate_scenarios(BY_AVERAGE()):aggregate_blocks(BY_SUM()), {color="black"});
-    dashboard_generation:push(chart);
+    tab_generation:push(chart);
 
     local chart = Chart("Revenue: " .. iteration);
     chart:add_area_stacking(cat_revter:aggregate_scenarios(BY_AVERAGE()), {color="red"});
@@ -464,7 +463,7 @@ for i = 1, #iterations do
     chart:add_area_stacking(cat_revcon:aggregate_scenarios(BY_AVERAGE()), {color="purple"});
     chart:add_area_stacking((defcit * cmgdem):aggregate_scenarios(BY_AVERAGE()):aggregate_blocks(BY_SUM()), {color="black"});
     chart:add_line((demand * cmgdem):aggregate_scenarios(BY_AVERAGE()):aggregate_blocks(BY_SUM()), {color="pink"});
-    dashboard_revenue:push(chart);
+    tab_revenue:push(chart);
 
     local chart = Chart("Cost: " .. iteration);
     chart:add_area_stacking(cat_coster:aggregate_scenarios(BY_AVERAGE()), {color="red"});
@@ -473,7 +472,7 @@ for i = 1, #iterations do
     chart:add_area_stacking(cat_coscon:aggregate_scenarios(BY_AVERAGE()), {color="purple"});
     -- TODO read deficit cost
     -- chart:add_area_stacking((defcit * defcos):aggregate_scenarios(BY_AVERAGE()), {color="black"});
-    dashboard_costs:push(chart);
+    tab_costs:push(chart);
 
     local chart = Chart("Net Revenue (per tech): " .. iteration);
     chart:add_area_stacking(cat_netter:aggregate_scenarios(BY_AVERAGE()), {color="red"});
@@ -482,7 +481,7 @@ for i = 1, #iterations do
     chart:add_area_stacking(cat_netcon:aggregate_scenarios(BY_AVERAGE()), {color="purple"});
     -- chart:add_area_stacking((defcit * cmgdem):aggregate_scenarios(BY_AVERAGE()), {color="black"});
     -- chart:add_line((demand * cmgdem):aggregate_scenarios(BY_AVERAGE()), {color="purple"});
-    dashboard_netrev:push(chart);
+    tab_netrev:push(chart);
 
     -- these already have 1 single scenario
     local chart = Chart("Risk Adjusted Net Revenue (per tech): " .. iteration);
@@ -490,20 +489,20 @@ for i = 1, #iterations do
     chart:add_area_stacking(cat_rskhid, {color="blue"});
     chart:add_area_stacking(cat_rskgnd, {color="green"});
     chart:add_area_stacking(cat_rskcon, {color="purple"});
-    dashboard_rskrev:push(chart);
+    tab_rskrev:push(chart);
 
     -- TODO add loop here
     local chart = Chart("Net Revenue: " .. iteration);
     chart:add_area_stacking(cat_nettot:aggregate_scenarios(BY_AVERAGE()), {color=medium_colors[1+1]});
-    dashboard_netrev:push(chart);
+    tab_netrev:push(chart);
 
     -- local chart = Chart("Normalized Net Revenue: " .. iteration);
     -- chart:add_area_stacking(cat_nettot_captured:aggregate_scenarios(BY_AVERAGE()), {color=medium_colors[1+1]});
-    -- dashboard_netrev:push(chart);
+    -- tab_netrev:push(chart);
 
     local chart = Chart("Risk Adjusted Net Revenue: " .. iteration);
     chart:add_area_stacking(cat_rsktot, {color=medium_colors[i+1]});
-    dashboard_rskrev:push(chart);
+    tab_rskrev:push(chart);
 
     load_all_collection(i, all_gerter, cat_gerter:aggregate_scenarios(BY_AVERAGE()));
     load_all_collection(i, all_gerhid, cat_gerhid:aggregate_scenarios(BY_AVERAGE()));
@@ -543,9 +542,9 @@ for i = 1, #iterations do
     table.insert(all_cmgdem, cmgdem:aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()));
 
     local chart = get_percentiles_chart(cat_eneemb:aggregate_agents(BY_SUM(), "All"), "Stored Energy: " .. iteration);
-    dashboard_volume:push(chart);
+    tab_volume:push(chart);
     local chart = get_percentiles_chart(cat_enever2:aggregate_agents(BY_SUM(), "All"), "Spilled Energy: " .. iteration);
-    dashboard_spill:push(chart);
+    tab_spill:push(chart);
 
     chart_avg_spill:add_line(cat_enever2:aggregate_agents(BY_SUM(), "i " .. tostring(i-2) .. " - ")
         :aggregate_scenarios(BY_AVERAGE()), {color=interp_colors[1][i]});
@@ -606,9 +605,9 @@ for i = 1, #iterations do
 
 
     local chart = get_percentiles_chart(cat_eneemb, "Stored Energy: " .. iteration);
-    dashboard_volume_ind:push(chart);
+    tab_volume_ind:push(chart);
     local chart = get_percentiles_chart(cat_enever2, "Spilled Energy: " .. iteration);
-    dashboard_spill_ind:push(chart);
+    tab_spill_ind:push(chart);
 end
 
 local cmgdem = aggregate_and_concatenate_as_stages(all_cmgdem, BY_AVERAGE()):save_cache();
@@ -616,7 +615,7 @@ local defcit = aggregate_and_concatenate_as_stages(all_defcit, BY_SUM()):save_ca
 
 local chart = Chart("Aggregated Load Marginal Cost");
 chart:add_column_stacking(cmgdem);
-dashboard_marginal_costs:push(chart);
+tab_marginal_costs:push(chart);
 
 local chart = Chart("Aggregated Generation");
 for _, v in pairs(all_gerter) do
@@ -629,7 +628,7 @@ for _, v in pairs(all_gergnd) do
     chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_SUM()), {color="green"});
 end
 chart:add_column_stacking(defcit, {color="black"});
-dashboard_generation:push(chart);
+tab_generation:push(chart);
 
 local chart = Chart("Aggregated Cost");
 for _, v in pairs(all_coster) do
@@ -645,7 +644,7 @@ for _, v in pairs(all_coscon) do
     chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_SUM()), {color="purple"});
 end
 -- chart:add_column_stacking(defcit * cmgdem), {color="black"});
-dashboard_costs:push(chart);
+tab_costs:push(chart);
 
 local chart = Chart("Aggregated Revenue");
 for _, v in pairs(all_revter) do
@@ -661,7 +660,7 @@ for _, v in pairs(all_revcon) do
     chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_SUM()), {color="purple"});
 end
 -- chart:add_column_stacking(defcit * cmgdem, {color="black"});
-dashboard_revenue:push(chart);
+tab_revenue:push(chart);
 
 local chart = Chart("Aggregated Net Revenue (per tech)");
 for _, v in pairs(all_netter) do
@@ -677,19 +676,19 @@ for _, v in pairs(all_netcon) do
     chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_SUM()), {color="purple"});
 end
 -- chart:add_column_stacking((defcit * cmgdem), {color="black"});
-dashboard_netrev:push(chart);
+tab_netrev:push(chart);
 
 local chart = Chart("Aggregated Net Revenue");
 for i, v in pairs(all_nettot) do
     chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_SUM()), {color=medium_colors[i]});
 end
-dashboard_netrev:push(chart);
+tab_netrev:push(chart);
 
 local chart = Chart("Normalized Aggregated Net Revenue");
 for i, v in pairs(all_nettot_captured) do
     chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_SUM()), {color=medium_colors[i]});
 end
-dashboard_netrev_captured:push(chart);
+tab_netrev_captured:push(chart);
 
 local chart = Chart("Aggregated Risk Adjusted Net Revenue (per tech)");
 for _, v in pairs(all_rskter) do
@@ -705,57 +704,55 @@ for _, v in pairs(all_rskcon) do
     chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_SUM()), {color="purple"});
 end
 -- chart:add_column_stacking((defcit * cmgdem), {color="black"});
-dashboard_rskrev:push(chart);
+tab_rskrev:push(chart);
 
 local chart = Chart("Aggregated Risk Adjusted Net Revenue");
 for i, v in pairs(all_rsktot) do
     chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_SUM()), {color=medium_colors[i]});
 end
-dashboard_rskrev:push(chart);
+tab_rskrev:push(chart);
 
 local chart = Chart("Average stored energy");
 for _, v in pairs(all_eneemb) do
     chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_AVERAGE()), {color="blue"});
 end
-dashboard_volume_ind:push(chart);
+tab_volume_ind:push(chart);
 
 local chart = Chart("Total spilled energy");
 for _, v in pairs(all_enever2) do
     chart:add_column_stacking(aggregate_and_concatenate_as_stages(v, BY_SUM()), {color="blue"});
 end
-dashboard_spill_ind:push(chart);
-
-
+tab_spill_ind:push(chart);
 
 -- local chart = Chart("Revenue");
 -- chart:add_line(concatenate_stages(aggregated_generation):set_stage_type(0) * concatenate_stages(aggregated_load_marginal_cost):set_stage_type(0));
--- dashboard_revenue:push(chart);
+-- tab_revenue:push(chart);
 
-dashboard_spill_ind:push(chart_avg_spill_ind);
-dashboard_volume_ind:push(chart_avg_volume_ind);
-dashboard_spill:push(chart_avg_spill);
-dashboard_volume:push(chart_avg_volume);
-dashboard_marginal_costs:push(chart_avg_spot);
+tab_spill_ind:push(chart_avg_spill_ind);
+tab_volume_ind:push(chart_avg_volume_ind);
+tab_spill:push(chart_avg_spill);
+tab_volume:push(chart_avg_volume);
+tab_marginal_costs:push(chart_avg_spot);
 
-dashboard_generation:push(chart_avg_gerter);
-dashboard_generation:push(chart_avg_gerhid);
-dashboard_generation:push(chart_avg_gergnd);
+tab_generation:push(chart_avg_gerter);
+tab_generation:push(chart_avg_gerhid);
+tab_generation:push(chart_avg_gergnd);
 
-dashboard_costs:push(chart_avg_cos);
-dashboard_revenue:push(chart_avg_rev);
-dashboard_netrev:push(chart_avg_net);
-dashboard_rskrev:push(chart_avg_rsk);
+tab_costs:push(chart_avg_cos);
+tab_revenue:push(chart_avg_rev);
+tab_netrev:push(chart_avg_net);
+tab_rskrev:push(chart_avg_rsk);
 
-(
-    dashboard_generation +
-    dashboard_marginal_costs +
-    dashboard_netrev_captured +
-    dashboard_costs +
-    dashboard_revenue +
-    dashboard_netrev +
-    dashboard_rskrev +
-    dashboard_volume +
-    dashboard_volume_ind +
-    dashboard_spill +
-    dashboard_spill_ind
-):save("dashboard_market");
+local dashboard = Dashboard();
+dashboard:push(tab_generation);
+dashboard:push(tab_marginal_costs);
+dashboard:push(tab_netrev_captured);
+dashboard:push(tab_costs);
+dashboard:push(tab_revenue);
+dashboard:push(tab_netrev);
+dashboard:push(tab_rskrev);
+dashboard:push(tab_volume);
+tab_volume:push(tab_volume_ind);
+dashboard:push(tab_spill);
+tab_spill:push(tab_spill_ind);
+dashboard:save("dashboard_market");
