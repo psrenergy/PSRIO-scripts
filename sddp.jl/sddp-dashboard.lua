@@ -1,6 +1,7 @@
 local function save_dashboard()
     local battery = Battery();
     local hydro = Hydro();
+    local generic = Generic();
     local powerinjection = PowerInjection();
     local renewable = Renewable();
     local study = Study();
@@ -22,13 +23,17 @@ local function save_dashboard()
         };
     end
 
-    local tab_costs = Dashboard("Costs");
+    local tab_costs = Tab("Costs");
     tab_costs:set_icon("dollar-sign");
     tab_costs:push("# Costs");
 
-    local tab_generation = Dashboard("Generation");
+    local tab_generation = Tab("Generation");
     tab_generation:set_icon("activity");
     tab_generation:push("# Generation");
+
+    local tab_solution_quality = Tab("Solution quality");
+    tab_solution_quality:set_icon("line-chart");
+    tab_solution_quality:push("# Solution quality");
 
     for _, item in pairs(suffixes) do
         -- GENERATION --
@@ -135,7 +140,39 @@ local function save_dashboard()
         tab_costs:push(chart);
     end
 
-    local dashboard = tab_generation + tab_costs;
+    -- Solution quality --
+    local sddpconvd = generic:load("sddpconvd"):set_stage_type(0);
+    local objcop = generic:load("objcop");
+
+    local chart = Chart("Convergence report");
+    chart:add_area_range(
+        sddpconvd:select_agent("Zsup-Tol"),
+        sddpconvd:select_agent("Zsup+Tol"),
+        {color="#bdccdc", showInLegend=false, xUnit="iterations"}
+    );
+    chart:add_line(sddpconvd:select_agent("Zinf"), {color="#f28e2b"});
+    chart:add_line(sddpconvd:select_agent("Zsup"), {color="#547eaa"});
+    tab_solution_quality:push(chart);
+
+    local chart = Chart("Breakdown of total operating costs");
+    local costs = objcop:aggregate_scenarios(BY_AVERAGE()):aggregate_blocks(BY_SUM()):aggregate_stages(BY_SUM()):select_agents_by_regex("(Pen|Cost)(.*)");
+    chart:add_pie(costs:select_agents(costs:gt(0)));
+    tab_solution_quality:push(chart);
+
+    local chart = Chart("Breakdown of total revenues");
+    local revenue = objcop:aggregate_scenarios(BY_AVERAGE()):aggregate_blocks(BY_SUM()):aggregate_stages(BY_SUM()):select_agents_by_regex("(Revenue)(.*)");
+    chart:add_pie(-revenue:select_agents(revenue:lt(0)));
+    tab_solution_quality:push(chart);
+
+    local chart = Chart("Number of cuts");
+    -- chart:add_line();
+    tab_solution_quality:push(chart);
+
+    -- DASHBOARD --
+    local dashboard = Dashboard();
+    dashboard:push(tab_generation);
+    dashboard:push(tab_costs);
+    dashboard:push(tab_solution_quality);
     dashboard:save("dashboard");
 end
 
