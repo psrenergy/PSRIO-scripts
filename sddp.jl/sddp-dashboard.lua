@@ -145,7 +145,7 @@ local function save_dashboard()
     -- Solution quality --
     local sddpconvd = generic:load("sddpconvd"):set_stage_type(0);
     local objcop = generic:load("objcop");
-    local sddpcuts = generic:load("sddpcuts");
+    local sddpcuts = generic:load("sddpcuts"):set_stage_type(0);
 
     local chart = Chart("Convergence report");
     chart:add_area_range(
@@ -168,7 +168,10 @@ local function save_dashboard()
     tab_solution_quality:push(chart);
 
     local chart = Chart("Number of cuts");
-    chart:add_line(sddpcuts:select_agent("Optimality"), {color="#547eaa"});
+    chart:add_line(
+        sddpcuts:select_agent("Optimality"), 
+        {color="#547eaa", xUnit="iterations"}
+    );
     chart:add_line(sddpcuts:select_agent("Feasibility"), {color="#f28e2b"});
     tab_solution_quality:push(chart);
 
