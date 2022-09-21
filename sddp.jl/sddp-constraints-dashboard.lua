@@ -1,6 +1,8 @@
+PSR.assert_version(">0.16.0");
+
 local hydro = Hydro();
 
-function add_aggregated_chart(dashboard, output)
+local function add_aggregated_chart(tab, output)
     local label = output .. "_aggregated";
 
     hydro:load(output)
@@ -11,21 +13,24 @@ function add_aggregated_chart(dashboard, output)
     
     local chart = Chart();
     chart:push(label, "line");
-    dashboard:push(chart);
+    tab:push(chart);
 end
 
-local dashboard = Dashboard();
-add_aggregated_chart(dashboard, "volfin_last_block");
-add_aggregated_chart(dashboard, "constraint_max_total_outflow");
-add_aggregated_chart(dashboard, "constraint_min_total_outflow");
-add_aggregated_chart(dashboard, "constraint_min_turbining");
+local tab = Tab();
+add_aggregated_chart(tab, "volfin_last_block");
+add_aggregated_chart(tab, "constraint_max_total_outflow");
+add_aggregated_chart(tab, "constraint_min_total_outflow");
+add_aggregated_chart(tab, "constraint_min_turbining");
 -- to do: irrigation
-add_aggregated_chart(dashboard, "constraint_max_spillage");
-add_aggregated_chart(dashboard, "constraint_min_spillage");
-add_aggregated_chart(dashboard, "constraint_max_target");
-add_aggregated_chart(dashboard, "constraint_min_target");
-add_aggregated_chart(dashboard, "MinBioSpillage");
-add_aggregated_chart(dashboard, "constraint_max_volume");
-add_aggregated_chart(dashboard, "constraint_min_volume");
-add_aggregated_chart(dashboard, "constraint_alert_storage");
+add_aggregated_chart(tab, "constraint_max_spillage");
+add_aggregated_chart(tab, "constraint_min_spillage");
+add_aggregated_chart(tab, "constraint_max_target");
+add_aggregated_chart(tab, "constraint_min_target");
+add_aggregated_chart(tab, "MinBioSpillage");
+add_aggregated_chart(tab, "constraint_max_volume");
+add_aggregated_chart(tab, "constraint_min_volume");
+add_aggregated_chart(tab, "constraint_alert_storage");
+
+local dashboard = Dashboard();
+dashboard:push(tab);
 dashboard:save("constraints_violation_report");

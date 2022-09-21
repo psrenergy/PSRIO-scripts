@@ -1,3 +1,5 @@
+PSR.assert_version(">0.16.0");
+
 local function save_dashboard()
     local battery = Battery();
     local hydro = Hydro();
@@ -125,11 +127,11 @@ local function save_dashboard()
         if not cmgdem:is_hourly() then
             cmgdem = cmgdem:aggregate_blocks(BY_AVERAGE());
         end
-        
+
         local cmgdem_avg = cmgdem:aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_AVERAGE(), "avg");
         local cmgdem_p10 = cmgdem:aggregate_scenarios(BY_PERCENTILE(10)):aggregate_agents(BY_AVERAGE(), "p10");
         local cmgdem_p90 = cmgdem:aggregate_scenarios(BY_PERCENTILE(90)):aggregate_agents(BY_AVERAGE(), "p90");
-        
+
         local chart = Chart("Load Marginal Cost" .. item.title);
         if cmgdem:stages() > 2 then
             chart:add_area_range(cmgdem_p10, cmgdem_p90, { color = "lightblue" });
