@@ -10,10 +10,10 @@ end
 local usernw = require("sddp/usernw");
 usernw():select_stages():save("usernw", {variable_by_block=2});
 
--- VEREC - Expected value of the percentage of rationing with respect to the load
+-- VERE15 - Expected value of the percentage of rationing with respect to the load
 local vere15 = require("sddp/vere15")();
 if vere15:is_hourly() then
-  enembp:save("vere15");
+  vere15:save("vere15");
 else
-  enembp:save("vere15",{csv=true});
+  vere15:save("vere15",{csv=true});
 end
