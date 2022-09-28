@@ -153,8 +153,8 @@ local function save_dashboard()
         sddpconvd:select_agent("Zsup+Tol"),
         {color="#bdccdc", showInLegend=false, xUnit="iterations"}
     );
-    chart:add_line(sddpconvd:select_agent("Zinf"), {color="#f28e2b"});
-    chart:add_line(sddpconvd:select_agent("Zsup"), {color="#547eaa"});
+    chart:add_line(sddpconvd:select_agent("Zinf"), {color="#f28e2b", dashStyle = "dash" });
+    chart:add_line(sddpconvd:select_agent("Zsup"), {color="#547eaa", dashStyle = "dash" });
     tab_solution_quality:push(chart);
 
     local chart = Chart("Breakdown of total operating costs");
