@@ -144,42 +144,46 @@ local function save_dashboard()
 
     -- Solution quality --
     local sddpconvd = generic:load("sddpconvd"):set_stage_type(0);
-    local objcop = generic:load("objcop");
-    local sddpcuts = generic:load("sddpcuts"):set_stage_type(0);
+    if sddpconvd:loaded() then
+        local objcop = generic:load("objcop");
+        local sddpcuts = generic:load("sddpcuts"):set_stage_type(0);
+        
+        local chart = Chart("Convergence report");
+        chart:add_area_range(
+            sddpconvd:select_agent("Zsup-Tol"),
+            sddpconvd:select_agent("Zsup+Tol"),
+            {color="#bdccdc", showInLegend=false, xUnit="iterations"}
+        );
+        chart:add_line(sddpconvd:select_agent("Zinf"), {color="#f28e2b", dashStyle = "dash" });
+        chart:add_line(sddpconvd:select_agent("Zsup"), {color="#547eaa", dashStyle = "dash" });
+        tab_solution_quality:push(chart);
 
-    local chart = Chart("Convergence report");
-    chart:add_area_range(
-        sddpconvd:select_agent("Zsup-Tol"),
-        sddpconvd:select_agent("Zsup+Tol"),
-        {color="#bdccdc", showInLegend=false, xUnit="iterations"}
-    );
-    chart:add_line(sddpconvd:select_agent("Zinf"), {color="#f28e2b", dashStyle = "dash" });
-    chart:add_line(sddpconvd:select_agent("Zsup"), {color="#547eaa", dashStyle = "dash" });
-    tab_solution_quality:push(chart);
+        local chart = Chart("Breakdown of total operating costs");
+        local costs = objcop:aggregate_scenarios(BY_AVERAGE()):aggregate_blocks(BY_SUM()):aggregate_stages(BY_SUM()):select_agents_by_regex("(Pen|Cost)(.*)");
+        chart:add_pie(costs:select_agents(costs:gt(0)));
+        tab_solution_quality:push(chart);
 
-    local chart = Chart("Breakdown of total operating costs");
-    local costs = objcop:aggregate_scenarios(BY_AVERAGE()):aggregate_blocks(BY_SUM()):aggregate_stages(BY_SUM()):select_agents_by_regex("(Pen|Cost)(.*)");
-    chart:add_pie(costs:select_agents(costs:gt(0)));
-    tab_solution_quality:push(chart);
+        local chart = Chart("Breakdown of total revenues");
+        local revenue = objcop:aggregate_scenarios(BY_AVERAGE()):aggregate_blocks(BY_SUM()):aggregate_stages(BY_SUM()):select_agents_by_regex("(Revenue)(.*)");
+        chart:add_pie(-revenue:select_agents(revenue:lt(0)));
+        tab_solution_quality:push(chart);
 
-    local chart = Chart("Breakdown of total revenues");
-    local revenue = objcop:aggregate_scenarios(BY_AVERAGE()):aggregate_blocks(BY_SUM()):aggregate_stages(BY_SUM()):select_agents_by_regex("(Revenue)(.*)");
-    chart:add_pie(-revenue:select_agents(revenue:lt(0)));
-    tab_solution_quality:push(chart);
-
-    local chart = Chart("Number of cuts");
-    chart:add_line(
-        sddpcuts:select_agent("Optimality"), 
-        {color="#547eaa", xUnit="iterations"}
-    );
-    chart:add_line(sddpcuts:select_agent("Feasibility"), {color="#f28e2b"});
-    tab_solution_quality:push(chart);
+        local chart = Chart("Number of cuts");
+        chart:add_line(
+            sddpcuts:select_agent("Optimality"), 
+            {color="#547eaa", xUnit="iterations"}
+        );
+        chart:add_line(sddpcuts:select_agent("Feasibility"), {color="#f28e2b"});
+        tab_solution_quality:push(chart);
+    end
 
     -- DASHBOARD --
     local dashboard = Dashboard();
     dashboard:push(tab_generation);
     dashboard:push(tab_costs);
-    dashboard:push(tab_solution_quality);
+    if sddpconvd:loaded() then
+        dashboard:push(tab_solution_quality);
+    end
     dashboard:save("dashboard");
 end
 
