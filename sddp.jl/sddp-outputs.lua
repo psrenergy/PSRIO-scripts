@@ -1,3 +1,5 @@
+PSR.assert_version(">0.17.0");
+
 local function save_inputs()
     local demand = Demand();
     local hydro = Hydro();
@@ -27,11 +29,11 @@ local function save_inputs()
     flexible_demand():save("lshref");
 
     -- LSHMAX
-    local lshmax = flexible_demand() * (1 + demand.maximum_increase:select_agents(demand.is_flexible));
+    local lshmax = flexible_demand() * (1 + demand.max_increase:select_agents(demand.is_flexible));
     lshmax:save("lshmax");
 
     -- LSHMIN
-    local lshmin = flexible_demand() * (1 - demand.maximum_decrease:select_agents(demand.is_flexible));
+    local lshmin = flexible_demand() * (1 - demand.max_decrease:select_agents(demand.is_flexible));
     lshmin:save("lshmin");
 
     -- -- FLOOD_CONTROL_HISTORICAL_SCENARIOS
@@ -102,12 +104,12 @@ local function save_outputs()
         "alert_storage",
         "discharge_rate",
         "irrigation",
-        "max_oper_stge", -- "maximum_operative_storage",
-        "max_spill", -- "maximum_spillage",
+        "max_oper_stge",   -- "maximum_operative_storage",
+        "max_spill",       -- "maximum_spillage",
         "max_total_otflw", -- "maximum_total_outflow",
-        "min_oper_stge", -- "minimum_operative_storage",
-        "min_spill_pct", -- "minimum_spillage_percentage",
-        "min_spill", -- "minimum_spillage",
+        "min_oper_stge",   -- "minimum_operative_storage",
+        "min_spill_pct",   -- "minimum_spillage_percentage",
+        "min_spill",       -- "minimum_spillage",
         "min_total_otflw", -- "minimum_total_outflow",
         "minimum_turbine",
         "target_storage"
