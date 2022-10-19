@@ -1,11 +1,11 @@
-spairs = require("lua/spairs");
+local spairs = require("lua/spairs");
 
-thermal = Thermal();
-output = thermal:load("gerter"):aggregate_agents(BY_SUM(), Collection.FUEL);
-agents = output:agents();
+local thermal = Thermal();
+local output = thermal:load("gerter"):aggregate_agents(BY_SUM(), Collection.FUEL);
+local agents = output:agents();
 
 -- BUILD DICTIONARY WITH UNIQUE AGENT NAMES
-dictionary = {};
+local dictionary = {};
 for i, v in spairs(agents) do
     if dictionary[v] then
         table.insert(dictionary[v], i);
@@ -15,7 +15,7 @@ for i, v in spairs(agents) do
 end
 
 -- AGGREGATE AGENTS
-unique_agents = {};
+local unique_agents = {};
 for agent, indices in pairs(dictionary) do 
     info("Aggregating " .. agent .. "...");
     table.insert(unique_agents, output:select_agents(indices):aggregate_agents(BY_SUM(), agent));   

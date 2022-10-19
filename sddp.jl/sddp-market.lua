@@ -341,9 +341,9 @@ for i = 1, #iterations do
 
         local thermal_cost = thermal_gen * cinte1();
         table.insert(coster, thermal_cost:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index));
-        local hydro_cost = hydro_gen * hydro.omcost;
+        local hydro_cost = hydro_gen * hydro.om_cost;
         table.insert(coshid, hydro_cost:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index));
-        local renew_cost = renew_gen * renewable.omcost;
+        local renew_cost = renew_gen * renewable.om_cost;
         table.insert(cosgnd, renew_cost:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(), index));
 
         local thermal_rev = thermal_gen * cmgdem;

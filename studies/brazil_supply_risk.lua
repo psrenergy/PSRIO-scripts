@@ -78,7 +78,7 @@ ena_de_2020_horizonte_GWm = 20.38 -- GWm
 -- local fator_energia_armazenada = hydro:load("fatorEnergiaArmazenada", true);
 
 -- LOAD DURACI
-local duraci = system.duraci;
+local duraci = system.load_level_length;
 if bool_demand_per_block then
     duraci = duraci:select_agents({1}):select_stages(1,last_stage);
 else

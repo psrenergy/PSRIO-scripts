@@ -1,12 +1,12 @@
-size = PSR.studies();
+local size = PSR.studies();
 
-study = Study();
-labels = study:get_files("(.*\\.csv|.*\\.hdr)");
+local study = Study();
+local labels = study:get_files("(.*\\.csv|.*\\.hdr)");
 for i = 1,#labels do
     label = labels[i];
     info("Concatenating file " .. label);
 
-    outputs = {};
+    local outputs = {};
     for j = 1,size do 
         output = Generic(j):load(label);
         table.insert(outputs, output);
