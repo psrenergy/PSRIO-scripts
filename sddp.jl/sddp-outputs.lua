@@ -1,4 +1,4 @@
-PSR.assert_version(">0.17.0");
+PSR.assert_version(">0.18.0");
 
 local function save_inputs()
     local demand = Demand();
@@ -77,8 +77,8 @@ local function save_outputs()
         { label = "defcit_risk", force = false },
         { label = "usecir", force = false },
         { label = "usedcl", force = false },
-        { label = "useful_storage_initial", force = false },
-        { label = "useful_storage_final", force = false },
+        { label = "useful_storage_initial", force = false, variable_by_block = 2 },
+        { label = "useful_storage_final", force = false, variable_by_block = 2 },
         { label = "hydro_spillage_cost", force = false },
         -- POWERVIEW OUTPUTS
         { label = "gerhid_per_bus", force = is_genesys },
