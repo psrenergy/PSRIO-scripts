@@ -32,12 +32,12 @@ max(0, -qturbi + qmin):convert("hm3"):save("constraint_min_turbining");
 local volfin = hydro:load("volfin" .. suffix_):aggregate_blocks(BY_LAST_VALUE());
 volfin:save("volfin_");
 
-local maxVol_nodata = hydro.vmax_chronological_historical_scenarios_nodata;
-local maxVol = hydro.vmax_chronological_historical_scenarios;
+local maxVol_nodata = hydro.max_operative_storage_historical_scenarios_nodata;
+local maxVol = hydro.max_operative_storage_historical_scenarios;
 ifelse(maxSpill_nodata:gt(0), 0, max(0, volfin - maxVol)):save("constraint_max_volume");
 
-local minVol_nodata = hydro.vmin_chronological_historical_scenarios_nodata;
-local minVol = hydro.vmin_chronological_historical_scenarios;
+local minVol_nodata = hydro.min_operative_storage_historical_scenarios_nodata;
+local minVol = hydro.min_operative_storage_historical_scenarios;
 ifelse(minSpill_nodata:gt(0), 0, max(0, -volfin + minVol)):save("constraint_min_volume");
 
 local min_bio_spillage_nodata = hydro.min_bio_spillage_historical_scenarios_nodata;
