@@ -152,7 +152,8 @@ viol_structs = {
 	{name = "vespset", aggregation = BY_SUM()},
     {name = "fcoffvio", aggregation = BY_SUM()},
 	{name = "vflmnww", aggregation = BY_AVERAGE()},
-	{name = "vflmxww", aggregation = BY_AVERAGE()}
+	{name = "vflmxww", aggregation = BY_AVERAGE()},
+	{name = "finjvio", aggregation = BY_SUM()}
 }
 
 viol_structs_debug = {
