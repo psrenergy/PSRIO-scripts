@@ -149,6 +149,16 @@ local function make_marg_costs(dashboard)
 	
 end
 
+local function make_risk_report(dashboard)
+    
+    local gen = Generic();
+    risk_file = gen:load("sddprisk");
+    local chart = Chart("Deficit risk by sub-system");
+    chart:add_column(risk_file);
+    dashboard:push(chart);
+    
+end
+
 local function get_convergence_file_agents(file_list, conv_age, cuts_age)
     
     local gen = Generic();
@@ -207,6 +217,63 @@ local function make_hourly_sol_status_graph(dashboard)
     chart:add_heatmap_hourly(penp);
     dashboard:push(chart);
 end
+
+-----------------------------------------------------------------------------------------------
+-- Violation reports methods
+-----------------------------------------------------------------------------------------------
+
+viol_report_structs = {
+	{name = "defcit",   title = "Deficit"},
+	{name = "nedefc",   title = "Deficit associated to non-electrical gas demand"},
+	{name = "defbus",   title = "Deficit per bus (% of load)"},
+	{name = "gncivio",  title = "General interpolation constraint violation"},
+	{name = "gncvio",   title = "General constraint: linear"},
+	{name = "vrestg",   title = "Generation constraint violation"},
+	{name = "excbus",   title = "Generation excess per AC bus"},
+	{name = "excsis",   title = "Generation excess per system"},
+	{name = "vvaler",   title = "Alert storage violation"},
+	{name = "vioguide", title = "Guide curve violation per hydro reservoir"},
+	{name = "vriego",   title = "Hydro: irrigation"},
+	{name = "vmxost",   title = "Hydro: maximum operative storage"},
+	{name = "vimxsp",   title = "Hydro: maximum spillage"},
+	{name = "vdefmx",   title = "Hydro: maximum total outflow"},
+	{name = "vvolmn",   title = "Hydro: minimum storage"},
+	{name = "vdefmn",   title = "Hydro: minimum total outflow"},
+	{name = "vturmn",   title = "Hydro: minimum turbining outflow"},
+	{name = "vimnsp",   title = "Hydro: mininum spillage"},
+	{name = "rampvio",  title = "Hydro: outflow ramp"},
+	{name = "vreseg",   title = "Reserve: joint requirement"},
+	{name = "vsarhd",   title = "RAS target storage violation %"},
+	{name = "vsarhden", title = "RAS target storage violation GWh"},
+	{name = "viocar",   title = "Risk Aversion Curve"},
+	{name = "vgmint",   title = "Thermal: minimum generation"},
+	{name = "vgmntt",   title = "NE"},
+	{name = "vioemiq",  title = "Emission budget violation"},
+	{name = "vsecset",  title = "Reservoir set: security energy constraint"},
+	{name = "valeset",  title = "Reservoir set: alert energy constraint"},
+	{name = "vespset",  title = "Reservoir set: flood control energy constraint"},
+    {name = "fcoffvio", title = "Fuel contract minimum offtake rate violation"},
+	{name = "vflmnww",  title = "Minimum hydro bypass flow violation"},
+	{name = "vflmxww",  title = "Maximum hydro bypass flow violation"},
+	{name = "finjvio",  title = "NE"}
+}
+
+local function make_viol_report(dashboard, viol_struct, suffix)
+
+    local gen = Generic();
+    
+    local file_name = "";
+    for i, struct in ipairs(viol_struct) do
+        file_name = "sddp_dashboard_viol_" .. suffix .. "_" .. struct.name;
+        viol_file = gen:load(file_name);
+        if viol_file:loaded() then
+            local chart = Chart(struct.title);
+            chart:add_column_stacking(viol_file);
+            dashboard:push(chart);
+        end
+    end
+end
+
 -----------------------------------------------------------------------------------------------
 -- COSTS
 -----------------------------------------------------------------------------------------------
@@ -226,15 +293,21 @@ total_costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SU
 -- Main tabs
 sddp_input      = Tab("Input data");
 sddp_solqual    = Tab("Solution quality");
+sddp_viol       = Tab("Violations");
 results_tab     = Tab("Results");
 
 -- Subtabs of "Input data"
 sddp_inferg     = Tab("Inflow energy");
 
+-- Subtabs of violations
+sddp_viol_avg   = Tab("Average");
+sddp_viol_max   = Tab("Maximum");
+    
 -- Subtabs of "Results"
 sddp_costs_revs = Tab("Costs & Revenues");
 sddp_marg_costs = Tab("Marginal Costs");
 sddp_generation = Tab("Generation");
+sddp_risk       = Tab("Risk");
 
 -----------------------------------------------------------------------------------------------
 -- Input data
@@ -282,6 +355,16 @@ make_conv_map_graph(sddp_solqual);
 make_added_cuts_graphs(sddp_solqual,cuts_data,horizon);
 
 -----------------------------------------------------------------------------------------------
+-- Violation report
+-----------------------------------------------------------------------------------------------
+
+make_viol_report(sddp_viol_avg,viol_report_structs,"avg");
+make_viol_report(sddp_viol_max,viol_report_structs,"max");
+
+sddp_viol:push(sddp_viol_avg);
+sddp_viol:push(sddp_viol_max);
+
+-----------------------------------------------------------------------------------------------
 -- Results report
 -----------------------------------------------------------------------------------------------
 
@@ -289,10 +372,12 @@ make_added_cuts_graphs(sddp_solqual,cuts_data,horizon);
 make_marg_costs(sddp_marg_costs);                         -- Marginal costs
 make_costs_and_revs(sddp_costs_revs); 					  -- Costs and revenues
 make_sddp_total_gen(sddp_generation,"Total generation");  -- Total generation
+make_risk_report(sddp_risk);                              -- Deficit risk
 
 results_tab:push(sddp_costs_revs);
 results_tab:push(sddp_marg_costs);
 results_tab:push(sddp_generation);
+results_tab:push(sddp_risk);
 
 -----------------------------------------------------------------------------------------------
 -- Saving dashboard
@@ -300,5 +385,6 @@ results_tab:push(sddp_generation);
 sddp_dashboard = Dashboard();
 sddp_dashboard:push(sddp_input);
 sddp_dashboard:push(sddp_solqual);
+sddp_dashboard:push(sddp_viol);
 sddp_dashboard:push(results_tab);
 sddp_dashboard:save("SDDPDashboard");
