@@ -151,7 +151,7 @@ end
 
 local function make_convergence_graphs(dashboard, conv_age, horizon)
     for i, conv in ipairs(conv_age) do
-        local chart = Chart("Convergence report | Horizon - " .. horizon[i]);
+        local chart = Chart("Convergence report | Horizon: " .. horizon[i]);
         chart:add_area_range(conv:select_agents({2}), conv:select_agents({4}), { xAllowDecimals = false }); -- Confidence interval
         chart:add_line(conv:select_agents({1}), { xAllowDecimals = false }); -- Zinf
         chart:add_line(conv:select_agents({3}), { xAllowDecimals = false }); -- Zsup
@@ -161,7 +161,7 @@ end
 
 local function make_added_cuts_graphs(dashboard, cuts_age, horizon)
     for i, cuts in ipairs(cuts_age) do
-        local chart = Chart("Number of added cuts report | Horizon - " .. horizon[i]);
+        local chart = Chart("Number of added cuts report | Horizon: " .. horizon[i]);
         chart:add_column(cuts:select_agents({1}), { xAllowDecimals = false }); -- Opt
         chart:add_column(cuts:select_agents({2}), { xAllowDecimals = false }); -- Feas
         dashboard:push(chart);
