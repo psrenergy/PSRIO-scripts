@@ -1,4 +1,4 @@
-local generic = Generic();
+﻿local generic = Generic();
 local study = Study();
 local thermal = Thermal();
 local hydro = Hydro();
@@ -169,6 +169,22 @@ local function make_added_cuts_graphs(dashboard, cuts_age, systems, horizon)
     end 
 end
 
+local function make_policy_report(dashboard, conv_age, cuts_age, systems, horizon)
+    for i, conv in ipairs(conv_age) do -- Each position of conv_age and cuts_age refers to the same file
+        dashboard:push("## System: " .. systems[i] .. " | Horizon: " .. horizon[i]);
+        local chart = Chart("Convergence report");
+        chart:add_area_range(conv:select_agents({2}), conv:select_agents({4}), { xAllowDecimals = false }); -- Confidence interval
+        chart:add_line(conv:select_agents({1}), { xAllowDecimals = false }); -- Zinf
+        chart:add_line(conv:select_agents({3}), { xAllowDecimals = false }); -- Zsup
+        dashboard:push(chart);
+        
+        chart = Chart("Number of added cuts report");
+        chart:add_column(cuts_age[i]:select_agents({1}), { xAllowDecimals = false }); -- Opt
+        chart:add_column(cuts_age[i]:select_agents({2}), { xAllowDecimals = false }); -- Feas
+        dashboard:push(chart);
+    end
+end
+
 local function make_penalty_proportion_graph(dashboard)
     local penp = generic:load("sddppenp");
     local chart = Chart("Share of violation penalties and deficit in the cost of each stage/scenario");
@@ -262,10 +278,14 @@ local total_costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages
 local sddp_input      = Tab("Input data");
 local sddp_solqual    = Tab("Solution quality");
 local sddp_viol       = Tab("Violations");
-local results_tab     = Tab("Results");
+local sddp_results    = Tab("Results");
 
 -- Subtabs of "Input data"
 local sddp_inferg     = Tab("Inflow energy");
+
+-- Subtabs of "Solution quality"
+local sddp_pol     = Tab("Policy");
+local sddp_sim     = Tab("Simulation");
 
 -- Subtabs of violations
 local sddp_viol_avg   = Tab("Average");
@@ -277,9 +297,19 @@ local sddp_marg_costs = Tab("Marginal Costs");
 local sddp_generation = Tab("Generation");
 local sddp_risk       = Tab("Risk");
 
+
+-- Set icons of the main tabs
+sddp_input:set_icon("file-input"); -- Alternative: arrow-big-right
+sddp_solqual:set_icon("alert-triangle");
+sddp_viol:set_icon("siren");
+sddp_results:set_icon("line-chart");
+
 -----------------------------------------------------------------------------------------------
 -- Input data
 -----------------------------------------------------------------------------------------------
+
+-- Case summary
+
 
 make_inflow_energy(sddp_inferg);
 sddp_input:push(sddp_inferg);
@@ -288,11 +318,12 @@ sddp_input:push(sddp_inferg);
 -- Solution quality report
 -----------------------------------------------------------------------------------------------
 
+-- *** Policy report ***
+
 -- Convergence and bender cuts statistics
 local file_list = {};
 local systems   = {};
 local horizon   = {};
-
 
 local conv_data = {};
 local cuts_data = {};
@@ -300,27 +331,32 @@ local cuts_data = {};
 -- Convergence report
 get_conv_file_info(file_list, systems, horizon);
 get_convergence_file_agents(file_list, conv_data, cuts_data);
-make_convergence_graphs(sddp_solqual, conv_data, systems, horizon);
+
+-- Creating policy report
+make_policy_report(sddp_pol, conv_data, cuts_data, systems, horizon);
+
+-- *** Simulation report ***
 
 -- Breakdown of ope. costs
 if is_greater_than_zero(total_costs_agg) then
-	add_chart_pie(sddp_solqual, { total_costs_agg }, "Breakdown of total operating costs");
+	add_chart_pie(sddp_sim, { total_costs_agg }, "Breakdown of total operating costs");
 end
 
 -- SDDP status report(only for hourly cases)
 local is_hourly = study:get_parameter("SIMH", -1) == 2; -- If SIMH is not present at sddp.dat, returns -1
 if is_hourly then
-    make_hourly_sol_status_graph(sddp_solqual);
+    make_hourly_sol_status_graph(sddp_sim);
 end
 
 -- Penalty proportion report
-make_penalty_proportion_graph(sddp_solqual);
+make_penalty_proportion_graph(sddp_sim);
 
 -- Convergence map report
-make_conv_map_graph(sddp_solqual);
+make_conv_map_graph(sddp_sim);
 
--- Added cuts report
-make_added_cuts_graphs(sddp_solqual, cuts_data, systems, horizon);
+-- Adding tabs to solution quality
+sddp_solqual:push(sddp_pol);
+sddp_solqual:push(sddp_sim);
 
 -----------------------------------------------------------------------------------------------
 -- Violation report
@@ -342,10 +378,10 @@ make_costs_and_revs(sddp_costs_revs); 					  -- Costs and revenues
 make_sddp_total_gen(sddp_generation, "Total generation"); -- Total generation
 make_risk_report(sddp_risk);                              -- Deficit risk
 
-results_tab:push(sddp_costs_revs);
-results_tab:push(sddp_marg_costs);
-results_tab:push(sddp_generation);
-results_tab:push(sddp_risk);
+sddp_results:push(sddp_costs_revs);
+sddp_results:push(sddp_marg_costs);
+sddp_results:push(sddp_generation);
+sddp_results:push(sddp_risk);
 
 -----------------------------------------------------------------------------------------------
 -- Saving dashboard
@@ -354,5 +390,5 @@ local sddp_dashboard = Dashboard();
 sddp_dashboard:push(sddp_input);
 sddp_dashboard:push(sddp_solqual);
 sddp_dashboard:push(sddp_viol);
-sddp_dashboard:push(results_tab);
+sddp_dashboard:push(sddp_results);
 sddp_dashboard:save("SDDPDashboard");
