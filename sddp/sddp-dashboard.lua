@@ -211,16 +211,16 @@ local function make_costs_and_revs(dashboard)
 		costs:aggregate_agents(BY_SUM(), "Average"):aggregate_scenarios(BY_AVERAGE()),
 		costs:aggregate_agents(BY_SUM(), "P90"):aggregate_scenarios(BY_PERCENTILE(90))
 	);
-    
-    chart:add_area_range(disp:select_agent(1), disp:select_agent(3),{color={"#E15759","#E15759"}}); -- Confidence interval
-    chart:add_line(disp:select_agent(2),{color={"#B60A1C"}}); -- Average
 
 	if is_greater_than_zero(costs_avg) then
 		add_chart_column(dashboard, { costs_avg }, "Average operating costs per stage");
 	end
 
 	if is_greater_than_zero(disp) then
-		add_chart_line(dashboard, { disp }, "Dispersion of operating costs per stage");
+	    local chart = Chart("Dispersion of operating costs per stage");	
+		chart:add_area_range(disp:select_agent(1), disp:select_agent(3),{color={"#EA6B73","#EA6B73"}}); -- Confidence interval
+        chart:add_line(disp:select_agent(2),{color={"#F02720"}}); -- Average
+        dashboard:push(chart);
 	end
 end
 
@@ -255,9 +255,9 @@ end
 local function make_convergence_graphs(dashboard, conv_age, systems, horizon)
     for i, conv in ipairs(conv_age) do
         local chart = Chart("Convergence report | System: " .. systems[i] .. " | Horizon: " .. horizon[i]);
-        chart:add_area_range(conv:select_agents({2}), conv:select_agents({4}), { xAllowDecimals = false }); -- Confidence interval
-        chart:add_line(conv:select_agents({1}), { xAllowDecimals = false }); -- Zinf
-        chart:add_line(conv:select_agents({3}), { xAllowDecimals = false }); -- Zsup
+        chart:add_area_range(conv:select_agents({2}), conv:select_agents({4}), {color={"#ACD98D","#ACD98D"}, xAllowDecimals = false }); -- Confidence interval
+        chart:add_line(conv:select_agents({1}), {color={"#3CB7CC"}, xAllowDecimals = false }); -- Zinf
+        chart:add_line(conv:select_agents({3}), {color={"#32A251"}, xAllowDecimals = false }); -- Zsup
         dashboard:push(chart);
     end
 end
@@ -275,9 +275,9 @@ local function make_policy_report(dashboard, conv_age, cuts_age, time_age, syste
     for i, conv in ipairs(conv_age) do -- Each position of conv_age and cuts_age refers to the same file
         dashboard:push("## System: " .. systems[i] .. " | Horizon: " .. horizon[i]);
         local chart = Chart("Convergence report");
-        chart:add_area_range(conv:select_agents({2}), conv:select_agents({4}), { xAllowDecimals = false }); -- Confidence interval
-        chart:add_line(conv:select_agents({1}), { xAllowDecimals = false }); -- Zinf
-        chart:add_line(conv:select_agents({3}), { xAllowDecimals = false }); -- Zsup
+        chart:add_area_range(conv:select_agents({2}), conv:select_agents({4}), {color={"#ACD98D","#ACD98D"},  xAllowDecimals = false }); -- Confidence interval
+        chart:add_line(conv:select_agents({1}), {color={"#3CB7CC"},  xAllowDecimals = false }); -- Zinf
+        chart:add_line(conv:select_agents({3}), {color={"#32A251"},  xAllowDecimals = false }); -- Zsup
         dashboard:push(chart);
         
         chart = Chart("Number of added cuts report");
