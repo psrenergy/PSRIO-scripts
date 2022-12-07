@@ -1,11 +1,16 @@
-﻿local generic = Generic();
-local study = Study();
-local thermal = Thermal();
-local hydro = Hydro();
-local renewable = Renewable();
-local battery = Battery();
+﻿local battery         = Battery();
+local bus             = Bus();
+local circuit         = Circuit();
+local generic         = Generic();
+local hydro           = Hydro();
+local interconn       = Interconnection();
 local power_injection = PowerInjection();
-local system = System();
+local renewable       = Renewable();
+local study           = Study();
+local system          = System();
+local thermal         = Thermal();
+
+PSR.set_global_colors({"#4E79A7", "#F28E2B", "#8CD17D","F1CE63","A0CBE8","B07AA1","E15759"});
 
 local function add_chart_line(dashboard, output, output_name)
 	local chart = Chart(output_name);-- Create chart
@@ -68,6 +73,72 @@ end
 -----------------------------------------------------------------------------------------------
 -- SDDP OUTPUT GENERATION FUNCTIONS
 -----------------------------------------------------------------------------------------------
+
+local function make_case_summary(dashboad)
+
+    -- Horizon
+    local initial_year = study:initial_year();
+    local nstage = study:stages();
+    local nforwd = study:scenarios();
+    local nback  = study:openings();
+    
+    -- Resolution
+    local blocks_size = hydro:load("gerhid"):blocks(1);
+    local is_hourly = hydro:load("gerhid"):is_hourly();
+    local has_hourly_data = ""
+    if is_hourly then
+        has_hourly_data = "yes"
+    else
+        has_hourly_data = "no"
+    end
+    
+    -- Generators
+    local bat_size     = #battery:labels();
+    local bus_size     = #bus:labels();
+    local circ_size    = #circuit:labels();
+    local hydro_size   = #hydro:labels();
+    local inter_size   = #interconn:labels();
+    local pinj_size    = #power_injection:labels();
+    local thermal_size = #thermal:labels();
+    local renew_size   = #renewable:labels();
+    local sys_size     = #system:labels();
+    
+    local has_net = ""
+    if( bus_size > 0 ) then
+        has_net = "yes"
+    else
+        has_net = "no"
+    end
+    
+    -- Inserting info
+    dashboad:push("# Case summary");
+    dashboad:push("");
+    dashboad:push("## Horizon, resolution and execution options");
+    dashboad:push("| Case parameter | Value |");
+    dashboad:push("|----------------|-------|");
+    dashboad:push("| Number of stages | "          .. tostring(nstage)       .. "|");
+    dashboad:push("| Initial year of study | "     .. tostring(initial_year) .. "|");
+    dashboad:push("| Number of blocks | "          .. tostring(blocks_size)  .. "|");
+    dashboad:push("| Number of forward series | "  .. tostring(nforwd)       .. "|");
+    dashboad:push("| Number of backward series | " .. tostring(nback)        .. "|");
+    dashboad:push("| Hourly representation | "     .. has_hourly_data        .. "|");
+    dashboad:push("| Network representation | "    .. has_net                .. "|");
+    dashboad:push("");
+    dashboad:push("## Dimensions");
+    dashboad:push("| Case parameter | Value |");
+    dashboad:push("|----------------|-------|");
+    dashboad:push("| Number of systems |"           .. tostring(sys_size)     .. "|");
+    dashboad:push("| Number of batteries |"         .. tostring(bat_size)     .. "|");
+    if has_net == "yes" then
+        dashboad:push("| Number of buses | "            .. tostring(bus_size)     .. "|");
+        dashboad:push("| Number of circuits | "         .. tostring(circ_size)    .. "|");
+    end
+    dashboad:push("| Number of hydro plants | "     .. tostring(hydro_size)   .. "|");
+    dashboad:push("| Number of interconnections | " .. tostring(inter_size)    .. "|");
+    dashboad:push("| Number of power injections | " .. tostring(pinj_size)    .. "|");
+    dashboad:push("| Number of renewable plants | " .. tostring(renew_size)   .. "|");
+    dashboad:push("| Number of thermal plants | "   .. tostring(thermal_size) .. "|");
+end
 
 local function make_inflow_energy(dashboard)
     local inferg = generic:load("sddp_dashboard_input_enaflu");
@@ -142,11 +213,12 @@ local function make_risk_report(dashboard)
     dashboard:push(chart);
 end
 
-local function get_convergence_file_agents(file_list, conv_age, cuts_age)
+local function get_convergence_file_agents(file_list, conv_age, cuts_age, time_age)
     for i, file in ipairs(file_list) do
         local conv_file = generic:load(file);
         conv_age[i] = conv_file:select_agents({1, 2, 3, 4}); -- Zinf        ,Zsup - Tol  ,Zsup        ,Zsup + Tol  
         cuts_age[i] = conv_file:select_agents({5, 6});     -- Optimality  ,Feasibility 
+        time_age[i] = conv_file:select_agents({7, 8});     -- Forw. time, Back. time
     end
 end
 
@@ -169,7 +241,7 @@ local function make_added_cuts_graphs(dashboard, cuts_age, systems, horizon)
     end 
 end
 
-local function make_policy_report(dashboard, conv_age, cuts_age, systems, horizon)
+local function make_policy_report(dashboard, conv_age, cuts_age, time_age, systems, horizon)
     for i, conv in ipairs(conv_age) do -- Each position of conv_age and cuts_age refers to the same file
         dashboard:push("## System: " .. systems[i] .. " | Horizon: " .. horizon[i]);
         local chart = Chart("Convergence report");
@@ -179,8 +251,11 @@ local function make_policy_report(dashboard, conv_age, cuts_age, systems, horizo
         dashboard:push(chart);
         
         chart = Chart("Number of added cuts report");
-        chart:add_column(cuts_age[i]:select_agents({1}), { xAllowDecimals = false }); -- Opt
-        chart:add_column(cuts_age[i]:select_agents({2}), { xAllowDecimals = false }); -- Feas
+        chart:add_column(cuts_age[i], { xAllowDecimals = false }); -- Opt and Feas
+        dashboard:push(chart);
+        
+        chart = Chart("Forward and backward execution times");
+        chart:add_line(time_age[i], { xAllowDecimals = false }); -- Forw. and Back. times
         dashboard:push(chart);
     end
 end
@@ -281,6 +356,7 @@ local sddp_viol       = Tab("Violations");
 local sddp_results    = Tab("Results");
 
 -- Subtabs of "Input data"
+local sddp_summ       = Tab("Case summary");
 local sddp_inferg     = Tab("Inflow energy");
 
 -- Subtabs of "Solution quality"
@@ -297,7 +373,6 @@ local sddp_marg_costs = Tab("Marginal Costs");
 local sddp_generation = Tab("Generation");
 local sddp_risk       = Tab("Risk");
 
-
 -- Set icons of the main tabs
 sddp_input:set_icon("file-input"); -- Alternative: arrow-big-right
 sddp_solqual:set_icon("alert-triangle");
@@ -309,9 +384,10 @@ sddp_results:set_icon("line-chart");
 -----------------------------------------------------------------------------------------------
 
 -- Case summary
-
-
+make_case_summary(sddp_summ);
 make_inflow_energy(sddp_inferg);
+
+sddp_input:push(sddp_summ);
 sddp_input:push(sddp_inferg);
 
 -----------------------------------------------------------------------------------------------
@@ -327,13 +403,14 @@ local horizon   = {};
 
 local conv_data = {};
 local cuts_data = {};
+local time_data = {};
 
 -- Convergence report
 get_conv_file_info(file_list, systems, horizon);
-get_convergence_file_agents(file_list, conv_data, cuts_data);
+get_convergence_file_agents(file_list, conv_data, cuts_data, time_data);
 
 -- Creating policy report
-make_policy_report(sddp_pol, conv_data, cuts_data, systems, horizon);
+make_policy_report(sddp_pol, conv_data, cuts_data, time_data, systems, horizon);
 
 -- *** Simulation report ***
 
