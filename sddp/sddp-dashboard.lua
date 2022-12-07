@@ -10,7 +10,8 @@ local study           = Study();
 local system          = System();
 local thermal         = Thermal();
 
-PSR.set_global_colors({"#4E79A7", "#F28E2B", "#8CD17D","F1CE63","A0CBE8","B07AA1","E15759"});
+-- Setting global colors
+PSR.set_global_colors({"#4E79A7","#F28E2B","#8CD17D","#B6992D","#E15759","#76B7B2","#FF9DA7","#D7B5A6","#B07AA1","#59A14F","#F1CE63","#A0CBE8","#E15759"});
 
 local function add_chart_line(dashboard, output, output_name)
 	local chart = Chart(output_name);-- Create chart
@@ -143,29 +144,55 @@ end
 local function make_inflow_energy(dashboard)
     local inferg = generic:load("sddp_dashboard_input_enaflu");
     local chart = Chart("Total inflow energy");
-    chart:add_area_range(inferg:select_agent(1), inferg:select_agent(3)); -- Confidence interval
-    chart:add_line(inferg:select_agent(2)); -- average
+    chart:add_area_range(inferg:select_agent(1), inferg:select_agent(3),{color={"#A0CBE8","#A0CBE8"}}); -- Confidence interval
+    chart:add_line(inferg:select_agent(2),{color={"#4E79A7"}}); -- average
     dashboard:push(chart);
 end
 
 local function make_sddp_total_gen(dashboard,chart_title)
-	-- Loading generations files
+	
+    -- Color preferences
+    local color_hydro       = '#4E79A7';
+    local color_thermal     = '#F28E2B';
+    local color_wind        = '#8CD17D';
+    local color_solar       = '#F1CE63';
+    local color_small_hydro = '#A0CBE8';
+    local color_battery     = '#B07AA1';
+    local color_deficit     = '#000000';
+    local color_pinj        = '#BAB0AC';
+
+    -- Loading generations files
 	local gerter = thermal:load("gerter");
 	local gerhid = hydro:load("gerhid");
 	local gergnd = renewable:load("gergnd");
 	local gerbat = renewable:load("gerbat");
 	local potinj = power_injection:load("powinj");
-	local def    = system:load("defcit")
+	local def    = system:load("defcit");
+    
+    -- Renewable technologies
+    wind = renewable.tech_type:eq(1);
+    solar = renewable.tech_type:eq(2);
+    small_hydro = renewable.tech_type:eq(4);
 
 	-- Data processing
-	local total_thermal_gen = gerter:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(),"Total Thermal");
-	local total_hydro_gen   = gerhid:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(),"Total Hydro");
-	local total_rnw_gen     = gergnd:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(),"Total Renewable");
-	local total_batt_gen    = gerbat:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(),"Total Battery");
-	local total_pot_inj     = potinj:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(),"Total P. Inj.");
-	local total_deficit     = def:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(),"Total Deficit");
+	local total_batt_gen        = gerbat:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(),"Total Battery");
+    local total_deficit         = def:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(),"Total Deficit");
+    local total_hydro_gen       = gerhid:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(),"Total Hydro");
+    local total_pot_inj         = potinj:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(),"Total P. Inj.");
+    local total_wind_gen        = gergnd:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(),"Total Wind");
+    local total_solar_gen       = gergnd:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(),"Total Solar");
+    local total_thermal_gen     = gerter:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(),"Total Thermal");
 
-	add_chart_area_stacking(dashboard, { total_thermal_gen, total_hydro_gen, total_rnw_gen, total_batt_gen, total_pot_inj, total_deficit }, chart_title);
+    chart = Chart(chart_title);
+    chart:add_area_stacking(total_thermal_gen,{color={color_thermal}});
+    chart:add_area_stacking(total_hydro_gen,{color={color_hydro}});
+    chart:add_area_stacking(total_batt_gen,{color={color_battery}});
+    chart:add_area_stacking(total_pot_inj,{color={color_pinj}});
+    chart:add_area_stacking(total_wind_gen,{color={color_wind}});
+    chart:add_area_stacking(total_solar_gen,{color={color_solar}});
+    chart:add_area_stacking(total_deficit,{color={color_deficit}});
+    
+    dashboard:push(chart);
 end
 
 local function make_costs_and_revs(dashboard)
@@ -184,6 +211,9 @@ local function make_costs_and_revs(dashboard)
 		costs:aggregate_agents(BY_SUM(), "Average"):aggregate_scenarios(BY_AVERAGE()),
 		costs:aggregate_agents(BY_SUM(), "P90"):aggregate_scenarios(BY_PERCENTILE(90))
 	);
+    
+    chart:add_area_range(disp:select_agent(1), disp:select_agent(3),{color={"#E15759","#E15759"}}); -- Confidence interval
+    chart:add_line(disp:select_agent(2),{color={"#B60A1C"}}); -- Average
 
 	if is_greater_than_zero(costs_avg) then
 		add_chart_column(dashboard, { costs_avg }, "Average operating costs per stage");
