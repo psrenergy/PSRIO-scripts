@@ -52,7 +52,7 @@ local function is_greater_than_zero(output)
 	end
 end
 
-local function get_conv_file_info(file_list, horizons)
+local function get_conv_file_info(file_list, systems, horizons)
     -- Loading file
     local sddppol = generic:load_table("sddppol.csv");
 
@@ -60,7 +60,8 @@ local function get_conv_file_info(file_list, horizons)
     for i = 1, #sddppol do
         file_name = sddppol[i]["FileNames"]
         file_list[i] = string.sub(file_name, 1, #file_name - 4)
-        horizons[i] = sddppol[i]["InitialHorizon"] .. ":" .. sddppol[i]["FinalHorizon"];
+        systems[i]   = sddppol[i]["System"]
+        horizons[i]  = sddppol[i]["InitialHorizon"] .. "-" .. sddppol[i]["FinalHorizon"];
     end
 end
 
@@ -149,9 +150,9 @@ local function get_convergence_file_agents(file_list, conv_age, cuts_age)
     end
 end
 
-local function make_convergence_graphs(dashboard, conv_age, horizon)
+local function make_convergence_graphs(dashboard, conv_age, systems, horizon)
     for i, conv in ipairs(conv_age) do
-        local chart = Chart("Convergence report | Horizon - " .. horizon[i]);
+        local chart = Chart("Convergence report | System: " .. systems[i] .. " | Horizon: " .. horizon[i]);
         chart:add_area_range(conv:select_agents({2}), conv:select_agents({4}), { xAllowDecimals = false }); -- Confidence interval
         chart:add_line(conv:select_agents({1}), { xAllowDecimals = false }); -- Zinf
         chart:add_line(conv:select_agents({3}), { xAllowDecimals = false }); -- Zsup
@@ -159,9 +160,9 @@ local function make_convergence_graphs(dashboard, conv_age, horizon)
     end
 end
 
-local function make_added_cuts_graphs(dashboard, cuts_age, horizon)
+local function make_added_cuts_graphs(dashboard, cuts_age, systems, horizon)
     for i, cuts in ipairs(cuts_age) do
-        local chart = Chart("Number of added cuts report | Horizon - " .. horizon[i]);
+        local chart = Chart("Number of added cuts report | System: " .. systems[i] .. " Horizon: " .. horizon[i]);
         chart:add_column(cuts:select_agents({1}), { xAllowDecimals = false }); -- Opt
         chart:add_column(cuts:select_agents({2}), { xAllowDecimals = false }); -- Feas
         dashboard:push(chart);
@@ -289,15 +290,17 @@ sddp_input:push(sddp_inferg);
 
 -- Convergence and bender cuts statistics
 local file_list = {};
+local systems   = {};
 local horizon   = {};
+
 
 local conv_data = {};
 local cuts_data = {};
 
 -- Convergence report
-get_conv_file_info(file_list, horizon);
+get_conv_file_info(file_list, systems, horizon);
 get_convergence_file_agents(file_list, conv_data, cuts_data);
-make_convergence_graphs(sddp_solqual, conv_data, horizon);
+make_convergence_graphs(sddp_solqual, conv_data, systems, horizon);
 
 -- Breakdown of ope. costs
 if is_greater_than_zero(total_costs_agg) then
@@ -317,7 +320,7 @@ make_penalty_proportion_graph(sddp_solqual);
 make_conv_map_graph(sddp_solqual);
 
 -- Added cuts report
-make_added_cuts_graphs(sddp_solqual,cuts_data,horizon);
+make_added_cuts_graphs(sddp_solqual, cuts_data, systems, horizon);
 
 -----------------------------------------------------------------------------------------------
 -- Violation report
