@@ -371,7 +371,7 @@ local objcop = require("sddp/costs");
 local costs = ifelse(objcop():ge(0), objcop(), 0);
 
 ---- sddp_dashboard_cost_tot
-local total_costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM());
+local total_costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
 
 -----------------------------------------------------------------------------------------------
 -- DASHBOARD
