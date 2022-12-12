@@ -380,10 +380,22 @@ local total_costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages
 -- The dashboard is separated into tabs. One tab contains the solution quality outputs and the other the outputs of the optimization model
 
 -- Main tabs
-local sddp_input      = Tab("Input data");
-local sddp_solqual    = Tab("Solution quality");
-local sddp_viol       = Tab("Violations");
-local sddp_results    = Tab("Results");
+local sddp_input   = Tab("Input data");
+local sddp_solqual = Tab("Solution quality");
+local sddp_viol    = Tab("Violations");
+local sddp_results = Tab("Results");
+
+-- Tabs are initially colapsed when first opening the dash
+sddp_input:set_collapsed(false);
+sddp_solqual:set_collapsed(true);
+sddp_viol:set_collapsed(true);
+sddp_results:set_collapsed(true);
+
+-- Main tabs have no content to show, hence they are disabled
+sddp_input:set_disabled();
+sddp_solqual:set_disabled();
+sddp_viol:set_disabled();
+sddp_results:set_disabled();
 
 -- Subtabs of "Input data"
 local sddp_summ       = Tab("Case summary");
