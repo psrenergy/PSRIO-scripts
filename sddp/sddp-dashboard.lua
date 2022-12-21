@@ -271,10 +271,42 @@ local function make_added_cuts_graphs(dashboard, cuts_age, systems, horizon)
     end 
 end
 
+local function calculate_number_of_systems(sys_vec)
+    
+    local sys_name = sys_vec[1];
+    local counter = 1;
+    for i, name in ipairs(sys_vec) do
+        if(sys_name ~= name) then
+            counter = counter + 1;
+            sys_name = name
+        end
+    end
+    
+    return counter;
+end
 local function make_policy_report(dashboard, conv_age, cuts_age, time_age, systems, horizon)
+
+    -- If there is only one FCF file in the case, print final simulation cost as columns
+    oper_mode = study:get_parameter("Opcion", -1); -- 1=AIS; 2=COO; 3=INT;    
+    
+    nsys = calculate_number_of_systems(systems);
+    graph_sim_cost = false;
+    
+    if( (oper_mode < 3 and nsys == 1) or  oper_mode == 3) then
+        info("Entrou aqui");    
+        graph_sim_cost = true;
+        local objcop = Generic():load("objcop");
+        total_costs = objcop:select_agent(1):aggregate_scenarios(BY_AVERAGE()):to_list()[1]; -- Select total cost agent
+        conv_age_aux = conv_age[1]:select_agent(1):rename_agent("Final simulation");         -- Take expression and use it as mask for "final_sim_cost"
+        final_sim_cost = conv_age_aux:fill(total_costs);
+    end
+       
     for i, conv in ipairs(conv_age) do -- Each position of conv_age and cuts_age refers to the same file
         dashboard:push("## System: " .. systems[i] .. " | Horizon: " .. horizon[i]);
         local chart = Chart("Convergence report");
+        if( graph_sim_cost ) then
+            chart:add_column(final_sim_cost, {color={"#D37295"},  xAllowDecimals = false }); -- Final simulation cost
+        end 
         chart:add_area_range(conv:select_agents({2}), conv:select_agents({4}), {color={"#ACD98D","#ACD98D"},  xAllowDecimals = false }); -- Confidence interval
         chart:add_line(conv:select_agents({1}), {color={"#3CB7CC"},  xAllowDecimals = false }); -- Zinf
         chart:add_line(conv:select_agents({3}), {color={"#32A251"},  xAllowDecimals = false }); -- Zsup
