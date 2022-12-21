@@ -107,9 +107,9 @@ local function save_outputs()
 
         for _, suffix in ipairs(suffixes) do
             if output.variable_by_block == nil then
-                f(suffix):save(output.label .. suffix, { force = force });
+                f(nil, suffix):save(output.label .. suffix, { force = force });
             else
-                f(suffix):save(output.label .. suffix, { force = force, variable_by_block = output.variable_by_block });
+                f(nil, suffix):save(output.label .. suffix, { force = force, variable_by_block = output.variable_by_block });
             end
         end
     end
