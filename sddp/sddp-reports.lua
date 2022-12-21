@@ -118,24 +118,6 @@ if( revenues:loaded() ) then
 end
 
 -----------------------------------------------------------------------------------------------
--- SDDPCOPE(D)
------------------------------------------------------------------------------------------------
-local cope = require("sddp-reports/sddpcope")();
-cope:save("sddpcope",{csv=true});
-
-local coped = require("sddp-reports/sddpcoped")();
-coped:save("sddpcoped",{csv=true});
-
------------------------------------------------------------------------------------------------
--- MARGINAL COSTS REPORT
------------------------------------------------------------------------------------------------
-local cmga = require("sddp-reports/sddpcmga")();
-cmga:save("sddpcmga",{csv=true});
-
-local cmgd = require("sddp-reports/sddpcmgd")();
-cmgd:save("sddpcmgd",{csv=true});
-
------------------------------------------------------------------------------------------------
 -- DEFICIT RISK
 -----------------------------------------------------------------------------------------------
 local defrisk = require("sddp-reports/sddprisk")();
