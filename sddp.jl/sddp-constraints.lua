@@ -1,67 +1,103 @@
 local study = Study();
 local hydro = Hydro();
 
-local scenario_constraint = study:is_genesys()
-local suffix_ = study:is_genesys() and "__week" or ""
+local suffix = "";
+if study:is_genesys() then
+    suffix ="__week";
+end
 
-local qturbi = hydro:load("qturbi" .. suffix_);
-local qverti = hydro:load("qverti" .. suffix_);
+local turbined_outflow = hydro:load("qturbi" .. suffix);
+local spilled_outflow = hydro:load("qverti" .. suffix);
+local final_storage = hydro:load("volfin" .. suffix);
 
-local maxTO_nodata = hydro.max_total_outflow_historical_scenarios_nodata;
-local maxTO = hydro.max_total_outflow_historical_scenarios;
-ifelse(maxTO_nodata:gt(0), 0, max(0, qturbi + qverti - maxTO)):convert("hm3"):save("constraint_max_total_outflow");
+local max_total_outflow_nodata = hydro.max_total_outflow_historical_scenarios_nodata;
+local max_total_outflow = hydro.max_total_outflow_historical_scenarios;
+ifelse(
+    max_total_outflow_nodata:gt(0),
+    0,
+    max(0, turbined_outflow + spilled_outflow - max_total_outflow)
+):convert("hm3"):save("constraint_max_total_outflow");
 
-local minTO_nodata = hydro.min_total_outflow_historical_scenarios_nodata;
-local minTO = hydro.min_total_outflow_historical_scenarios;
+local min_total_outflow_nodata = hydro.min_total_outflow_historical_scenarios_nodata;
+local min_total_outflow = hydro.min_total_outflow_historical_scenarios;
 local minTODf = hydro.min_total_outflow_modification;
-ifelse(minTO_nodata:gt(0), ifelse(minTODf:gt(0), max(0, -qturbi - qverti + minTODf) , 0), max(0, -qturbi - qverti + minTO)):convert("hm3"):save("constraint_min_total_outflow");
+ifelse(
+    min_total_outflow_nodata:gt(0),
+    ifelse(
+        minTODf:gt(0),
+        max(0, -turbined_outflow - spilled_outflow + minTODf), 
+        0
+    ),
+    max(0, -turbined_outflow - spilled_outflow + min_total_outflow)
+):convert("hm3"):save("constraint_min_total_outflow");
 
-local maxSpill_nodata = hydro.max_spillage_historical_scenarios_nodata;
-local maxSpill = hydro.max_spillage_historical_scenarios;
-ifelse(maxSpill_nodata:gt(0), 0, max(0, qverti - maxSpill)):convert("hm3"):save("constraint_max_spillage");
+local max_spillage_nodata = hydro.max_spillage_historical_scenarios_nodata;
+local max_spillage = hydro.max_spillage_historical_scenarios;
+ifelse(
+    max_spillage_nodata:gt(0),
+    0,
+    max(0, spilled_outflow - max_spillage)
+):convert("hm3"):save("constraint_max_spillage");
 
-local minSpill_nodata = hydro.min_spillage_historical_scenarios_nodata;
-local minSpill = hydro.min_spillage_historical_scenarios;
-minSpill_nodata = minSpill_nodata:to_block(BY_SUM());
-minSpill = minSpill:to_block(BY_SUM());
-ifelse(minSpill_nodata:gt(0), 0, max(0, -qverti + minSpill)):convert("hm3"):save("constraint_min_spillage");
+local min_spillage_nodata = hydro.min_spillage_historical_scenarios_nodata:to_block(BY_SUM());
+local min_spillage = hydro.min_spillage_historical_scenarios:to_block(BY_SUM());
+ifelse(
+    min_spillage_nodata:gt(0),
+    0,
+    max(0, -spilled_outflow + min_spillage)
+):convert("hm3"):save("constraint_min_spillage");
 
-local qmin = hydro.qmin;
-max(0, -qturbi + qmin):convert("hm3"):save("constraint_min_turbining");
+local min_turbining_outflow = hydro.min_turbining_outflow;
+max(0, min_turbining_outflow - turbined_outflow):convert("hm3"):save("constraint_min_turbining");
 
-local volfin = hydro:load("volfin" .. suffix_):aggregate_blocks(BY_LAST_VALUE());
-volfin:save("volfin_");
+final_storage:aggregate_blocks(BY_LAST_VALUE());
+final_storage:save("volfin_");
 
-local maxVol_nodata = hydro.max_operative_storage_historical_scenarios_nodata;
+-- local maxVol_nodata = hydro.max_operative_storage_historical_scenarios_nodata;
 local maxVol = hydro.max_operative_storage_historical_scenarios;
-ifelse(maxSpill_nodata:gt(0), 0, max(0, volfin - maxVol)):save("constraint_max_volume");
+ifelse(
+    max_spillage_nodata:gt(0),
+    0,
+    max(0, final_storage - maxVol)
+):save("constraint_max_volume");
 
-local minVol_nodata = hydro.min_operative_storage_historical_scenarios_nodata;
-local minVol = hydro.min_operative_storage_historical_scenarios;
-ifelse(minSpill_nodata:gt(0), 0, max(0, -volfin + minVol)):save("constraint_min_volume");
+-- local minVol_nodata = hydro.min_operative_storage_historical_scenarios_nodata;
+local min_operative_storage = hydro.min_operative_storage_historical_scenarios;
+ifelse(
+    max_spillage_nodata:gt(0),
+    0,
+    max(0, min_operative_storage - final_storage)
+):save("constraint_min_volume");
 
-local min_bio_spillage_nodata = hydro.min_bio_spillage_historical_scenarios_nodata;
-local min_bio_spillage = hydro.min_bio_spillage_historical_scenarios;
-min_bio_spillage_nodata = min_bio_spillage_nodata:to_block(BY_SUM());
-min_bio_spillage = min_bio_spillage:to_block(BY_SUM());
-ifelse(min_bio_spillage_nodata:gt(0), 0, max(0, (min_bio_spillage/100)*qturbi - (1-min_bio_spillage/100)*qverti)):save("MinBioSpillage");
+local min_bio_spillage_nodata = hydro.min_bio_spillage_historical_scenarios_nodata:to_block(BY_SUM());
+local min_bio_spillage = hydro.min_bio_spillage_historical_scenarios:to_block(BY_SUM());
+ifelse(
+    min_bio_spillage_nodata:gt(0),
+    0,
+    max(0, (min_bio_spillage / 100) * turbined_outflow - (1 - min_bio_spillage / 100) * spilled_outflow)
+):save("MinBioSpillage");
 
-local alertStorage_nodata = hydro.alert_storage_historical_scenarios_nodata;
-local alertStorage = hydro.alert_storage_historical_scenarios;
-ifelse(alertStorage_nodata:gt(0), 0, max(0, -volfin + alertStorage)):save("constraint_alert_storage");
+local alert_storage_nodata = hydro.alert_storage_historical_scenarios_nodata;
+local alert_storage = hydro.alert_storage_historical_scenarios;
+ifelse(
+    alert_storage_nodata:gt(0),
+    0,
+    max(0, alert_storage - final_storage)
+):save("constraint_alert_storage");
 
-local floodVol_nodata = hydro.flood_control_historical_scenarios_nodata;
-local floodVol = hydro.flood_control_historical_scenarios;
-ifelse(floodVol_nodata:gt(0), 0, max(0, -volfin + floodVol)):save("hydro_flood_volume");
+local flood_control_nodata = hydro.flood_control_historical_scenarios_nodata;
+local flood_control = hydro.flood_control_historical_scenarios;
+ifelse(
+    flood_control_nodata:gt(0),
+    0,
+    max(0, flood_control - final_storage)
+):save("hydro_flood_volume");
 
-local Target_nodata = hydro.target_storage_historical_scenarios_nodata;
-local Target = hydro.target_storage_historical_scenarios;
-local maxTarget = (1 + hydro.target_storage_tolerance) * Target;
-local minTarget = (1 - hydro.target_storage_tolerance) * Target;
-maxTarget = maxTarget:aggregate_blocks(BY_FIRST_VALUE());
-minTarget = minTarget:aggregate_blocks(BY_FIRST_VALUE());
--- Target:save("hydro_max_targert_");
-maxTarget:save("hydro_max_target");
-minTarget:save("hydro_min_target");
-ifelse(Target_nodata:gt(0), 0, ifelse(Target:gt(0), max(0,  volfin - maxTarget), 0)):save("constraint_max_target");
-ifelse(Target_nodata:gt(0), 0, ifelse(Target:gt(0), max(0, -volfin + minTarget), 0)):save("constraint_min_target");
+local target_storage_nodata = hydro.target_storage_historical_scenarios_nodata;
+local target_storage = hydro.target_storage_historical_scenarios;
+local max_target_storage = ((1 + hydro.target_storage_tolerance) * target_storage):aggregate_blocks(BY_FIRST_VALUE());
+local min_target_storage = ((1 - hydro.target_storage_tolerance) * target_storage):aggregate_blocks(BY_FIRST_VALUE());
+max_target_storage:save("hydro_max_target");
+min_target_storage:save("hydro_min_target");
+ifelse(target_storage_nodata:gt(0), 0, ifelse(target_storage:gt(0), max(0, final_storage - max_target_storage), 0)):save("constraint_max_target");
+ifelse(target_storage_nodata:gt(0), 0, ifelse(target_storage:gt(0), max(0, min_target_storage - final_storage), 0)):save("constraint_min_target");
