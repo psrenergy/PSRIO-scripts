@@ -9,6 +9,7 @@ local renewable       = Renewable();
 local study           = Study();
 local system          = System();
 local thermal         = Thermal();
+local discount_rate = require("sddp/discount_rate")();
 
 -- Setting global colors
 PSR.set_global_colors({"#4E79A7","#F28E2B","#8CD17D","#B6992D","#E15759","#76B7B2","#FF9DA7","#D7B5A6","#B07AA1","#59A14F","#F1CE63","#A0CBE8","#E15759"});
@@ -43,10 +44,6 @@ local function add_chart_area_stacking(dashboard, output, output_name)
 		chart:add_area_stacking(out); -- Add output
 	end
 	dashboard:push(chart);            -- Add outputs to informed dashboard
-end
-
-local function discount_rate()
-	return (1 + study.discount_rate) ^ ((study.stage - 1) / study:stages_per_year()); -- Discount rate	
 end
 
 local function is_greater_than_zero(output)
@@ -197,7 +194,7 @@ end
 
 local function make_costs_and_revs(dashboard)
 	local objcop = require("sddp/costs");
-	local costs = ifelse(objcop():ge(0), objcop(), 0) / discount_rate();
+	local costs = ifelse(objcop():ge(0), objcop(), 0) / discount_rate;
 
 	-- sddp_dashboard_cost_tot
 	costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):save("sddp_dashboard_cost_tot", {remove_zeros = true, csv=true});
@@ -296,8 +293,6 @@ local function make_policy_report(dashboard, conv_age, cuts_age, time_age, syste
     if( (oper_mode < 3 and nsys == 1) or  oper_mode == 3) then
         graph_sim_cost = true;
         local objcop = Generic():load("objcop");
-        local discount_rate = require("sddp/discount_rate")();
-
         
         -- Select total cost and future cost agents
         total_cost_age = objcop:select_agent(1):aggregate_scenarios(BY_AVERAGE());
@@ -413,7 +408,7 @@ local objcop = require("sddp/costs");
 local costs = ifelse(objcop():ge(0), objcop(), 0);
 
 ---- sddp_dashboard_cost_tot
-local total_costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
+local total_costs_agg = (costs/discount_rate):aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
 
 -----------------------------------------------------------------------------------------------
 -- DASHBOARD
