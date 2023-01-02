@@ -128,7 +128,7 @@ local function make_case_summary(dashboad)
     dashboad:push("## Dimensions");
     dashboad:push("| Case parameter | Value |");
     dashboad:push("|----------------|-------|");
-    dashboad:push("| Number of systems |"           .. tostring(sys_size)     .. "|");
+    dashboad:push("| Number of systems considered|"           .. tostring(sys_size)     .. "|");
     dashboad:push("| Number of batteries |"         .. tostring(bat_size)     .. "|");
     if has_net == "yes" then
         dashboad:push("| Number of buses | "            .. tostring(bus_size)     .. "|");
@@ -247,8 +247,8 @@ local function get_convergence_file_agents(file_list, conv_age, cuts_age, time_a
     for i, file in ipairs(file_list) do
         local conv_file = generic:load(file);
         conv_age[i] = conv_file:select_agents({1, 2, 3, 4}); -- Zinf        ,Zsup - Tol  ,Zsup        ,Zsup + Tol  
-        cuts_age[i] = conv_file:select_agents({5, 6});     -- Optimality  ,Feasibility 
-        time_age[i] = conv_file:select_agents({7, 8});     -- Forw. time, Back. time
+        cuts_age[i] = conv_file:select_agents({5, 6});       -- Optimality  ,Feasibility 
+        time_age[i] = conv_file:select_agents({7, 8});       -- Forw. time, Back. time
     end
 end
 
@@ -286,26 +286,36 @@ local function calculate_number_of_systems(sys_vec)
 end
 local function make_policy_report(dashboard, conv_age, cuts_age, time_age, systems, horizon)
 
-    -- If there is only one FCF file in the case, print final simulation cost as columns
+    -- Get operation mode parameter
     oper_mode = study:get_parameter("Opcion", -1); -- 1=AIS; 2=COO; 3=INT;    
     
     nsys = calculate_number_of_systems(systems);
     graph_sim_cost = false;
     
+    -- If there is only one FCF file in the case, print final simulation cost as columns
     if( (oper_mode < 3 and nsys == 1) or  oper_mode == 3) then
-        info("Entrou aqui");    
         graph_sim_cost = true;
         local objcop = Generic():load("objcop");
-        total_costs = objcop:select_agent(1):aggregate_scenarios(BY_AVERAGE()):to_list()[1]; -- Select total cost agent
-        conv_age_aux = conv_age[1]:select_agent(1):rename_agent("Final simulation");         -- Take expression and use it as mask for "final_sim_cost"
-        final_sim_cost = conv_age_aux:fill(total_costs);
+        local discount_rate = require("sddp/discount_rate")();
+
+        
+        -- Select total cost and future cost agents
+        total_cost_age = objcop:select_agent(1):aggregate_scenarios(BY_AVERAGE());
+        future_cost_age = objcop:select_agent(-1):aggregate_scenarios(BY_AVERAGE());
+        
+        -- Calculating total cost as sum of immediate costs per stage
+        immediate_cost = ((total_cost_age - future_cost_age)/discount_rate):aggregate_stages(BY_SUM()):rename_agent("Total cost"):to_list()[1];
+        
+        -- Take expression and use it as mask for "final_sim_cost"
+        conv_age_aux = conv_age[1]:select_agent(1):rename_agent("Final simulation");  
+        final_sim_cost = conv_age_aux:fill(immediate_cost);
     end
        
     for i, conv in ipairs(conv_age) do -- Each position of conv_age and cuts_age refers to the same file
         dashboard:push("## System: " .. systems[i] .. " | Horizon: " .. horizon[i]);
         local chart = Chart("Convergence report");
         if( graph_sim_cost ) then
-            chart:add_column(final_sim_cost, {color={"#D37295"},  xAllowDecimals = false }); -- Final simulation cost
+            chart:add_line(final_sim_cost, {color={"#D37295"},  xAllowDecimals = false }); -- Final simulation cost
         end 
         chart:add_area_range(conv:select_agents({2}), conv:select_agents({4}), {color={"#ACD98D","#ACD98D"},  xAllowDecimals = false }); -- Confidence interval
         chart:add_line(conv:select_agents({1}), {color={"#3CB7CC"},  xAllowDecimals = false }); -- Zinf
