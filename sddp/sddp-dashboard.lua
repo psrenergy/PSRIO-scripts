@@ -74,21 +74,14 @@ end
 
 local function make_case_summary(dashboad)
 
+    -- Description
+    local description = study:get_parameter("Descricao","")
+    
     -- Horizon
     local initial_year = study:initial_year();
     local nstage = study:stages();
     local nforwd = study:scenarios();
     local nback  = study:openings();
-    
-    -- Resolution
-    local blocks_size = hydro:load("gerhid"):blocks(1);
-    local is_hourly = hydro:load("gerhid"):is_hourly();
-    local has_hourly_data = ""
-    if is_hourly then
-        has_hourly_data = "yes"
-    else
-        has_hourly_data = "no"
-    end
     
     -- Generators
     local bat_size     = #battery:labels();
@@ -101,15 +94,30 @@ local function make_case_summary(dashboad)
     local renew_size   = #renewable:labels();
     local sys_size     = #system:labels();
     
-    local has_net = ""
-    if( bus_size > 0 ) then
-        has_net = "yes"
+    -- Demand resolution
+    local blocks_size = study:get_parameter("NumberBlocks",-1);
+    
+    -- Hourly representation
+    local is_hourly = study:get_parameter("SIMH",-1) == 2;
+    if is_hourly then
+        is_hourly_str = "yes"
     else
-        has_net = "no"
+        is_hourly_str = "no"
+    end
+    
+    -- Network
+    local has_net = study:get_parameter("Rede",-1) == 1;
+    if( has_net ) then
+        has_net_str = "yes"
+    else
+        has_net_str = "no"
     end
     
     -- Inserting info
     dashboad:push("# Case summary");
+    dashboad:push("");
+    dashboad:push("## Description");
+    dashboad:push(description);
     dashboad:push("");
     dashboad:push("## Horizon, resolution and execution options");
     dashboad:push("| Case parameter | Value |");
@@ -119,20 +127,23 @@ local function make_case_summary(dashboad)
     dashboad:push("| Number of blocks | "          .. tostring(blocks_size)  .. "|");
     dashboad:push("| Number of forward series | "  .. tostring(nforwd)       .. "|");
     dashboad:push("| Number of backward series | " .. tostring(nback)        .. "|");
-    dashboad:push("| Hourly representation | "     .. has_hourly_data        .. "|");
-    dashboad:push("| Network representation | "    .. has_net                .. "|");
+    dashboad:push("| Hourly representation | "     .. is_hourly_str        .. "|");
+    dashboad:push("| Network representation | "    .. has_net_str            .. "|");
     dashboad:push("");
     dashboad:push("## Dimensions");
     dashboad:push("| Case parameter | Value |");
     dashboad:push("|----------------|-------|");
     dashboad:push("| Number of systems considered|"           .. tostring(sys_size)     .. "|");
     dashboad:push("| Number of batteries |"         .. tostring(bat_size)     .. "|");
-    if has_net == "yes" then
+    
+    if has_net then
         dashboad:push("| Number of buses | "            .. tostring(bus_size)     .. "|");
         dashboad:push("| Number of circuits | "         .. tostring(circ_size)    .. "|");
+    else
+        dashboad:push("| Number of interconnections | " .. tostring(inter_size)    .. "|");
     end
+    
     dashboad:push("| Number of hydro plants | "     .. tostring(hydro_size)   .. "|");
-    dashboad:push("| Number of interconnections | " .. tostring(inter_size)    .. "|");
     dashboad:push("| Number of power injections | " .. tostring(pinj_size)    .. "|");
     dashboad:push("| Number of renewable plants | " .. tostring(renew_size)   .. "|");
     dashboad:push("| Number of thermal plants | "   .. tostring(thermal_size) .. "|");
