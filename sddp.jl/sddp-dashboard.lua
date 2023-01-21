@@ -1,4 +1,4 @@
-PSR.assert_version(">0.16.0");
+PSR.assert_version(">0.22.0");
 
 local function save_dashboard()
     local battery = Battery();
@@ -142,12 +142,12 @@ local function save_dashboard()
         tab_costs:push(chart);
     end
 
-    -- Solution quality --
+    -- SOLUTION QUALITY --
     local sddpconvd = generic:load("sddpconvd"):set_stage_type(0);
     if sddpconvd:loaded() then
         local objcop = generic:load("objcop");
         local sddpcuts = generic:load("sddpcuts"):set_stage_type(0);
-        
+
         local chart = Chart("Convergence report");
         chart:add_area_range(
             sddpconvd:select_agent("Zsup-Tol"),
@@ -179,6 +179,7 @@ local function save_dashboard()
 
     -- DASHBOARD --
     local dashboard = Dashboard();
+    dashboard:set_title("SDDP");
     dashboard:push(tab_generation);
     dashboard:push(tab_costs);
     if sddpconvd:loaded() then

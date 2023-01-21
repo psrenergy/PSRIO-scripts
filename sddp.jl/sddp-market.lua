@@ -1,4 +1,4 @@
-PSR.assert_version(">0.16.0");
+PSR.assert_version(">0.22.0");
 
 -- TODO pass vector of colors
 -- today doable adding line by line
@@ -242,9 +242,9 @@ local all_lambda = {};
 local all_alpha = {};
 
 local toml = generic:load_toml("sddpconfig.dat");
-local alpha = toml:get_int("CCTA", 0);
+local alpha = toml:get_integer("CCTA", 0);
 all_alpha["0"] = alpha;
-local lambda = toml:get_int("CCTL", 0)/100;
+local lambda = toml:get_integer("CCTL", 0)/100;
 all_lambda["0"] = lambda;
 
 -- min (1 - λ) * E[x] + λ * CVaR_alpha[x] (alpha highest - right)
@@ -254,9 +254,9 @@ local size = toml:get_array_size("AGENT");
 for a = 1, size do
     local agent = toml:get_array("AGENT", a);
     -- this is alpha used in sddp for cost min, where 0 is worst (high cost)
-    local alpha = agent:get_int("alpha", 0);
+    local alpha = agent:get_integer("alpha", 0);
     all_alpha[tostring(a)] = alpha;
-    local lambda = agent:get_int("lambda", 0)/100;
+    local lambda = agent:get_integer("lambda", 0)/100;
     all_lambda[tostring(a)] = lambda;
 end
 
