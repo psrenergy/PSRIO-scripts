@@ -175,7 +175,7 @@ local function make_sddp_total_gen(dashboard,chart_title)
 	local gergnd = renewable:load("gergnd");
 	local gerbat = renewable:load("gerbat");
 	local potinj = power_injection:load("powinj");
-	local def    = system:load("defcit");
+	local defcit    = system:load("defcit");
     
     -- Renewable technologies
     wind = renewable.tech_type:eq(1);
@@ -183,13 +183,13 @@ local function make_sddp_total_gen(dashboard,chart_title)
     small_hydro = renewable.tech_type:eq(4);
 
 	-- Data processing
-	local total_batt_gen        = gerbat:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(),"Total Battery");
-    local total_deficit         = def:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(),"Total Deficit");
-    local total_hydro_gen       = gerhid:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(),"Total Hydro");
-    local total_pot_inj         = potinj:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(),"Total P. Inj.");
-    local total_wind_gen        = gergnd:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(),"Total Wind");
-    local total_solar_gen       = gergnd:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(),"Total Solar");
-    local total_thermal_gen     = gerter:aggregate_blocks(BY_SUM()):aggregate_agents(BY_SUM(),"Total Thermal");
+	local total_batt_gen        = gerbat:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),"Total Battery");
+    local total_deficit         = defcit:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),"Total Deficit");
+    local total_hydro_gen       = gerhid:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),"Total Hydro");
+    local total_pot_inj         = potinj:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),"Total P. Inj.");
+    local total_wind_gen        = gergnd:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),"Total Wind");
+    local total_solar_gen       = gergnd:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),"Total Solar");
+    local total_thermal_gen     = gerter:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),"Total Thermal");
 
     chart = Chart(chart_title);
     chart:add_area_stacking(total_thermal_gen,{color={color_thermal}});
@@ -236,8 +236,8 @@ local function make_marg_costs(dashboard)
 	local cmg = system:load("cmgdem")
 
 	-- Marginal cost aggregated by average
-	local cmg_aggsum  = cmg:aggregate_blocks(BY_AVERAGE());
-	local cmg_aggyear = cmg:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_AVERAGE(), Profile.PER_YEAR);
+	local cmg_aggsum  = cmg:aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE());
+	local cmg_aggyear = cmg:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_AVERAGE(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE());
 
 	-- Add marginal costs outputs
 	add_chart_column(dashboard,{cmg_aggsum},"Average marginal costs per stage per subsystem"); -- Average Marg. cost
@@ -341,14 +341,14 @@ end
 local function make_penalty_proportion_graph(dashboard)
     local penp = generic:load("sddppenp");
     local chart = Chart("Share of violation penalties and deficit in the cost of each stage/scenario");
-    chart:add_heatmap_hourly(penp);
+    chart:add_heatmap(penp);
     dashboard:push(chart);
 end
 
 local function make_conv_map_graph(dashboard)
     local conv_map = generic:load("sddpconvmap");
     local chart = Chart("Convergence map");
-    chart:add_heatmap_hourly(conv_map);
+    chart:add_heatmap(conv_map);
     dashboard:push(chart);
 end
 
