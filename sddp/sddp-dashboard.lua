@@ -341,14 +341,14 @@ end
 local function make_penalty_proportion_graph(dashboard)
     local penp = generic:load("sddppenp");
     local chart = Chart("Share of violation penalties and deficit in the cost of each stage/scenario");
-    chart:add_heatmap(penp);
+    chart:add_heatmap(penp, {showInLegend = false, stops = {{0.0,"#4E79A7"}, {0.5,"#FBEEB3"}, {1.0,"#C64B3E"}}, stopsMin = 0.0, stopsMax = 100.0 });
     dashboard:push(chart);
 end
 
 local function make_conv_map_graph(dashboard)
     local conv_map = generic:load("sddpconvmap");
     local chart = Chart("Convergence map");
-    chart:add_heatmap(conv_map);
+    chart:add_heatmap(conv_map,{ showInLegend = false, stops = {{0.0,"#C64B3E"}, {0.5,"#FBEEB3"}, {1.0,"#4E79A7"}}, stopsMin = 0, stopsMax = 2 });
     dashboard:push(chart);
 end
 
@@ -458,8 +458,8 @@ local sddp_viol_avg   = Tab("Average");
 local sddp_viol_max   = Tab("Maximum");
 
 -- Subtabs of "Results"
-local sddp_costs_revs = Tab("Costs & Revenues");
-local sddp_marg_costs = Tab("Marginal Costs");
+local sddp_costs_revs = Tab("Costs & revenues");
+local sddp_marg_costs = Tab("Marginal costs");
 local sddp_generation = Tab("Generation");
 local sddp_risk       = Tab("Risk");
 
