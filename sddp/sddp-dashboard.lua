@@ -74,6 +74,15 @@ end
 
 local function make_case_summary(dashboad)
 
+    -- Model info
+    local gen = Generic();
+    local model_info = gen:load_toml("sddp.info");
+    
+    local model_name = model_info:get_string("model")
+    local model_user = model_info:get_string("user")
+    local model_ver = model_info:get_string("version")
+    local model_hash = model_info:get_string("hash")
+    
     -- Description
     local description = study:get_parameter("Descricao","")
     
@@ -115,6 +124,12 @@ local function make_case_summary(dashboad)
     
     -- Inserting info
     dashboad:push("# Case summary");
+    dashboad:push("");
+    dashboad:push("## About the model");
+    dashboad:push("Model: "   .. model_name);
+    dashboad:push("User: "    .. model_user);
+    dashboad:push("Version: " .. model_ver);
+    dashboad:push("Hash: "    .. model_hash);
     dashboad:push("");
     dashboad:push("## Description");
     dashboad:push(description);
