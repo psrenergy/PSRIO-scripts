@@ -370,7 +370,7 @@ end
 local function make_hourly_sol_status_graph(dashboard)
     local status = generic:load("sddpstatus");
     local chart = Chart("Execution status per stage and scenario");
-    chart:add_heatmap(status,{ showInLegend = false, stops = {{0.0,"#8ACE7E"}, {0.5,"#FBEEB3"}, {1.0,"#4E79A7"}}, stopsMin = 0, stopsMax = 2 });
+    chart:add_heatmap(status,{ showInLegend = false, stops = {{0.0,"#8ACE7E"}, {0.33,"#4E79A7"}, {0.66,"#C64B3E"}, {1.0,"#FBEEB3"}}, stopsMin = 0, stopsMax = 3 });
     dashboard:push(chart);
 end
 
