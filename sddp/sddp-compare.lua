@@ -183,12 +183,12 @@ local function make_sddp_total_gen(dashboard)
     
     -- Loading generations files
     for i=1,N do
-        gerter[i] = cases[i]:load("gerter");
-        gerhid[i] = cases[i]:load("gerhid");
-        gergnd[i] = cases[i]:load("gergnd");
-        gerbat[i] = cases[i]:load("gerbat");
-        potinj[i] = cases[i]:load("powinj");
-        defcit[i] = cases[i]:load("defcit");
+        gerter[i] = Thermal(i):load("gerter");
+        gerhid[i] = Hydro(i):load("gerhid");
+        gergnd[i] = Renewable(i):load("gergnd");
+        gerbat[i] = Battery(i):load("gerbat");
+        potinj[i] = PowerInjection(i):load("powinj");
+        defcit[i] = System(i):load("defcit");
     end
     
     chart_tot_gerhid  = Chart("Total Hydro");
@@ -208,6 +208,7 @@ local function make_sddp_total_gen(dashboard)
     local total_solar_gen;  
     local total_thermal_gen;    
     
+    -- Total generation report
     for i=1,N do
        
         -- Data processing
@@ -238,7 +239,6 @@ local function make_sddp_total_gen(dashboard)
         end
     end
     
-    
     if #chart_tot_gerhid > 0 then
         dashboard:push(chart_tot_gerhid);
     end
@@ -257,6 +257,69 @@ local function make_sddp_total_gen(dashboard)
     if #chart_tot_defcit > 0 then
         dashboard:push(chart_tot_defcit);
     end
+    
+    -- Generation per system report
+    agents = cases[1]:load("cmgdem"):agents();
+    for i, agent in ipairs(agents) do
+    
+        chart_tot_gerhid  = Chart("Total Hydro - "..agent);
+        chart_tot_gerter  = Chart("Total Thermal - "..agent);
+        chart_tot_renw    = Chart("Total Renewable - "..agent);
+        chart_tot_gerbat  = Chart("Total Battery - "..agent);
+        chart_tot_potinj  = Chart("Total Power Injection - "..agent);
+        chart_tot_defcit  = Chart("Total Deficit - "..agent);
+    
+        for i=1,N do
+            -- Data processing
+            total_hydro_gen   = gerhid[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),Collection.SYSTEM):select_agent(agent):rename_agent(case_dir_list[i] .. " - Total Hydro");
+            total_batt_gen    = gerbat[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),Collection.SYSTEM):select_agent(agent):rename_agent(case_dir_list[i] .. " - Total Battery");
+            total_deficit     = defcit[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),Collection.SYSTEM):select_agent(agent):rename_agent(case_dir_list[i] .. " - Total Deficit");
+            total_pot_inj     = potinj[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),Collection.SYSTEM):select_agent(agent):rename_agent(case_dir_list[i] .. " - Total P. Inj.");
+            total_renw_gen    = gergnd[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),Collection.SYSTEM):select_agent(agent):rename_agent(case_dir_list[i] .. " - Total Renewable");
+            total_thermal_gen = gerter[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),Collection.SYSTEM):select_agent(agent):rename_agent(case_dir_list[i] .. " - Total Thermal");
+    
+            info("Aqui");
+            info(total_hydro_gen:loaded());
+            if total_hydro_gen:loaded() then
+                chart_tot_gerhid:add_area_stacking(total_hydro_gen); 
+            end
+            if total_thermal_gen:loaded() then
+                chart_tot_gerter:add_area_stacking(total_thermal_gen); 
+            end
+            if total_renw_gen:loaded() then
+                chart_tot_renw:add_area_stacking(total_renw_gen);    
+            end
+            if total_batt_gen:loaded() then
+                chart_tot_gerbat:add_area_stacking(total_batt_gen);  
+            end
+            if total_pot_inj:loaded() then
+                chart_tot_potinj:add_area_stacking(total_pot_inj);  
+            end
+            if total_deficit:loaded() then
+                chart_tot_defcit:add_area_stacking(total_deficit);  
+            end
+        end
+        
+        if #chart_tot_gerhid > 0 then
+            dashboard:push(chart_tot_gerhid);
+        end
+        if #chart_tot_gerter > 0 then
+            dashboard:push(chart_tot_gerter);
+        end
+        if #chart_tot_renw > 0 then
+            dashboard:push(chart_tot_renw);
+        end 
+        if #chart_tot_gerbat > 0 then
+            dashboard:push(chart_tot_gerbat);
+        end
+        if #chart_tot_potinj > 0 then
+            dashboard:push(chart_tot_potinj);
+        end 
+        if #chart_tot_defcit > 0 then
+            dashboard:push(chart_tot_defcit);
+        end     
+    end
+       
 end
 
 -----------------------------------------------------------------------------------------------
