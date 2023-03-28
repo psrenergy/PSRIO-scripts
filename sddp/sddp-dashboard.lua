@@ -184,31 +184,31 @@ local function create_tab_summary()
     
     tab:push("## Dimensions");
     
-    local sys_string = "| Number of systems ";
-    local battery_string = "| Number of batteries ";
-    local bus_string = "| Number of buses ";
-    local circuit_string = "| Number of circuits ";
-    local interc_string = "| Number of interconnections ";
-    local hydro_string = "| Number of hydro plants ";
-    local pinj_string = "| Number of power injections ";
-    local renw_string = "| Number of renewable plants ";
-    local thermal_string = "| Number of thermal plants ";
+    local sys_string = "| Systems ";
+    local battery_string = "| Batteries ";
+    local bus_string = "| Buses ";
+    local circuit_string = "| Circuits ";
+    local interc_string = "| Interconnections ";
+    local hydro_string = "| Hydro plants ";
+    local pinj_string = "| Power injections ";
+    local renw_string = "| Renewable plants ";
+    local thermal_string = "| Thermal plants ";
     
     for i=1, studies do
-        sys_string         = sys_string ..     " | " .. tostring(system[i]:labels());
-        battery_string     = battery_string .. " | " .. tostring(battery[i]:labels());
+        sys_string         = sys_string ..     " | " .. tostring(#system[i]:labels());
+        battery_string     = battery_string .. " | " .. tostring(#battery[i]:labels());
     
         if netrep_val == "yes" then
-            bus_string         = bus_string ..     " | " .. tostring(bus[i]:labels());
-            circuit_string     = circuit_string .. " | " .. tostring(circuit[i]:labels());
+            bus_string         = bus_string ..     " | " .. tostring(#bus[i]:labels());
+            circuit_string     = circuit_string .. " | " .. tostring(#circuit[i]:labels());
         else
-            interc_string      = interc_string ..  " | " .. tostring(interconnection[i]:labels());
+            interc_string      = interc_string ..  " | " .. tostring(#interconnection[i]:labels());
         end
         
-        hydro_string       = hydro_string ..   " | " .. tostring(hydro[i]:labels());
-        pinj_string        = pinj_string ..    " | " .. tostring(power_injection[i]:labels());
-        renw_string        = renw_string ..    " | " .. tostring(renewable[i]:labels());
-        thermal_string     = thermal_string .. " | " .. tostring(thermal[i]:labels());
+        hydro_string       = hydro_string ..   " | " .. tostring(#hydro[i]:labels());
+        pinj_string        = pinj_string ..    " | " .. tostring(#power_injection[i]:labels());
+        renw_string        = renw_string ..    " | " .. tostring(#renewable[i]:labels());
+        thermal_string     = thermal_string .. " | " .. tostring(#thermal[i]:labels());
     end
     
     tab:push(header_string);
