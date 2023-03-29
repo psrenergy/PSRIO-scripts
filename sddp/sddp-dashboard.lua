@@ -214,18 +214,18 @@ local function create_tab_summary()
     tab:push(header_string);
     tab:push(lower_header_string);
     tab:push(sys_string);
+    tab:push(hydro_string);
+    tab:push(thermal_string);
+    tab:push(renw_string);
     tab:push(battery_string);
+    tab:push(pinj_string);
     if netrep_val == "yes" then
         tab:push(bus_string);
         tab:push(circuit_string);
     else
         tab:push(interc_string );
     end
-    tab:push(hydro_string);
-    tab:push(pinj_string);
-    tab:push(renw_string);
-    tab:push(thermal_string);
-       
+    
     return tab;
 end
 
@@ -467,6 +467,9 @@ local function create_pol_report()
             chart:add_area_range(conv_age:select_agents({2}), conv_age:select_agents({4}), {color={"#ACD98D","#ACD98D"},  xAllowDecimals = false }); -- Confidence interval
             chart:add_line(conv_age:select_agents({1}), {color={"#3CB7CC"},  xAllowDecimals = false }); -- Zinf
             chart:add_line(conv_age:select_agents({3}), {color={"#32A251"},  xAllowDecimals = false }); -- Zsup
+            if( graph_sim_cost ) then
+                chart:add_line(final_sim_cost, {color={"#D37295"},  xAllowDecimals = false }); -- Final simulation cost
+            end 
             pol_rep:push(chart);
             
             chart = Chart("Number of added cuts report");
