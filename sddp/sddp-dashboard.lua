@@ -370,8 +370,7 @@ local function create_pol_report()
         pol_rep:push("## System: " .. systems[i] .. " | Horizon: " .. horizon[i]);
         
         if studies > 1 then
-            local chart_conv_zsup = Chart("Convergence report - ZSup");
-            local chart_conv_zinf = Chart("Convergence report - ZInf");
+            local chart_conv = Chart("Convergence report");
             local chart_cut_opt   = Chart("Added cuts - Optimality");
             local chart_cut_feas  = Chart("Added cuts - Feasibility");
             local chart_time_forw = Chart("Execution time - Forward");
@@ -384,21 +383,23 @@ local function create_pol_report()
                 time_age = conv_file:select_agents({7, 8});       -- Forw. time, Back. time
             
                 -- Confidence interval
-                chart_conv_zsup:add_area_range(conv_age:select_agents({2}), 
-                                            conv_age:select_agents({4}), 
-                                            {color={light_global_color[j],
-                                                    light_global_color[j]},
-                                                    xAllowDecimals = false, 
-                                                    showInLegend = false });
+                chart_conv:add_area_range(conv_age:select_agents({2}):rename_agent(case_dir_list[j] .. " - Zsup - Tol"), 
+                                          conv_age:select_agents({4}):rename_agent(case_dir_list[j] .. " - Zsup + Tol"), 
+                                          {color={light_global_color[j],
+                                                  light_global_color[j]},
+                                                  xAllowDecimals = false, 
+                                                  showInLegend = true });
                 
                 -- Zsup
-                chart_conv_zsup:add_line(conv_age:select_agents({3}):rename_agent(case_dir_list[j]),
-                                        {color={main_global_color[j]},
-                                                xAllowDecimals = false });
+                chart_conv:add_line(conv_age:select_agents({3}):rename_agent(case_dir_list[j] .. " - Zsup"),
+                                   {color={main_global_color[j]},
+                                           xAllowDecimals = false});
                 
                 -- Zinf
-                chart_conv_zinf:add_line(conv_age:select_agents({1}):rename_agent(case_dir_list[j]),
-                                        {xAllowDecimals = false }); -- Zinf
+                chart_conv:add_line(conv_age:select_agents({1}):rename_agent(case_dir_list[j] .. " - Zinf"),
+                                   {color={main_global_color[j]}, 
+                                           xAllowDecimals = false, 
+                                           dashStyle = "dash"}); -- Zinf
                                         
                 -- Cuts - optimality
                 chart_cut_opt:add_column(cuts_age:select_agents({1}):rename_agent(case_dir_list[j]),
@@ -406,7 +407,7 @@ local function create_pol_report()
                 
                 -- Cuts - feasibility
                 chart_cut_feas:add_column(cuts_age:select_agents({2}):rename_agent(case_dir_list[j]),
-                                        {xAllowDecimals = false});
+                                         {xAllowDecimals = false});
                 
                 -- Execution time - forward
                 chart_time_forw:add_line(time_age:select_agents({1}):rename_agent(case_dir_list[j]),
@@ -417,11 +418,8 @@ local function create_pol_report()
                                         {xAllowDecimals = false});
             end
         
-            if #chart_conv_zsup > 0 then
-                pol_rep:push(chart_conv_zsup);
-            end
-            if #chart_conv_zinf > 0 then
-                pol_rep:push(chart_conv_zinf);
+            if #chart_conv > 0 then
+                pol_rep:push(chart_conv);
             end
             if #chart_cut_opt > 0 then
                 pol_rep:push(chart_cut_opt);
@@ -482,7 +480,9 @@ local function create_pol_report()
     end
     
     -- Convergence heatmap
-    create_conv_map_graph(pol_rep,1);
+    if studies == 1 then
+        create_conv_map_graph(pol_rep,1);
+    end
     
     return pol_rep;
 end
@@ -1022,11 +1022,13 @@ tab_sol_qual:push(create_pol_report());
 tab_sol_qual:push(create_sim_report());
 
 -- Violation
-create_viol_report(tab_viol_avg,viol_report_structs,"avg");
-create_viol_report(tab_viol_max,viol_report_structs,"max");
-
-tab_violations:push(tab_viol_avg);
-tab_violations:push(tab_viol_max);
+if studies == 1 then
+    create_viol_report(tab_viol_avg,viol_report_structs,"avg");
+    create_viol_report(tab_viol_max,viol_report_structs,"max");
+    
+    tab_violations:push(tab_viol_avg);
+    tab_violations:push(tab_viol_max);
+end
 
 -- Results
 tab_results:push(create_costs_and_revs());
@@ -1037,6 +1039,10 @@ tab_results:push(create_risk_report());
 local dashboard = Dashboard();
 dashboard:push(tab_input_data);
 dashboard:push(tab_sol_qual);
-dashboard:push(tab_violations);
+
+if studies == 1 then
+    dashboard:push(tab_violations);
+end
+
 dashboard:push(tab_results);
 dashboard:save("SDDPDashboard");
