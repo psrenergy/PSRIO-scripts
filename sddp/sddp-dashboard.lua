@@ -111,16 +111,16 @@ local function create_tab_summary()
         end
     end
 
-    tab:push("## Case description");
+    tab:push("## Case title");
         
     if studies == 1 then
-        tab:push("| Description |");
+        tab:push("| Title |");
         tab:push("|:-----------:|");
         for i = 1, studies do
             tab:push("| " .. description[i] .. " | ");
         end
     else
-        tab:push("| Case | Description |");
+        tab:push("| Case | Title |");
         tab:push("|:----:|:-----------:|");
         for i = 1, studies do
             tab:push("| " .. i .. " | " .. description[i] .. " | ");
@@ -131,11 +131,11 @@ local function create_tab_summary()
     
     local header_string = "| Case parameter ";
     local lower_header_string = "|---------------";
-    local nstg_string = "| Number of stages ";
+    local nstg_string = "| Stages ";
     local ini_year_string = "| Initial year of study ";
-    local nblk_string = "| Number of blocks ";
-    local nforw_string = "| Number of forward series ";
-    local nback_string = "| Number of backward series ";
+    local nblk_string = "| Blocks ";
+    local nforw_string = "| Forward series ";
+    local nback_string = "| Backward series ";
     local hrep_string = "| Hourly representation ";
     local netrep_string = "| Network representation ";
     
@@ -243,20 +243,22 @@ local function create_inflow_energy()
     
     -- Color vectors
     local chart = Chart("Total inflow energy");
-    for i=1,studies do
-            
-        if studies > 1 then
-            -- Confidence interval
-            chart:add_area_range(inferg[i]:select_agent(1), inferg[i]:select_agent(3),{color={light_global_color[i],light_global_color[i]},showInLegend = false});
-            chart:add_line(inferg[i]:select_agent(2):rename_agent(case_dir_list[i])); -- average
-        else
-            -- Confidence interval
-            chart:add_area_range(inferg[i]:select_agent(1), inferg[i]:select_agent(3),{color={light_global_color[i],light_global_color[i]}});
-            chart:add_line(inferg[i]:select_agent(2)); -- average
-        end
+    if studies > 1 then
+        for i=1,studies do
         
+           -- Confidence interval
+           chart:add_area_range(inferg[i]:select_agent(1), inferg[i]:select_agent(3),{color={light_global_color[i],light_global_color[i]},showInLegend = false});
+           chart:add_line(inferg[i]:select_agent(2):rename_agent(case_dir_list[i])); -- average
+        end
+    else
+         -- Confidence interval
+        chart:add_area_range(inferg[1]:select_agent(1), inferg[1]:select_agent(3),{color={light_global_color[1],light_global_color[1]}});
+        chart:add_line(inferg[1]:select_agent(2)); -- average
+    end 
+    
+    if #chart > 0 then
+        inf_energ_rep:push(chart);
     end
-    inf_energ_rep:push(chart);
     
     return inf_energ_rep;
 end 
@@ -318,6 +320,31 @@ local function calculate_number_of_systems(sys_vec)
     end
     
     return counter;
+end
+
+-----------------------------------------------------------------------------------------------
+-- Heatmap report functions
+-----------------------------------------------------------------------------------------------
+
+local function create_penalty_proportion_graph(tab,i)
+    local penp = generic[i]:load("sddppenp");
+    local chart = Chart("Share of violation penalties and deficit in the cost of each stage/scenario");
+    chart:add_heatmap(penp, {showInLegend = false, stops = {{0.0,"#4E79A7"}, {0.5,"#FBEEB3"}, {1.0,"#C64B3E"}}, stopsMin = 0.0, stopsMax = 100.0 });
+    tab:push(chart);
+end
+
+local function create_conv_map_graph(tab,i)
+    local conv_map = generic[i]:load("sddpconvmap");
+    local chart = Chart("Convergence map");
+    chart:add_heatmap(conv_map,{ showInLegend = false, stops = {{0.0,"#C64B3E"}, {0.5,"#FBEEB3"}, {1.0,"#4E79A7"}}, stopsMin = 0, stopsMax = 2 });
+    tab:push(chart);
+end
+
+local function create_hourly_sol_status_graph(tab,i)
+    local status = generic[i]:load("sddpstatus");
+    local chart = Chart("Execution status per stage and scenario");
+    chart:add_heatmap(status,{ showInLegend = false, stops = {{0.0,"#8ACE7E"}, {0.33,"#4E79A7"}, {0.66,"#C64B3E"}, {1.0,"#FBEEB3"}}, stopsMin = 0, stopsMax = 3 });
+    tab:push(chart);
 end
 
 local function create_pol_report()
@@ -409,7 +436,6 @@ local function create_pol_report()
                 pol_rep:push(chart_time_back);
             end
         else
-        
             -- Get operation mode parameter
             oper_mode = study[1]:get_parameter("Opcion", -1); -- 1=AIS; 2=COO; 3=INT;    
     
@@ -455,38 +481,10 @@ local function create_pol_report()
         end
     end
     
+    -- Convergence heatmap
+    create_conv_map_graph(pol_rep,1);
+    
     return pol_rep;
-end
-
------------------------------------------------------------------------------------------------
--- Heatmap reports
------------------------------------------------------------------------------------------------
-
-local function create_penalty_proportion_graph(tab,i)
-    local penp = generic[i]:load("sddppenp");
-    local chart = Chart("Share of violation penalties and deficit in the cost of each stage/scenario");
-    chart:add_heatmap(penp, {showInLegend = false, stops = {{0.0,"#4E79A7"}, {0.5,"#FBEEB3"}, {1.0,"#C64B3E"}}, stopsMin = 0.0, stopsMax = 100.0 });
-    tab:push(chart);
-end
-
-local function create_conv_map_graph(tab,i)
-    local conv_map = generic[i]:load("sddpconvmap");
-    local chart = Chart("Convergence map");
-    chart:add_heatmap(conv_map,{ showInLegend = false, stops = {{0.0,"#C64B3E"}, {0.5,"#FBEEB3"}, {1.0,"#4E79A7"}}, stopsMin = 0, stopsMax = 2 });
-    tab:push(chart);
-end
-
-local function create_hourly_sol_status_graph(tab,i)
-    local status = generic[i]:load("sddpstatus");
-    local chart = Chart("Execution status per stage and scenario");
-    chart:add_heatmap(status,{ showInLegend = false, stops = {{0.0,"#8ACE7E"}, {0.33,"#4E79A7"}, {0.66,"#C64B3E"}, {1.0,"#FBEEB3"}}, stopsMin = 0, stopsMax = 3 });
-    tab:push(chart);
-end
-
-local function create_map_reports(tab,i)
-    create_hourly_sol_status_graph(tab,i);
-    create_penalty_proportion_graph(tab,i);
-    create_conv_map_graph(tab,i);
 end
 
 -----------------------------------------------------------------------------------------------
@@ -501,31 +499,44 @@ local function create_sim_report()
     local objcop;
     local discount_rate;
     local costs;
+    local costs_agg;
     
     local chart = Chart("Breakdown of total operating costs");
-    for i=1,studies do
-        objcop = require("sddp/costs");
-        discount_rate = require("sddp/discount_rate");
-        costs = ifelse(objcop(i):ge(0), objcop(i), 0) / discount_rate(i);
-
-        -- sddp_dashboard_cost_tot
+    
+    objcop = require("sddp/costs");
+    discount_rate = require("sddp/discount_rate");
+            
+    if studies > 1 then
+        for i=1,studies do
+            objcop = require("sddp/costs");
+            discount_rate = require("sddp/discount_rate");
+            costs = ifelse(objcop(i):ge(0), objcop(i), 0) / discount_rate(i);
+    
+            -- sddp_dashboard_cost_tot
+            costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
+            chart:add_categories(costs_agg, case_dir_list[i]); 
+        end
+    else
+        costs = ifelse(objcop(1):ge(0), objcop(1), 0) / discount_rate(1);
         costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
         
-        if studies > 1 then
-            chart:add_categories(costs_agg, case_dir_list[i]);
-        else
-            if is_greater_than_zero(costs_agg) then
-                chart:add_pie(costs_agg);
-            end
-        end 
+        if is_greater_than_zero(costs_agg) then
+            chart:add_pie(costs_agg);
+        end
+      
     end
     
     if #chart > 0 then
         sim_rep:push(chart);
     end 
     
+    -- Heatmap after the pizza graph in dashboard
     if studies == 1 then
-        create_map_reports(sim_rep,1);
+        -- Creating simulation heatmap graphics
+        if study[1]:get_parameter("SIMH",-1) == 2 then
+            create_hourly_sol_status_graph(sim_rep,1);
+        end
+        create_penalty_proportion_graph(sim_rep,1);
     end
     
     return sim_rep;
@@ -671,6 +682,22 @@ local function create_gen_report()
     local color_deficit     = '#000000';
     local color_pinj        = '#BAB0AC';
 
+    local total_small_hydro_gen;
+    local total_hydro_gen;      
+    local total_batt_gen;   
+    local total_deficit;    
+    local total_pot_inj;    
+    local total_wind_gen;   
+    local total_solar_gen;  
+    local total_thermal_gen;    
+   
+    local total_hydro_gen_age;
+    local total_batt_gen_age;   
+    local total_deficit_age;    
+    local total_pot_inj_age;    
+    local total_renw_gen_age;   
+    local total_thermal_gen_age;
+    
     local gerter = {};
 	local gerhid = {};
 	local gergnd = {};
@@ -701,22 +728,6 @@ local function create_gen_report()
     else
         chart = Chart("Total generation");
     end
-    
-    local total_small_hydro_gen;
-    local total_hydro_gen;      
-    local total_batt_gen;   
-    local total_deficit;    
-    local total_pot_inj;    
-    local total_wind_gen;   
-    local total_solar_gen;  
-    local total_thermal_gen;    
-   
-    local total_hydro_gen_age;
-    local total_batt_gen_age;   
-    local total_deficit_age;    
-    local total_pot_inj_age;    
-    local total_renw_gen_age;   
-    local total_thermal_gen_age;
     
     -- Total generation report
     for i=1,studies do
@@ -885,7 +896,10 @@ local function create_risk_report()
         risk_file = system[1]:load("sddprisk");
         chart:add_column(risk_file);
     end
-    risk_rep:push(chart);
+    
+    if #chart > 0 then
+        risk_rep:push(chart);
+    end
     
     return risk_rep;
 end
