@@ -247,8 +247,8 @@ local function create_inflow_energy()
         for i=1,studies do
         
            -- Confidence interval
-           chart:add_area_range(inferg[i]:select_agent(1), inferg[i]:select_agent(3),{color={light_global_color[i],light_global_color[i]},showInLegend = false});
-           chart:add_line(inferg[i]:select_agent(2):rename_agent(case_dir_list[i])); -- average
+           chart:add_area_range(inferg[i]:select_agent(1):add_prefix(case_dir_list[i].." - "), inferg[i]:select_agent(3),{color={light_global_color[i],light_global_color[i]}});
+           chart:add_line(inferg[i]:select_agent(2):add_prefix(case_dir_list[i].." - ")); -- average
         end
     else
          -- Confidence interval
@@ -580,8 +580,8 @@ local function create_costs_and_revs()
         
         if studies > 1 then
             if is_greater_than_zero(disp) then
-                chart:add_area_range(disp:select_agent(1), disp:select_agent(3),{color = light_global_color[i], showInLegend = false}); -- Confidence interval
-                chart:add_line(disp:select_agent(2):rename_agent(case_dir_list[i])); -- Average
+                chart:add_area_range(disp:select_agent(1):add_prefix(case_dir_list[i].." - "), disp:select_agent(3),{color = light_global_color[i]}); -- Confidence interval
+                chart:add_line(disp:select_agent(2):add_prefix(case_dir_list[i].." - ")); -- Average
             end 
         else
             if is_greater_than_zero(disp) then
@@ -592,7 +592,7 @@ local function create_costs_and_revs()
         
         -- sddp_dashboard_cost_avg
         if studies > 1 then
-            costs_avg = costs:aggregate_scenarios(BY_AVERAGE()):select_agent(1):rename_agent(case_dir_list[i] .. " - Average");
+            costs_avg = costs:aggregate_scenarios(BY_AVERAGE()):select_agent(1):add_prefix(case_dir_list[i].." - ");
         else
             costs_avg = costs:aggregate_scenarios(BY_AVERAGE()):select_agent(1);
         end
