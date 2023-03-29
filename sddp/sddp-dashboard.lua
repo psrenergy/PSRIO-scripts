@@ -351,6 +351,10 @@ local function create_pol_report()
 
     local pol_rep = Tab("Policy");
     
+    local total_cost_age;
+    local future_cost_age;
+    local immediate_cost;                
+                
     local file_list = {};
     local systems   = {};
     local horizon   = {};
@@ -451,12 +455,19 @@ local function create_pol_report()
                 local objcop = Generic():load("objcop");
                 local discount_rate = require("sddp/discount_rate")(1);
             
-                -- Select total cost and future cost agents
-                local total_cost_age = objcop:select_agent(1):aggregate_scenarios(BY_AVERAGE());
-                local future_cost_age = objcop:select_agent(-1):aggregate_scenarios(BY_AVERAGE());
                 
-                -- Calculating total cost as sum of immediate costs per stage
-                immediate_cost = ((total_cost_age - future_cost_age)/discount_rate):aggregate_stages(BY_SUM()):rename_agent("Total cost"):to_list()[1];
+                if study[1]:get_parameter("SIMH",-1) == 2 then -- Hourly model writes objcop with different columns
+                    -- Remove first column(Future cost) of hourly objcop
+                    immediate_cost = (objcop:remove_agent(1)/discount_rate):aggregate_agents(BY_SUM(),"Immediate cost"):aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):to_list()[1];
+                else
+                    -- Select total cost and future cost agents
+                    total_cost_age = objcop:select_agent(1):aggregate_scenarios(BY_AVERAGE());
+                    future_cost_age = objcop:select_agent(-1):aggregate_scenarios(BY_AVERAGE());
+                    
+                    -- Calculating total cost as sum of immediate costs per stage
+                    ((total_cost_age - future_cost_age)/discount_rate):save("teste_imm",{csv=true});
+                    immediate_cost = ((total_cost_age - future_cost_age)/discount_rate):aggregate_stages(BY_SUM()):rename_agent("Total cost"):to_list()[1];
+                end
                 
                 -- Take expression and use it as mask for "final_sim_cost"
                 conv_age_aux = conv_age:select_agent(1):rename_agent("Final simulation");  
