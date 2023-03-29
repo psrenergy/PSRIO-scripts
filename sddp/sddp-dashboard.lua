@@ -521,8 +521,6 @@ local function create_sim_report()
             
     if studies > 1 then
         for i=1,studies do
-            objcop = require("sddp/costs");
-            discount_rate = require("sddp/discount_rate");
             costs = ifelse(objcop(i):ge(0), objcop(i), 0) / discount_rate(i);
     
             -- sddp_dashboard_cost_tot
@@ -530,13 +528,12 @@ local function create_sim_report()
             chart:add_categories(costs_agg, case_dir_list[i]); 
         end
     else
-        costs = ifelse(objcop(1):ge(0), objcop(1), 0) / discount_rate(1);
+        costs = ifelse(objcop():ge(0), objcop(), 0) / discount_rate();
         costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
         
         if is_greater_than_zero(costs_agg) then
             chart:add_pie(costs_agg);
         end
-      
     end
     
     if #chart > 0 then
@@ -703,6 +700,7 @@ local function create_gen_report()
     local total_other_renw_gen;
     local total_wind_gen;   
     local total_solar_gen;  
+    local total_small_hydro_gen;
     local total_thermal_gen;    
     
     local total_hydro_gen_age;
@@ -712,6 +710,7 @@ local function create_gen_report()
     local total_other_renw_gen_age;    
     local total_wind_gen_age;   
     local total_solar_gen_age;  
+    local total_small_hydro_gen_age;
     local total_thermal_gen_age;
     
     local gerter = {};
@@ -740,6 +739,7 @@ local function create_gen_report()
         chart_tot_other_renw = Chart("Total Renewable - Other tech.");
         chart_tot_renw_wind  = Chart("Total Renewable - Wind");
         chart_tot_renw_solar = Chart("Total Renewable - Solar");
+        chart_tot_renw_shyd  = Chart("Total Renewable - Small hydro");
         chart_tot_gerbat     = Chart("Total Battery");
         chart_tot_potinj     = Chart("Total Power Injection");
         chart_tot_defcit     = Chart("Total Deficit");
@@ -751,33 +751,36 @@ local function create_gen_report()
     for i=1,studies do
     
         if studies > 1 then
-            total_hydro_gen_age      = case_dir_list[i] .. " - ";
-            total_batt_gen_age       = case_dir_list[i] .. " - ";
-            total_deficit_age        = case_dir_list[i] .. " - ";
-            total_pot_inj_age        = case_dir_list[i] .. " - ";
-            total_other_renw_gen_age = case_dir_list[i] .. " - ";
-            total_wind_gen_age       = case_dir_list[i] .. " - ";   
-            total_solar_gen_age      = case_dir_list[i] .. " - ";
-            total_thermal_gen_age    = case_dir_list[i] .. " - ";
+            total_hydro_gen_age       = case_dir_list[i] .. " - ";
+            total_batt_gen_age        = case_dir_list[i] .. " - ";
+            total_deficit_age         = case_dir_list[i] .. " - ";
+            total_pot_inj_age         = case_dir_list[i] .. " - ";
+            total_other_renw_gen_age  = case_dir_list[i] .. " - ";
+            total_wind_gen_age        = case_dir_list[i] .. " - ";   
+            total_solar_gen_age       = case_dir_list[i] .. " - ";
+            total_small_hydro_gen_age = case_dir_list[i] .. " - ";
+            total_thermal_gen_age     = case_dir_list[i] .. " - ";
         else
-            total_hydro_gen_age      = "";
-            total_batt_gen_age       = "";
-            total_deficit_age        = "";
-            total_pot_inj_age        = "";
-            total_other_renw_gen_age = "";
-            total_wind_gen_age       = "";
-            total_solar_gen_age      = "";
-            total_thermal_gen_age    = "";
+            total_hydro_gen_age       = "";
+            total_batt_gen_age        = "";
+            total_deficit_age         = "";
+            total_pot_inj_age         = "";
+            total_other_renw_gen_age  = "";
+            total_wind_gen_age        = "";
+            total_solar_gen_age       = "";
+            total_small_hydro_gen_age = "";
+            total_thermal_gen_age     = "";
         end
         
-        total_hydro_gen_age      = total_hydro_gen_age      .. "Total Hydro";
-        total_batt_gen_age       = total_batt_gen_age       .. "Total Battery"; 
-        total_deficit_age        = total_deficit_age        .. "Total Deficit"; 
-        total_pot_inj_age        = total_pot_inj_age        .. "Total P. Inj."; 
-        total_other_renw_gen_age = total_other_renw_gen_age .. "Total Renewable - Other tech.";
-        total_wind_gen_age       = total_wind_gen_age       .. "Total Renewable - Wind";
-        total_solar_gen_age      = total_solar_gen_age      .. "Total Renewable - Solar";
-        total_thermal_gen_age    = total_thermal_gen_age    .. "Total Thermal";
+        total_hydro_gen_age       = total_hydro_gen_age       .. "Total Hydro";
+        total_batt_gen_age        = total_batt_gen_age        .. "Total Battery"; 
+        total_deficit_age         = total_deficit_age         .. "Total Deficit"; 
+        total_pot_inj_age         = total_pot_inj_age         .. "Total P. Inj."; 
+        total_other_renw_gen_age  = total_other_renw_gen_age  .. "Total Renewable - Other tech.";
+        total_wind_gen_age        = total_wind_gen_age        .. "Total Renewable - Wind";
+        total_solar_gen_age       = total_solar_gen_age       .. "Total Renewable - Solar";
+        total_small_hydro_gen_age = total_small_hydro_gen_age .. "Total Renewable - Small hydro";
+        total_thermal_gen_age     = total_thermal_gen_age     .. "Total Thermal";
         
         -- Data processing
         total_hydro_gen      = gerhid[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),total_hydro_gen_age);
@@ -785,10 +788,13 @@ local function create_gen_report()
         total_deficit        = defcit[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),total_deficit_age);    
         total_pot_inj        = potinj[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),total_pot_inj_age);
         
-        total_other_renw_gen = gergnd[i]:select_agents(renewable[i].tech_type:ne(1)):select_agents(renewable[i].tech_type:ne(2));
-        total_other_renw_gen = total_other_renw_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),total_other_renw_gen_age);
-        total_wind_gen       = gergnd[i]:select_agents(renewable[i].tech_type:eq(1)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),total_wind_gen_age);
-        total_solar_gen      = gergnd[i]:select_agents(renewable[i].tech_type:eq(2)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),total_solar_gen_age);
+        -- Renewable generation is broken into 3 types
+        total_other_renw_gen  = gergnd[i]:select_agents(renewable[i].tech_type:ne(1)):select_agents(renewable[i].tech_type:ne(2)):select_agents(renewable[i].tech_type:ne(4));
+        total_other_renw_gen  = total_other_renw_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),total_other_renw_gen_age);
+        total_wind_gen        = gergnd[i]:select_agents(renewable[i].tech_type:eq(1)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),total_wind_gen_age);
+        total_solar_gen       = gergnd[i]:select_agents(renewable[i].tech_type:eq(2)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),total_solar_gen_age);
+        total_small_hydro_gen = gergnd[i]:select_agents(renewable[i].tech_type:eq(4)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),total_small_hydro_gen_age);
+        
         total_thermal_gen    = gerter[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),total_thermal_gen_age);
 
         if studies > 1 then
@@ -807,6 +813,9 @@ local function create_gen_report()
             if total_solar_gen:loaded() then
                 chart_tot_renw_solar:add_area_stacking(total_solar_gen);    
             end
+            if total_small_hydro_gen:loaded() then
+                chart_tot_renw_shyd:add_area_stacking(total_small_hydro_gen);    
+            end
             if total_batt_gen:loaded() then
                 chart_tot_gerbat:add_area_stacking(total_batt_gen);  
             end
@@ -821,6 +830,7 @@ local function create_gen_report()
             chart:add_area_stacking(total_hydro_gen,{color={color_hydro}});
             chart:add_area_stacking(total_wind_gen,{color={color_wind}});
             chart:add_area_stacking(total_solar_gen,{color={color_solar}});
+            chart:add_area_stacking(total_small_hydro_gen,{color={color_small_hydro}});
             chart:add_area_stacking(total_other_renw_gen,{color={color_renw_other}});
             chart:add_area_stacking(total_batt_gen,{color={color_battery}});
             chart:add_area_stacking(total_pot_inj,{color={color_pinj}});
@@ -835,9 +845,18 @@ local function create_gen_report()
         if #chart_tot_gerter > 0 then
             gen_rep:push(chart_tot_gerter);
         end
-        if #chart_tot_renw > 0 then
-            gen_rep:push(chart_tot_renw);
+        if #chart_tot_other_renw > 0 then
+            gen_rep:push(chart_tot_other_renw);
         end 
+        if #chart_tot_renw_wind > 0 then
+            gen_rep:push(total_wind_gen);
+        end 
+        if #chart_tot_renw_solar > 0 then
+            gen_rep:push(total_solar_gen);
+        end
+        if #chart_tot_renw_shyd > 0 then
+            gen_rep:push(total_small_hydro_gen);
+        end
         if #chart_tot_gerbat > 0 then
             gen_rep:push(chart_tot_gerbat);
         end
@@ -856,12 +875,15 @@ local function create_gen_report()
         agents = generic[1]:load("cmgdem"):agents();
         for i, agent in ipairs(agents) do
         
-            chart_tot_gerhid  = Chart("Total Hydro - "..agent);
-            chart_tot_gerter  = Chart("Total Thermal - "..agent);
-            chart_tot_renw    = Chart("Total Renewable - "..agent);
-            chart_tot_gerbat  = Chart("Total Battery - "..agent);
-            chart_tot_potinj  = Chart("Total Power Injection - "..agent);
-            chart_tot_defcit  = Chart("Total Deficit - "..agent);
+            chart_tot_gerhid     = Chart("Total Hydro - "..agent);
+            chart_tot_gerter     = Chart("Total Thermal - "..agent);
+            chart_tot_renw_other = Chart("Total Renewable - Other tech. - "..agent);
+            chart_tot_renw_wind  = Chart("Total Renewable - Wind - "..agent);
+            chart_tot_renw_solar = Chart("Total Renewable - Solar - "..agent);
+            chart_tot_renw_shyd  = Chart("Total Renewable - Small hydro - "..agent);
+            chart_tot_gerbat     = Chart("Total Battery - "..agent);
+            chart_tot_potinj     = Chart("Total Power Injection - "..agent);
+            chart_tot_defcit     = Chart("Total Deficit - "..agent);
         
             for i=1,studies do
                 -- Data processing
@@ -869,20 +891,34 @@ local function create_gen_report()
                 total_batt_gen    = gerbat[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),Collection.SYSTEM):select_agent(agent):rename_agent(case_dir_list[i] .. " - Total Battery");
                 total_deficit     = defcit[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),Collection.SYSTEM):select_agent(agent):rename_agent(case_dir_list[i] .. " - Total Deficit");
                 total_pot_inj     = potinj[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),Collection.SYSTEM):select_agent(agent):rename_agent(case_dir_list[i] .. " - Total P. Inj.");
-                total_renw_gen    = gergnd[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),Collection.SYSTEM):select_agent(agent):rename_agent(case_dir_list[i] .. " - Total Renewable");
+                
+                -- Renewable generation is broken into 3 types
+                total_other_renw_gen  = gergnd[i]:select_agents(renewable[i].tech_type:ne(1)):select_agents(renewable[i].tech_type:ne(2)):select_agents(renewable[i].tech_type:ne(4));
+                total_other_renw_gen  = total_other_renw_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),Collection.SYSTEM):select_agent(agent):rename_agent(case_dir_list[i] .. " - Total Renewable - Other tech.");
+                total_wind_gen        = gergnd[i]:select_agents(renewable[i].tech_type:eq(1)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),Collection.SYSTEM):select_agent(agent):rename_agent(case_dir_list[i] .. " - Total Renewable - Wind");
+                total_solar_gen       = gergnd[i]:select_agents(renewable[i].tech_type:eq(2)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),Collection.SYSTEM):select_agent(agent):rename_agent(case_dir_list[i] .. " - Total Renewable - Solar");
+                total_small_hydro_gen = gergnd[i]:select_agents(renewable[i].tech_type:eq(4)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),Collection.SYSTEM):select_agent(agent):rename_agent(case_dir_list[i] .. " - Total Renewable - Small hydro");
+        
                 total_thermal_gen = gerter[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),Collection.SYSTEM):select_agent(agent):rename_agent(case_dir_list[i] .. " - Total Thermal");
         
-                info("Aqui");
-                info(total_hydro_gen:loaded());
                 if total_hydro_gen:loaded() then
                     chart_tot_gerhid:add_area_stacking(total_hydro_gen); 
                 end
                 if total_thermal_gen:loaded() then
                     chart_tot_gerter:add_area_stacking(total_thermal_gen); 
                 end
-                if total_renw_gen:loaded() then
-                    chart_tot_renw:add_area_stacking(total_renw_gen);    
+                if total_other_renw_gen:loaded() then
+                    chart_tot_renw_other:push(chart_tot_other_renw);
+                end 
+                if total_wind_gen:loaded() then
+                    chart_tot_renw_wind:push(total_wind_gen);
+                end 
+                if total_solar_gen:loaded() then
+                    chart_tot_renw_solar:push(total_solar_gen);
                 end
+                if total_small_hydro_gen:loaded() then
+                    chart_tot_renw_shyd:push(total_small_hydro_gen);
+                end 
                 if total_batt_gen:loaded() then
                     chart_tot_gerbat:add_area_stacking(total_batt_gen);  
                 end
@@ -900,9 +936,18 @@ local function create_gen_report()
             if #chart_tot_gerter > 0 then
                 gen_rep:push(chart_tot_gerter);
             end
-            if #chart_tot_renw > 0 then
-                gen_rep:push(chart_tot_renw);
+            if #chart_tot_other_renw > 0 then
+                gen_rep:push(chart_tot_other_renw);
+            end
+            if #chart_tot_renw_wind > 0 then
+                gen_rep:push(chart_tot_renw_wind);
             end 
+            if #chart_tot_renw_solar > 0 then
+                gen_rep:push(chart_tot_renw_solar);
+            end 
+            if #chart_tot_renw_shyd > 0 then
+                gen_rep:push(chart_tot_renw_shyd);
+            end
             if #chart_tot_gerbat > 0 then
                 gen_rep:push(chart_tot_gerbat);
             end
