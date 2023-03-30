@@ -234,7 +234,7 @@ end
 -----------------------------------------------------------------------------------------------
 
 local function create_inflow_energy()
-    local inf_energ_rep = Tab("Inflow energy");
+    local tab = Tab("Inflow energy");
     
     local inferg = {};
     for i=1,studies do
@@ -257,10 +257,10 @@ local function create_inflow_energy()
     end 
     
     if #chart > 0 then
-        inf_energ_rep:push(chart);
+        tab:push(chart);
     end
     
-    return inf_energ_rep;
+    return tab;
 end 
 
 -----------------------------------------------------------------------------------------------
@@ -349,7 +349,7 @@ end
 
 local function create_pol_report()
 
-    local pol_rep = Tab("Policy");
+    local tab = Tab("Policy");
     
     local total_cost_age;
     local future_cost_age;
@@ -371,7 +371,7 @@ local function create_pol_report()
     
     -- Creating policy report
     for i, file in ipairs(file_list) do 
-        pol_rep:push("## System: " .. systems[i] .. " | Horizon: " .. horizon[i]);
+        tab:push("## System: " .. systems[i] .. " | Horizon: " .. horizon[i]);
         
         if studies > 1 then
             local chart_conv = Chart("Convergence report");
@@ -423,19 +423,19 @@ local function create_pol_report()
             end
         
             if #chart_conv > 0 then
-                pol_rep:push(chart_conv);
+                tab:push(chart_conv);
             end
             if #chart_cut_opt > 0 then
-                pol_rep:push(chart_cut_opt);
+                tab:push(chart_cut_opt);
             end
             if #chart_cut_feas > 0 then
-                pol_rep:push(chart_cut_feas);
+                tab:push(chart_cut_feas);
             end
             if #chart_time_forw > 0 then
-                pol_rep:push(chart_time_forw);
+                tab:push(chart_time_forw);
             end
             if #chart_time_back > 0 then
-                pol_rep:push(chart_time_back);
+                tab:push(chart_time_back);
             end
         else
             -- Get operation mode parameter
@@ -480,24 +480,24 @@ local function create_pol_report()
             if( graph_sim_cost ) then
                 chart:add_line(final_sim_cost, {color={"#D37295"},  xAllowDecimals = false }); -- Final simulation cost
             end 
-            pol_rep:push(chart);
+            tab:push(chart);
             
             chart = Chart("Number of added cuts report");
             chart:add_column(cuts_age, { xAllowDecimals = false }); -- Opt and Feas
-            pol_rep:push(chart);
+            tab:push(chart);
             
             chart = Chart("Forward and backward execution times");
             chart:add_line(time_age, { xAllowDecimals = false }); -- Forw. and Back. times
-            pol_rep:push(chart);
+            tab:push(chart);
         end
     end
     
     -- Convergence heatmap
     if studies == 1 then
-        create_conv_map_graph(pol_rep,1);
+        create_conv_map_graph(tab,1);
     end
     
-    return pol_rep;
+    return tab;
 end
 
 -----------------------------------------------------------------------------------------------
@@ -506,7 +506,7 @@ end
 
 local function create_sim_report()
         
-    local sim_rep = Tab("Simulation"); 
+    local tab = Tab("Simulation"); 
  
     local costs;
     local objcop;
@@ -537,19 +537,19 @@ local function create_sim_report()
     end
     
     if #chart > 0 then
-        sim_rep:push(chart);
+        tab:push(chart);
     end 
     
     -- Heatmap after the pizza graph in dashboard
     if studies == 1 then
         -- Creating simulation heatmap graphics
         if study[1]:get_parameter("SIMH",-1) == 2 then
-            create_hourly_sol_status_graph(sim_rep,1);
+            create_hourly_sol_status_graph(tab,1);
         end
-        create_penalty_proportion_graph(sim_rep,1);
+        create_penalty_proportion_graph(tab,1);
     end
     
-    return sim_rep;
+    return tab;
 end 
 
 -----------------------------------------------------------------------------------------------
@@ -557,7 +557,7 @@ end
 -----------------------------------------------------------------------------------------------
 
 local function create_costs_and_revs()
-    local cost_rep = Tab("Costs & revenues");
+    local tab = Tab("Costs & revenues");
     
     local objcop;
     local discount_rate;
@@ -610,14 +610,14 @@ local function create_costs_and_revs()
     end
     
     if #chart > 0 then
-        cost_rep:push(chart);
+        tab:push(chart);
     end 
     
     if #chart_avg > 0 then
-        cost_rep:push(chart_avg);
+        tab:push(chart_avg);
     end 
     
-    return cost_rep;
+    return tab;
 end
 
 -----------------------------------------------------------------------------------------------
@@ -625,7 +625,7 @@ end
 -----------------------------------------------------------------------------------------------
 
 local function create_marg_costs()
-    local marg_costs = Tab("Marginal costs");
+    local tab = Tab("Marginal costs");
 
     local cmg = {};
     local cmg_aggsum;
@@ -653,7 +653,7 @@ local function create_marg_costs()
         cmg_aggyear = cmg[1]:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_AVERAGE(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE());
         chart_subsys:add_column(cmg_aggyear);
     end
-    marg_costs:push(chart_subsys);
+    tab:push(chart_subsys);
     
     if studies > 1 then
         agents = cmg[1]:agents();
@@ -663,16 +663,16 @@ local function create_marg_costs()
                 cmg_aggsum = cmg[j]:select_agent(agent):rename_agent(case_dir_list[j]):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE())
                 chart_per_stg:add_line(cmg_aggsum);  -- Average marg. cost per stage
             end 
-            marg_costs:push(chart_per_stg);
+            tab:push(chart_per_stg);
         end
     else
         local chart_per_stg = Chart("Average marginal costs per stage per subsystem");
         cmg_aggsum  = cmg[1]:aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE());
         chart_per_stg:add_column(cmg_aggsum);
-        marg_costs:push(chart_per_stg);
+        tab:push(chart_per_stg);
     end
     
-    return marg_costs;
+    return tab;
 end
 
 -----------------------------------------------------------------------------------------------
@@ -680,7 +680,7 @@ end
 -----------------------------------------------------------------------------------------------
 
 local function create_gen_report()
-    local gen_rep = Tab("Generation");
+    local tab = Tab("Generation");
 
 -- Color preferences
     local color_hydro       = '#4E79A7';
@@ -840,34 +840,34 @@ local function create_gen_report()
     
     if studies > 1 then
         if #chart_tot_gerhid > 0 then
-            gen_rep:push(chart_tot_gerhid);
+            tab:push(chart_tot_gerhid);
         end
         if #chart_tot_gerter > 0 then
-            gen_rep:push(chart_tot_gerter);
+            tab:push(chart_tot_gerter);
         end
         if #chart_tot_other_renw > 0 then
-            gen_rep:push(chart_tot_other_renw);
+            tab:push(chart_tot_other_renw);
         end 
         if #chart_tot_renw_wind > 0 then
-            gen_rep:push(total_wind_gen);
+            tab:push(total_wind_gen);
         end 
         if #chart_tot_renw_solar > 0 then
-            gen_rep:push(total_solar_gen);
+            tab:push(total_solar_gen);
         end
         if #chart_tot_renw_shyd > 0 then
-            gen_rep:push(total_small_hydro_gen);
+            tab:push(total_small_hydro_gen);
         end
         if #chart_tot_gerbat > 0 then
-            gen_rep:push(chart_tot_gerbat);
+            tab:push(chart_tot_gerbat);
         end
         if #chart_tot_potinj > 0 then
-            gen_rep:push(chart_tot_potinj);
+            tab:push(chart_tot_potinj);
         end 
         if #chart_tot_defcit > 0 then
-            gen_rep:push(chart_tot_defcit);
+            tab:push(chart_tot_defcit);
         end
     else
-        gen_rep:push(chart);
+        tab:push(chart);
     end 
     
     if studies > 1 then
@@ -931,40 +931,40 @@ local function create_gen_report()
             end
             
             if #chart_tot_gerhid > 0 then
-                gen_rep:push(chart_tot_gerhid);
+                tab:push(chart_tot_gerhid);
             end
             if #chart_tot_gerter > 0 then
-                gen_rep:push(chart_tot_gerter);
+                tab:push(chart_tot_gerter);
             end
             if #chart_tot_other_renw > 0 then
-                gen_rep:push(chart_tot_other_renw);
+                tab:push(chart_tot_other_renw);
             end
             if #chart_tot_renw_wind > 0 then
-                gen_rep:push(chart_tot_renw_wind);
+                tab:push(chart_tot_renw_wind);
             end 
             if #chart_tot_renw_solar > 0 then
-                gen_rep:push(chart_tot_renw_solar);
+                tab:push(chart_tot_renw_solar);
             end 
             if #chart_tot_renw_shyd > 0 then
-                gen_rep:push(chart_tot_renw_shyd);
+                tab:push(chart_tot_renw_shyd);
             end
             if #chart_tot_gerbat > 0 then
-                gen_rep:push(chart_tot_gerbat);
+                tab:push(chart_tot_gerbat);
             end
             if #chart_tot_potinj > 0 then
-                gen_rep:push(chart_tot_potinj);
+                tab:push(chart_tot_potinj);
             end 
             if #chart_tot_defcit > 0 then
-                gen_rep:push(chart_tot_defcit);
+                tab:push(chart_tot_defcit);
             end     
         end
     end
     
-    return gen_rep;
+    return tab;
 end
 
 local function create_risk_report()
-    local risk_rep = Tab("Risk");
+    local tab = Tab("Risk");
     local chart = Chart("Deficit risk by sub-system");
     
     if studies > 1 then
@@ -980,10 +980,10 @@ local function create_risk_report()
     end
     
     if #chart > 0 then
-        risk_rep:push(chart);
+        tab:push(chart);
     end
     
-    return risk_rep;
+    return tab;
 end
 
 -----------------------------------------------------------------------------------------------
@@ -1069,7 +1069,7 @@ end
 
 -- Main tabs
 local tab_input_data = Tab("Input data");
-local tab_sol_qual   = Tab("Solution quality");
+local tab_solution_quality   = Tab("Solution quality");
 local tab_violations = Tab("Violations");
 local tab_results    = Tab("Results");
 
@@ -1078,18 +1078,18 @@ local tab_viol_avg = Tab("Average");
 local tab_viol_max = Tab("Maximum");
 
 tab_input_data:set_collapsed(false);
-tab_sol_qual:set_collapsed(true);
+tab_solution_quality:set_collapsed(true);
 tab_violations:set_collapsed(true);
 tab_results:set_collapsed(true);
 
 tab_input_data:set_disabled();
-tab_sol_qual:set_disabled();
+tab_solution_quality:set_disabled();
 tab_violations:set_disabled();
 tab_results:set_disabled();
 
 -- Set icons of the main tabs
 tab_input_data:set_icon("file-input"); -- Alternative: arrow-big-right
-tab_sol_qual:set_icon("alert-triangle");
+tab_solution_quality:set_icon("alert-triangle");
 tab_violations:set_icon("siren");
 tab_results:set_icon("line-chart");
 
@@ -1098,10 +1098,10 @@ tab_input_data:push(create_tab_summary());
 tab_input_data:push(create_inflow_energy());
 
 -- Solution quality - Policy report
-tab_sol_qual:push(create_pol_report());
+tab_solution_quality:push(create_pol_report());
 
 -- Solution quality - Simulation report
-tab_sol_qual:push(create_sim_report());
+tab_solution_quality:push(create_sim_report());
 
 -- Violation
 if studies == 1 then
@@ -1120,7 +1120,7 @@ tab_results:push(create_risk_report());
 
 local dashboard = Dashboard();
 dashboard:push(tab_input_data);
-dashboard:push(tab_sol_qual);
+dashboard:push(tab_solution_quality);
 
 if studies == 1 then
     dashboard:push(tab_violations);
