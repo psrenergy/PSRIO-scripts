@@ -114,7 +114,6 @@ local function create_tab_summary()
     end
 
     tab:push("## Case title");
-
     if studies == 1 then
         tab:push("| Title |");
         tab:push("|:-----------:|");
@@ -285,8 +284,8 @@ end
 local function get_convergence_file_agents(file_list, conv_age, cuts_age, time_age, case_index)
     for i, file in ipairs(file_list) do
         local conv_file = generic[case_index]:load(file);
-        conv_age[i] = conv_file:select_agents({ 1, 2, 3, 4 }); -- Zinf        ,Zsup - Tol  ,Zsup        ,Zsup + Tol  
-        cuts_age[i] = conv_file:select_agents({ 5, 6 }); -- Optimality  ,Feasibility 
+        conv_age[i] = conv_file:select_agents({ 1, 2, 3, 4 }); -- Zinf, Zsup - Tol, Zsup, Zsup + Tol  
+        cuts_age[i] = conv_file:select_agents({ 5, 6 }); -- Optimality, Feasibility 
         time_age[i] = conv_file:select_agents({ 7, 8 }); -- Forw. time, Back. time
     end
 end
@@ -311,7 +310,6 @@ local function make_added_cuts_graphs(dashboard, cuts_age, systems, horizon)
 end
 
 local function calculate_number_of_systems(sys_vec)
-
     local sys_name = sys_vec[1];
     local counter = 1;
     for i, name in ipairs(sys_vec) do
@@ -350,7 +348,6 @@ local function create_hourly_sol_status_graph(tab, i)
 end
 
 local function create_pol_report()
-
     local tab = Tab("Policy");
 
     local total_cost_age;
@@ -494,28 +491,22 @@ end
 local function create_sim_report()
     local tab = Tab("Simulation");
 
-    local costs;
-    local objcop;
-    local discount_rate;
-    local costs;
-    local costs_agg;
-
     local chart = Chart("Breakdown of total operating costs");
 
-    objcop = require("sddp/costs");
-    discount_rate = require("sddp/discount_rate");
+    local objcop = require("sddp/costs");
+    local discount_rate = require("sddp/discount_rate");
 
     if studies > 1 then
         for i = 1, studies do
-            costs = ifelse(objcop(i):ge(0), objcop(i), 0) / discount_rate(i);
+            local costs = ifelse(objcop(i):ge(0), objcop(i), 0) / discount_rate(i);
 
             -- sddp_dashboard_cost_tot
-            costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
+            local costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
             chart:add_categories(costs_agg, case_dir_list[i]);
         end
     else
-        costs = ifelse(objcop():ge(0), objcop(), 0) / discount_rate();
-        costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
+        local costs = ifelse(objcop():ge(0), objcop(), 0) / discount_rate();
+        local costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
 
         if is_greater_than_zero(costs_agg) then
             chart:add_pie(costs_agg);
@@ -545,18 +536,13 @@ end
 local function create_costs_and_revs()
     local tab = Tab("Costs & revenues");
 
-    local objcop;
-    local discount_rate;
-    local costs;
-    local costs_avg;
-
     local chart = Chart("Dispersion of operating costs per stage");
     local chart_avg = Chart("Average operating costs per stage");
 
     for i = 1, studies do
-        objcop = require("sddp/costs");
-        discount_rate = require("sddp/discount_rate");
-        costs = ifelse(objcop(i):ge(0), objcop(i), 0) / discount_rate(i);
+        local objcop = require("sddp/costs");
+        local discount_rate = require("sddp/discount_rate");
+        local costs = ifelse(objcop(i):ge(0), objcop(i), 0) / discount_rate(i);
 
         -- sddp_dashboard_cost_tot
         costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM());
@@ -580,10 +566,9 @@ local function create_costs_and_revs()
         end
 
         -- sddp_dashboard_cost_avg
+        local costs_avg = costs:aggregate_scenarios(BY_AVERAGE()):select_agent(1);
         if studies > 1 then
-            costs_avg = costs:aggregate_scenarios(BY_AVERAGE()):select_agent(1):add_prefix(case_dir_list[i] .. " - ");
-        else
-            costs_avg = costs:aggregate_scenarios(BY_AVERAGE()):select_agent(1);
+            costs_avg = costs_avg:add_prefix(case_dir_list[i] .. " - ");
         end
 
         if is_greater_than_zero(costs_avg) then
@@ -623,35 +608,35 @@ local function create_marg_costs()
     end
 
     -- Marginal cost aggregated by average
-    chart_subsys = Chart("Annual marginal cost by sub-system");
+    local chart = Chart("Annual marginal cost by sub-system");
     if studies > 1 then
         for i = 1, studies do
             cmg_aggyear = cmg[i]:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_AVERAGE(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM);
 
             -- Add marginal costs outputs
-            chart_subsys:add_categories(cmg_aggyear, case_dir_list[i]); -- Annual Marg. cost     
+            chart:add_categories(cmg_aggyear, case_dir_list[i]); -- Annual Marg. cost     
         end
     else
         cmg_aggyear = cmg[1]:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_AVERAGE(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE());
-        chart_subsys:add_column(cmg_aggyear);
+        chart:add_column(cmg_aggyear);
     end
-    tab:push(chart_subsys);
+    tab:push(chart);
 
     if studies > 1 then
-        agents = cmg[1]:agents();
+        local agents = cmg[1]:agents();
         for i, agent in ipairs(agents) do
-            local chart_per_stg = Chart("Average marginal costs per stage per subsystem" .. " - " .. agent);
+            local chart = Chart("Average marginal costs per stage per subsystem" .. " - " .. agent);
             for j = 1, studies do
                 cmg_aggsum = cmg[j]:select_agent(agent):rename_agent(case_dir_list[j]):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE())
-                chart_per_stg:add_line(cmg_aggsum); -- Average marg. cost per stage
+                chart:add_line(cmg_aggsum); -- Average marg. cost per stage
             end
-            tab:push(chart_per_stg);
+            tab:push(chart);
         end
     else
-        local chart_per_stg = Chart("Average marginal costs per stage per subsystem");
+        local chart = Chart("Average marginal costs per stage per subsystem");
         cmg_aggsum = cmg[1]:aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE());
-        chart_per_stg:add_column(cmg_aggsum);
-        tab:push(chart_per_stg);
+        chart:add_column(cmg_aggsum);
+        tab:push(chart);
     end
 
     return tab;
@@ -854,9 +839,8 @@ local function create_gen_report()
 
     if studies > 1 then
         -- Generation per system report
-        agents = generic[1]:load("cmgdem"):agents();
+        local agents = generic[1]:load("cmgdem"):agents();
         for i, agent in ipairs(agents) do
-
             chart_tot_gerhid = Chart("Total Hydro - " .. agent);
             chart_tot_gerter = Chart("Total Thermal - " .. agent);
             chart_tot_renw_other = Chart("Total Renewable - Other tech. - " .. agent);
@@ -1009,7 +993,6 @@ local viol_report_structs = {
 }
 
 local function create_viol_report(tab, viol_struct, suffix)
-
     local file_name;
     local viol_file;
 
@@ -1020,7 +1003,7 @@ local function create_viol_report(tab, viol_struct, suffix)
             viol_file = generic[1]:load(file_name);
 
             -- Assuming agents in reference case(1st case) are the same as the ones in the others
-            agents = viol_file:agents();
+            local agents = viol_file:agents();
             for j, agent in ipairs(agents) do
                 local chart = Chart(struct.title .. " - " .. agent);
                 for k = 1, studies do

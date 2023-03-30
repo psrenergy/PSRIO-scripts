@@ -56,6 +56,11 @@
         "min",
         "concatenate",
         "concatenate_stages",
-        "concatenate_scenarios"
+        "concatenate_scenarios",
+        "PSR",
+        "Chart",
+        "Tab",
+        "ifelse",
+        "Dashboard"
     ]
 }
