@@ -32,8 +32,6 @@ for i = 1, studies do
     table.insert(study, Study(i));
     table.insert(system, System(i));
     table.insert(thermal, Thermal(i));
-
-    table.insert(case_dir_list, generic[i]:dirname());
 end
 
 -- Cases' directory names
