@@ -1,7 +1,8 @@
 -- Setting global colors
-PSR.set_global_colors({ "#4E79A7", "#F28E2B", "#8CD17D", "#B6992D", "#E15759", "#76B7B2", "#FF9DA7", "#D7B5A6", "#B07AA1", "#59A14F", "#F1CE63", "#A0CBE8", "#E15759" });
-main_global_color = { "#4E79A7", "#F28E2B", "#8CD17D", "#B6992D", "#E15759", "#76B7B2", "#FF9DA7", "#D7B5A6", "#B07AA1", "#59A14F", "#F1CE63", "#A0CBE8", "#E15759" }
-light_global_color = { "#B7C9DD", "#FAD2AA", "#D1EDCB", "#e9daa4", "#f3bcbd", "#c8e2e0", "#ffd8dc", "#efe1db", "#dfcad9", "#bbdbb7", "#f9ebc1", "#d9eaf6", "#f3bcbd" };
+local main_global_color = { "#4E79A7", "#F28E2B", "#8CD17D", "#B6992D", "#E15759", "#76B7B2", "#FF9DA7", "#D7B5A6", "#B07AA1", "#59A14F", "#F1CE63", "#A0CBE8", "#E15759" };
+local light_global_color = { "#B7C9DD", "#FAD2AA", "#D1EDCB", "#E9DAA4", "#F3BCBD", "#C8E2E0", "#FFD8DC", "#EFE1DB", "#DFCAD9", "#BBDBB7", "#F9EBC1", "#D9EAF6", "#F3BCBD" };
+
+PSR.set_global_colors(main_global_color);
 
 -- Study dimension
 local studies = PSR.studies();
@@ -19,9 +20,6 @@ local study = {};
 local system = {};
 local thermal = {};
 
--- Cases' directory names
-local case_dir_list = {};
-
 for i = 1, studies do
     table.insert(battery, Battery(i));
     table.insert(bus, Bus(i));
@@ -35,6 +33,12 @@ for i = 1, studies do
     table.insert(system, System(i));
     table.insert(thermal, Thermal(i));
 
+    table.insert(case_dir_list, generic[i]:dirname());
+end
+
+-- Cases' directory names
+local case_dir_list = {};
+for i = 1, studies do
     table.insert(case_dir_list, generic[i]:dirname());
 end
 
