@@ -1083,6 +1083,11 @@ tab_results:push(create_marg_costs());
 tab_results:push(create_gen_report());
 tab_results:push(create_risk_report());
 
+dashboard_name = "sddp-dashboard";
+if studies > 1 then
+    dashboard_name = "sddp-compare";
+end
+
 local dashboard = Dashboard();
 dashboard:push(tab_input_data);
 dashboard:push(tab_solution_quality);
@@ -1092,4 +1097,4 @@ if studies == 1 then
 end
 
 dashboard:push(tab_results);
-dashboard:save("SDDPDashboard");
+dashboard:save(dashboard_name);
