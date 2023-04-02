@@ -100,13 +100,13 @@ local function create_tab_summary()
 
     tab:push("## About the model");
     if studies == 1 then
-        tab:push("| Model | User | Version | Hash |");
+        tab:push("| Model | User | Version | ID |");
         tab:push("|:-----:|:----:|:-------:|:----:|");
         for i = 1, studies do
             tab:push("| " .. model[i] .. " | " .. user[i] .. " | " .. version[i] .. " | " .. hash[i] .. " |");
         end
     else
-        tab:push("| Case | Model | User | Version | Hash |");
+        tab:push("| Case | Model | User | Version | ID |");
         tab:push("|:----:|:-----:|:----:|:-------:|:----:|");
         for i = 1, studies do
             tab:push("| " .. i .. " | " .. model[i] .. " | " .. user[i] .. " | " .. version[i] .. " | " .. hash[i] .. " |");
@@ -401,10 +401,10 @@ local function create_pol_report()
                 chart_cut_feas:add_column(cuts_age:select_agents({ 2 }):rename_agent(case_dir_list[j]), { xAllowDecimals = false });
 
                 -- Execution time - forward
-                chart_time_forw:add_line(time_age:select_agents({ 1 }):rename_agent(case_dir_list[j]), { xAllowDecimals = false });
+                chart_time_forw:add_column(time_age:select_agents({ 1 }):rename_agent(case_dir_list[j]), { xAllowDecimals = false });
 
                 -- Execution time - backward
-                chart_time_back:add_line(time_age:select_agents({ 2 }):rename_agent(case_dir_list[j]), { xAllowDecimals = false });
+                chart_time_back:add_column(time_age:select_agents({ 2 }):rename_agent(case_dir_list[j]), { xAllowDecimals = false });
             end
 
             if #chart_conv > 0 then
@@ -623,9 +623,10 @@ local function create_marg_costs()
     tab:push(chart);
 
     if studies > 1 then
+        tab:push("## Average marginal costs per stage per subsystem");
         local agents = cmg[1]:agents();
         for i, agent in ipairs(agents) do
-            local chart = Chart("Average marginal costs per stage per subsystem" .. " - " .. agent);
+            local chart = Chart(agent);
             for j = 1, studies do
                 cmg_aggsum = cmg[j]:select_agent(agent):rename_agent(case_dir_list[j]):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE())
                 chart:add_line(cmg_aggsum); -- Average marg. cost per stage
@@ -841,15 +842,15 @@ local function create_gen_report()
         -- Generation per system report
         local agents = generic[1]:load("cmgdem"):agents();
         for i, agent in ipairs(agents) do
-            chart_tot_gerhid = Chart("Total Hydro - " .. agent);
-            chart_tot_gerter = Chart("Total Thermal - " .. agent);
-            chart_tot_renw_other = Chart("Total Renewable - Other tech. - " .. agent);
-            chart_tot_renw_wind = Chart("Total Renewable - Wind - " .. agent);
-            chart_tot_renw_solar = Chart("Total Renewable - Solar - " .. agent);
-            chart_tot_renw_shyd = Chart("Total Renewable - Small hydro - " .. agent);
-            chart_tot_gerbat = Chart("Total Battery - " .. agent);
-            chart_tot_potinj = Chart("Total Power Injection - " .. agent);
-            chart_tot_defcit = Chart("Total Deficit - " .. agent);
+            chart_tot_gerhid = Chart("Total Hydro");
+            chart_tot_gerter = Chart("Total Thermal");
+            chart_tot_renw_other = Chart("Total Renewable - Other tech.");
+            chart_tot_renw_wind = Chart("Total Renewable - Wind");
+            chart_tot_renw_solar = Chart("Total Renewable - Solar");
+            chart_tot_renw_shyd = Chart("Total Renewable - Small hydro");
+            chart_tot_gerbat = Chart("Total Battery");
+            chart_tot_potinj = Chart("Total Power Injection");
+            chart_tot_defcit = Chart("Total Deficit");
 
             for i = 1, studies do
                 -- Data processing
@@ -896,14 +897,12 @@ local function create_gen_report()
                 end
             end
 
+            tab:push("## Total generation per subsystem - " .. agent);
             if #chart_tot_gerhid > 0 then
                 tab:push(chart_tot_gerhid);
             end
             if #chart_tot_gerter > 0 then
                 tab:push(chart_tot_gerter);
-            end
-            if #chart_tot_other_renw > 0 then
-                tab:push(chart_tot_other_renw);
             end
             if #chart_tot_renw_wind > 0 then
                 tab:push(chart_tot_renw_wind);
@@ -913,6 +912,9 @@ local function create_gen_report()
             end
             if #chart_tot_renw_shyd > 0 then
                 tab:push(chart_tot_renw_shyd);
+            end
+            if #chart_tot_other_renw > 0 then
+                tab:push(chart_tot_other_renw);
             end
             if #chart_tot_gerbat > 0 then
                 tab:push(chart_tot_gerbat);
