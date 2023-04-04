@@ -53,6 +53,52 @@ local function is_greater_than_zero(output)
     end
 end
 
+local function load_info_file(file_name,case_index)
+
+    -- Initialize struct
+    info_struct = {{model = ""}, {user = ""}, {version = ""}, {hash = ""}, {model = ""}, {status = ""}, {infrep = ""}};
+    
+    local info = generic[case_index]:load_toml(file_name);
+    model   = info:get_string("model", "---");
+    user    = info:get_string("user", "---");
+    version = info:get_string("version", "---");
+    hash    = info:get_string("hash", "---");
+    status  = info:get_string("status", "---");
+    infrep  = info:get_string("infrep", "---");
+    
+    info_struct.model   = model;
+    info_struct.user    = user;
+    info_struct.version = version;
+    info_struct.hash    = hash;
+    info_struct.status  = tonumber(status);
+    info_struct.infrep  = infrep;
+    
+    return info_struct
+end
+
+-- Loading info files from each case
+local info_struct = {};
+for i = 1, studies do
+    info_struct[i] = load_info_file("SDDP.info",i);
+end
+
+-----------------------------------------------------------------------------------------------
+-- Infeasibility report function
+-----------------------------------------------------------------------------------------------
+local function dash_infeasibility(tab,file_name,case_index)
+
+    local inv_table = Study(case_index):load_table_without_header(file_name);
+
+    for i=1,#inv_table do
+        data=(inv_table[i][1]);
+        if data then
+            tab:push(data);
+        else
+            tab:push(" ");
+        end
+    end
+end
+
 -----------------------------------------------------------------------------------------------
 -- Case summary report function
 -----------------------------------------------------------------------------------------------
@@ -73,12 +119,6 @@ local function create_tab_summary()
     for i = 1, studies do
         table.insert(label, generic[i]:cloudname());
         table.insert(path, generic[i]:path());
-
-        local info = generic[i]:load_toml("sddp.info");
-        table.insert(model, info:get_string("model", "---"));
-        table.insert(user, info:get_string("user", "---"));
-        table.insert(version, info:get_string("version", "---"));
-        table.insert(hash, info:get_string("hash", "---"));
 
         local study = Study(i);
         table.insert(description, study:get_parameter("Descricao", ""));
@@ -103,13 +143,13 @@ local function create_tab_summary()
         tab:push("| Model | User | Version | ID |");
         tab:push("|:-----:|:----:|:-------:|:----:|");
         for i = 1, studies do
-            tab:push("| " .. model[i] .. " | " .. user[i] .. " | " .. version[i] .. " | " .. hash[i] .. " |");
+            tab:push("| " .. info_struct[i].model .. " | " .. info_struct[i].user .. " | " .. info_struct[i].version .. " | " .. info_struct[i].hash .. " |");
         end
     else
         tab:push("| Case | Model | User | Version | ID |");
         tab:push("|:----:|:-----:|:----:|:-------:|:----:|");
         for i = 1, studies do
-            tab:push("| " .. i .. " | " .. model[i] .. " | " .. user[i] .. " | " .. version[i] .. " | " .. hash[i] .. " |");
+            tab:push("| " .. i .. " | " .. info_struct[i].model .. " | " .. info_struct[i].user .. " | " .. info_struct[i].version .. " | " .. info_struct[i].hash .. " |");
         end
     end
 
@@ -1034,6 +1074,14 @@ end
 -- Dashboard tab configuration
 -----------------------------------------------------------------------------------------------
 
+local dashboard = Dashboard();
+
+-- Dashboard name configuration
+dashboard_name = "sddp-dashboard";
+if studies > 1 then
+    dashboard_name = "sddp-compare";
+end
+
 -- Main tabs
 local tab_input_data = Tab("Input data");
 local tab_solution_quality = Tab("Solution quality");
@@ -1062,6 +1110,22 @@ tab_results:set_icon("line-chart");
 
 -- Input data
 tab_input_data:push(create_tab_summary());
+if studies == 1 then
+    info("Aqui 1");
+    info(info_struct[1].status);
+    if info_struct[1].status > 0 then
+        info("Aqui 2");
+        tab_inf = Tab("Infeasibility report");
+        dash_infeasibility(tab_inf,info_struct[1].infrep .. ".out",1);
+        
+        dashboard:push(tab_input_data);
+        dashboard:push(tab_inf);
+        
+        dashboard:save(dashboard_name);
+        return
+    end
+end
+
 tab_input_data:push(create_inflow_energy());
 
 -- Solution quality - Policy report
@@ -1085,12 +1149,6 @@ tab_results:push(create_marg_costs());
 tab_results:push(create_gen_report());
 tab_results:push(create_risk_report());
 
-dashboard_name = "sddp-dashboard";
-if studies > 1 then
-    dashboard_name = "sddp-compare";
-end
-
-local dashboard = Dashboard();
 dashboard:push(tab_input_data);
 dashboard:push(tab_solution_quality);
 
