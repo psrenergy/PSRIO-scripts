@@ -7,39 +7,6 @@ PSR.set_global_colors(main_global_color);
 -- Study dimension
 local studies = PSR.studies();
 
--- Collection arrays
-local battery = {};
-local bus = {};
-local circuit = {};
-local generic = {};
-local hydro = {};
-local interconnection = {};
-local power_injection = {};
-local renewable = {};
-local study = {};
-local system = {};
-local thermal = {};
-
-for i = 1, studies do
-    table.insert(battery, Battery(i));
-    table.insert(bus, Bus(i));
-    table.insert(circuit, Circuit(i));
-    table.insert(generic, Generic(i));
-    table.insert(hydro, Hydro(i));
-    table.insert(interconnection, Interconnection(i));
-    table.insert(power_injection, PowerInjection(i));
-    table.insert(renewable, Renewable(i));
-    table.insert(study, Study(i));
-    table.insert(system, System(i));
-    table.insert(thermal, Thermal(i));
-end
-
--- Cases' directory names
-local case_dir_list = {};
-for i = 1, studies do
-    table.insert(case_dir_list, generic[i]:dirname());
-end
-
 -----------------------------------------------------------------------------------------------
 -- Auxiliary functions
 -----------------------------------------------------------------------------------------------
@@ -58,13 +25,13 @@ local function load_info_file(file_name,case_index)
     -- Initialize struct
     info_struct = {{model = ""}, {user = ""}, {version = ""}, {hash = ""}, {model = ""}, {status = ""}, {infrep = ""}};
     
-    local info = generic[case_index]:load_toml(file_name);
-    model   = info:get_string("model", "---");
-    user    = info:get_string("user", "---");
-    version = info:get_string("version", "---");
-    hash    = info:get_string("hash", "---");
-    status  = info:get_string("status", "---");
-    infrep  = info:get_string("infrep", "---");
+    local toml = Generic(case_index):load_toml(file_name);
+    model   = toml:get_string("model", "---");
+    user    = toml:get_string("user", "---");
+    version = toml:get_string("version", "---");
+    hash    = toml:get_string("hash", "---");
+    status  = toml:get_string("status", "---");
+    infrep  = toml:get_string("infrep", "---");
     
     info_struct.model   = model;
     info_struct.user    = user;
@@ -72,15 +39,52 @@ local function load_info_file(file_name,case_index)
     info_struct.hash    = hash;
     info_struct.status  = tonumber(status);
     info_struct.infrep  = infrep;
-    
-    return info_struct
+      
+    return info_struct;
 end
 
--- Loading info files from each case
-local info_struct = {};
-for i = 1, studies do
-    info_struct[i] = load_info_file("SDDP.info",i);
+local function load_model_info(col_struct, info_struct)
+    for i = 1, studies do
+        table.insert(col_struct.battery        , Battery(i));
+        table.insert(col_struct.bus            , Bus(i));
+        table.insert(col_struct.circuit        , Circuit(i));
+        table.insert(col_struct.generic        , Generic(i));
+        table.insert(col_struct.hydro          , Hydro(i));
+        table.insert(col_struct.interconnection, Interconnection(i));
+        table.insert(col_struct.power_injection, PowerInjection(i));
+        table.insert(col_struct.renewable      , Renewable(i));
+        table.insert(col_struct.study          , Study(i));
+        table.insert(col_struct.system         , System(i));
+        table.insert(col_struct.thermal        , Thermal(i));
+        
+        table.insert(col_struct.case_dir_list  , Generic(i):dirname());
+        
+        -- Loading info files from each case
+        info_struct[i] = load_info_file("SDDP.info",i);
+        
+        info(info_struct[i].model);
+        info(info_struct[i].hash);
+    end
 end
+
+local function remove_case_info(col_struct, info_struct, case_index)
+    table.remove(col_struct.battery        , Battery(case_index));
+    table.remove(col_struct.bus            , Bus(case_index));
+    table.remove(col_struct.circuit        , Circuit(case_index));
+    table.remove(col_struct.generic        , Generic(case_index));
+    table.remove(col_struct.hydro          , Hydro(case_index));
+    table.remove(col_struct.interconnection, Interconnection(case_index));
+    table.remove(col_struct.power_injection, PowerInjection(case_index));
+    table.remove(col_struct.renewable      , Renewable(case_index));
+    table.remove(col_struct.study          , Study(case_index));
+    table.remove(col_struct.system         , System(case_index));
+    table.remove(col_struct.thermal        , Thermal(case_index));
+          
+    table.remove(col_struct.case_dir_list  , generic[case_index]:dirname());
+    
+    -- Loading info files from each case
+    table.remove(info_struct, case_index);
+end 
 
 -----------------------------------------------------------------------------------------------
 -- Infeasibility report function
@@ -103,7 +107,7 @@ end
 -- Case summary report function
 -----------------------------------------------------------------------------------------------
 
-local function create_tab_summary()
+local function create_tab_summary(col_struct, info_struct)
     local tab = Tab("Case summary");
     tab:push("# Case summary");
 
@@ -117,8 +121,8 @@ local function create_tab_summary()
     local description = {};
 
     for i = 1, studies do
-        table.insert(label, generic[i]:cloudname());
-        table.insert(path, generic[i]:path());
+        table.insert(label,col_struct.generic[i]:cloudname());
+        table.insert(path, col_struct.generic[i]:path());
 
         local study = Study(i);
         table.insert(description, study:get_parameter("Descricao", ""));
@@ -183,35 +187,35 @@ local function create_tab_summary()
     local hrep_val = {};
     local netrep_val = {};
     for i = 1, studies do
-        header_string = header_string .. " | " .. case_dir_list[i];
+        header_string = header_string             .. " | " .. col_struct.case_dir_list[i];
         lower_header_string = lower_header_string .. "|-----------";
-        nstg_string = nstg_string .. " | " .. tostring(study[i]:stages());
-        ini_year_string = ini_year_string .. " | " .. tostring(study[i]:initial_year());
-        nblk_string = nblk_string .. " | " .. tostring(study[i]:get_parameter("NumberBlocks", -1));
-        nforw_string = nforw_string .. " | " .. tostring(study[i]:scenarios());
-        nback_string = nback_string .. " | " .. tostring(study[i]:openings());
-
+        nstg_string = nstg_string                 .. " | " .. tostring(col_struct.study[i]:stages());
+        ini_year_string = ini_year_string         .. " | " .. tostring(col_struct.study[i]:initial_year());
+        nblk_string = nblk_string                 .. " | " .. tostring(col_struct.study[i]:get_parameter("NumberBlocks", -1));
+        nforw_string = nforw_string               .. " | " .. tostring(col_struct.study[i]:scenarios());
+        nback_string = nback_string               .. " | " .. tostring(col_struct.study[i]:openings());
+ 
         hrep_val[i] = "no";
-        if study[i]:get_parameter("SIMH", -1) == 2 then
+        if col_struct.study[i]:get_parameter("SIMH", -1) == 2 then
             hrep_val[i] = "yes";
         end
         hrep_string = hrep_string .. " | " .. hrep_val[i];
 
         netrep_val[i] = "no";
-        if study[i]:get_parameter("Rede", -1) == 1 then
+        if col_struct.study[i]:get_parameter("Rede", -1) == 1 then
             netrep_val[i] = "yes";
         end
         netrep_string = netrep_string .. " | " .. netrep_val[i];
     end
-    header_string = header_string .. "|";
+    header_string = header_string             .. "|";
     lower_header_string = lower_header_string .. "|";
-    nstg_string = nstg_string .. "|";
-    ini_year_string = ini_year_string .. "|";
-    nblk_string = nblk_string .. "|";
-    nforw_string = nforw_string .. "|";
-    nback_string = nback_string .. "|";
-    hrep_string = hrep_string .. "|";
-    netrep_string = netrep_string .. "|";
+    nstg_string = nstg_string                 .. "|";
+    ini_year_string = ini_year_string         .. "|";
+    nblk_string = nblk_string                 .. "|";
+    nforw_string = nforw_string               .. "|";
+    nback_string = nback_string               .. "|";
+    hrep_string = hrep_string                 .. "|";
+    netrep_string = netrep_string             .. "|";
 
     tab:push(header_string);
     tab:push(lower_header_string);
@@ -225,31 +229,31 @@ local function create_tab_summary()
 
     tab:push("## Dimensions");
 
-    local sys_string = "| Systems ";
+    local sys_string     = "| Systems ";
     local battery_string = "| Batteries ";
-    local bus_string = "| Buses ";
+    local bus_string     = "| Buses ";
     local circuit_string = "| Circuits ";
-    local interc_string = "| Interconnections ";
-    local hydro_string = "| Hydro plants ";
-    local pinj_string = "| Power injections ";
-    local renw_string = "| Renewable plants ";
+    local interc_string  = "| Interconnections ";
+    local hydro_string   = "| Hydro plants ";
+    local pinj_string    = "| Power injections ";
+    local renw_string    = "| Renewable plants ";
     local thermal_string = "| Thermal plants ";
 
     for i = 1, studies do
-        sys_string = sys_string .. " | " .. tostring(#system[i]:labels());
-        battery_string = battery_string .. " | " .. tostring(#battery[i]:labels());
-
-        if netrep_val == "yes" then
-            bus_string = bus_string .. " | " .. tostring(#bus[i]:labels());
-            circuit_string = circuit_string .. " | " .. tostring(#circuit[i]:labels());
+        sys_string = sys_string             .. " | " .. tostring(#col_struct.system[i]:labels());
+        battery_string = battery_string     .. " | " .. tostring(#col_struct.battery[i]:labels());
+                                            
+        if netrep_val == "yes" then         
+            bus_string = bus_string         .. " | " .. tostring(#col_struct.bus[i]:labels());
+            circuit_string = circuit_string .. " | " .. tostring(#col_struct.circuit[i]:labels());
         else
-            interc_string = interc_string .. " | " .. tostring(#interconnection[i]:labels());
+            interc_string = interc_string   .. " | " .. tostring(#col_struct.interconnection[i]:labels());
         end
 
-        hydro_string = hydro_string .. " | " .. tostring(#hydro[i]:labels());
-        pinj_string = pinj_string .. " | " .. tostring(#power_injection[i]:labels());
-        renw_string = renw_string .. " | " .. tostring(#renewable[i]:labels());
-        thermal_string = thermal_string .. " | " .. tostring(#thermal[i]:labels());
+        hydro_string   = hydro_string   .. " | " .. tostring(#col_struct.hydro[i]:labels());
+        pinj_string    = pinj_string    .. " | " .. tostring(#col_struct.power_injection[i]:labels());
+        renw_string    = renw_string    .. " | " .. tostring(#col_struct.renewable[i]:labels());
+        thermal_string = thermal_string .. " | " .. tostring(#col_struct.thermal[i]:labels());
     end
 
     tab:push(header_string);
@@ -274,12 +278,12 @@ end
 -- Inflow energy report function
 -----------------------------------------------------------------------------------------------
 
-local function create_inflow_energy()
+local function create_inflow_energy(col_struct)
     local tab = Tab("Inflow energy");
 
     local inferg = {};
     for i = 1, studies do
-        inferg[i] = generic[i]:load("sddp_dashboard_input_enaflu");
+        inferg[i] = col_struct.generic[i]:load("sddp_dashboard_input_enaflu");
     end
 
     -- Color vectors
@@ -288,8 +292,8 @@ local function create_inflow_energy()
         for i = 1, studies do
 
             -- Confidence interval
-            chart:add_area_range(inferg[i]:select_agent(1):add_prefix(case_dir_list[i] .. " - "), inferg[i]:select_agent(3), { color = { light_global_color[i], light_global_color[i] } });
-            chart:add_line(inferg[i]:select_agent(2):add_prefix(case_dir_list[i] .. " - ")); -- average
+            chart:add_area_range(inferg[i]:select_agent(1):add_prefix(col_struct.case_dir_list[i] .. " - "), inferg[i]:select_agent(3), { color = { light_global_color[i], light_global_color[i] } });
+            chart:add_line(inferg[i]:select_agent(2):add_prefix(col_struct.case_dir_list[i] .. " - ")); -- average
         end
     else
         -- Confidence interval
@@ -308,9 +312,9 @@ end
 -- Policy report functions
 -----------------------------------------------------------------------------------------------
 
-local function get_conv_file_info(file_list, systems, horizons, case_index)
+local function get_conv_file_info(col_struct, file_list, systems, horizons, case_index)
     -- Loading file
-    local sddppol = generic[case_index]:load_table("sddppol.csv");
+    local sddppol = col_struct.generic[case_index]:load_table("sddppol.csv");
 
     local file_name = "";
     for i = 1, #sddppol do
@@ -321,9 +325,9 @@ local function get_conv_file_info(file_list, systems, horizons, case_index)
     end
 end
 
-local function get_convergence_file_agents(file_list, conv_age, cuts_age, time_age, case_index)
+local function get_convergence_file_agents(col_struct, file_list, conv_age, cuts_age, time_age, case_index)
     for i, file in ipairs(file_list) do
-        local conv_file = generic[case_index]:load(file);
+        local conv_file = col_struct.generic[case_index]:load(file);
         conv_age[i] = conv_file:select_agents({ 1, 2, 3, 4 }); -- Zinf, Zsup - Tol, Zsup, Zsup + Tol  
         cuts_age[i] = conv_file:select_agents({ 5, 6 }); -- Optimality, Feasibility 
         time_age[i] = conv_file:select_agents({ 7, 8 }); -- Forw. time, Back. time
@@ -366,28 +370,28 @@ end
 -- Heatmap report functions
 -----------------------------------------------------------------------------------------------
 
-local function create_penalty_proportion_graph(tab, i)
-    local penp = generic[i]:load("sddppenp");
+local function create_penalty_proportion_graph(tab, col_struct, i)
+    local penp = col_struct.generic[i]:load("sddppenp");
     local chart = Chart("Share of violation penalties and deficit in the cost of each stage/scenario");
     chart:add_heatmap(penp, { showInLegend = false, stops = { { 0.0, "#4E79A7" }, { 0.5, "#FBEEB3" }, { 1.0, "#C64B3E" } }, stopsMin = 0.0, stopsMax = 100.0 });
     tab:push(chart);
 end
 
-local function create_conv_map_graph(tab, i)
-    local conv_map = generic[i]:load("sddpconvmap");
+local function create_conv_map_graph(tab, col_struct, i)
+    local conv_map = col_struct.generic[i]:load("sddpconvmap");
     local chart = Chart("Convergence map");
     chart:add_heatmap(conv_map, { showInLegend = false, stops = { { 0.0, "#C64B3E" }, { 0.5, "#FBEEB3" }, { 1.0, "#4E79A7" } }, stopsMin = 0, stopsMax = 2 });
     tab:push(chart);
 end
 
-local function create_hourly_sol_status_graph(tab, i)
-    local status = generic[i]:load("sddpstatus");
+local function create_hourly_sol_status_graph(tab, col_struct, i)
+    local status = col_struct.generic[i]:load("sddpstatus");
     local chart = Chart("Execution status per stage and scenario");
     chart:add_heatmap(status, { showInLegend = false, stops = { { 0.0, "#8ACE7E" }, { 0.33, "#4E79A7" }, { 0.66, "#C64B3E" }, { 1.0, "#FBEEB3" } }, stopsMin = 0, stopsMax = 3 });
     tab:push(chart);
 end
 
-local function create_pol_report()
+local function create_pol_report(col_struct)
     local tab = Tab("Policy");
 
     local total_cost_age;
@@ -405,8 +409,8 @@ local function create_pol_report()
     local conv_file;
 
     -- Convergence report
-    get_conv_file_info(file_list, systems, horizon, 1);
-    get_convergence_file_agents(file_list, conv_data, cuts_data, time_data, 1);
+    get_conv_file_info(col_struct, file_list, systems, horizon, 1);
+    get_convergence_file_agents(col_struct, file_list, conv_data, cuts_data, time_data, 1);
 
     -- Creating policy report
     for i, file in ipairs(file_list) do
@@ -420,7 +424,7 @@ local function create_pol_report()
             local chart_time_back = Chart("Execution time - Backward");
 
             for j = 1, studies do
-                conv_file = generic[j]:load(file);
+                conv_file = col_struct.generic[j]:load(file);
                 conv_age = conv_file:select_agents({ 1, 2, 3, 4 }); -- Zinf        ,Zsup - Tol  ,Zsup        ,Zsup + Tol  
                 cuts_age = conv_file:select_agents({ 5, 6 }); -- Optimality  ,Feasibility 
                 time_age = conv_file:select_agents({ 7, 8 }); -- Forw. time, Back. time
@@ -464,12 +468,12 @@ local function create_pol_report()
             end
         else
             -- Get operation mode parameter
-            oper_mode = study[1]:get_parameter("Opcion", -1); -- 1=AIS; 2=COO; 3=INT;    
+            oper_mode = col_struct.study[1]:get_parameter("Opcion", -1); -- 1=AIS; 2=COO; 3=INT;    
 
             nsys = calculate_number_of_systems(systems);
             graph_sim_cost = false;
 
-            conv_file = generic[1]:load(file);
+            conv_file = col_struct.generic[1]:load(file);
             conv_age = conv_file:select_agents({ 1, 2, 3, 4 }); -- Zinf        ,Zsup - Tol  ,Zsup        ,Zsup + Tol  
             cuts_age = conv_file:select_agents({ 5, 6 }); -- Optimality  ,Feasibility 
             time_age = conv_file:select_agents({ 7, 8 }); -- Forw. time, Back. time
@@ -477,10 +481,10 @@ local function create_pol_report()
             -- If there is only one FCF file in the case, print final simulation cost as columns
             if ((oper_mode < 3 and nsys == 1) or oper_mode == 3) then
                 graph_sim_cost = true;
-                local objcop = Generic():load("objcop");
+                local objcop = col_struct.generic[1]:load("objcop");
                 local discount_rate = require("sddp/discount_rate")(1);
 
-                if study[1]:get_parameter("SIMH", -1) == 2 then -- Hourly model writes objcop with different columns
+                if col_struct.study[1]:get_parameter("SIMH", -1) == 2 then -- Hourly model writes objcop with different columns
                     -- Remove first column(Future cost) of hourly objcop
                     immediate_cost = (objcop:remove_agent(1) / discount_rate):aggregate_agents(BY_SUM(), "Immediate cost"):aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):to_list()[1];
                 else
@@ -518,7 +522,7 @@ local function create_pol_report()
 
     -- Convergence heatmap
     if studies == 1 then
-        create_conv_map_graph(tab, 1);
+        create_conv_map_graph(tab, col_struct, 1);
     end
 
     return tab;
@@ -528,7 +532,7 @@ end
 -- Simulation objetive function cost terms report function
 -----------------------------------------------------------------------------------------------
 
-local function create_sim_report()
+local function create_sim_report(col_struct)
     local tab = Tab("Simulation");
 
     local chart = Chart("Breakdown of total operating costs");
@@ -560,10 +564,10 @@ local function create_sim_report()
     -- Heatmap after the pizza graph in dashboard
     if studies == 1 then
         -- Creating simulation heatmap graphics
-        if study[1]:get_parameter("SIMH", -1) == 2 then
-            create_hourly_sol_status_graph(tab, 1);
+        if col_struct.study[1]:get_parameter("SIMH", -1) == 2 then
+            create_hourly_sol_status_graph(tab, col_struct, 1);
         end
-        create_penalty_proportion_graph(tab, 1);
+        create_penalty_proportion_graph(tab, col_struct, 1);
     end
 
     return tab;
@@ -590,25 +594,39 @@ local function create_costs_and_revs()
             costs:save("sddp_dashboard_cost_tot", { remove_zeros = true, csv = true });
         end
 
-        -- sddp_dashboard_cost_disp
-        local disp = concatenate(costs:aggregate_agents(BY_SUM(), "P10"):aggregate_scenarios(BY_PERCENTILE(10)), costs:aggregate_agents(BY_SUM(), "Average"):aggregate_scenarios(BY_AVERAGE()), costs:aggregate_agents(BY_SUM(), "P90"):aggregate_scenarios(BY_PERCENTILE(90)));
-
+        local disp;
         if studies > 1 then
+            -- sddp_dashboard_cost_disp
+            disp = concatenate(costs:aggregate_agents(BY_SUM(), "P10"):aggregate_scenarios(BY_PERCENTILE(10)),
+                               costs:aggregate_agents(BY_SUM(), "Average"):aggregate_scenarios(BY_AVERAGE()), 
+                               costs:aggregate_agents(BY_SUM(), "P90"):aggregate_scenarios(BY_PERCENTILE(90)));
+
             if is_greater_than_zero(disp) then
-                chart:add_area_range(disp:select_agent(1):add_prefix(case_dir_list[i] .. " - "), disp:select_agent(3), { color = light_global_color[i] }); -- Confidence interval
-                chart:add_line(disp:select_agent(2):add_prefix(case_dir_list[i] .. " - ")); -- Average
+                chart:add_area_range(disp:select_agent(1):add_prefix(col_struct.case_dir_list[i] .. " - "), disp:select_agent(3), { color = light_global_color[i] }); -- Confidence interval
+                chart:add_line(disp:select_agent(2):add_prefix(col_struct.case_dir_list[i] .. " - ")); -- Average
             end
         else
+            -- sddp_dashboard_cost_disp
+            
+            disp = concatenate(costs:aggregate_agents(BY_SUM(), "Min."):aggregate_scenarios(BY_MIN()),
+                               costs:aggregate_agents(BY_SUM(), "P25"):aggregate_scenarios(BY_PERCENTILE(25)),
+                               costs:aggregate_agents(BY_SUM(), "P50"):aggregate_scenarios(BY_PERCENTILE(50)),
+                               costs:aggregate_agents(BY_SUM(), "P75"):aggregate_scenarios(BY_PERCENTILE(75)),
+                               costs:aggregate_agents(BY_SUM(), "Max."):aggregate_scenarios(BY_MAX()));
+                               
             if is_greater_than_zero(disp) then
-                chart:add_area_range(disp:select_agent(1), disp:select_agent(3), { color = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
-                chart:add_line(disp:select_agent(2), { color = { "#F02720" } }); -- Average
+                chart:add_box_plot(disp:select_agent(1),
+                                   disp:select_agent(2),
+                                   disp:select_agent(3),
+                                   disp:select_agent(4),
+                                   disp:select_agent(5));
             end
         end
 
         -- sddp_dashboard_cost_avg
         local costs_avg = costs:aggregate_scenarios(BY_AVERAGE()):select_agent(1);
         if studies > 1 then
-            costs_avg = costs_avg:add_prefix(case_dir_list[i] .. " - ");
+            costs_avg = costs_avg:add_prefix(col_struct.case_dir_list[i] .. " - ");
         end
 
         if is_greater_than_zero(costs_avg) then
@@ -616,6 +634,7 @@ local function create_costs_and_revs()
         end
     end
 
+    info(#chart);
     if #chart > 0 then
         tab:push(chart);
     end
@@ -631,7 +650,7 @@ end
 -- Marginal cost report function
 -----------------------------------------------------------------------------------------------
 
-local function create_marg_costs()
+local function create_marg_costs(col_struct)
     local tab = Tab("Marginal costs");
 
     local cmg = {};
@@ -640,7 +659,7 @@ local function create_marg_costs()
 
     local sys = {};
     for i = 1, studies do
-        sys[i] = System(i);
+        sys[i] = col_struct.system[i];
     end
 
     for i = 1, studies do
@@ -654,7 +673,7 @@ local function create_marg_costs()
             cmg_aggyear = cmg[i]:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_AVERAGE(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM);
 
             -- Add marginal costs outputs
-            chart:add_categories(cmg_aggyear, case_dir_list[i]); -- Annual Marg. cost     
+            chart:add_categories(cmg_aggyear, col_struct.case_dir_list[i]); -- Annual Marg. cost     
         end
     else
         cmg_aggyear = cmg[1]:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_AVERAGE(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE());
@@ -668,7 +687,7 @@ local function create_marg_costs()
         for i, agent in ipairs(agents) do
             local chart = Chart(agent);
             for j = 1, studies do
-                cmg_aggsum = cmg[j]:select_agent(agent):rename_agent(case_dir_list[j]):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE())
+                cmg_aggsum = cmg[j]:select_agent(agent):rename_agent(col_struct.case_dir_list[j]):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE())
                 chart:add_line(cmg_aggsum); -- Average marg. cost per stage
             end
             tab:push(chart);
@@ -687,7 +706,7 @@ end
 -- Generation report function
 -----------------------------------------------------------------------------------------------
 
-local function create_gen_report()
+local function create_gen_report(col_struct)
     local tab = Tab("Generation");
 
     -- Color preferences
@@ -732,25 +751,25 @@ local function create_gen_report()
 
     -- Loading generations files
     for i = 1, studies do
-        gerter[i] = thermal[i]:load("gerter");
-        gerhid[i] = hydro[i]:load("gerhid");
-        gergnd[i] = renewable[i]:load("gergnd");
-        gerbat[i] = battery[i]:load("gerbat");
-        potinj[i] = power_injection[i]:load("powinj");
-        defcit[i] = system[i]:load("defcit");
+        gerter[i] = col_struct.thermal[i]:load("gerter");
+        gerhid[i] = col_struct.hydro[i]:load("gerhid");
+        gergnd[i] = col_struct.renewable[i]:load("gergnd");
+        gerbat[i] = col_struct.battery[i]:load("gerbat");
+        potinj[i] = col_struct.power_injection[i]:load("powinj");
+        defcit[i] = col_struct.system[i]:load("defcit");
     end
 
     if studies > 1 then
-        chart_tot_gerhid = Chart("Total Hydro");
-        chart_tot_sml_hid = Chart("Total Small Hydro");
-        chart_tot_gerter = Chart("Total Thermal");
+        chart_tot_gerhid     = Chart("Total Hydro");
+        chart_tot_sml_hid    = Chart("Total Small Hydro");
+        chart_tot_gerter     = Chart("Total Thermal");
         chart_tot_other_renw = Chart("Total Renewable - Other tech.");
-        chart_tot_renw_wind = Chart("Total Renewable - Wind");
+        chart_tot_renw_wind  = Chart("Total Renewable - Wind");
         chart_tot_renw_solar = Chart("Total Renewable - Solar");
-        chart_tot_renw_shyd = Chart("Total Renewable - Small hydro");
-        chart_tot_gerbat = Chart("Total Battery");
-        chart_tot_potinj = Chart("Total Power Injection");
-        chart_tot_defcit = Chart("Total Deficit");
+        chart_tot_renw_shyd  = Chart("Total Renewable - Small hydro");
+        chart_tot_gerbat     = Chart("Total Battery");
+        chart_tot_potinj     = Chart("Total Power Injection");
+        chart_tot_defcit     = Chart("Total Deficit");
     else
         chart = Chart("Total generation");
     end
@@ -759,49 +778,49 @@ local function create_gen_report()
     for i = 1, studies do
 
         if studies > 1 then
-            total_hydro_gen_age = case_dir_list[i] .. " - ";
-            total_batt_gen_age = case_dir_list[i] .. " - ";
-            total_deficit_age = case_dir_list[i] .. " - ";
-            total_pot_inj_age = case_dir_list[i] .. " - ";
-            total_other_renw_gen_age = case_dir_list[i] .. " - ";
-            total_wind_gen_age = case_dir_list[i] .. " - ";
-            total_solar_gen_age = case_dir_list[i] .. " - ";
+            total_hydro_gen_age       = case_dir_list[i] .. " - ";
+            total_batt_gen_age        = case_dir_list[i] .. " - ";
+            total_deficit_age         = case_dir_list[i] .. " - ";
+            total_pot_inj_age         = case_dir_list[i] .. " - ";
+            total_other_renw_gen_age  = case_dir_list[i] .. " - ";
+            total_wind_gen_age        = case_dir_list[i] .. " - ";
+            total_solar_gen_age       = case_dir_list[i] .. " - ";
             total_small_hydro_gen_age = case_dir_list[i] .. " - ";
-            total_thermal_gen_age = case_dir_list[i] .. " - ";
-        else
-            total_hydro_gen_age = "";
-            total_batt_gen_age = "";
-            total_deficit_age = "";
-            total_pot_inj_age = "";
-            total_other_renw_gen_age = "";
-            total_wind_gen_age = "";
-            total_solar_gen_age = "";
+            total_thermal_gen_age     = case_dir_list[i] .. " - ";
+        else 
+            total_hydro_gen_age       = "";
+            total_batt_gen_age        = "";
+            total_deficit_age         = "";
+            total_pot_inj_age         = "";
+            total_other_renw_gen_age  = "";
+            total_wind_gen_age        = "";
+            total_solar_gen_age       = "";
             total_small_hydro_gen_age = "";
-            total_thermal_gen_age = "";
+            total_thermal_gen_age     = "";
         end
 
-        total_hydro_gen_age = total_hydro_gen_age .. "Total Hydro";
-        total_batt_gen_age = total_batt_gen_age .. "Total Battery";
-        total_deficit_age = total_deficit_age .. "Total Deficit";
-        total_pot_inj_age = total_pot_inj_age .. "Total P. Inj.";
-        total_other_renw_gen_age = total_other_renw_gen_age .. "Total Renewable - Other tech.";
-        total_wind_gen_age = total_wind_gen_age .. "Total Renewable - Wind";
-        total_solar_gen_age = total_solar_gen_age .. "Total Renewable - Solar";
+        total_hydro_gen_age       = total_hydro_gen_age       .. "Total Hydro";
+        total_batt_gen_age        = total_batt_gen_age        .. "Total Battery";
+        total_deficit_age         = total_deficit_age         .. "Total Deficit";
+        total_pot_inj_age         = total_pot_inj_age         .. "Total P. Inj.";
+        total_other_renw_gen_age  = total_other_renw_gen_age  .. "Total Renewable - Other tech.";
+        total_wind_gen_age        = total_wind_gen_age        .. "Total Renewable - Wind";
+        total_solar_gen_age       = total_solar_gen_age       .. "Total Renewable - Solar";
         total_small_hydro_gen_age = total_small_hydro_gen_age .. "Total Renewable - Small hydro";
-        total_thermal_gen_age = total_thermal_gen_age .. "Total Thermal";
+        total_thermal_gen_age     = total_thermal_gen_age     .. "Total Thermal";
 
         -- Data processing
         total_hydro_gen = gerhid[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_hydro_gen_age);
-        total_batt_gen = gerbat[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_batt_gen_age);
-        total_deficit = defcit[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_deficit_age);
-        total_pot_inj = potinj[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_pot_inj_age);
+        total_batt_gen  = gerbat[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_batt_gen_age);
+        total_deficit   = defcit[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_deficit_age);
+        total_pot_inj   = potinj[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_pot_inj_age);
 
         -- Renewable generation is broken into 3 types
-        total_other_renw_gen = gergnd[i]:select_agents(renewable[i].tech_type:ne(1)):select_agents(renewable[i].tech_type:ne(2)):select_agents(renewable[i].tech_type:ne(4));
-        total_other_renw_gen = total_other_renw_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_other_renw_gen_age);
-        total_wind_gen = gergnd[i]:select_agents(renewable[i].tech_type:eq(1)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_wind_gen_age);
-        total_solar_gen = gergnd[i]:select_agents(renewable[i].tech_type:eq(2)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_solar_gen_age);
-        total_small_hydro_gen = gergnd[i]:select_agents(renewable[i].tech_type:eq(4)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_small_hydro_gen_age);
+        total_other_renw_gen  = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:ne(1)):select_agents(col_struct.renewable[i].tech_type:ne(2)):select_agents(col_struct.renewable[i].tech_type:ne(4));
+        total_other_renw_gen  = total_other_renw_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_other_renw_gen_age);
+        total_wind_gen        = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(1)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_wind_gen_age);
+        total_solar_gen       = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(2)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_solar_gen_age);
+        total_small_hydro_gen = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(4)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_small_hydro_gen_age);
 
         total_thermal_gen = gerter[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_thermal_gen_age);
 
@@ -882,28 +901,28 @@ local function create_gen_report()
         -- Generation per system report
         local agents = generic[1]:load("cmgdem"):agents();
         for i, agent in ipairs(agents) do
-            chart_tot_gerhid = Chart("Total Hydro");
-            chart_tot_gerter = Chart("Total Thermal");
+            chart_tot_gerhid     = Chart("Total Hydro");
+            chart_tot_gerter     = Chart("Total Thermal");
             chart_tot_renw_other = Chart("Total Renewable - Other tech.");
-            chart_tot_renw_wind = Chart("Total Renewable - Wind");
+            chart_tot_renw_wind  = Chart("Total Renewable - Wind");
             chart_tot_renw_solar = Chart("Total Renewable - Solar");
-            chart_tot_renw_shyd = Chart("Total Renewable - Small hydro");
-            chart_tot_gerbat = Chart("Total Battery");
-            chart_tot_potinj = Chart("Total Power Injection");
-            chart_tot_defcit = Chart("Total Deficit");
+            chart_tot_renw_shyd  = Chart("Total Renewable - Small hydro");
+            chart_tot_gerbat     = Chart("Total Battery");
+            chart_tot_potinj     = Chart("Total Power Injection");
+            chart_tot_defcit     = Chart("Total Deficit");
 
             for i = 1, studies do
                 -- Data processing
                 total_hydro_gen = gerhid[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(case_dir_list[i] .. " - Total Hydro");
-                total_batt_gen = gerbat[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(case_dir_list[i] .. " - Total Battery");
-                total_deficit = defcit[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(case_dir_list[i] .. " - Total Deficit");
-                total_pot_inj = potinj[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(case_dir_list[i] .. " - Total P. Inj.");
-
+                total_batt_gen  = gerbat[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(case_dir_list[i] .. " - Total Battery");
+                total_deficit   = defcit[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(case_dir_list[i] .. " - Total Deficit");
+                total_pot_inj   = potinj[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(case_dir_list[i] .. " - Total P. Inj.");
+ 
                 -- Renewable generation is broken into 3 types
-                total_other_renw_gen = gergnd[i]:select_agents(renewable[i].tech_type:ne(1)):select_agents(renewable[i].tech_type:ne(2)):select_agents(renewable[i].tech_type:ne(4));
-                total_other_renw_gen = total_other_renw_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(case_dir_list[i] .. " - Total Renewable - Other tech.");
-                total_wind_gen = gergnd[i]:select_agents(renewable[i].tech_type:eq(1)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(case_dir_list[i] .. " - Total Renewable - Wind");
-                total_solar_gen = gergnd[i]:select_agents(renewable[i].tech_type:eq(2)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(case_dir_list[i] .. " - Total Renewable - Solar");
+                total_other_renw_gen  = gergnd[i]:select_agents(renewable[i].tech_type:ne(1)):select_agents(renewable[i].tech_type:ne(2)):select_agents(renewable[i].tech_type:ne(4));
+                total_other_renw_gen  = total_other_renw_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(case_dir_list[i] .. " - Total Renewable - Other tech.");
+                total_wind_gen        = gergnd[i]:select_agents(renewable[i].tech_type:eq(1)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(case_dir_list[i] .. " - Total Renewable - Wind");
+                total_solar_gen       = gergnd[i]:select_agents(renewable[i].tech_type:eq(2)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(case_dir_list[i] .. " - Total Renewable - Solar");
                 total_small_hydro_gen = gergnd[i]:select_agents(renewable[i].tech_type:eq(4)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(case_dir_list[i] .. " - Total Renewable - Small hydro");
 
                 total_thermal_gen = gerter[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(case_dir_list[i] .. " - Total Thermal");
@@ -971,19 +990,19 @@ local function create_gen_report()
     return tab;
 end
 
-local function create_risk_report()
+local function create_risk_report(col_struct)
     local tab = Tab("Risk");
     local chart = Chart("Deficit risk by sub-system");
 
     if studies > 1 then
         for i = 1, studies do
-            risk_file = system[i]:load("sddprisk"):aggregate_agents(BY_AVERAGE(), Collection.SYSTEM);
+            risk_file = col_struct.system[i]:load("sddprisk"):aggregate_agents(BY_AVERAGE(), Collection.SYSTEM);
 
             -- Add marginal costs outputs
             chart:add_categories(risk_file, case_dir_list[i]); -- Annual Marg. cost     
         end
     else
-        risk_file = system[1]:load("sddprisk");
+        risk_file = col_struct.system[1]:load("sddprisk");
         chart:add_column(risk_file);
     end
 
@@ -1034,7 +1053,7 @@ local viol_report_structs = {
     { name = "finjvio", title = "NE" }
 }
 
-local function create_viol_report(tab, viol_struct, suffix)
+local function create_viol_report(tab, col_struct, viol_struct, suffix)
     local file_name;
     local viol_file;
 
@@ -1042,14 +1061,14 @@ local function create_viol_report(tab, viol_struct, suffix)
         for i, struct in ipairs(viol_struct) do
 
             file_name = "sddp_dashboard_viol_" .. suffix .. "_" .. struct.name;
-            viol_file = generic[1]:load(file_name);
+            viol_file = col_struct.generic[1]:load(file_name);
 
             -- Assuming agents in reference case(1st case) are the same as the ones in the others
             local agents = viol_file:agents();
             for j, agent in ipairs(agents) do
                 local chart = Chart(struct.title .. " - " .. agent);
                 for k = 1, studies do
-                    viol_file = generic[k]:load(file_name):select_agent(agent):rename_agent(case_dir_list[k]);
+                    viol_file = col_struct.generic[k]:load(file_name):select_agent(agent):rename_agent(case_dir_list[k]);
                     if viol_file:loaded() then
                         chart:add_column_stacking(viol_file);
                     end
@@ -1060,7 +1079,7 @@ local function create_viol_report(tab, viol_struct, suffix)
     else
         for i, struct in ipairs(viol_struct) do
             file_name = "sddp_dashboard_viol_" .. suffix .. "_" .. struct.name;
-            viol_file = generic[1]:load(file_name);
+            viol_file = col_struct.generic[1]:load(file_name);
             if viol_file:loaded() then
                 local chart = Chart(struct.title);
                 chart:add_column_stacking(viol_file);
@@ -1070,17 +1089,43 @@ local function create_viol_report(tab, viol_struct, suffix)
     end
 end
 
------------------------------------------------------------------------------------------------
--- Dashboard tab configuration
------------------------------------------------------------------------------------------------
+-- Collection arrays struct
+local col_struct = {
+    battery         = {},
+    bus             = {},
+    circuit         = {},
+    generic         = {},
+    hydro           = {},
+    interconnection = {},
+    power_injection = {},
+    renewable       = {},
+    study           = {},
+    system          = {},
+    thermal         = {},
+    case_dir_list   = {}  -- Cases' directory names
+};
 
-local dashboard = Dashboard();
+-- Model info structure
+local info_struct = {};
+
+load_model_info(col_struct,info_struct);
+
+info(#col_struct.generic);
+
+info(tostring(info_struct.version));
+info(tostring(info_struct.hash));
 
 -- Dashboard name configuration
 dashboard_name = "sddp-dashboard";
 if studies > 1 then
     dashboard_name = "sddp-compare";
 end
+
+-----------------------------------------------------------------------------------------------
+-- Dashboard tab configuration
+-----------------------------------------------------------------------------------------------
+
+local dashboard = Dashboard();
 
 -- Main tabs
 local tab_input_data = Tab("Input data");
@@ -1109,13 +1154,10 @@ tab_violations:set_icon("siren");
 tab_results:set_icon("line-chart");
 
 -- Input data
-tab_input_data:push(create_tab_summary());
+tab_input_data:push(create_tab_summary(col_struct, info_struct));
 if studies == 1 then
-    info("Aqui 1");
-    info(info_struct[1].status);
     if info_struct[1].status > 0 then
-        info("Aqui 2");
-        tab_inf = Tab("Infeasibility report");
+        local tab_inf = Tab("Infeasibility report");
         dash_infeasibility(tab_inf,info_struct[1].infrep .. ".out",1);
         
         dashboard:push(tab_input_data);
@@ -1124,20 +1166,42 @@ if studies == 1 then
         dashboard:save(dashboard_name);
         return
     end
+else
+    local has_inf = {};
+    for i = 1, studies do
+        if info_struct[i].status > 0 then
+            table.insert(has_inf, i)
+        end
+    end
+    
+    if #has_inf > 0 then
+        local tab_inf = Tab("Infeasibility report");
+        for i = 1, #has_inf do
+            j = has_inf[i]; -- Pointer to case
+            local tab_inf_sub = Tab(case_dir_list[j]);
+            dash_infeasibility(tab_inf_sub,info_struct[j].infrep .. ".out",j);
+            
+            tab_inf:push(tab_inf_sub);
+            
+            -- Remove from vectors
+            remove_case_info(col_struct, info_struct, j);
+        end
+        studies = #has_inf;
+    end
 end
 
-tab_input_data:push(create_inflow_energy());
+tab_input_data:push(create_inflow_energy(col_struct));
 
 -- Solution quality - Policy report
-tab_solution_quality:push(create_pol_report());
+tab_solution_quality:push(create_pol_report(col_struct));
 
 -- Solution quality - Simulation report
-tab_solution_quality:push(create_sim_report());
+tab_solution_quality:push(create_sim_report(col_struct));
 
 -- Violation
 if studies == 1 then
-    create_viol_report(tab_viol_avg, viol_report_structs, "avg");
-    create_viol_report(tab_viol_max, viol_report_structs, "max");
+    create_viol_report(tab_viol_avg, col_struct, viol_report_structs, "avg");
+    create_viol_report(tab_viol_max, col_struct, viol_report_structs, "max");
 
     tab_violations:push(tab_viol_avg);
     tab_violations:push(tab_viol_max);
@@ -1145,9 +1209,9 @@ end
 
 -- Results
 tab_results:push(create_costs_and_revs());
-tab_results:push(create_marg_costs());
-tab_results:push(create_gen_report());
-tab_results:push(create_risk_report());
+tab_results:push(create_marg_costs(col_struct));
+tab_results:push(create_gen_report(col_struct));
+tab_results:push(create_risk_report(col_struct));
 
 dashboard:push(tab_input_data);
 dashboard:push(tab_solution_quality);
