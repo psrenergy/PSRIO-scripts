@@ -183,15 +183,15 @@ local function create_tab_summary(col_struct, info_struct)
 
     tab:push("## Horizon, resolution and execution options");
 
-    local header_string = "| Case parameter ";
+    local header_string       = "| Case parameter ";
     local lower_header_string = "|---------------";
-    local nstg_string = "| Stages ";
-    local ini_year_string = "| Initial year of study ";
-    local nblk_string = "| Blocks ";
-    local nforw_string = "| Forward series ";
-    local nback_string = "| Backward series ";
-    local hrep_string = "| Hourly representation ";
-    local netrep_string = "| Network representation ";
+    local nstg_string         = "| Stages ";
+    local ini_year_string     = "| Initial year of study ";
+    local nblk_string         = "| Blocks ";
+    local nforw_string        = "| Forward series ";
+    local nback_string        = "| Backward series ";
+    local hrep_string         = "| Hourly representation ";
+    local netrep_string       = "| Network representation ";
 
     local hrep_val = {};
     local netrep_val = {};
@@ -1145,6 +1145,7 @@ local tab_viol_max = Tab("Maximum");
 local tab_inf = Tab("Infeasibility report");
 
 tab_input_data:set_collapsed(false);
+tab_inf:set_disabled(false);
 tab_solution_quality:set_collapsed(true);
 tab_violations:set_collapsed(true);
 tab_results:set_collapsed(true);
@@ -1195,14 +1196,25 @@ else
             -- Remove from vectors
             remove_case_info(col_struct, info_struct, j);
         end
+        
         studies = studies - #has_inf;
+              
+        -- If only one study was successful, comparison does not exist
+        if studies == 1 then
+            dashboard:push(tab_input_data);
+            dashboard:push(tab_inf);
+            dashboard:save(dashboard_name);
+            return
+        end
     end
     
 end
 
+-- Input data inflow energy
 tab_input_data:push(create_inflow_energy(col_struct));
 dashboard:push(tab_input_data);
 
+-- If infeasibilities are present, dashboard
 if #has_inf > 0 then
     dashboard:push(tab_inf);
 end
