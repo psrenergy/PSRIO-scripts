@@ -238,15 +238,18 @@ local function create_tab_summary(col_struct, info_struct)
 
     tab:push("## Dimensions");
 
-    local sys_string     = "| Systems ";
-    local battery_string = "| Batteries ";
-    local bus_string     = "| Buses ";
-    local circuit_string = "| Circuits ";
-    local interc_string  = "| Interconnections ";
-    local hydro_string   = "| Hydro plants ";
-    local pinj_string    = "| Power injections ";
-    local renw_string    = "| Renewable plants ";
-    local thermal_string = "| Thermal plants ";
+    local sys_string      = "| Systems ";
+    local battery_string  = "| Batteries ";
+    local bus_string      = "| Buses ";
+    local circuit_string  = "| Circuits ";
+    local interc_string   = "| Interconnections ";
+    local hydro_string    = "| Hydro plants ";
+    local pinj_string     = "| Power injections ";
+    local renw_w_string   = "| Renewable plants - Wind ";
+    local renw_s_string   = "| Renewable plants - Solar";
+    local renw_sh_string  = "| Renewable plants - Small hydro";
+    local renw_oth_string = "| Renewable plants - Other tech.";
+    local thermal_string  = "| Thermal plants ";
 
     for i = 1, studies do
         sys_string = sys_string             .. " | " .. tostring(#col_struct.system[i]:labels());
@@ -259,10 +262,21 @@ local function create_tab_summary(col_struct, info_struct)
             interc_string = interc_string   .. " | " .. tostring(#col_struct.interconnection[i]:labels());
         end
 
-        hydro_string   = hydro_string   .. " | " .. tostring(#col_struct.hydro[i]:labels());
-        pinj_string    = pinj_string    .. " | " .. tostring(#col_struct.power_injection[i]:labels());
-        renw_string    = renw_string    .. " | " .. tostring(#col_struct.renewable[i]:labels());
-        thermal_string = thermal_string .. " | " .. tostring(#col_struct.thermal[i]:labels());
+        hydro_string    = hydro_string    .. " | " .. tostring(#col_struct.hydro[i]:labels());
+        pinj_string     = pinj_string     .. " | " .. tostring(#col_struct.power_injection[i]:labels());
+        
+        total_renw = #col_struct.renewable[i]:labels();
+        renw_wind  = col_struct.renewable[i].tech_type:select_agents(col_struct.renewable[i].tech_type:eq(1)):agents_size();
+        renw_solar = col_struct.renewable[i].tech_type:select_agents(col_struct.renewable[i].tech_type:eq(2)):agents_size();
+        renw_sh    = col_struct.renewable[i].tech_type:select_agents(col_struct.renewable[i].tech_type:eq(4)):agents_size();
+        renw_oth   = total_renw - renw_wind - renw_solar - renw_sh;
+        
+        renw_sh_string  = renw_sh_string  .. " | " .. tostring(renw_sh);
+        renw_w_string   = renw_w_string   .. " | " .. tostring(renw_wind);
+        renw_s_string   = renw_s_string   .. " | " .. tostring(renw_solar);
+        renw_oth_string = renw_oth_string .. " | " .. tostring(renw_oth);
+        
+        thermal_string  = thermal_string  .. " | " .. tostring(#col_struct.thermal[i]:labels());
     end
 
     tab:push(header_string);
@@ -270,7 +284,10 @@ local function create_tab_summary(col_struct, info_struct)
     tab:push(sys_string);
     tab:push(hydro_string);
     tab:push(thermal_string);
-    tab:push(renw_string);
+    tab:push(renw_w_string);
+    tab:push(renw_s_string);
+    tab:push(renw_sh_string)
+    tab:push(renw_oth_string);
     tab:push(battery_string);
     tab:push(pinj_string);
     if netrep_val == "yes" then
@@ -603,32 +620,17 @@ local function create_costs_and_revs(col_struct)
             costs:save("sddp_dashboard_cost_tot", { remove_zeros = true, csv = true });
         end
 
-        local disp;
-        if studies > 1 then
-            -- sddp_dashboard_cost_disp
-            disp = concatenate(costs:aggregate_agents(BY_SUM(), "P10"):aggregate_scenarios(BY_PERCENTILE(10)),
-                               costs:aggregate_agents(BY_SUM(), "Average"):aggregate_scenarios(BY_AVERAGE()), 
-                               costs:aggregate_agents(BY_SUM(), "P90"):aggregate_scenarios(BY_PERCENTILE(90)));
+        local disp = concatenate(costs:aggregate_agents(BY_SUM(), "P10"):aggregate_scenarios(BY_PERCENTILE(10)), costs:aggregate_agents(BY_SUM(), "Average"):aggregate_scenarios(BY_AVERAGE()), costs:aggregate_agents(BY_SUM(), "P90"):aggregate_scenarios(BY_PERCENTILE(90)));
 
+        if studies > 1 then
             if is_greater_than_zero(disp) then
                 chart:add_area_range(disp:select_agent(1):add_prefix(col_struct.case_dir_list[i] .. " - "), disp:select_agent(3), { color = light_global_color[i] }); -- Confidence interval
                 chart:add_line(disp:select_agent(2):add_prefix(col_struct.case_dir_list[i] .. " - ")); -- Average
             end
         else
-            -- sddp_dashboard_cost_disp
-            
-            disp = concatenate(costs:aggregate_agents(BY_SUM(), "Min."):aggregate_scenarios(BY_MIN()),
-                               costs:aggregate_agents(BY_SUM(), "P25"):aggregate_scenarios(BY_PERCENTILE(25)),
-                               costs:aggregate_agents(BY_SUM(), "P50"):aggregate_scenarios(BY_PERCENTILE(50)),
-                               costs:aggregate_agents(BY_SUM(), "P75"):aggregate_scenarios(BY_PERCENTILE(75)),
-                               costs:aggregate_agents(BY_SUM(), "Max."):aggregate_scenarios(BY_MAX()));
-                               
             if is_greater_than_zero(disp) then
-                chart:add_box_plot(disp:select_agent(1),
-                                   disp:select_agent(2),
-                                   disp:select_agent(3),
-                                   disp:select_agent(4),
-                                   disp:select_agent(5));
+                chart:add_area_range(disp:select_agent(1), disp:select_agent(3), { color = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
+                chart:add_line(disp:select_agent(2), { color = { "#F02720" } }); -- Average
             end
         end
 
@@ -643,7 +645,6 @@ local function create_costs_and_revs(col_struct)
         end
     end
 
-    info(#chart);
     if #chart > 0 then
         tab:push(chart);
     end
