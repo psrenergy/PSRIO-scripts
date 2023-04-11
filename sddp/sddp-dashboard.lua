@@ -456,25 +456,25 @@ local function create_pol_report(col_struct)
                 time_age = conv_file:select_agents({ 7, 8 }); -- Forw. time, Back. time
 
                 -- Confidence interval
-                chart_conv:add_area_range(conv_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup - Tol"), conv_age:select_agents({ 4 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup + Tol"), { color = { light_global_color[j], light_global_color[j] }, xAllowDecimals = false, showInLegend = true });
+                chart_conv:add_area_range(conv_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup - Tol"), conv_age:select_agents({ 4 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup + Tol"), { color = { light_global_color[j], light_global_color[j] }, xUnit = "Iteration", xAllowDecimals = false, showInLegend = true });
 
                 -- Zsup
-                chart_conv:add_line(conv_age:select_agents({ 3 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup"), { color = { main_global_color[j] }, xAllowDecimals = false });
+                chart_conv:add_line(conv_age:select_agents({ 3 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup"), { color = { main_global_color[j] }, xUnit = "Iteration", xAllowDecimals = false });
 
                 -- Zinf
-                chart_conv:add_line(conv_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j] .. " - Zinf"), { color = { main_global_color[j] }, xAllowDecimals = false, dashStyle = "dash" }); -- Zinf
+                chart_conv:add_line(conv_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j] .. " - Zinf"), { color = { main_global_color[j] }, xUnit = "Iteration", xAllowDecimals = false, dashStyle = "dash" }); -- Zinf
 
                 -- Cuts - optimality
-                chart_cut_opt:add_column(cuts_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j]), { xAllowDecimals = false });
+                chart_cut_opt:add_column(cuts_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
 
                 -- Cuts - feasibility
-                chart_cut_feas:add_column(cuts_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j]), { xAllowDecimals = false });
+                chart_cut_feas:add_column(cuts_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
 
                 -- Execution time - forward
-                chart_time_forw:add_column(time_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j]), { xAllowDecimals = false });
+                chart_time_forw:add_column(time_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
 
                 -- Execution time - backward
-                chart_time_back:add_column(time_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j]), { xAllowDecimals = false });
+                chart_time_back:add_column(time_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
             end
 
             if #chart_conv > 0 then
@@ -528,20 +528,20 @@ local function create_pol_report(col_struct)
             end
 
             local chart = Chart("Convergence report");
-            chart:add_area_range(conv_age:select_agents({ 2 }), conv_age:select_agents({ 4 }), { color = { "#ACD98D", "#ACD98D" }, xAllowDecimals = false }); -- Confidence interval
-            chart:add_line(conv_age:select_agents({ 1 }), { color = { "#3CB7CC" }, xAllowDecimals = false }); -- Zinf
-            chart:add_line(conv_age:select_agents({ 3 }), { color = { "#32A251" }, xAllowDecimals = false }); -- Zsup
+            chart:add_area_range(conv_age:select_agents({ 2 }), conv_age:select_agents({ 4 }), { color = { "#ACD98D", "#ACD98D" }, xUnit = "Iteration", xAllowDecimals = false }); -- Confidence interval
+            chart:add_line(conv_age:select_agents({ 1 }), { color = { "#3CB7CC" }, xUnit = "Iteration", xAllowDecimals = false }); -- Zinf
+            chart:add_line(conv_age:select_agents({ 3 }), { color = { "#32A251" }, xUnit = "Iteration", xAllowDecimals = false }); -- Zsup
             if (graph_sim_cost) then
-                chart:add_line(final_sim_cost, { color = { "#D37295" }, xAllowDecimals = false }); -- Final simulation cost
+                chart:add_line(final_sim_cost, { color = { "#D37295" }, xUnit = "Iteration", xAllowDecimals = false }); -- Final simulation cost
             end
             tab:push(chart);
 
             chart = Chart("Number of added cuts report");
-            chart:add_column(cuts_age, { xAllowDecimals = false }); -- Opt and Feas
+            chart:add_column(cuts_age, { xUnit = "Iteration", xAllowDecimals = false }); -- Opt and Feas
             tab:push(chart);
 
             chart = Chart("Forward and backward execution times");
-            chart:add_line(time_age, { xAllowDecimals = false }); -- Forw. and Back. times
+            chart:add_line(time_age, { xUnit = "Iteration", xAllowDecimals = false }); -- Forw. and Back. times
             tab:push(chart);
         end
     end
