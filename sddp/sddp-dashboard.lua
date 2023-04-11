@@ -459,10 +459,10 @@ local function create_pol_report(col_struct)
                 chart_conv:add_area_range(conv_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup - Tol"), conv_age:select_agents({ 4 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup + Tol"), { color = { light_global_color[j], light_global_color[j] }, xUnit = "Iteration", xAllowDecimals = false, showInLegend = true });
 
                 -- Zsup
-                chart_conv:add_line(conv_age:select_agents({ 3 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup"), { color = { main_global_color[j] }, xUnit = "Iteration", xAllowDecimals = false });
+                chart_conv:add_line(conv_age:select_agents({ 3 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup"), { color = { main_global_color[j] }, xAllowDecimals = false });
 
                 -- Zinf
-                chart_conv:add_line(conv_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j] .. " - Zinf"), { color = { main_global_color[j] }, xUnit = "Iteration", xAllowDecimals = false, dashStyle = "dash" }); -- Zinf
+                chart_conv:add_line(conv_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j] .. " - Zinf"), { color = { main_global_color[j] }, xAllowDecimals = false, dashStyle = "dash" }); -- Zinf
 
                 -- Cuts - optimality
                 chart_cut_opt:add_column(cuts_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
@@ -529,10 +529,10 @@ local function create_pol_report(col_struct)
 
             local chart = Chart("Convergence report");
             chart:add_area_range(conv_age:select_agents({ 2 }), conv_age:select_agents({ 4 }), { color = { "#ACD98D", "#ACD98D" }, xUnit = "Iteration", xAllowDecimals = false }); -- Confidence interval
-            chart:add_line(conv_age:select_agents({ 1 }), { color = { "#3CB7CC" }, xUnit = "Iteration", xAllowDecimals = false }); -- Zinf
-            chart:add_line(conv_age:select_agents({ 3 }), { color = { "#32A251" }, xUnit = "Iteration", xAllowDecimals = false }); -- Zsup
+            chart:add_line(conv_age:select_agents({ 1 }), { color = { "#3CB7CC" }, xAllowDecimals = false }); -- Zinf
+            chart:add_line(conv_age:select_agents({ 3 }), { color = { "#32A251" }, xAllowDecimals = false }); -- Zsup
             if (graph_sim_cost) then
-                chart:add_line(final_sim_cost, { color = { "#D37295" }, xUnit = "Iteration", xAllowDecimals = false }); -- Final simulation cost
+                chart:add_line(final_sim_cost, { color = { "#D37295" }, xAllowDecimals = false }); -- Final simulation cost
             end
             tab:push(chart);
 
@@ -826,7 +826,10 @@ local function create_gen_report(col_struct)
         total_pot_inj   = potinj[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_pot_inj_age);
 
         -- Renewable generation is broken into 3 types
-        total_other_renw_gen  = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:ne(1)):select_agents(col_struct.renewable[i].tech_type:ne(2)):select_agents(col_struct.renewable[i].tech_type:ne(4));
+        total_other_renw_gen  = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:ne(1) &
+                                                        col_struct.renewable[i].tech_type:ne(2) & 
+                                                        col_struct.renewable[i].tech_type:ne(4));
+                                                        
         total_other_renw_gen  = total_other_renw_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_other_renw_gen_age);
         total_wind_gen        = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(1)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_wind_gen_age);
         total_solar_gen       = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(2)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_solar_gen_age);
@@ -929,7 +932,10 @@ local function create_gen_report(col_struct)
                 total_pot_inj   = potinj[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(col_struct.case_dir_list[i] .. " - Total P. Inj.");
  
                 -- Renewable generation is broken into 3 types
-                total_other_renw_gen  = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:ne(1)):select_agents(col_struct.renewable[i].tech_type:ne(2)):select_agents(col_struct.renewable[i].tech_type:ne(4));
+                total_other_renw_gen  = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:ne(1) &
+                                                                col_struct.renewable[i].tech_type:ne(2) & 
+                                                                col_struct.renewable[i].tech_type:ne(4));
+                                                        
                 total_other_renw_gen  = total_other_renw_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(col_struct.case_dir_list[i] .. " - Total Renewable - Other tech.");
                 total_wind_gen        = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(1)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(col_struct.case_dir_list[i] .. " - Total Renewable - Wind");
                 total_solar_gen       = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(2)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(col_struct.case_dir_list[i] .. " - Total Renewable - Solar");
