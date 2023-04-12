@@ -89,17 +89,24 @@ end
 local function dash_infeasibility(tab,file_name,case_index)
 
     local inv_table = Study(case_index):load_table_without_header(file_name);
-
-    for i=1,#inv_table do
-        data=(inv_table[i][1]);
-        if data then
-            tab:push(data);
-        else
+    
+    for lin=1,#inv_table do
+        local data=(inv_table[lin][1]);
+        local col = 2
+        local stg_concat = data;
+        if not data then
             tab:push(" ");
+        else
+            local data_2=(inv_table[lin][col]);
+            while data_2 do
+                stg_concat = stg_concat..","..data_2;
+                col = col + 1;
+                data_2=(inv_table[lin][col]);
+            end
+            tab:push(stg_concat);
         end
     end
 end
-
 -----------------------------------------------------------------------------------------------
 -- Case summary report function
 -----------------------------------------------------------------------------------------------
