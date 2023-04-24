@@ -404,21 +404,21 @@ end
 -----------------------------------------------------------------------------------------------
 
 local function create_penalty_proportion_graph(tab, col_struct, i)
-    local penp = col_struct.generic[i]:load("sddppenp");
+    local penp = col_struct.generic[i]:load("sddppenp_new");
     local chart = Chart("Share of violation penalties and deficit in the cost of each stage/scenario");
     chart:add_heatmap(penp, { showInLegend = false, stops = { { 0.0, "#4E79A7" }, { 0.5, "#FBEEB3" }, { 1.0, "#C64B3E" } }, stopsMin = 0.0, stopsMax = 100.0 });
     tab:push(chart);
 end
 
 local function create_conv_map_graph(tab, col_struct, i)
-    local conv_map = col_struct.generic[i]:load("sddpconvmap");
+    local conv_map = col_struct.generic[i]:load("sddpconvmap_new");
     local chart = Chart("Convergence map");
     chart:add_heatmap(conv_map, { showInLegend = false, stops = { { 0.0, "#C64B3E" }, { 0.5, "#FBEEB3" }, { 1.0, "#4E79A7" } }, stopsMin = 0, stopsMax = 2 });
     tab:push(chart);
 end
 
 local function create_hourly_sol_status_graph(tab, col_struct, i)
-    local status = col_struct.generic[i]:load("sddpstatus");
+    local status = col_struct.generic[i]:load("sddpstatus_new");
     local chart = Chart("Execution status per stage and scenario");
     chart:add_heatmap(status, { showInLegend = false, stops = { { 0.0, "#8ACE7E" }, { 0.33, "#4E79A7" }, { 0.66, "#C64B3E" }, { 1.0, "#FBEEB3" } }, stopsMin = 0, stopsMax = 3 });
     tab:push(chart);
