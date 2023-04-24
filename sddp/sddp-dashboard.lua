@@ -12,7 +12,7 @@ local studies = PSR.studies();
 -----------------------------------------------------------------------------------------------
 
 local function is_greater_than_zero(output)
-    local x = output:aggregate_agents(BY_SUM(), "CheckZeros"):aggregate_stages(BY_SUM()):to_list();
+    local x = output:abs():aggregate_agents(BY_SUM(), "CheckZeros"):aggregate_stages(BY_SUM()):to_list();
     if x[1] > 0.0 then
         return true;
     else
@@ -642,22 +642,18 @@ local function create_costs_and_revs(col_struct)
         end
 
         -- sddp_dashboard_cost_avg
-        local costs_avg = costs:aggregate_scenarios(BY_AVERAGE()):select_agent(1);
-        if studies > 1 then
-            costs_avg = costs_avg:add_prefix(col_struct.case_dir_list[i] .. " - ");
+        local costs_avg = costs:remove_zeros();
+        if studies == 1 and is_greater_than_zero(costs_avg) then
+            chart_avg:add_column_stacking(costs_avg);
         end
-
-        if is_greater_than_zero(costs_avg) then
-            chart_avg:add_line(costs_avg);
-        end
-    end
-
-    if #chart > 0 then
-        tab:push(chart);
     end
 
     if #chart_avg > 0 then
         tab:push(chart_avg);
+    end
+    
+    if #chart > 0 then
+        tab:push(chart);
     end
 
     return tab;
