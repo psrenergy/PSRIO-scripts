@@ -642,7 +642,7 @@ local function create_costs_and_revs(col_struct)
         end
 
         -- sddp_dashboard_cost_avg
-        local costs_avg = costs:remove_zeros();
+        local costs_avg = costs:aggregate_scenarios(BY_AVERAGE()):remove_zeros();
         if studies == 1 and is_greater_than_zero(costs_avg) then
             chart_avg:add_column_stacking(costs_avg);
         end
