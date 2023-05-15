@@ -192,6 +192,7 @@ local function create_tab_summary(col_struct, info_struct)
 
     local header_string       = "| Case parameter ";
     local lower_header_string = "|---------------";
+    local case_type_string    = "| Case type ";
     local nstg_string         = "| Stages ";
     local ini_year_string     = "| Initial year of study ";
     local nblk_string         = "| Blocks ";
@@ -200,16 +201,24 @@ local function create_tab_summary(col_struct, info_struct)
     local hrep_string         = "| Hourly representation ";
     local netrep_string       = "| Network representation ";
 
-    local hrep_val = {};
+    local hrep_val   = {};
     local netrep_val = {};
+    local case_type  = {};
     for i = 1, studies do
         header_string = header_string             .. " | " .. col_struct.case_dir_list[i];
         lower_header_string = lower_header_string .. "|-----------";
-        nstg_string = nstg_string                 .. " | " .. tostring(col_struct.study[i]:stages());
-        ini_year_string = ini_year_string         .. " | " .. tostring(col_struct.study[i]:initial_year());
-        nblk_string = nblk_string                 .. " | " .. tostring(col_struct.study[i]:get_parameter("NumberBlocks", -1));
-        nforw_string = nforw_string               .. " | " .. tostring(col_struct.study[i]:scenarios());
-        nback_string = nback_string               .. " | " .. tostring(col_struct.study[i]:openings());
+        
+        case_type[i] = "Monthly";
+        if col_struct.study[i]:stage_type() == 1 then
+            case_type[i] = "Weekly";
+        end
+        case_type_string = case_type_string .. " | " .. case_type[i];
+        
+        nstg_string      = nstg_string      .. " | " .. tostring(col_struct.study[i]:stages());
+        ini_year_string  = ini_year_string  .. " | " .. tostring(col_struct.study[i]:initial_year());
+        nblk_string      = nblk_string      .. " | " .. tostring(col_struct.study[i]:get_parameter("NumberBlocks", -1));
+        nforw_string     = nforw_string     .. " | " .. tostring(col_struct.study[i]:scenarios());
+        nback_string     = nback_string     .. " | " .. tostring(col_struct.study[i]:openings());
  
         hrep_val[i] = "no";
         if col_struct.study[i]:get_parameter("SIMH", -1) == 2 then
@@ -223,18 +232,20 @@ local function create_tab_summary(col_struct, info_struct)
         end
         netrep_string = netrep_string .. " | " .. netrep_val[i];
     end
-    header_string = header_string             .. "|";
+    header_string       = header_string       .. "|";
     lower_header_string = lower_header_string .. "|";
-    nstg_string = nstg_string                 .. "|";
-    ini_year_string = ini_year_string         .. "|";
-    nblk_string = nblk_string                 .. "|";
-    nforw_string = nforw_string               .. "|";
-    nback_string = nback_string               .. "|";
-    hrep_string = hrep_string                 .. "|";
-    netrep_string = netrep_string             .. "|";
+    case_type_string    = case_type_string    .. "|";
+    nstg_string         = nstg_string         .. "|";
+    ini_year_string     = ini_year_string     .. "|";
+    nblk_string         = nblk_string         .. "|";
+    nforw_string        = nforw_string        .. "|";
+    nback_string        = nback_string        .. "|";
+    hrep_string         = hrep_string         .. "|";
+    netrep_string       = netrep_string       .. "|";
 
     tab:push(header_string);
     tab:push(lower_header_string);
+    tab:push(case_type_string);
     tab:push(nstg_string);
     tab:push(ini_year_string);
     tab:push(nblk_string);
@@ -369,7 +380,7 @@ end
 
 local function make_convergence_graphs(dashboard, conv_age, systems, horizon)
     for i, conv in ipairs(conv_age) do
-        local chart = Chart("Convergence report | System: " .. systems[i] .. " | Horizon: " .. horizon[i]);
+        local chart = Chart("Convergence | System: " .. systems[i] .. " | Horizon: " .. horizon[i]);
         chart:add_area_range(conv:select_agents({ 2 }), conv:select_agents({ 4 }), { color = { "#ACD98D", "#ACD98D" }, xAllowDecimals = false }); -- Confidence interval
         chart:add_line(conv:select_agents({ 1 }), { color = { "#3CB7CC" }, xAllowDecimals = false }); -- Zinf
         chart:add_line(conv:select_agents({ 3 }), { color = { "#32A251" }, xAllowDecimals = false }); -- Zsup
@@ -379,7 +390,7 @@ end
 
 local function make_added_cuts_graphs(dashboard, cuts_age, systems, horizon)
     for i, cuts in ipairs(cuts_age) do
-        local chart = Chart("Number of added cuts report | System: " .. systems[i] .. " Horizon: " .. horizon[i]);
+        local chart = Chart("Number of added cuts | System: " .. systems[i] .. " Horizon: " .. horizon[i]);
         chart:add_column(cuts:select_agents({ 1 }), { xAllowDecimals = false }); -- Opt
         chart:add_column(cuts:select_agents({ 2 }), { xAllowDecimals = false }); -- Feas
         dashboard:push(chart);
@@ -404,23 +415,23 @@ end
 -----------------------------------------------------------------------------------------------
 
 local function create_penalty_proportion_graph(tab, col_struct, i)
-    local penp = col_struct.generic[i]:load("sddppenp_new");
+    local penp = col_struct.generic[i]:load("sddppenp");
     local chart = Chart("Share of violation penalties and deficit in the cost of each stage/scenario");
-    chart:add_heatmap(penp, { showInLegend = false, stops = { { 0.0, "#4E79A7" }, { 0.5, "#FBEEB3" }, { 1.0, "#C64B3E" } }, stopsMin = 0.0, stopsMax = 100.0 });
+    chart:add_heatmap(penp, { yUnit = "Scenario", xUnit = "Stage", showInLegend = false, stops = { { 0.0, "#4E79A7" }, { 0.5, "#FBEEB3" }, { 1.0, "#C64B3E" } }, stopsMin = 0.0, stopsMax = 100.0});
     tab:push(chart);
 end
 
 local function create_conv_map_graph(tab, col_struct, i)
-    local conv_map = col_struct.generic[i]:load("sddpconvmap_new");
+    local conv_map = col_struct.generic[i]:load("sddpconvmap");
     local chart = Chart("Convergence map");
-    chart:add_heatmap(conv_map, { showInLegend = false, stops = { { 0.0, "#C64B3E" }, { 0.5, "#FBEEB3" }, { 1.0, "#4E79A7" } }, stopsMin = 0, stopsMax = 2 });
+    chart:add_heatmap(conv_map, { yUnit = "Iteration", xUnit = "Stage", showInLegend = false, stops = { { 0.0, "#C64B3E" }, { 0.5, "#FBEEB3" }, { 1.0, "#4E79A7" } }, stopsMin = 0, stopsMax = 2 });
     tab:push(chart);
 end
 
 local function create_hourly_sol_status_graph(tab, col_struct, i)
-    local status = col_struct.generic[i]:load("sddpstatus_new");
+    local status = col_struct.generic[i]:load("sddpstatus");
     local chart = Chart("Execution status per stage and scenario");
-    chart:add_heatmap(status, { showInLegend = false, stops = { { 0.0, "#8ACE7E" }, { 0.33, "#4E79A7" }, { 0.66, "#C64B3E" }, { 1.0, "#FBEEB3" } }, stopsMin = 0, stopsMax = 3 });
+    chart:add_heatmap(status, { yUnit = "Scenario", xUnit = "Stage", showInLegend = false, stops = { { 0.0, "#8ACE7E" }, { 0.33, "#4E79A7" }, { 0.66, "#C64B3E" }, { 1.0, "#FBEEB3" } }, stopsMin = 0, stopsMax = 3 });
     tab:push(chart);
 end
 
@@ -450,9 +461,9 @@ local function create_pol_report(col_struct)
         tab:push("## System: " .. systems[i] .. " | Horizon: " .. horizon[i]);
 
         if studies > 1 then
-            local chart_conv = Chart("Convergence report");
-            local chart_cut_opt = Chart("Added cuts - Optimality");
-            local chart_cut_feas = Chart("Added cuts - Feasibility");
+            local chart_conv      = Chart("Convergence");
+            local chart_cut_opt   = Chart("New cuts per iteration - Optimality");
+            local chart_cut_feas  = Chart("New cuts per iteration - Feasibility");
             local chart_time_forw = Chart("Execution time - Forward");
             local chart_time_back = Chart("Execution time - Backward");
 
@@ -475,8 +486,9 @@ local function create_pol_report(col_struct)
                 chart_cut_opt:add_column(cuts_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
 
                 -- Cuts - feasibility
-                chart_cut_feas:add_column(cuts_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
-
+                if is_greater_than_zero(cuts_age:select_agents({ 2 })) then
+                    chart_cut_feas:add_column(cuts_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
+                end 
                 -- Execution time - forward
                 chart_time_forw:add_column(time_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
 
@@ -534,7 +546,7 @@ local function create_pol_report(col_struct)
                 final_sim_cost = conv_age_aux:fill(immediate_cost);
             end
 
-            local chart = Chart("Convergence report");
+            local chart = Chart("Convergence");
             chart:add_area_range(conv_age:select_agents({ 2 }), conv_age:select_agents({ 4 }), { color = { "#ACD98D", "#ACD98D" }, xUnit = "Iteration", xAllowDecimals = false }); -- Confidence interval
             chart:add_line(conv_age:select_agents({ 1 }), { color = { "#3CB7CC" }, xAllowDecimals = false }); -- Zinf
             chart:add_line(conv_age:select_agents({ 3 }), { color = { "#32A251" }, xAllowDecimals = false }); -- Zsup
@@ -543,12 +555,18 @@ local function create_pol_report(col_struct)
             end
             tab:push(chart);
 
-            chart = Chart("Number of added cuts report");
-            chart:add_column(cuts_age, { xUnit = "Iteration", xAllowDecimals = false }); -- Opt and Feas
+            chart = Chart("New cuts per iteration");
+            
+            chart:add_column(cuts_age:select_agents({ 1 }), { xUnit = "Iteration", xAllowDecimals = false }); -- Optimality
+            
+            -- For feas. cuts, plot only if at least one cut
+            if is_greater_than_zero(cuts_age:select_agents({ 2 })) then
+                chart:add_column(cuts_age:select_agents({ 2 }), { xUnit = "Iteration", xAllowDecimals = false }); -- Feasibility
+            end
             tab:push(chart);
 
             chart = Chart("Forward and backward execution times");
-            chart:add_line(time_age, { xUnit = "Iteration", xAllowDecimals = false }); -- Forw. and Back. times
+            chart:add_line(time_age:rename_agents({"Forward","Backward"}), { xUnit = "Iteration", xAllowDecimals = false }); -- Forw. and Back. times
             tab:push(chart);
         end
     end
@@ -631,20 +649,20 @@ local function create_costs_and_revs(col_struct)
 
         if studies > 1 then
             if is_greater_than_zero(disp) then
-                chart:add_area_range(disp:select_agent(1):add_prefix(col_struct.case_dir_list[i] .. " - "), disp:select_agent(3), { color = light_global_color[i] }); -- Confidence interval
-                chart:add_line(disp:select_agent(2):add_prefix(col_struct.case_dir_list[i] .. " - ")); -- Average
+                chart:add_area_range(disp:select_agent(1):add_prefix(col_struct.case_dir_list[i] .. " - "), disp:select_agent(3), { xUnit="Stage", color = light_global_color[i] }); -- Confidence interval
+                chart:add_line(disp:select_agent(2):add_prefix(col_struct.case_dir_list[i] .. " - "),{xUnit="Stage"}); -- Average
             end
         else
             if is_greater_than_zero(disp) then
-                chart:add_area_range(disp:select_agent(1), disp:select_agent(3), { color = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
-                chart:add_line(disp:select_agent(2), { color = { "#F02720" } }); -- Average
+                chart:add_area_range(disp:select_agent(1), disp:select_agent(3), { xUnit="Stage", color = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
+                chart:add_line(disp:select_agent(2), { xUnit="Stage", color = { "#F02720" } }); -- Average
             end
         end
 
         -- sddp_dashboard_cost_avg
         local costs_avg = costs:aggregate_scenarios(BY_AVERAGE()):remove_zeros();
         if studies == 1 and is_greater_than_zero(costs_avg) then
-            chart_avg:add_column_stacking(costs_avg);
+            chart_avg:add_column_stacking(costs_avg,{xUnit="Stage"});
         end
     end
 
@@ -701,14 +719,14 @@ local function create_marg_costs(col_struct)
             local chart = Chart(agent);
             for j = 1, studies do
                 cmg_aggsum = cmg[j]:select_agent(agent):rename_agent(col_struct.case_dir_list[j]):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE())
-                chart:add_line(cmg_aggsum); -- Average marg. cost per stage
+                chart:add_line(cmg_aggsum,{xUnit="Stage"}); -- Average marg. cost per stage
             end
             tab:push(chart);
         end
     else
         local chart = Chart("Average marginal costs per stage per subsystem");
         cmg_aggsum = cmg[1]:aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE());
-        chart:add_column(cmg_aggsum);
+        chart:add_column(cmg_aggsum,{xUnit="Stage"});
         tab:push(chart);
     end
 
@@ -842,42 +860,42 @@ local function create_gen_report(col_struct)
 
         if studies > 1 then
             if total_hydro_gen:loaded() then
-                chart_tot_gerhid:add_area_stacking(total_hydro_gen);
+                chart_tot_gerhid:add_area_stacking(total_hydro_gen, { xUnit="Stage"});
             end
             if total_thermal_gen:loaded() then
-                chart_tot_gerter:add_area_stacking(total_thermal_gen);
+                chart_tot_gerter:add_area_stacking(total_thermal_gen, { xUnit="Stage"});
             end
             if total_other_renw_gen:loaded() then
-                chart_tot_other_renw:add_area_stacking(total_other_renw_gen);
+                chart_tot_other_renw:add_area_stacking(total_other_renw_gen, { xUnit="Stage"});
             end
             if total_wind_gen:loaded() then
-                chart_tot_renw_wind:add_area_stacking(total_wind_gen);
+                chart_tot_renw_wind:add_area_stacking(total_wind_gen, { xUnit="Stage"});
             end
             if total_solar_gen:loaded() then
-                chart_tot_renw_solar:add_area_stacking(total_solar_gen);
+                chart_tot_renw_solar:add_area_stacking(total_solar_gen, { xUnit="Stage"});
             end
             if total_small_hydro_gen:loaded() then
-                chart_tot_renw_shyd:add_area_stacking(total_small_hydro_gen);
+                chart_tot_renw_shyd:add_area_stacking(total_small_hydro_gen, { xUnit="Stage"});
             end
             if total_batt_gen:loaded() then
-                chart_tot_gerbat:add_area_stacking(total_batt_gen);
+                chart_tot_gerbat:add_area_stacking(total_batt_gen, { xUnit="Stage"});
             end
             if total_pot_inj:loaded() then
-                chart_tot_potinj:add_area_stacking(total_pot_inj);
+                chart_tot_potinj:add_area_stacking(total_pot_inj, { xUnit="Stage"});
             end
             if total_deficit:loaded() then
-                chart_tot_defcit:add_area_stacking(total_deficit);
+                chart_tot_defcit:add_area_stacking(total_deficit, { xUnit="Stage"});
             end
         else
-            chart:add_area_stacking(total_thermal_gen, { color = { color_thermal } });
-            chart:add_area_stacking(total_hydro_gen, { color = { color_hydro } });
-            chart:add_area_stacking(total_wind_gen, { color = { color_wind } });
-            chart:add_area_stacking(total_solar_gen, { color = { color_solar } });
-            chart:add_area_stacking(total_small_hydro_gen, { color = { color_small_hydro } });
-            chart:add_area_stacking(total_other_renw_gen, { color = { color_renw_other } });
-            chart:add_area_stacking(total_batt_gen, { color = { color_battery } });
-            chart:add_area_stacking(total_pot_inj, { color = { color_pinj } });
-            chart:add_area_stacking(total_deficit, { color = { color_deficit } });
+            chart:add_area_stacking(total_thermal_gen    , { xUnit="Stage", color = { color_thermal     } });
+            chart:add_area_stacking(total_hydro_gen      , { xUnit="Stage", color = { color_hydro       } });
+            chart:add_area_stacking(total_wind_gen       , { xUnit="Stage", color = { color_wind        } });
+            chart:add_area_stacking(total_solar_gen      , { xUnit="Stage", color = { color_solar       } });
+            chart:add_area_stacking(total_small_hydro_gen, { xUnit="Stage", color = { color_small_hydro } });
+            chart:add_area_stacking(total_other_renw_gen , { xUnit="Stage", color = { color_renw_other  } });
+            chart:add_area_stacking(total_batt_gen       , { xUnit="Stage", color = { color_battery     } });
+            chart:add_area_stacking(total_pot_inj        , { xUnit="Stage", color = { color_pinj        } });
+            chart:add_area_stacking(total_deficit        , { xUnit="Stage", color = { color_deficit     } });
         end
     end
 
@@ -892,13 +910,13 @@ local function create_gen_report(col_struct)
             tab:push(chart_tot_other_renw);
         end
         if #chart_tot_renw_wind > 0 then
-            tab:push(total_wind_gen);
+            tab:push(chart_tot_renw_wind);
         end
         if #chart_tot_renw_solar > 0 then
-            tab:push(total_solar_gen);
+            tab:push(chart_tot_renw_solar);
         end
         if #chart_tot_renw_shyd > 0 then
-            tab:push(total_small_hydro_gen);
+            tab:push(chart_tot_renw_shyd);
         end
         if #chart_tot_gerbat > 0 then
             tab:push(chart_tot_gerbat);
@@ -947,31 +965,31 @@ local function create_gen_report(col_struct)
                 total_thermal_gen = gerter[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(col_struct.case_dir_list[i] .. " - Total Thermal");
 
                 if total_hydro_gen:loaded() then
-                    chart_tot_gerhid:add_area_stacking(total_hydro_gen);
+                    chart_tot_gerhid:add_area_stacking(total_hydro_gen, { xUnit="Stage"});
                 end
                 if total_thermal_gen:loaded() then
-                    chart_tot_gerter:add_area_stacking(total_thermal_gen);
+                    chart_tot_gerter:add_area_stacking(total_thermal_gen, { xUnit="Stage"});
                 end
                 if total_other_renw_gen:loaded() then
-                    chart_tot_renw_other:push(chart_tot_other_renw);
+                    chart_tot_renw_other:push(chart_tot_other_renw, { xUnit="Stage"});
                 end
                 if total_wind_gen:loaded() then
-                    chart_tot_renw_wind:push(total_wind_gen);
+                    chart_tot_renw_wind:push(total_wind_gen, { xUnit="Stage"});
                 end
                 if total_solar_gen:loaded() then
-                    chart_tot_renw_solar:push(total_solar_gen);
+                    chart_tot_renw_solar:push(total_solar_gen, { xUnit="Stage"});
                 end
                 if total_small_hydro_gen:loaded() then
-                    chart_tot_renw_shyd:push(total_small_hydro_gen);
+                    chart_tot_renw_shyd:push(total_small_hydro_gen, { xUnit="Stage"});
                 end
                 if total_batt_gen:loaded() then
-                    chart_tot_gerbat:add_area_stacking(total_batt_gen);
+                    chart_tot_gerbat:add_area_stacking(total_batt_gen, { xUnit="Stage"});
                 end
                 if total_pot_inj:loaded() then
-                    chart_tot_potinj:add_area_stacking(total_pot_inj);
+                    chart_tot_potinj:add_area_stacking(total_pot_inj, { xUnit="Stage"});
                 end
                 if total_deficit:loaded() then
-                    chart_tot_defcit:add_area_stacking(total_deficit);
+                    chart_tot_defcit:add_area_stacking(total_deficit, { xUnit="Stage"});
                 end
             end
 
@@ -1037,39 +1055,39 @@ end
 -----------------------------------------------------------------------------------------------
 
 local viol_report_structs = {
-    { name = "defcit", title = "Deficit" },
-    { name = "nedefc", title = "Deficit associated to non-electrical gas demand" },
-    { name = "defbus", title = "Deficit per bus (% of load)" },
-    { name = "gncivio", title = "General interpolation constraint violation" },
-    { name = "gncvio", title = "General constraint: linear" },
-    { name = "vrestg", title = "Generation constraint violation" },
-    { name = "excbus", title = "Generation excess per AC bus" },
-    { name = "excsis", title = "Generation excess per system" },
-    { name = "vvaler", title = "Alert storage violation" },
+    { name = "defcit"  , title = "Deficit" },
+    { name = "nedefc"  , title = "Deficit associated to non-electrical gas demand" },
+    { name = "defbus"  , title = "Deficit per bus (% of load)" },
+    { name = "gncivio" , title = "General interpolation constraint violation" },
+    { name = "gncvio"  , title = "General constraint: linear" },
+    { name = "vrestg"  , title = "Generation constraint violation" },
+    { name = "excbus"  , title = "Generation excess per AC bus" },
+    { name = "excsis"  , title = "Generation excess per system" },
+    { name = "vvaler"  , title = "Alert storage violation" },
     { name = "vioguide", title = "Guide curve violation per hydro reservoir" },
-    { name = "vriego", title = "Hydro: irrigation" },
-    { name = "vmxost", title = "Hydro: maximum operative storage" },
-    { name = "vimxsp", title = "Hydro: maximum spillage" },
-    { name = "vdefmx", title = "Hydro: maximum total outflow" },
-    { name = "vvolmn", title = "Hydro: minimum storage" },
-    { name = "vdefmn", title = "Hydro: minimum total outflow" },
-    { name = "vturmn", title = "Hydro: minimum turbining outflow" },
-    { name = "vimnsp", title = "Hydro: mininum spillage" },
-    { name = "rampvio", title = "Hydro: outflow ramp" },
-    { name = "vreseg", title = "Reserve: joint requirement" },
-    { name = "vsarhd", title = "RAS target storage violation %" },
+    { name = "vriego"  , title = "Hydro: irrigation" },
+    { name = "vmxost"  , title = "Hydro: maximum operative storage" },
+    { name = "vimxsp"  , title = "Hydro: maximum spillage" },
+    { name = "vdefmx"  , title = "Hydro: maximum total outflow" },
+    { name = "vvolmn"  , title = "Hydro: minimum storage" },
+    { name = "vdefmn"  , title = "Hydro: minimum total outflow" },
+    { name = "vturmn"  , title = "Hydro: minimum turbining outflow" },
+    { name = "vimnsp"  , title = "Hydro: mininum spillage" },
+    { name = "rampvio" , title = "Hydro: outflow ramp" },
+    { name = "vreseg"  , title = "Reserve: joint requirement" },
+    { name = "vsarhd"  , title = "RAS target storage violation %" },
     { name = "vsarhden", title = "RAS target storage violation GWh" },
-    { name = "viocar", title = "Risk Aversion Curve" },
-    { name = "vgmint", title = "Thermal: minimum generation" },
-    { name = "vgmntt", title = "NE" },
-    { name = "vioemiq", title = "Emission budget violation" },
-    { name = "vsecset", title = "Reservoir set: security energy constraint" },
-    { name = "valeset", title = "Reservoir set: alert energy constraint" },
-    { name = "vespset", title = "Reservoir set: flood control energy constraint" },
+    { name = "viocar"  , title = "Risk Aversion Curve" },
+    { name = "vgmint"  , title = "Thermal: minimum generation" },
+    { name = "vgmntt"  , title = "NE" },
+    { name = "vioemiq" , title = "Emission budget violation" },
+    { name = "vsecset" , title = "Reservoir set: security energy constraint" },
+    { name = "valeset" , title = "Reservoir set: alert energy constraint" },
+    { name = "vespset" , title = "Reservoir set: flood control energy constraint" },
     { name = "fcoffvio", title = "Fuel contract minimum offtake rate violation" },
-    { name = "vflmnww", title = "Minimum hydro bypass flow violation" },
-    { name = "vflmxww", title = "Maximum hydro bypass flow violation" },
-    { name = "finjvio", title = "NE" }
+    { name = "vflmnww" , title = "Minimum hydro bypass flow violation" },
+    { name = "vflmxww" , title = "Maximum hydro bypass flow violation" },
+    { name = "finjvio" , title = "NE" }
 }
 
 local function create_viol_report(tab, col_struct, viol_struct, suffix)
@@ -1089,7 +1107,7 @@ local function create_viol_report(tab, col_struct, viol_struct, suffix)
                 for k = 1, studies do
                     viol_file = col_struct.generic[k]:load(file_name):select_agent(agent):rename_agent(case_dir_list[k]);
                     if viol_file:loaded() then
-                        chart:add_column_stacking(viol_file);
+                        chart:add_column_stacking(viol_file, {xUnit="Stage"});
                     end
                 end
                 tab:push(chart);
@@ -1101,8 +1119,8 @@ local function create_viol_report(tab, col_struct, viol_struct, suffix)
             viol_file = col_struct.generic[1]:load(file_name);
             if viol_file:loaded() then
                 local chart = Chart(struct.title);
-                chart:add_column_stacking(viol_file);
-                tab:push(chart);
+                chart:add_column_stacking(viol_file, {xUnit="Stage"});
+                tab:push(chart); 
             end
         end
     end
@@ -1142,10 +1160,10 @@ end
 local dashboard = Dashboard();
 
 -- Main tabs
-local tab_input_data = Tab("Input data");
+local tab_input_data       = Tab("Input data");
 local tab_solution_quality = Tab("Solution quality");
-local tab_violations = Tab("Violations");
-local tab_results = Tab("Results");
+local tab_violations       = Tab("Violations");
+local tab_results          = Tab("Results");
 
 -- Violation tabs
 local tab_viol_avg = Tab("Average");
