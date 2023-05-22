@@ -586,7 +586,7 @@ end
 local function create_sim_report(col_struct)
     local tab = Tab("Simulation");
 
-    local chart = Chart("Breakdown of total operating costs");
+    local cost_chart = Chart("Breakdown of total operating costs");
 
     local objcop = require("sddp/costs");
     local discount_rate = require("sddp/discount_rate");
@@ -597,19 +597,19 @@ local function create_sim_report(col_struct)
 
             -- sddp_dashboard_cost_tot
             local costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
-            chart:add_categories(costs_agg, col_struct.case_dir_list[i]);
+            cost_chart:add_categories(costs_agg, col_struct.case_dir_list[i]);
         end
     else
         local costs = ifelse(objcop():ge(0), objcop(), 0) / discount_rate();
         local costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
 
         if is_greater_than_zero(costs_agg) then
-            chart:add_pie(costs_agg);
+            cost_chart:add_pie(costs_agg);
         end
     end
 
-    if #chart > 0 then
-        tab:push(chart);
+    if #cost_chart > 0 then
+        tab:push(cost_chart);
     end
 
     -- Heatmap after the pizza graph in dashboard
@@ -619,6 +619,22 @@ local function create_sim_report(col_struct)
             create_hourly_sol_status_graph(tab, col_struct, 1);
         end
         create_penalty_proportion_graph(tab, col_struct, 1);
+        
+        -- Creating scenario execution times graphics (dispersion)
+        extime_chart = Chart("Execution times dispersion");
+        
+        extime = col_struct.generic[1]:load("extime");
+        
+        local extime_disp = concatenate(extime:aggregate_agents(BY_SUM(), "P10"):aggregate_scenarios(BY_PERCENTILE(10)), extime:aggregate_agents(BY_SUM(), "Average"):aggregate_scenarios(BY_AVERAGE()), extime:aggregate_agents(BY_SUM(), "P90"):aggregate_scenarios(BY_PERCENTILE(90)));
+        
+        if is_greater_than_zero(extime_disp) then
+            extime_chart:add_area_range(extime_disp:select_agent(1), extime_disp:select_agent(3), { xUnit="Stage", color = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
+            extime_chart:add_line(extime_disp:select_agent(2), { xUnit="Stage", color = { "#F02720" } }); -- Average
+        end
+        
+        if #extime_chart > 0 then
+            tab:push(extime_chart);
+        end
     end
 
     return tab;
@@ -704,11 +720,11 @@ local function create_marg_costs(col_struct)
             cmg_aggyear = cmg[i]:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_AVERAGE(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM);
 
             -- Add marginal costs outputs
-            chart:add_categories(cmg_aggyear, col_struct.case_dir_list[i]); -- Annual Marg. cost     
+            chart:add_categories(cmg_aggyear, col_struct.case_dir_list[i], { xUnit="Year" }); -- Annual Marg. cost     
         end
     else
         cmg_aggyear = cmg[1]:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_AVERAGE(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE());
-        chart:add_column(cmg_aggyear);
+        chart:add_column(cmg_aggyear, { xUnit="Year" });
     end
     tab:push(chart);
 
