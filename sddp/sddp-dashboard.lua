@@ -435,6 +435,20 @@ local function create_hourly_sol_status_graph(tab, col_struct, i)
     tab:push(chart);
 end
 
+-- Execution times per scenario (dispersion)
+local function create_exe_timer_per_scen(tab, col_struct, i)
+    local extime_chart = Chart("Execution times dispersion");
+    local extime = col_struct.generic[i]:load("extime");
+    local extime_disp = concatenate(extime:aggregate_agents(BY_SUM(), "P10"):aggregate_scenarios(BY_PERCENTILE(10)), extime:aggregate_agents(BY_SUM(), "Average"):aggregate_scenarios(BY_AVERAGE()), extime:aggregate_agents(BY_SUM(), "P90"):aggregate_scenarios(BY_PERCENTILE(90)));
+    if is_greater_than_zero(extime_disp) then
+        extime_chart:add_area_range(extime_disp:select_agent(1), extime_disp:select_agent(3), { xUnit="Stage", color = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
+        extime_chart:add_line(extime_disp:select_agent(2), { xUnit="Stage", color = { "#F02720" } }); -- Average
+    end
+    if #extime_chart > 0 then
+        tab:push(extime_chart);
+    end
+end 
+
 local function create_pol_report(col_struct)
     local tab = Tab("Policy");
 
@@ -586,55 +600,57 @@ end
 local function create_sim_report(col_struct)
     local tab = Tab("Simulation");
 
+    local costs;
+    local costs_agg;
+    local exe_times;
+    
     local cost_chart = Chart("Breakdown of total operating costs");
+    local exet_chart = Chart("Execution times");
 
     local objcop = require("sddp/costs");
     local discount_rate = require("sddp/discount_rate");
 
     if studies > 1 then
         for i = 1, studies do
-            local costs = ifelse(objcop(i):ge(0), objcop(i), 0) / discount_rate(i);
+            costs = ifelse(objcop(i):ge(0), objcop(i), 0) / discount_rate(i);
 
             -- sddp_dashboard_cost_tot
-            local costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
+            costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
             cost_chart:add_categories(costs_agg, col_struct.case_dir_list[i]);
+            
+            -- Execution times (sim, post-processing and total time)
+            exe_times = col_struct.generic[1]:load("sddptimes");
+            exet_chart:add_categories(exe_times, col_struct.case_dir_list[i]);
         end
     else
-        local costs = ifelse(objcop():ge(0), objcop(), 0) / discount_rate();
-        local costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
+        costs = ifelse(objcop():ge(0), objcop(), 0) / discount_rate();
+        costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
 
         if is_greater_than_zero(costs_agg) then
             cost_chart:add_pie(costs_agg);
         end
+        
+        -- Execution times (sim, post-processing and total time)
+        exe_times = col_struct.generic[1]:load("sddptimes");
+        exet_chart:add_column(exe_times);
     end
 
     if #cost_chart > 0 then
         tab:push(cost_chart);
     end
-
+    
+    if #exet_chart > 0 then
+        tab:push(exet_chart);
+    end
+    
     -- Heatmap after the pizza graph in dashboard
     if studies == 1 then
         -- Creating simulation heatmap graphics
         if col_struct.study[1]:get_parameter("SIMH", -1) == 2 then
             create_hourly_sol_status_graph(tab, col_struct, 1);
+            create_exe_timer_per_scen(tab, col_struct, 1);
         end
         create_penalty_proportion_graph(tab, col_struct, 1);
-        
-        -- Creating scenario execution times graphics (dispersion)
-        extime_chart = Chart("Execution times dispersion");
-        
-        extime = col_struct.generic[1]:load("extime");
-        
-        local extime_disp = concatenate(extime:aggregate_agents(BY_SUM(), "P10"):aggregate_scenarios(BY_PERCENTILE(10)), extime:aggregate_agents(BY_SUM(), "Average"):aggregate_scenarios(BY_AVERAGE()), extime:aggregate_agents(BY_SUM(), "P90"):aggregate_scenarios(BY_PERCENTILE(90)));
-        
-        if is_greater_than_zero(extime_disp) then
-            extime_chart:add_area_range(extime_disp:select_agent(1), extime_disp:select_agent(3), { xUnit="Stage", color = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
-            extime_chart:add_line(extime_disp:select_agent(2), { xUnit="Stage", color = { "#F02720" } }); -- Average
-        end
-        
-        if #extime_chart > 0 then
-            tab:push(extime_chart);
-        end
     end
 
     return tab;
