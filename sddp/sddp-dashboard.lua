@@ -192,6 +192,7 @@ local function create_tab_summary(col_struct, info_struct)
 
     local header_string       = "| Case parameter ";
     local lower_header_string = "|---------------";
+    local exe_type_string     = "| Execution type ";
     local case_type_string    = "| Case type ";
     local nstg_string         = "| Stages ";
     local ini_year_string     = "| Initial year of study ";
@@ -203,10 +204,18 @@ local function create_tab_summary(col_struct, info_struct)
 
     local hrep_val   = {};
     local netrep_val = {};
+    local exe_type   = {};
     local case_type  = {};
+   
     for i = 1, studies do
         header_string = header_string             .. " | " .. col_struct.case_dir_list[i];
         lower_header_string = lower_header_string .. "|-----------";
+        
+        exe_type[i] = "Policy";
+        if col_struct.study[i]:get_parameter("Objetivo", -1) == 2 then
+            exe_type[i] = "Simulation";
+        end
+        exe_type_string = exe_type_string .. " | " .. exe_type[i];
         
         case_type[i] = "Monthly";
         if col_struct.study[i]:stage_type() == 1 then
@@ -234,6 +243,7 @@ local function create_tab_summary(col_struct, info_struct)
     end
     header_string       = header_string       .. "|";
     lower_header_string = lower_header_string .. "|";
+    exe_type_string     = exe_type_string     .. "|";
     case_type_string    = case_type_string    .. "|";
     nstg_string         = nstg_string         .. "|";
     ini_year_string     = ini_year_string     .. "|";
@@ -245,6 +255,7 @@ local function create_tab_summary(col_struct, info_struct)
 
     tab:push(header_string);
     tab:push(lower_header_string);
+    tab:push(exe_type_string);
     tab:push(case_type_string);
     tab:push(nstg_string);
     tab:push(ini_year_string);
@@ -619,7 +630,7 @@ local function create_sim_report(col_struct)
             cost_chart:add_categories(costs_agg, col_struct.case_dir_list[i]);
             
             -- Execution times (sim, post-processing and total time)
-            exe_times = col_struct.generic[1]:load("sddptimes");
+            exe_times = col_struct.generic[i]:load("sddptimes");
             exet_chart:add_categories(exe_times, col_struct.case_dir_list[i]);
         end
     else
@@ -1280,7 +1291,11 @@ if #has_inf > 0 then
 end
 
 -- Solution quality - Policy report
-tab_solution_quality:push(create_pol_report(col_struct));
+local sddppol = col_struct.generic[1]:load_table("sddppol.csv");
+if col_struct.study[1]:get_parameter("Objetivo", -1) == 1 or
+   #sddppol > 0 then
+    tab_solution_quality:push(create_pol_report(col_struct));
+end
 
 -- Solution quality - Simulation report
 tab_solution_quality:push(create_sim_report(col_struct));
