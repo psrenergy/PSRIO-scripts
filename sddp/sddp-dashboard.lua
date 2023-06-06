@@ -440,15 +440,15 @@ local function create_conv_map_graph(tab, col_struct, i)
 end
 
 local function create_hourly_sol_status_graph(tab, col_struct, i)
-    local status = col_struct.generic[i]:load("sddpstatus");
-    local chart = Chart("Execution status per stage and scenario");
+    local status = col_struct.generic[i]:load("hrstat");
+    local chart = Chart("Solution status per stage and scenario");
     chart:add_heatmap(status, { yUnit = "Scenario", xUnit = "Stage", showInLegend = false, stops = { { 0.0, "#8ACE7E" }, { 0.33, "#4E79A7" }, { 0.66, "#C64B3E" }, { 1.0, "#FBEEB3" } }, stopsMin = 0, stopsMax = 3 });
     tab:push(chart);
 end
 
 -- Execution times per scenario (dispersion)
 local function create_exe_timer_per_scen(tab, col_struct, i)
-    local extime_chart = Chart("Execution times dispersion");
+    local extime_chart = Chart("Dispersion of execution times per scenario");
     local extime = col_struct.generic[i]:load("extime");
     local extime_disp = concatenate(extime:aggregate_agents(BY_SUM(), "P10"):aggregate_scenarios(BY_PERCENTILE(10)), extime:aggregate_agents(BY_SUM(), "Average"):aggregate_scenarios(BY_AVERAGE()), extime:aggregate_agents(BY_SUM(), "P90"):aggregate_scenarios(BY_PERCENTILE(90)));
     if is_greater_than_zero(extime_disp) then
@@ -659,11 +659,13 @@ local function create_sim_report(col_struct)
         -- Creating simulation heatmap graphics
         if col_struct.study[1]:get_parameter("SIMH", -1) == 2 then
             create_hourly_sol_status_graph(tab, col_struct, 1);
-            create_exe_timer_per_scen(tab, col_struct, 1);
         end
+        -- Execution times per scenario
+        create_exe_timer_per_scen(tab, col_struct, 1);
+        
         create_penalty_proportion_graph(tab, col_struct, 1);
     end
-
+    
     return tab;
 end
 
