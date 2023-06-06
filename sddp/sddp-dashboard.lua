@@ -347,12 +347,12 @@ local function create_inflow_energy(col_struct)
         for i = 1, studies do
 
             -- Confidence interval
-            chart:add_area_range(inferg[i]:select_agent(1):add_prefix(col_struct.case_dir_list[i] .. " - "), inferg[i]:select_agent(3), { color = { light_global_color[i], light_global_color[i] } });
+            chart:add_area_range(inferg[i]:select_agent(1):add_prefix(col_struct.case_dir_list[i] .. " - "), inferg[i]:select_agent(3), { xUnit="Stage", color = { light_global_color[i], light_global_color[i] } });
             chart:add_line(inferg[i]:select_agent(2):add_prefix(col_struct.case_dir_list[i] .. " - ")); -- average
         end
     else
         -- Confidence interval
-        chart:add_area_range(inferg[1]:select_agent(1), inferg[1]:select_agent(3), { color = { light_global_color[1], light_global_color[1] } });
+        chart:add_area_range(inferg[1]:select_agent(1), inferg[1]:select_agent(3), { xUnit="Stage", color = { light_global_color[1], light_global_color[1] } });
         chart:add_line(inferg[1]:select_agent(2)); -- average
     end
 
@@ -905,31 +905,31 @@ local function create_gen_report(col_struct)
 
         if studies > 1 then
             if total_hydro_gen:loaded() then
-                chart_tot_gerhid:add_area_stacking(total_hydro_gen, { xUnit="Stage"});
+                chart_tot_gerhid:add_column(total_hydro_gen, { xUnit="Stage"});
             end
             if total_thermal_gen:loaded() then
-                chart_tot_gerter:add_area_stacking(total_thermal_gen, { xUnit="Stage"});
+                chart_tot_gerter:add_column(total_thermal_gen, { xUnit="Stage"});
             end
             if total_other_renw_gen:loaded() then
-                chart_tot_other_renw:add_area_stacking(total_other_renw_gen, { xUnit="Stage"});
+                chart_tot_other_renw:add_column(total_other_renw_gen, { xUnit="Stage"});
             end
             if total_wind_gen:loaded() then
-                chart_tot_renw_wind:add_area_stacking(total_wind_gen, { xUnit="Stage"});
+                chart_tot_renw_wind:add_column(total_wind_gen, { xUnit="Stage"});
             end
             if total_solar_gen:loaded() then
-                chart_tot_renw_solar:add_area_stacking(total_solar_gen, { xUnit="Stage"});
+                chart_tot_renw_solar:add_column(total_solar_gen, { xUnit="Stage"});
             end
             if total_small_hydro_gen:loaded() then
-                chart_tot_renw_shyd:add_area_stacking(total_small_hydro_gen, { xUnit="Stage"});
+                chart_tot_renw_shyd:add_column(total_small_hydro_gen, { xUnit="Stage"});
             end
             if total_batt_gen:loaded() then
-                chart_tot_gerbat:add_area_stacking(total_batt_gen, { xUnit="Stage"});
+                chart_tot_gerbat:add_column(total_batt_gen, { xUnit="Stage"});
             end
             if total_pot_inj:loaded() then
-                chart_tot_potinj:add_area_stacking(total_pot_inj, { xUnit="Stage"});
+                chart_tot_potinj:add_column(total_pot_inj, { xUnit="Stage"});
             end
             if total_deficit:loaded() then
-                chart_tot_defcit:add_area_stacking(total_deficit, { xUnit="Stage"});
+                chart_tot_defcit:add_column(total_deficit, { xUnit="Stage"});
             end
         else
             chart:add_area_stacking(total_thermal_gen    , { xUnit="Stage", color = { color_thermal     } });
@@ -1010,31 +1010,31 @@ local function create_gen_report(col_struct)
                 total_thermal_gen = gerter[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(col_struct.case_dir_list[i] .. " - Total Thermal");
 
                 if total_hydro_gen:loaded() then
-                    chart_tot_gerhid:add_area_stacking(total_hydro_gen, { xUnit="Stage"});
+                    chart_tot_gerhid:add_column(total_hydro_gen, { xUnit="Stage"});
                 end
                 if total_thermal_gen:loaded() then
-                    chart_tot_gerter:add_area_stacking(total_thermal_gen, { xUnit="Stage"});
+                    chart_tot_gerter:add_column(total_thermal_gen, { xUnit="Stage"});
                 end
                 if total_other_renw_gen:loaded() then
-                    chart_tot_renw_other:push(chart_tot_other_renw, { xUnit="Stage"});
+                    chart_tot_renw_other:add_column(total_other_renw_gen, { xUnit="Stage"});
                 end
                 if total_wind_gen:loaded() then
-                    chart_tot_renw_wind:push(total_wind_gen, { xUnit="Stage"});
+                    chart_tot_renw_wind:add_column(total_wind_gen, col_struct.case_dir_list[i], { xUnit="Stage"});
                 end
                 if total_solar_gen:loaded() then
-                    chart_tot_renw_solar:push(total_solar_gen, { xUnit="Stage"});
+                    chart_tot_renw_solar:add_column(total_solar_gen, col_struct.case_dir_list[i], { xUnit="Stage"});
                 end
                 if total_small_hydro_gen:loaded() then
-                    chart_tot_renw_shyd:push(total_small_hydro_gen, { xUnit="Stage"});
+                    chart_tot_renw_shyd:add_column(total_small_hydro_gen, col_struct.case_dir_list[i], { xUnit="Stage"});
                 end
                 if total_batt_gen:loaded() then
-                    chart_tot_gerbat:add_area_stacking(total_batt_gen, { xUnit="Stage"});
+                    chart_tot_gerbat:add_column(total_batt_gen, { xUnit="Stage"});
                 end
                 if total_pot_inj:loaded() then
-                    chart_tot_potinj:add_area_stacking(total_pot_inj, { xUnit="Stage"});
+                    chart_tot_potinj:add_column(total_pot_inj, { xUnit="Stage"});
                 end
                 if total_deficit:loaded() then
-                    chart_tot_defcit:add_area_stacking(total_deficit, { xUnit="Stage"});
+                    chart_tot_defcit:add_column(total_deficit, { xUnit="Stage"});
                 end
             end
 
@@ -1074,6 +1074,7 @@ end
 
 local function create_risk_report(col_struct)
     local tab = Tab("Risk");
+    local chart = Chart("Deficit risk by sub-system");
     local chart = Chart("Deficit risk by sub-system");
 
     if studies > 1 then
