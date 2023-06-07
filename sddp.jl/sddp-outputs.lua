@@ -137,11 +137,11 @@ end
 local function save_reports()
     -- SDDPCOPE
     local sddpcope = require("sddp-reports/sddpcope");
-    sddpcope():save("sddpcope_psrio", { csv = true, remove_zeros = true });
+    sddpcope():save("sddpcope_psrio", { csv = true });
 
     -- SDDPCOPED
     local sddpcoped = require("sddp-reports/sddpcoped");
-    sddpcoped():save("sddpcoped_psrio", { csv = true, remove_zeros = true });
+    sddpcoped():save("sddpcoped_psrio", { csv = true });
 
     -- SDDPGRXXD
     local sddpgrxxd = require("sddp-reports/sddpgrxxd");
