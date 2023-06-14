@@ -367,9 +367,9 @@ end
 -- Policy report functions
 -----------------------------------------------------------------------------------------------
 
-local function get_conv_file_info(col_struct, file_list, systems, horizons, case_index)
+local function get_conv_file_info(col_struct, file_name, file_list, systems, horizons, case_index)
     -- Loading file
-    local sddppol = col_struct.generic[case_index]:load_table("sddppol.csv");
+    local sddppol = col_struct.generic[case_index]:load_table(file_name);
 
     local file_name = "";
     for i = 1, #sddppol do
@@ -386,6 +386,13 @@ local function get_convergence_file_agents(col_struct, file_list, conv_age, cuts
         conv_age[i] = conv_file:select_agents({ 1, 2, 3, 4 }); -- Zinf, Zsup - Tol, Zsup, Zsup + Tol  
         cuts_age[i] = conv_file:select_agents({ 5, 6 }); -- Optimality, Feasibility 
         time_age[i] = conv_file:select_agents({ 7, 8 }); -- Forw. time, Back. time
+    end
+end
+
+local function get_convergence_map_status(col_struct, file_list, conv_status, case_index)
+    for i, file in ipairs(file_list) do
+        local conv_map_file = col_struct.generic[case_index]:load(file);
+        conv_status[i] = conv_map_file; -- Convergence status
     end
 end
 
@@ -432,8 +439,8 @@ local function create_penalty_proportion_graph(tab, col_struct, i)
     tab:push(chart);
 end
 
-local function create_conv_map_graph(tab, col_struct, i)
-    local conv_map = col_struct.generic[i]:load("sddpconvmap");
+local function create_conv_map_graph(tab, file_name, col_struct, i)
+    local conv_map = col_struct.generic[i]:load(file_name);
     local chart = Chart("Convergence map");
     chart:add_heatmap(conv_map, { yUnit = "Iteration", xUnit = "Stage", showInLegend = false, stops = { { 0.0, "#C64B3E" }, { 0.5, "#FBEEB3" }, { 1.0, "#4E79A7" } }, stopsMin = 0, stopsMax = 2 });
     tab:push(chart);
@@ -466,21 +473,27 @@ local function create_pol_report(col_struct)
     local total_cost_age;
     local future_cost_age;
     local immediate_cost;
-
+    
     local file_list = {};
+    local convm_file_list = {};
     local systems = {};
     local horizon = {};
 
     local conv_data = {};
     local cuts_data = {};
     local time_data = {};
+    conv_status     = {};
 
     local conv_file;
 
+    -- Convergence map report
+    get_conv_file_info(col_struct, "sddpcnvm.csv", convm_file_list, systems, horizon, 1);
+    get_convergence_map_status(col_struct, convm_file_list, conv_status, 1);
+            
     -- Convergence report
-    get_conv_file_info(col_struct, file_list, systems, horizon, 1);
+    get_conv_file_info(col_struct, "sddppol.csv", file_list, systems, horizon, 1);
     get_convergence_file_agents(col_struct, file_list, conv_data, cuts_data, time_data, 1);
-
+    
     -- Creating policy report
     for i, file in ipairs(file_list) do
         tab:push("## System: " .. systems[i] .. " | Horizon: " .. horizon[i]);
@@ -593,13 +606,13 @@ local function create_pol_report(col_struct)
             chart = Chart("Forward and backward execution times");
             chart:add_line(time_age:rename_agents({"Forward","Backward"}), { xUnit = "Iteration", xAllowDecimals = false }); -- Forw. and Back. times
             tab:push(chart);
+                    
+            -- Convergence map
+            create_conv_map_graph(tab, convm_file_list[i], col_struct, 1);
         end
     end
 
-    -- Convergence heatmap
-    if studies == 1 then
-        create_conv_map_graph(tab, col_struct, 1);
-    end
+
 
     return tab;
 end
