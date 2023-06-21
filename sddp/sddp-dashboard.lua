@@ -487,7 +487,7 @@ local function create_pol_report(col_struct)
     local conv_file;
 
     -- Convergence map report
-    get_conv_file_info(col_struct, "sddpcnvm.csv", convm_file_list, systems, horizon, 1);
+    get_conv_file_info(col_struct, "sddpconvm.csv", convm_file_list, systems, horizon, 1);
     get_convergence_map_status(col_struct, convm_file_list, conv_status, 1);
             
     -- Convergence report
