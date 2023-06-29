@@ -673,8 +673,11 @@ local function create_sim_report(col_struct)
         if col_struct.study[1]:get_parameter("SIMH", -1) == 2 then
             create_hourly_sol_status_graph(tab, col_struct, 1);
         end
+        
         -- Execution times per scenario
-        create_exe_timer_per_scen(tab, col_struct, 1);
+        if not col_struct.study[1]:get_parameter("SCEN", -1) == 1 then -- SDDP scenarios does not have execution times per scenario
+            create_exe_timer_per_scen(tab, col_struct, 1);
+        end
         
         create_penalty_proportion_graph(tab, col_struct, 1);
     end
@@ -1307,10 +1310,12 @@ if #has_inf > 0 then
 end
 
 -- Solution quality - Policy report
-local sddppol = col_struct.generic[1]:load_table("sddppol.csv");
-if col_struct.study[1]:get_parameter("Objetivo", -1) == 1 or
-   #sddppol > 0 then
-    tab_solution_quality:push(create_pol_report(col_struct));
+if not col_struct.study[1]:get_parameter("SCEN", -1) == 1 then -- SDDP scenarios does not have policy phase
+    local sddppol = col_struct.generic[1]:load_table("sddppol.csv");
+    if col_struct.study[1]:get_parameter("Objetivo", -1) == 1 or
+    #sddppol > 0 then
+        tab_solution_quality:push(create_pol_report(col_struct));
+    end
 end
 
 -- Solution quality - Simulation report
