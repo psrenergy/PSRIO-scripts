@@ -23,7 +23,7 @@ local function violation_aggregation(viol_struct,aggregation,suffix,tol)
                 	violation:remove_agents(largest_agents):aggregate_agents(BY_SUM(), "Others")
             	);
         	end
-        	violation:save("sddp_dashboard_viol_" .. suffix .. "_" .. viol_struct.name, {remove_zeros = true, csv=true});
+        	violation:remove_zeros():save("sddp_dashboard_viol_" .. suffix .. "_" .. viol_struct.name, {csv=true});
 			info("Violation dashboard for " .. viol_struct.name .. " created successfully.")
 		else
 			info("Violation values for " .. viol_struct.name .. " aren't significatives. Skipping save... ")
@@ -76,10 +76,10 @@ local costs = ifelse(objcop():ge(0), objcop(), 0);
 
 if( costs:loaded() ) then
     -- sddp_dashboard_cost_tot. Considering discount rate in the cost aggregation
-    (costs/discount_rate()):aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):save("sddp_dashboard_cost_tot", {remove_zeros = true, csv=true});
+    (costs/discount_rate()):aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros():save("sddp_dashboard_cost_tot", {csv=true});
     
     -- sddp_dashboard_cost_avg
-    costs:aggregate_scenarios(BY_AVERAGE()):save("sddp_dashboard_cost_avg", {remove_zeros = true, csv=true});
+    costs:aggregate_scenarios(BY_AVERAGE()):remove_zeros():save("sddp_dashboard_cost_avg", {csv=true});
     
     -- sddp_dashboard_cost_disp
     disp = concatenate(
@@ -100,10 +100,10 @@ local revenues = ifelse(objcop():le(0), -objcop(), 0);
 
 if( revenues:loaded() ) then
     -- sddp_dashboard_rev_tot. Considering discount rate in the revenue aggregation
-    (revenues/discount_rate()):aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):save("sddp_dashboard_rev_tot", {remove_zeros = true, csv=true});
+    (revenues/discount_rate()):aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros():save("sddp_dashboard_rev_tot", {csv=true});
     
     -- sddp_dashboard_rev_avg
-    revenues:aggregate_scenarios(BY_AVERAGE()):save("sddp_dashboard_rev_avg", {remove_zeros = true, csv=true});
+    revenues:aggregate_scenarios(BY_AVERAGE()):remove_zeros():save("sddp_dashboard_rev_avg", {csv=true});
     
     -- sddp_dashboard_rev_disp
     disp = concatenate(
@@ -178,7 +178,7 @@ local rnw = Renewable();
 -- Get renewable generation spillage
 rnw_spill = rnw:load("vergnd");
 
-rnw_spill:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_scenarios(BY_AVERAGE()):save("sddp_dashboard_result_avg_vergnd",{remove_zeros=true, csv=true});
+rnw_spill:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_scenarios(BY_AVERAGE()):remove_zeros():save("sddp_dashboard_result_avg_vergnd",{csv=true});
 
 -----------------------------------------------------------------------------------------------
 -- LGC
@@ -187,7 +187,7 @@ local lgcgen = Hydro():load("lgcgen");
 local lgcrev = Hydro():load("lgcrev");
 
 -- sddp_dashboard_lgc_gen
-lgcgen:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM(), Profile.PER_YEAR):save("sddp_dashboard_lgc_gen", {remove_zeros = true, csv=true});
+lgcgen:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM(), Profile.PER_YEAR):remove_zeros():save("sddp_dashboard_lgc_gen", {csv=true});
 
 -- sddp_dashboard_lgc_rev
-lgcrev:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM(), Profile.PER_YEAR):save("sddp_dashboard_lgc_rev", {remove_zeros = true, csv=true});
+lgcrev:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM(), Profile.PER_YEAR):remove_zeros():save("sddp_dashboard_lgc_rev", {csv=true});

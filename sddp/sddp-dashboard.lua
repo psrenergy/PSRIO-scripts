@@ -700,7 +700,7 @@ local function create_costs_and_revs(col_struct)
         -- sddp_dashboard_cost_tot
         costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM());
         if studies == 1 then
-            costs:save("sddp_dashboard_cost_tot", { remove_zeros = true, csv = true });
+            costs:remove_zeros():save("sddp_dashboard_cost_tot", { csv = true });
         end
 
         local disp = concatenate(costs:aggregate_agents(BY_SUM(), "P10"):aggregate_scenarios(BY_PERCENTILE(10)), costs:aggregate_agents(BY_SUM(), "Average"):aggregate_scenarios(BY_AVERAGE()), costs:aggregate_agents(BY_SUM(), "P90"):aggregate_scenarios(BY_PERCENTILE(90)));
