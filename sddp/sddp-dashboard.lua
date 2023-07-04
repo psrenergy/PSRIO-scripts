@@ -441,6 +441,12 @@ end
 
 local function create_conv_map_graph(tab, file_name, col_struct, i)
     local conv_map = col_struct.generic[i]:load(file_name);
+    tab:push("### Convergence map legend");
+    tab:push("| Color | Meaning |");
+    tab:push("|:-----:|:-------:|");
+    tab:push("| Blue | **converged**|");
+    tab:push("| Yellow | **warning**|");
+    tab:push("| Red | **not converged**|");
     local chart = Chart("Convergence map");
     chart:add_heatmap(conv_map, { yUnit = "Iteration", xUnit = "Stage", showInLegend = false, stops = { { 0.0, "#C64B3E" }, { 0.5, "#FBEEB3" }, { 1.0, "#4E79A7" } }, stopsMin = 0, stopsMax = 2 });
     tab:push(chart);
@@ -448,6 +454,13 @@ end
 
 local function create_hourly_sol_status_graph(tab, col_struct, i)
     local status = col_struct.generic[i]:load("hrstat");
+    tab:push("### Solution status legend");
+    tab:push("| Color | Meaning |");
+    tab:push("|:-----:|:-------:|");
+    tab:push("| Green | **success**|");
+    tab:push("| Blue | **warning**|");
+    tab:push("| Red | **error**|");
+    tab:push("| Yellow | **linear**|");
     local chart = Chart("Solution status per stage and scenario");
     chart:add_heatmap(status, { yUnit = "Scenario", xUnit = "Stage", showInLegend = false, stops = { { 0.0, "#8ACE7E" }, { 0.33, "#4E79A7" }, { 0.66, "#C64B3E" }, { 1.0, "#FBEEB3" } }, stopsMin = 0, stopsMax = 3 });
     tab:push(chart);
@@ -459,6 +472,13 @@ local function create_exe_timer_per_scen(tab, col_struct, i)
     local extime = col_struct.generic[i]:load("extime");
     local extime_disp = concatenate(extime:aggregate_agents(BY_SUM(), "P10"):aggregate_scenarios(BY_PERCENTILE(10)), extime:aggregate_agents(BY_SUM(), "Average"):aggregate_scenarios(BY_AVERAGE()), extime:aggregate_agents(BY_SUM(), "P90"):aggregate_scenarios(BY_PERCENTILE(90)));
     if is_greater_than_zero(extime_disp) then
+        info("Ola");
+        info(extime_disp:aggregate_scenarios(BY_MAX()):aggregate_stages(BY_MAX()):to_list()[1]);
+        if extime_disp:aggregate_scenarios(BY_MAX()):aggregate_stages(BY_MAX()):to_list()[1] < 3600 then
+            info("Converteu");
+            extime_disp:convert("s")
+        end
+        extime_disp:save("extime_disp", {csv=true});
         extime_chart:add_area_range(extime_disp:select_agent(1), extime_disp:select_agent(3), { xUnit="Stage", color = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
         extime_chart:add_line(extime_disp:select_agent(2), { xUnit="Stage", color = { "#F02720" } }); -- Average
     end
@@ -675,7 +695,7 @@ local function create_sim_report(col_struct)
         end
         
         -- Execution times per scenario
-        if not col_struct.study[1]:get_parameter("SCEN", -1) == 1 then -- SDDP scenarios does not have execution times per scenario
+        if col_struct.study[1]:get_parameter("SCEN", 0) == 0 then -- SDDP scenarios does not have execution times per scenario
             create_exe_timer_per_scen(tab, col_struct, 1);
         end
         
@@ -1310,7 +1330,7 @@ if #has_inf > 0 then
 end
 
 -- Solution quality - Policy report
-if not col_struct.study[1]:get_parameter("SCEN", -1) == 1 then -- SDDP scenarios does not have policy phase
+if col_struct.study[1]:get_parameter("SCEN", 0) == 0 then -- SDDP scenarios does not have policy phase
     local sddppol = col_struct.generic[1]:load_table("sddppol.csv");
     if col_struct.study[1]:get_parameter("Objetivo", -1) == 1 or
     #sddppol > 0 then
