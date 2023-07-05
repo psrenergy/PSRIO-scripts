@@ -435,6 +435,8 @@ end
 local function create_penalty_proportion_graph(tab, col_struct, i)
     local penp = col_struct.generic[i]:load("sddppenp");
     local chart = Chart("Share of violation penalties and deficit in the cost of each stage/scenario");
+    
+    penp:convert("%");
     chart:add_heatmap(penp, { yUnit = "Scenario", xUnit = "Stage", showInLegend = false, stops = { { 0.0, "#4E79A7" }, { 0.5, "#FBEEB3" }, { 1.0, "#C64B3E" } }, stopsMin = 0.0, stopsMax = 100.0});
     tab:push(chart);
 end
@@ -631,8 +633,6 @@ local function create_pol_report(col_struct)
             create_conv_map_graph(tab, convm_file_list[i], col_struct, 1);
         end
     end
-
-
 
     return tab;
 end
@@ -1208,6 +1208,26 @@ local function create_viol_report(tab, col_struct, viol_struct, suffix)
     end
 end
 
+local function create_viol_report_from_list(tab, col_struct, viol_list, viol_struct, suffix)
+    local viol_name;
+    local tokens = {};
+
+    for i, file in ipairs(viol_list) do
+        -- Look for file title in violation structure
+        for j, struct in ipairs(viol_struct) do
+            viol_name = "sddp_dashboard_viol_" .. suffix .. "_" .. struct.name;
+            if file == viol_name then
+                viol_file = col_struct.generic[1]:load(file);
+                if viol_file:loaded() then
+                    local chart = Chart(struct.title);
+                    chart:add_column_stacking(viol_file, {xUnit="Stage"});
+                    tab:push(chart); 
+                end
+            end
+        end
+    end
+end
+
 -- Collection arrays struct
 local col_struct = {
     battery         = {},
@@ -1343,9 +1363,29 @@ tab_solution_quality:push(create_sim_report(col_struct));
 
 -- Violation
 if studies == 1 then
-    create_viol_report(tab_viol_avg, col_struct, viol_report_structs, "avg");
-    create_viol_report(tab_viol_max, col_struct, viol_report_structs, "max");
-
+    local viol_files;
+    local viol_list = {};
+    
+    local viol_file_name = "sddp_viol.out";
+    
+    -- Load list of violations
+    viol_files = col_struct.generic[1]:load_table_without_header(viol_file_name);
+    
+    -- Check if violation list file is present
+    if #viol_files > 0 then
+        -- Create list of violation outputs to be considered
+        for lin = 1, #viol_files do
+            file = viol_files[lin][1];
+            table.insert(viol_list,file);
+        end
+        
+        create_viol_report_from_list(tab_viol_avg, col_struct, viol_list, viol_report_structs, "avg");
+        create_viol_report_from_list(tab_viol_max, col_struct, viol_list, viol_report_structs, "max");
+    else
+        create_viol_report(tab_viol_avg, col_struct, viol_report_structs, "avg");
+        create_viol_report(tab_viol_max, col_struct, viol_report_structs, "max");
+    end 
+    
     tab_violations:push(tab_viol_avg);
     tab_violations:push(tab_viol_max);
 end

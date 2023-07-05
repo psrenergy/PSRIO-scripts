@@ -2,7 +2,7 @@
 -- LOCAL FUNCTIONS
 -----------------------------------------------------------------------------------------------
 
-local function violation_aggregation(viol_struct,aggregation,suffix,tol)
+local function violation_aggregation(log_viol,viol_struct,aggregation,suffix,tol)
     n_agents = 5;
 
     generic = Generic();
@@ -23,20 +23,47 @@ local function violation_aggregation(viol_struct,aggregation,suffix,tol)
                 	violation:remove_agents(largest_agents):aggregate_agents(BY_SUM(), "Others")
             	);
         	end
-        	violation:remove_zeros():save("sddp_dashboard_viol_" .. suffix .. "_" .. viol_struct.name, {csv=true});
+            viol_file_name = "sddp_dashboard_viol_" .. suffix .. "_" .. viol_struct.name
+        	violation:remove_zeros():save(viol_file_name, {csv=true});
 			info("Violation dashboard for " .. viol_struct.name .. " created successfully.")
+            if log_viol.file:is_open() then
+                log_viol.file:write(viol_file_name .. "\n");
+                log_viol.nrec = log_viol.nrec + 1;
+            else
+                info("Error writing violation log file");
+            end
 		else
 			info("Violation values for " .. viol_struct.name .. " aren't significatives. Skipping save... ")
 		end
     end
 end
 
-local function violation_output(viol_structs,tol)
+local function violation_output(log_viol, out_list, viol_structs, tol)
+    local file_exists;
+
     for i, viol_struct in ipairs(viol_structs) do
---      Aggregation by Max
-        violation_aggregation(viol_struct,BY_MAX(),"max",tol)
---      Aggregation by Average
-        violation_aggregation(viol_struct,BY_AVERAGE(),"avg",tol)
+        file_exists = false;
+        for j, out_file in ipairs(out_list) do
+            if out_file == viol_struct.name then
+                file_exists = true;
+            end
+        end
+        
+        if file_exists then
+            has_at_least_one_out = true;
+            
+--          Aggregation by Max
+            violation_aggregation(log_viol,viol_struct,BY_MAX(),"max",tol)
+--          Aggregation by Average
+            violation_aggregation(log_viol,viol_struct,BY_AVERAGE(),"avg",tol)
+        end
+    end
+    
+    if log_viol.nrec == 0 then
+        info("Entrou aqui");
+        if log_viol.file:is_open() then
+            log_viol.file:write("empty");
+        end
     end
 end
 
@@ -126,6 +153,8 @@ defrisk:save("sddprisk",{csv=true});
 -----------------------------------------------------------------------------------------------
 -- VIOLATIONS
 -----------------------------------------------------------------------------------------------
+
+-- IMPORTANT: the name of the violation must be the same as the dependency
 viol_structs = {
 	{name = "defcit", aggregation = BY_SUM()},
 	{name = "nedefc", aggregation = BY_AVERAGE()},
@@ -168,8 +197,24 @@ viol_structs_debug = {
 	{name = "vfeact", aggregation = BY_AVERAGE()}
 }
 
-violation_output(viol_structs, 0.01)
+-- Load output files from SDDP model
+local output_list_name = "outfiles.out";
+local out_list = {};
 
+local sddp_outputs = Generic():load_table_without_header(output_list_name);
+if #sddp_outputs > 0 then
+    -- Create list of violation outputs to be considered
+    for lin = 1, #sddp_outputs do
+        file = sddp_outputs[lin][1];
+        file = string.gsub(string.gsub(file,".csv","")," ","");
+        table.insert(out_list,file);
+    end
+end
+
+-- Log file with violation files used execution
+log_viol = {file = Generic():create_writer("sddp_viol.out"), nrec = 0};
+violation_output(log_viol, out_list, viol_structs, 0.01)
+log_viol.file:close();
 -----------------------------------------------------------------------------------------------
 -- RENEWABLES
 -----------------------------------------------------------------------------------------------
