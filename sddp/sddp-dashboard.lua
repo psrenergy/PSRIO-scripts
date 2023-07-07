@@ -11,6 +11,12 @@ local studies = PSR.studies();
 -- Auxiliary functions
 -----------------------------------------------------------------------------------------------
 
+local function push_tab_to_tab(tab_from, tab_to)
+    if #tab_from > 0 then
+        tab_to:push(tab_from);
+    end 
+end
+
 local function is_greater_than_zero(output)
     local x = output:abs():aggregate_agents(BY_SUM(), "CheckZeros"):aggregate_stages(BY_SUM()):to_list();
     if x[1] > 0.0 then
@@ -1294,7 +1300,7 @@ tab_violations:set_icon("siren");
 tab_results:set_icon("line-chart");
 
 -- Input data summary
-tab_input_data:push(create_tab_summary(col_struct, info_struct));
+push_tab_to_tab(create_tab_summary(col_struct, info_struct),tab_input_data);
 
 -- Infeasibility report
 local has_inf = {};
@@ -1341,12 +1347,12 @@ else
 end
 
 -- Input data inflow energy
-tab_input_data:push(create_inflow_energy(col_struct));
+push_tab_to_tab(create_inflow_energy(col_struct),tab_input_data);
 dashboard:push(tab_input_data);
 
 -- If infeasibilities are present, dashboard
 if #has_inf > 0 then
-    dashboard:push(tab_inf);
+    push_tab_to_tab(tab_inf,dashboard);
 end
 
 -- Solution quality - Policy report
@@ -1354,12 +1360,12 @@ if col_struct.study[1]:get_parameter("SCEN", 0) == 0 then -- SDDP scenarios does
     local sddppol = col_struct.generic[1]:load_table("sddppol.csv");
     if col_struct.study[1]:get_parameter("Objetivo", -1) == 1 or
     #sddppol > 0 then
-        tab_solution_quality:push(create_pol_report(col_struct));
+        push_tab_to_tab(create_pol_report(col_struct),tab_solution_quality);
     end
 end
 
 -- Solution quality - Simulation report
-tab_solution_quality:push(create_sim_report(col_struct));
+push_tab_to_tab(create_sim_report(col_struct),tab_solution_quality);
 
 -- Violation
 if studies == 1 then
@@ -1386,21 +1392,21 @@ if studies == 1 then
         create_viol_report(tab_viol_max, col_struct, viol_report_structs, "max");
     end 
     
-    tab_violations:push(tab_viol_avg);
-    tab_violations:push(tab_viol_max);
+    push_tab_to_tab(tab_viol_avg,tab_violations);
+    push_tab_to_tab(tab_viol_max,tab_violations);
 end
 
 -- Results
-tab_results:push(create_costs_and_revs(col_struct));
-tab_results:push(create_marg_costs(col_struct));
-tab_results:push(create_gen_report(col_struct));
-tab_results:push(create_risk_report(col_struct));
+push_tab_to_tab(create_costs_and_revs(col_struct),tab_results);
+push_tab_to_tab(create_marg_costs(col_struct)    ,tab_results);
+push_tab_to_tab(create_gen_report(col_struct)    ,tab_results);
+push_tab_to_tab(create_risk_report(col_struct)   ,tab_results);
 
-dashboard:push(tab_solution_quality);
-
+push_tab_to_tab(tab_solution_quality, dashboard);
 if studies == 1 then
-    dashboard:push(tab_violations);
+    push_tab_to_tab(tab_violations,dashboard);
 end
 
-dashboard:push(tab_results);
+push_tab_to_tab(tab_results,dashboard);
+
 dashboard:save(dashboard_name);
