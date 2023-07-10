@@ -118,7 +118,9 @@ end
 -----------------------------------------------------------------------------------------------
 
 local function create_tab_summary(col_struct, info_struct)
-    local tab = Tab("Case summary");
+    local tab = Tab("Info");
+    tab:set_icon("info");
+    
     tab:push("# Case summary");
 
     local exe_status_str;
@@ -1115,7 +1117,7 @@ local function create_gen_report(col_struct)
 end
 
 local function create_risk_report(col_struct)
-    local tab = Tab("Risk");
+    local tab = Tab("Deficit risk");
     local chart = Chart("Deficit risk by sub-system");
     local chart = Chart("Deficit risk by sub-system");
 
@@ -1255,63 +1257,36 @@ local info_struct = {};
 
 load_model_info(col_struct,info_struct);
 
--- Dashboard name configuration
-dashboard_name = "sddp";
-if studies > 1 then
-    dashboard_name = dashboard_name .. "-compare";
-end
-
 -----------------------------------------------------------------------------------------------
 -- Dashboard tab configuration
 -----------------------------------------------------------------------------------------------
 
 local dashboard = Dashboard();
 
--- Main tabs
-local tab_input_data       = Tab("Input data");
-local tab_solution_quality = Tab("Solution quality");
-local tab_violations       = Tab("Violations");
-local tab_results          = Tab("Results");
+-- Dashboard name configuration
+dashboard_name = "sddp";
+if studies > 1 then
+    dashboard_name = dashboard_name .. "-compare";
+end
 
--- Violation tabs
-local tab_viol_avg = Tab("Average");
-local tab_viol_max = Tab("Maximum");
-
+----------------
 -- Infeasibility
+----------------
 local tab_inf = Tab("Infeasibility report");
-
-tab_input_data:set_collapsed(false);
 tab_inf:set_disabled(false);
-tab_solution_quality:set_collapsed(true);
-tab_violations:set_collapsed(true);
-tab_results:set_collapsed(true);
-
-tab_input_data:set_disabled();
 tab_inf:set_disabled();
-tab_solution_quality:set_disabled();
-tab_violations:set_disabled();
-tab_results:set_disabled();
-
--- Set icons of the main tabs
-tab_input_data:set_icon("file-input"); -- Alternative: arrow-big-right
 tab_inf:set_icon("alert-triangle");
-tab_solution_quality:set_icon("alert-triangle");
-tab_violations:set_icon("siren");
-tab_results:set_icon("line-chart");
-
--- Input data summary
-push_tab_to_tab(create_tab_summary(col_struct, info_struct),tab_input_data);
 
 -- Infeasibility report
 local has_inf = {};
 if studies == 1 then
     if info_struct[1].status > 0 then
         dash_infeasibility(tab_inf,info_struct[1].infrep .. ".out",1);
-        
-        dashboard:push(tab_input_data);
-        dashboard:push(tab_inf);
-        
+ 
+        push_tab_to_tab(tab_inf,dashboard);                                     -- Infeasibility
+        push_tab_to_tab(create_tab_summary(col_struct, info_struct),dashboard); -- Case information summary
         dashboard:save(dashboard_name);
+        
         return
     end
 else
@@ -1337,8 +1312,8 @@ else
               
         -- If only one study was successful, comparison does not exist
         if studies == 1 then
-            dashboard:push(tab_input_data);
-            dashboard:push(tab_inf);
+            push_tab_to_tab(tab_inf,dashboard);
+            push_tab_to_tab(create_tab_summary(col_struct, info_struct),dashboard); -- Case information summary
             dashboard:save(dashboard_name);
             return
         end
@@ -1346,16 +1321,21 @@ else
     
 end
 
--- Input data inflow energy
-push_tab_to_tab(create_inflow_energy(col_struct),tab_input_data);
-dashboard:push(tab_input_data);
-
 -- If infeasibilities are present, dashboard
 if #has_inf > 0 then
     push_tab_to_tab(tab_inf,dashboard);
 end
 
--- Solution quality - Policy report
+-------------------
+-- Solution quality
+-------------------
+
+local tab_solution_quality = Tab("Solution quality");
+tab_solution_quality:set_collapsed(false);
+tab_solution_quality:set_disabled();
+tab_solution_quality:set_icon("alert-triangle");
+
+-- Policy report
 if col_struct.study[1]:get_parameter("SCEN", 0) == 0 then -- SDDP scenarios does not have policy phase
     local sddppol = col_struct.generic[1]:load_table("sddppol.csv");
     if col_struct.study[1]:get_parameter("Objetivo", -1) == 1 or
@@ -1364,10 +1344,24 @@ if col_struct.study[1]:get_parameter("SCEN", 0) == 0 then -- SDDP scenarios does
     end
 end
 
--- Solution quality - Simulation report
+-- Simulation report
 push_tab_to_tab(create_sim_report(col_struct),tab_solution_quality);
 
+push_tab_to_tab(tab_solution_quality, dashboard);
+
+------------
 -- Violation
+------------
+
+-- Violation tabs
+local tab_violations = Tab("Violations");
+local tab_viol_avg   = Tab("Average");
+local tab_viol_max   = Tab("Maximum");
+
+tab_violations:set_collapsed(true);
+tab_violations:set_disabled();
+tab_violations:set_icon("siren");
+
 if studies == 1 then
     local viol_files;
     local viol_list = {};
@@ -1394,19 +1388,30 @@ if studies == 1 then
     
     push_tab_to_tab(tab_viol_avg,tab_violations);
     push_tab_to_tab(tab_viol_max,tab_violations);
+    
+    push_tab_to_tab(tab_violations,dashboard);
 end
 
+----------
 -- Results
+----------
+
+local tab_results = Tab("Results");
+tab_results:set_collapsed(true);
+tab_results:set_disabled();
+tab_results:set_icon("line-chart");
+
 push_tab_to_tab(create_costs_and_revs(col_struct),tab_results);
 push_tab_to_tab(create_marg_costs(col_struct)    ,tab_results);
 push_tab_to_tab(create_gen_report(col_struct)    ,tab_results);
 push_tab_to_tab(create_risk_report(col_struct)   ,tab_results);
-
-push_tab_to_tab(tab_solution_quality, dashboard);
-if studies == 1 then
-    push_tab_to_tab(tab_violations,dashboard);
-end
+push_tab_to_tab(create_inflow_energy(col_struct) ,tab_results);
 
 push_tab_to_tab(tab_results,dashboard);
+
+---------------------------
+-- Case information summary
+---------------------------
+push_tab_to_tab(create_tab_summary(col_struct, info_struct),dashboard);
 
 dashboard:save(dashboard_name);
