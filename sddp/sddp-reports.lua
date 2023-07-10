@@ -206,7 +206,6 @@ if #sddp_outputs > 0 then
     -- Create list of violation outputs to be considered
     for lin = 1, #sddp_outputs do
         file = sddp_outputs[lin][1];
-        file = string.gsub(string.gsub(file,".csv","")," ","");
         table.insert(out_list,file);
     end
 end

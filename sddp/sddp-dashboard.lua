@@ -1256,9 +1256,9 @@ local info_struct = {};
 load_model_info(col_struct,info_struct);
 
 -- Dashboard name configuration
-dashboard_name = "sddp-dashboard";
+dashboard_name = "sddp";
 if studies > 1 then
-    dashboard_name = "sddp-compare";
+    dashboard_name = dashboard_name .. "-compare";
 end
 
 -----------------------------------------------------------------------------------------------
