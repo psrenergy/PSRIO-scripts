@@ -442,7 +442,7 @@ end
 
 local function create_penalty_proportion_graph(tab, col_struct, i)
     local penp = col_struct.generic[i]:load("sddppenp");
-    local chart = Chart("Share of violation penalties and deficit in the cost of each stage/scenario");
+    local chart = Chart("Share of violation penalties and deficit in the cost of each stage/scenario (%)");
     
     penp:convert("%");
     chart:add_heatmap(penp, { yUnit = "Scenario", xUnit = "Stage", showInLegend = false, stops = { { 0.0, "#4E79A7" }, { 0.5, "#FBEEB3" }, { 1.0, "#C64B3E" } }, stopsMin = 0.0, stopsMax = 100.0});
@@ -1264,7 +1264,7 @@ load_model_info(col_struct,info_struct);
 local dashboard = Dashboard();
 
 -- Dashboard name configuration
-dashboard_name = "sddp";
+dashboard_name = "SDDP";
 if studies > 1 then
     dashboard_name = dashboard_name .. "-compare";
 end
