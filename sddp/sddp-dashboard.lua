@@ -445,34 +445,50 @@ local function create_penalty_proportion_graph(tab, col_struct, i)
     local chart = Chart("Share of violation penalties and deficit in the cost of each stage/scenario (%)");
     
     penp:convert("%");
-    chart:add_heatmap(penp, { yUnit = "Scenario", xUnit = "Stage", showInLegend = false, stops = { { 0.0, "#4E79A7" }, { 0.5, "#FBEEB3" }, { 1.0, "#C64B3E" } }, stopsMin = 0.0, stopsMax = 100.0});
+    chart:add_heatmap_series(penp, { yLabel = "Scenario", xLabel = "Stage", showInLegend = false, stops = { { 0.0, "#4E79A7" }, { 0.5, "#FBEEB3" }, { 1.0, "#C64B3E" } }, stopsMin = 0.0, stopsMax = 100.0 });
     tab:push(chart);
 end
 
 local function create_conv_map_graph(tab, file_name, col_struct, i)
     local conv_map = col_struct.generic[i]:load(file_name);
-    tab:push("### Convergence map legend");
-    tab:push("| Color | Meaning |");
-    tab:push("|:-----:|:-------:|");
-    tab:push("| Blue | **converged**|");
-    tab:push("| Yellow | **warning**|");
-    tab:push("| Red | **not converged**|");
+    
+    local options = {
+    yLabel = "Iteration",
+    xLabel = "Stage",
+    showInLegend = false,
+    stopsMin = 0,
+    stopsMax = 2,
+    dataClasses = {
+                  { color = "#4E79A7", to = 0  , name = "converged" },
+                  { color = "#FBEEB3", from = 1, to = 2, name = "warning" },
+                  { color = "#C64B3E", from = 2, name = "not converged" }
+                  }
+    };
+
     local chart = Chart("Convergence map");
-    chart:add_heatmap(conv_map, { yUnit = "Iteration", xUnit = "Stage", showInLegend = false, stops = { { 0.0, "#C64B3E" }, { 0.5, "#FBEEB3" }, { 1.0, "#4E79A7" } }, stopsMin = 0, stopsMax = 2 });
+    chart:add_heatmap(conv_map,options);
     tab:push(chart);
 end
 
 local function create_hourly_sol_status_graph(tab, col_struct, i)
     local status = col_struct.generic[i]:load("hrstat");
-    tab:push("### Solution status legend");
-    tab:push("| Color | Meaning |");
-    tab:push("|:-----:|:-------:|");
-    tab:push("| Green | **success**|");
-    tab:push("| Blue | **warning**|");
-    tab:push("| Red | **error**|");
-    tab:push("| Yellow | **linear**|");
+
+    local options = {
+    yLabel = "Scenario",
+    xLabel = "Stage",
+    showInLegend = false,
+    stopsMin = 0,
+    stopsMax = 3,
+    dataClasses = {
+                  { color = "#8ACE7E", to = 0, name = "success" },
+                  { color = "#4E79A7", from = 1, to = 2, name = "warning" },
+                  { color = "#C64B3E", from = 2, to = 3, name = "error" },
+                  { color = "#FBEEB3", from = 3, name = "linear" }
+                  }
+    };
+
     local chart = Chart("Solution status per stage and scenario");
-    chart:add_heatmap(status, { yUnit = "Scenario", xUnit = "Stage", showInLegend = false, stops = { { 0.0, "#8ACE7E" }, { 0.33, "#4E79A7" }, { 0.66, "#C64B3E" }, { 1.0, "#FBEEB3" } }, stopsMin = 0, stopsMax = 3 });
+    chart:add_heatmap(status,options);
     tab:push(chart);
 end
 
@@ -830,7 +846,7 @@ local function create_gen_report(col_struct)
     -- Color preferences
     local color_hydro = '#4E79A7';
     local color_thermal = '#F28E2B';
-    local color_renw_other = '#ED4A9E';
+    local color_renw_other = '#BAB0AC';
     local color_wind = '#8CD17D';
     local color_solar = '#F1CE63';
     local color_small_hydro = '#A0CBE8';
@@ -857,7 +873,17 @@ local function create_gen_report(col_struct)
     local total_solar_gen_age;
     local total_small_hydro_gen_age;
     local total_thermal_gen_age;
-
+    
+    local hydro_agent_name;
+    local thermal_agent_name;
+    local battery_agent_name;
+    local deficit_agent_name;
+    local pinj_agent_name;   
+    local renw_ot_agent_name;     
+    local renw_wind_agent_name;   
+    local renw_solar_agent_name;  
+    local renw_shydro_agent_name; 
+    
     local gerter = {};
     local gerhid = {};
     local gergnd = {};
@@ -1018,98 +1044,123 @@ local function create_gen_report(col_struct)
         tab:push(chart);
     end
 
-    if studies > 1 then
-        -- Generation per system report
-        local agents = col_struct.generic[1]:load("cmgdem"):agents();
-        for i, agent in ipairs(agents) do
-            chart_tot_gerhid     = Chart("Total Hydro");
-            chart_tot_gerter     = Chart("Total Thermal");
-            chart_tot_renw_other = Chart("Total Renewable - Other tech.");
-            chart_tot_renw_wind  = Chart("Total Renewable - Wind");
-            chart_tot_renw_solar = Chart("Total Renewable - Solar");
-            chart_tot_renw_shyd  = Chart("Total Renewable - Small hydro");
-            chart_tot_gerbat     = Chart("Total Battery");
-            chart_tot_potinj     = Chart("Total Power Injection");
-            chart_tot_defcit     = Chart("Total Deficit");
-
-            for i = 1, studies do
-                -- Data processing
-                total_hydro_gen = gerhid[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(col_struct.case_dir_list[i] .. " - Total Hydro");
-                total_batt_gen  = gerbat[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(col_struct.case_dir_list[i] .. " - Total Battery");
-                total_deficit   = defcit[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(col_struct.case_dir_list[i] .. " - Total Deficit");
-                total_pot_inj   = potinj[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(col_struct.case_dir_list[i] .. " - Total P. Inj.");
+    -- Name initialization
+    hydro_agent_name   = "Total Hydro";
+    thermal_agent_name = "Total Thermal";
+    battery_agent_name = "Total Battery";
+    deficit_agent_name = "Total Deficit";
+    pinj_agent_name    = "Total P. Inj.";
+    
+    renw_ot_agent_name     = "Total Renewable - Other tech.";
+    renw_wind_agent_name   = "Total Renewable - Wind";
+    renw_solar_agent_name  = "Total Renewable - Solar";
+    renw_shydro_agent_name = "Total Renewable - Small hydro";
+        
+    -- Generation per system report
+    local agents = col_struct.generic[1]:load("cmgdem"):agents();
+    for i, agent in ipairs(agents) do
+        chart_tot_gerhid     = Chart("Total Hydro");
+        chart_tot_gerter     = Chart("Total Thermal");
+        chart_tot_renw_other = Chart("Total Renewable - Other tech.");
+        chart_tot_renw_wind  = Chart("Total Renewable - Wind");
+        chart_tot_renw_solar = Chart("Total Renewable - Solar");
+        chart_tot_renw_shyd  = Chart("Total Renewable - Small hydro");
+        chart_tot_gerbat     = Chart("Total Battery");
+        chart_tot_potinj     = Chart("Total Power Injection");
+        chart_tot_defcit     = Chart("Total Deficit");
+            
+        for i = 1, studies do
+                
+            if studies > 1 then
+                hydro_agent_name   = col_struct.case_dir_list[i] .. " - " .. hydro_agent_name;
+                thermal_agent_name = col_struct.case_dir_list[i] .. " - " .. thermal_agent_name;
+                battery_agent_name = col_struct.case_dir_list[i] .. " - " .. battery_agent_name;
+                deficit_agent_name = col_struct.case_dir_list[i] .. " - " .. deficit_agent_name;
+                pinj_agent_name    = col_struct.case_dir_list[i] .. " - " .. pinj_agent_name;
+                
+                renw_ot_agent_name     = col_struct.case_dir_list[i] .. " - " .. renw_ot_agent_name;
+                renw_wind_agent_name   = col_struct.case_dir_list[i] .. " - " .. renw_wind_agent_name;
+                renw_solar_agent_name  = col_struct.case_dir_list[i] .. " - " .. renw_solar_agent_name;
+                renw_shydro_agent_name = col_struct.case_dir_list[i] .. " - " .. renw_shydro_agent_name;               
+            end
+            
+            -- Data processing
+            total_hydro_gen = gerhid[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(hydro_agent_name);
+            total_batt_gen  = gerbat[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(battery_agent_name);
+            total_deficit   = defcit[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(deficit_agent_name);
+            total_pot_inj   = potinj[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(pinj_agent_name);
  
-                -- Renewable generation is broken into 3 types
-                total_other_renw_gen  = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:ne(1) &
-                                                                col_struct.renewable[i].tech_type:ne(2) & 
-                                                                col_struct.renewable[i].tech_type:ne(4));
-                                                        
-                total_other_renw_gen  = total_other_renw_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(col_struct.case_dir_list[i] .. " - Total Renewable - Other tech.");
-                total_wind_gen        = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(1)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(col_struct.case_dir_list[i] .. " - Total Renewable - Wind");
-                total_solar_gen       = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(2)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(col_struct.case_dir_list[i] .. " - Total Renewable - Solar");
-                total_small_hydro_gen = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(4)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(col_struct.case_dir_list[i] .. " - Total Renewable - Small hydro");
+            -- Renewable generation is broken into 3 types
+            total_other_renw_gen  = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:ne(1) &
+                                                            col_struct.renewable[i].tech_type:ne(2) & 
+                                                            col_struct.renewable[i].tech_type:ne(4));
+                                                    
+            total_other_renw_gen  = total_other_renw_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_ot_agent_name);
+            total_wind_gen        = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(1)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_wind_agent_name);
+            total_solar_gen       = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(2)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_solar_agent_name);
+            total_small_hydro_gen = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(4)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_shydro_agent_name);
 
-                total_thermal_gen = gerter[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(col_struct.case_dir_list[i] .. " - Total Thermal");
+            total_thermal_gen = gerter[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(thermal_agent_name);
 
-                if total_hydro_gen:loaded() then
-                    chart_tot_gerhid:add_column(total_hydro_gen, { xUnit="Stage"});
-                end
-                if total_thermal_gen:loaded() then
-                    chart_tot_gerter:add_column(total_thermal_gen, { xUnit="Stage"});
-                end
-                if total_other_renw_gen:loaded() then
-                    chart_tot_renw_other:add_column(total_other_renw_gen, { xUnit="Stage"});
-                end
-                if total_wind_gen:loaded() then
-                    chart_tot_renw_wind:add_column(total_wind_gen, col_struct.case_dir_list[i], { xUnit="Stage"});
-                end
-                if total_solar_gen:loaded() then
-                    chart_tot_renw_solar:add_column(total_solar_gen, col_struct.case_dir_list[i], { xUnit="Stage"});
-                end
-                if total_small_hydro_gen:loaded() then
-                    chart_tot_renw_shyd:add_column(total_small_hydro_gen, col_struct.case_dir_list[i], { xUnit="Stage"});
-                end
-                if total_batt_gen:loaded() then
-                    chart_tot_gerbat:add_column(total_batt_gen, { xUnit="Stage"});
-                end
-                if total_pot_inj:loaded() then
-                    chart_tot_potinj:add_column(total_pot_inj, { xUnit="Stage"});
-                end
-                if total_deficit:loaded() then
-                    chart_tot_defcit:add_column(total_deficit, { xUnit="Stage"});
-                end
+            if total_hydro_gen:loaded() then
+                chart_tot_gerhid:add_column(total_hydro_gen, { xUnit="Stage"});
             end
-
-            tab:push("## Total generation per subsystem - " .. agent);
-            if #chart_tot_gerhid > 0 then
-                tab:push(chart_tot_gerhid);
+            if total_thermal_gen:loaded() then
+                chart_tot_gerter:add_column(total_thermal_gen, { xUnit="Stage"});
             end
-            if #chart_tot_gerter > 0 then
-                tab:push(chart_tot_gerter);
+            if total_other_renw_gen:loaded() then
+                chart_tot_renw_other:add_column(total_other_renw_gen, { xUnit="Stage"});
             end
-            if #chart_tot_renw_wind > 0 then
-                tab:push(chart_tot_renw_wind);
+            if total_wind_gen:loaded() then
+                chart_tot_renw_wind:add_column(total_wind_gen, col_struct.case_dir_list[i], { xUnit="Stage"});
             end
-            if #chart_tot_renw_solar > 0 then
-                tab:push(chart_tot_renw_solar);
+            if total_solar_gen:loaded() then
+                chart_tot_renw_solar:add_column(total_solar_gen, col_struct.case_dir_list[i], { xUnit="Stage"});
             end
-            if #chart_tot_renw_shyd > 0 then
-                tab:push(chart_tot_renw_shyd);
+            if total_small_hydro_gen:loaded() then
+                chart_tot_renw_shyd:add_column(total_small_hydro_gen, col_struct.case_dir_list[i], { xUnit="Stage"});
             end
-            if #chart_tot_other_renw > 0 then
-                tab:push(chart_tot_other_renw);
+            if total_batt_gen:loaded() then
+                chart_tot_gerbat:add_column(total_batt_gen, { xUnit="Stage"});
             end
-            if #chart_tot_gerbat > 0 then
-                tab:push(chart_tot_gerbat);
+            if total_pot_inj:loaded() then
+                chart_tot_potinj:add_column(total_pot_inj, { xUnit="Stage"});
             end
-            if #chart_tot_potinj > 0 then
-                tab:push(chart_tot_potinj);
-            end
-            if #chart_tot_defcit > 0 then
-                tab:push(chart_tot_defcit);
+            if total_deficit:loaded() then
+                chart_tot_defcit:add_column(total_deficit, { xUnit="Stage"});
             end
         end
+
+        tab:push("## Total generation per subsystem - " .. agent);
+        if #chart_tot_gerhid > 0 then
+            tab:push(chart_tot_gerhid);
+        end
+        if #chart_tot_gerter > 0 then
+            tab:push(chart_tot_gerter);
+        end
+        if #chart_tot_renw_other > 0 then
+            tab:push(chart_tot_renw_other);
+        end
+        if #chart_tot_renw_wind > 0 then
+            tab:push(chart_tot_renw_wind);
+        end
+        if #chart_tot_renw_solar > 0 then
+            tab:push(chart_tot_renw_solar);
+        end
+        if #chart_tot_renw_shyd > 0 then
+            tab:push(chart_tot_renw_shyd);
+        end
+        if #chart_tot_gerbat > 0 then
+            tab:push(chart_tot_gerbat);
+        end
+        if #chart_tot_potinj > 0 then
+            tab:push(chart_tot_potinj);
+        end
+        if #chart_tot_defcit > 0 then
+            tab:push(chart_tot_defcit);
+        end
     end
+    --end
 
     return tab;
 end
@@ -1332,10 +1383,12 @@ tab_solution_quality:set_icon("alert-triangle");
 
 -- Policy report
 if col_struct.study[1]:get_parameter("SCEN", 0) == 0 then -- SDDP scenarios does not have policy phase
-    local sddppol = col_struct.generic[1]:load_table("sddppol.csv");
-    if col_struct.study[1]:get_parameter("Objetivo", -1) == 1 or
-    #sddppol > 0 then
+    local file_name = "sddppol.csv"
+    local sddppol = col_struct.generic[1]:file_exists(file_name);
+    if sddppol then
         push_tab_to_tab(create_pol_report(col_struct),tab_solution_quality);
+    else
+        info("file " .. file_name .. " does not exist. Skipping policy report");
     end
 end
 
