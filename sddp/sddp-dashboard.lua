@@ -57,9 +57,6 @@ local function load_model_info(col_struct, info_struct)
     for i = 1, studies do
         -- Verify whether info file exists
         file_exists = col_struct.generic[i]:file_exists(info_file_name);
-        info("Bruno")
-        info(i)
-        info(file_exists);
         table.insert(existence_log,file_exists);
         
         -- Loading info files from each case
@@ -1448,14 +1445,10 @@ for i = 1, studies do
     if not col_struct.study[i]:get_parameter("SCEN", 0) == 0 or 
        not col_struct.generic[i]:file_exists(pol_file_name) then 
         create_policy_report = false;
-        info("Create pol?");
-        info(create_policy_report)
     end 
 end
 
 -- Policy report
-info("Create pol? 2");
-info(create_policy_report)
 if create_policy_report then -- SDDP scenarios does not have policy phase
     push_tab_to_tab(create_pol_report(col_struct),tab_solution_quality);
 else
