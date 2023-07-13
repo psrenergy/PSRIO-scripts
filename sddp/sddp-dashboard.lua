@@ -50,6 +50,28 @@ local function load_info_file(file_name,case_index)
 end
 
 local function load_model_info(col_struct, info_struct)
+    local file_exists;
+    local info_file_name = "SDDP.info";
+    local existence_log = {}
+    
+    for i = 1, studies do
+        -- Verify whether info file exists
+        file_exists = col_struct.generic[i]:file_exists(info_file_name);
+        info("Bruno")
+        info(i)
+        info(file_exists);
+        table.insert(existence_log,file_exists);
+        
+        -- Loading info files from each case
+        if existence_log[i] then
+            info_struct[i] = load_info_file(info_file_name,i);
+        end
+    end
+    
+    return existence_log;
+end
+
+local function load_collections(col_struct, info_struct)
     for i = 1, studies do
         table.insert(col_struct.battery        , Battery(i));
         table.insert(col_struct.bus            , Bus(i));
@@ -64,9 +86,6 @@ local function load_model_info(col_struct, info_struct)
         table.insert(col_struct.thermal        , Thermal(i));
         
         table.insert(col_struct.case_dir_list  , Generic(i):dirname());
-        
-        -- Loading info files from each case
-        info_struct[i] = load_info_file("SDDP.info",i);
     end
 end
 
@@ -118,6 +137,7 @@ end
 -----------------------------------------------------------------------------------------------
 
 local function create_tab_summary(col_struct, info_struct)
+       
     local tab = Tab("Info");
     tab:set_icon("info");
     
@@ -441,16 +461,30 @@ end
 -----------------------------------------------------------------------------------------------
 
 local function create_penalty_proportion_graph(tab, col_struct, i)
-    local penp = col_struct.generic[i]:load("sddppenp");
-    local chart = Chart("Share of violation penalties and deficit in the cost of each stage/scenario (%)");
+    local output_name  = "sddppenp";
+    local report_title = "Share of violation penalties and deficit in the cost of each stage/scenario";
+    local penp = col_struct.generic[i]:load(output_name);
+    
+    if not penp:loaded() then
+        info(output_name .. " could not be loaded. ".. "'" .. report_title .. "'" .. "report will not be displayed");
+        return
+    end
     
     penp:convert("%");
+    
+    local chart = Chart(report_title .. " (%)");
     chart:add_heatmap_series(penp, { yLabel = "Scenario", xLabel = "Stage", showInLegend = false, stops = { { 0.0, "#4E79A7" }, { 0.5, "#FBEEB3" }, { 1.0, "#C64B3E" } }, stopsMin = 0.0, stopsMax = 100.0 });
     tab:push(chart);
 end
 
 local function create_conv_map_graph(tab, file_name, col_struct, i)
     local conv_map = col_struct.generic[i]:load(file_name);
+    local report_title = "Convergence map";
+
+    if not conv_map:loaded() then
+        info(file_name .. " could not be loaded. ".. "'" .. report_title .. "'" .. "report will not be displayed");
+        return
+    end
     
     local options = {
     yLabel = "Iteration",
@@ -465,14 +499,21 @@ local function create_conv_map_graph(tab, file_name, col_struct, i)
                   }
     };
 
-    local chart = Chart("Convergence map");
+    local chart = Chart(report_title);
     chart:add_heatmap(conv_map,options);
     tab:push(chart);
 end
 
 local function create_hourly_sol_status_graph(tab, col_struct, i)
-    local status = col_struct.generic[i]:load("hrstat");
-
+    local output_name  = "hrstat";
+    local report_title = "Solution status per stage and scenario";
+    local status = col_struct.generic[i]:load(output_name);
+    
+    if not status:loaded() then
+        info(output_name .. " output could not be loaded. ".. "'" .. report_title .. "'" .. "report will not be displayed");
+        return
+    end
+    
     local options = {
     yLabel = "Scenario",
     xLabel = "Stage",
@@ -487,15 +528,22 @@ local function create_hourly_sol_status_graph(tab, col_struct, i)
                   }
     };
 
-    local chart = Chart("Solution status per stage and scenario");
+    local chart = Chart(report_title);
     chart:add_heatmap(status,options);
     tab:push(chart);
 end
 
 -- Execution times per scenario (dispersion)
 local function create_exe_timer_per_scen(tab, col_struct, i)
-    local extime_chart = Chart("Dispersion of execution times per scenario");
-    local extime = col_struct.generic[i]:load("extime");
+    local extime_chart;
+    local output_name  = "extime";
+    local extime = col_struct.generic[i]:load(output_name);
+    
+    if not extime:loaded() then
+        info(output_name .. " output could not be loaded. 'Dispersion of execution times per scenario' report will not be displayed");
+        return
+    end
+    
     local extime_disp = concatenate(extime:aggregate_agents(BY_SUM(), "P10"):aggregate_scenarios(BY_PERCENTILE(10)), extime:aggregate_agents(BY_SUM(), "Average"):aggregate_scenarios(BY_AVERAGE()), extime:aggregate_agents(BY_SUM(), "P90"):aggregate_scenarios(BY_PERCENTILE(90)));
     if is_greater_than_zero(extime_disp) then
         if extime_disp:aggregate_scenarios(BY_MAX()):aggregate_stages(BY_MAX()):to_list()[1] < 1.0 then
@@ -503,6 +551,8 @@ local function create_exe_timer_per_scen(tab, col_struct, i)
         elseif extime_disp:aggregate_scenarios(BY_MAX()):aggregate_stages(BY_MAX()):to_list()[1] < 3600.0 then
             extime_disp = extime_disp:convert("s");
         end
+        
+        extime_chart = Chart("Dispersion of execution times per scenario");
         extime_chart:add_area_range(extime_disp:select_agent(1), extime_disp:select_agent(3), { xUnit="Stage", color = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
         extime_chart:add_line(extime_disp:select_agent(2), { xUnit="Stage", color = { "#F02720" } }); -- Average
     end
@@ -1304,7 +1354,16 @@ local col_struct = {
 -- Model info structure
 local info_struct = {};
 
-load_model_info(col_struct,info_struct);
+load_collections(col_struct);
+local info_existence_log = load_model_info(col_struct, info_struct);
+
+local create_info_report = true;
+for i = 1, #info_existence_log do
+    if not info_existence_log[i] then
+        create_info_report = false;
+        break;
+    end
+end
 
 -----------------------------------------------------------------------------------------------
 -- Dashboard tab configuration
@@ -1325,51 +1384,53 @@ local tab_inf = Tab("Infeasibility report");
 tab_inf:set_icon("alert-triangle");
 
 -- Infeasibility report
-local has_inf = {};
-if studies == 1 then
-    if info_struct[1].status > 0 then
-        dash_infeasibility(tab_inf,info_struct[1].infrep .. ".out",1);
-        push_tab_to_tab(tab_inf,dashboard);                                     -- Infeasibility
-        push_tab_to_tab(create_tab_summary(col_struct, info_struct),dashboard); -- Case information summary
-        dashboard:save(dashboard_name);
-        
-        return
-    end
-else
-    for i = 1, studies do
-        if info_struct[i].status > 0 then
-            table.insert(has_inf, i)
-        end
-    end
-    
-    if #has_inf > 0 then
-        for i = 1, #has_inf do
-            j = has_inf[i]; -- Pointer to case
-            local tab_inf_sub = Tab(col_struct.case_dir_list[j]);
-            dash_infeasibility(tab_inf_sub,info_struct[j].infrep .. ".out",j);
-            
-            tab_inf:push(tab_inf_sub);
-            
-            -- Remove from vectors
-            remove_case_info(col_struct, info_struct, j);
-        end
-        
-        studies = studies - #has_inf;
-              
-        -- If only one study was successful, comparison does not exist
-        if studies == 1 then
-            push_tab_to_tab(tab_inf,dashboard);
+if create_info_report then
+    local has_inf = {};
+    if studies == 1 then
+        if info_struct[1].status > 0 then
+            dash_infeasibility(tab_inf,info_struct[1].infrep .. ".out",1);
+            push_tab_to_tab(tab_inf,dashboard);                                     -- Infeasibility
             push_tab_to_tab(create_tab_summary(col_struct, info_struct),dashboard); -- Case information summary
             dashboard:save(dashboard_name);
+            
             return
         end
+    else
+        for i = 1, studies do
+            if info_struct[i].status > 0 then
+                table.insert(has_inf, i)
+            end
+        end
+        
+        if #has_inf > 0 then
+            for i = 1, #has_inf do
+                j = has_inf[i]; -- Pointer to case
+                local tab_inf_sub = Tab(col_struct.case_dir_list[j]);
+                dash_infeasibility(tab_inf_sub,info_struct[j].infrep .. ".out",j);
+                
+                tab_inf:push(tab_inf_sub);
+                
+                -- Remove from vectors
+                remove_case_info(col_struct, info_struct, j);
+            end
+            
+            studies = studies - #has_inf;
+                
+            -- If only one study was successful, comparison does not exist
+            if studies == 1 then
+                push_tab_to_tab(tab_inf,dashboard);
+                push_tab_to_tab(create_tab_summary(col_struct, info_struct),dashboard); -- Case information summary
+                dashboard:save(dashboard_name);
+                return
+            end
+        end
+        
     end
     
-end
-
--- If infeasibilities are present, dashboard
-if #has_inf > 0 then
-    push_tab_to_tab(tab_inf,dashboard);
+    -- If infeasibilities are present, dashboard
+    if #has_inf > 0 then
+        push_tab_to_tab(tab_inf,dashboard);
+    end
 end
 
 -------------------
@@ -1381,15 +1442,24 @@ tab_solution_quality:set_collapsed(false);
 tab_solution_quality:set_disabled();
 tab_solution_quality:set_icon("alert-triangle");
 
+local create_policy_report = true;
+local pol_file_name = "sddppol.csv"
+for i = 1, studies do
+    if not col_struct.study[i]:get_parameter("SCEN", 0) == 0 or 
+       not col_struct.generic[i]:file_exists(pol_file_name) then 
+        create_policy_report = false;
+        info("Create pol?");
+        info(create_policy_report)
+    end 
+end
+
 -- Policy report
-if col_struct.study[1]:get_parameter("SCEN", 0) == 0 then -- SDDP scenarios does not have policy phase
-    local file_name = "sddppol.csv"
-    local sddppol = col_struct.generic[1]:file_exists(file_name);
-    if sddppol then
-        push_tab_to_tab(create_pol_report(col_struct),tab_solution_quality);
-    else
-        info("file " .. file_name .. " does not exist. Skipping policy report");
-    end
+info("Create pol? 2");
+info(create_policy_report)
+if create_policy_report then -- SDDP scenarios does not have policy phase
+    push_tab_to_tab(create_pol_report(col_struct),tab_solution_quality);
+else
+    info("file " .. pol_file_name .. " does not exist. Policy report will not be displayed.");
 end
 
 -- Simulation report
@@ -1460,6 +1530,8 @@ push_tab_to_tab(tab_results,dashboard);
 ---------------------------
 -- Case information summary
 ---------------------------
-push_tab_to_tab(create_tab_summary(col_struct, info_struct),dashboard);
+if create_info_report then
+    push_tab_to_tab(create_tab_summary(col_struct, info_struct),dashboard);
+end
 
 dashboard:save(dashboard_name);
