@@ -29,22 +29,24 @@ end
 local function load_info_file(file_name,case_index)
 
     -- Initialize struct
-    info_struct = {{model = ""}, {user = ""}, {version = ""}, {hash = ""}, {model = ""}, {status = ""}, {infrep = ""}};
+    info_struct = {{model = ""}, {user = ""}, {version = ""}, {hash = ""}, {model = ""}, {status = ""}, {infrep = ""}, {dash_name = ""}};
     
     local toml = Generic(case_index):load_toml(file_name);
-    model   = toml:get_string("model", "---");
-    user    = toml:get_string("user", "---");
-    version = toml:get_string("version", "---");
-    hash    = toml:get_string("hash", "---");
-    status  = toml:get_string("status", "---");
-    infrep  = toml:get_string("infrep", "---");
+    model      = toml:get_string("model", "---");
+    user       = toml:get_string("user", "---");
+    version    = toml:get_string("version", "---");
+    hash       = toml:get_string("hash", "---");
+    status     = toml:get_string("status", "---");
+    infrep     = toml:get_string("infrep", "---");
+    dash_name  = toml:get_string("dash", "---");
     
-    info_struct.model   = model;
-    info_struct.user    = user;
-    info_struct.version = version;
-    info_struct.hash    = hash;
-    info_struct.status  = tonumber(status);
-    info_struct.infrep  = infrep;
+    info_struct.model     = model;
+    info_struct.user      = user;
+    info_struct.version   = version;
+    info_struct.hash      = hash;
+    info_struct.status    = tonumber(status);
+    info_struct.infrep    = infrep;
+    info_struct.dash_name = dash_name;
       
     return info_struct;
 end
@@ -55,7 +57,7 @@ local function load_model_info(col_struct, info_struct)
     local existence_log = {}
     
     for i = 1, studies do
-        -- Verify whether info file exists
+        -- Verify whether info file exists for each case
         file_exists = col_struct.generic[i]:file_exists(info_file_name);
         table.insert(existence_log,file_exists);
         
@@ -1354,6 +1356,7 @@ local info_struct = {};
 load_collections(col_struct);
 local info_existence_log = load_model_info(col_struct, info_struct);
 
+-- If at least one case does not have the .info file, info report is not displayed
 local create_info_report = true;
 for i = 1, #info_existence_log do
     if not info_existence_log[i] then
@@ -1369,7 +1372,11 @@ end
 local dashboard = Dashboard();
 
 -- Dashboard name configuration
-dashboard_name = "SDDP";
+local dashboard_name = "SDDP";
+if #info_struct > 0 and not (info_struct[1].dash_name == "---") then
+    dashboard_name = info_struct[1].dash_name;
+end
+
 if studies > 1 then
     dashboard_name = dashboard_name .. "-compare";
 end
