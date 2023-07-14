@@ -600,31 +600,35 @@ local function create_pol_report(col_struct)
 
             for j = 1, studies do
                 conv_file = col_struct.generic[j]:load(file);
-                conv_age = conv_file:select_agents({ 1, 2, 3, 4 }); -- Zinf        ,Zsup - Tol  ,Zsup        ,Zsup + Tol  
-                cuts_age = conv_file:select_agents({ 5, 6 }); -- Optimality  ,Feasibility 
-                time_age = conv_file:select_agents({ 7, 8 }); -- Forw. time, Back. time
-
-                -- Confidence interval
-                chart_conv:add_area_range(conv_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup - Tol"), conv_age:select_agents({ 4 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup + Tol"), { color = { light_global_color[j], light_global_color[j] }, xUnit = "Iteration", xAllowDecimals = false, showInLegend = true });
-
-                -- Zsup
-                chart_conv:add_line(conv_age:select_agents({ 3 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup"), { color = { main_global_color[j] }, xAllowDecimals = false });
-
-                -- Zinf
-                chart_conv:add_line(conv_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j] .. " - Zinf"), { color = { main_global_color[j] }, xAllowDecimals = false, dashStyle = "dash" }); -- Zinf
-
-                -- Cuts - optimality
-                chart_cut_opt:add_column(cuts_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
-
-                -- Cuts - feasibility
-                if is_greater_than_zero(cuts_age:select_agents({ 2 })) then
-                    chart_cut_feas:add_column(cuts_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
-                end 
-                -- Execution time - forward
-                chart_time_forw:add_column(time_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
-
-                -- Execution time - backward
-                chart_time_back:add_column(time_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
+                if conv_file:loaded() then
+                    conv_age = conv_file:select_agents({ 1, 2, 3, 4 }); -- Zinf        ,Zsup - Tol  ,Zsup        ,Zsup + Tol  
+                    cuts_age = conv_file:select_agents({ 5, 6 }); -- Optimality  ,Feasibility 
+                    time_age = conv_file:select_agents({ 7, 8 }); -- Forw. time, Back. time
+    
+                    -- Confidence interval
+                    chart_conv:add_area_range(conv_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup - Tol"), conv_age:select_agents({ 4 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup + Tol"), { color = { light_global_color[j], light_global_color[j] }, xUnit = "Iteration", xAllowDecimals = false, showInLegend = true });
+    
+                    -- Zsup
+                    chart_conv:add_line(conv_age:select_agents({ 3 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup"), { color = { main_global_color[j] }, xAllowDecimals = false });
+    
+                    -- Zinf
+                    chart_conv:add_line(conv_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j] .. " - Zinf"), { color = { main_global_color[j] }, xAllowDecimals = false, dashStyle = "dash" }); -- Zinf
+    
+                    -- Cuts - optimality
+                    chart_cut_opt:add_column(cuts_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
+    
+                    -- Cuts - feasibility
+                    if is_greater_than_zero(cuts_age:select_agents({ 2 })) then
+                        chart_cut_feas:add_column(cuts_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
+                    end 
+                    -- Execution time - forward
+                    chart_time_forw:add_column(time_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
+    
+                    -- Execution time - backward
+                    chart_time_back:add_column(time_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
+                else
+                    info("Comparing cases have different policy horizons! Policy will only contain the main case data.");
+                end
             end
 
             if #chart_conv > 0 then
