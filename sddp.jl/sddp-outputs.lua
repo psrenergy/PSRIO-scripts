@@ -1,8 +1,9 @@
-PSR.assert_version(">0.18.0");
+PSR.assert_version(">0.20.0");
 
 local function save_inputs()
     local demand = Demand();
-    local hydro = Hydro();
+    local study = Study();
+    local has_flexible_demand = study:has_flexible_demand();
 
     -- QMAXIM
     local qmaxim = require("sddp/qmaxim");
@@ -26,15 +27,15 @@ local function save_inputs()
 
     -- LSHREF
     local flexible_demand = require("sddp/flexible_demand");
-    flexible_demand():save("lshref");
+    flexible_demand():save("lshref", { force = has_flexible_demand });
 
     -- LSHMAX
     local lshmax = flexible_demand() * (1 + demand.max_increase:select_agents(demand.is_flexible));
-    lshmax:save("lshmax");
+    lshmax:save("lshmax", { force = has_flexible_demand });
 
     -- LSHMIN
     local lshmin = flexible_demand() * (1 - demand.max_decrease:select_agents(demand.is_flexible));
-    lshmin:save("lshmin");
+    lshmin:save("lshmin", { force = has_flexible_demand });
 
     -- -- FLOOD_CONTROL_HISTORICAL_SCENARIOS
     -- hydro.flood_control_historical_scenarios:save("flood_control_historical_scenarios", { horizon = true });
@@ -64,6 +65,7 @@ end
 local function save_outputs()
     local study = Study();
     local is_genesys = study:is_genesys();
+    local has_flexible_demand = study:has_flexible_demand();
 
     -- SUFFIXES
     local suffixes = { "" };
@@ -72,14 +74,15 @@ local function save_outputs()
     end
 
     local outputs = {
-        { label = "vturmn", force = false },
-        { label = "qtoutf", force = false, variable_by_block = 2 },
-        { label = "defcit_risk", force = false },
-        { label = "usecir", force = false },
-        { label = "usedcl", force = false },
-        { label = "useful_storage_initial", force = false, variable_by_block = 2 },
-        { label = "useful_storage_final", force = false, variable_by_block = 2 },
-        { label = "hydro_spillage_cost", force = false },
+        { label = "vturmn" },
+        { label = "qtoutf", variable_by_block = 2 },
+        { label = "defcit_risk" },
+        { label = "usecir" },
+        { label = "usedcl" },
+        { label = "useful_storage_initial", variable_by_block = 2 },
+        { label = "useful_storage_final", variable_by_block = 2 },
+        { label = "hydro_spillage_cost" },
+        { label = "lshccst", base = "flexible_load_curtailment_cost", force = has_flexible_demand },
         -- POWERVIEW OUTPUTS
         { label = "gerhid_per_bus", force = is_genesys },
         { label = "gerfuel_per_bus", force = is_genesys },
@@ -90,12 +93,23 @@ local function save_outputs()
     };
 
     for _, output in ipairs(outputs) do
-        local f = require("sddp/" .. output.label);
+        local f;
+        if output.base == nil then
+            f = require("sddp/" .. output.label);
+        else
+            f = require("sddp/" .. output.base);
+        end
+
+        local force = false;
+        if output.force ~= nil then
+            force = output.force;
+        end
+
         for _, suffix in ipairs(suffixes) do
             if output.variable_by_block == nil then
-                f(suffix):save(output.label .. suffix, { force = output.force });
+                f(nil, suffix):save(output.label .. suffix, { force = force });
             else
-                f(suffix):save(output.label .. suffix, { force = output.force, variable_by_block = output.variable_by_block });
+                f(nil, suffix):save(output.label .. suffix, { force = force, variable_by_block = output.variable_by_block });
             end
         end
     end
@@ -123,11 +137,11 @@ end
 local function save_reports()
     -- SDDPCOPE
     local sddpcope = require("sddp-reports/sddpcope");
-    sddpcope():save("sddpcope_psrio", { csv = true, remove_zeros = true });
+    sddpcope():save("sddpcope_psrio", { csv = true });
 
     -- SDDPCOPED
     local sddpcoped = require("sddp-reports/sddpcoped");
-    sddpcoped():save("sddpcoped_psrio", { csv = true, remove_zeros = true });
+    sddpcoped():save("sddpcoped_psrio", { csv = true });
 
     -- SDDPGRXXD
     local sddpgrxxd = require("sddp-reports/sddpgrxxd");

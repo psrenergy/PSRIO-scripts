@@ -26,7 +26,7 @@ minSpill_nodata = minSpill_nodata:to_block(BY_SUM());
 minSpill = minSpill:to_block(BY_SUM());
 ifelse(minSpill_nodata:gt(0), 0, max(0, -qverti + minSpill)):convert("hm3"):save("constraint_min_spillage");
 
-local qmin = hydro.qmin;
+local qmin = hydro.min_turbining_outflow;
 max(0, -qturbi + qmin):convert("hm3"):save("constraint_min_turbining");
 
 local volfin = hydro:load("volfin" .. suffix_):aggregate_blocks(BY_LAST_VALUE());
