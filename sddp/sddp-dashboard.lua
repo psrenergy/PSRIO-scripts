@@ -545,15 +545,21 @@ local function create_exe_timer_per_scen(tab, col_struct, i)
     
     local extime_disp = concatenate(extime:aggregate_agents(BY_SUM(), "P10"):aggregate_scenarios(BY_PERCENTILE(10)), extime:aggregate_agents(BY_SUM(), "Average"):aggregate_scenarios(BY_AVERAGE()), extime:aggregate_agents(BY_SUM(), "P90"):aggregate_scenarios(BY_PERCENTILE(90)));
     if is_greater_than_zero(extime_disp) then
-        if extime_disp:aggregate_scenarios(BY_MAX()):aggregate_stages(BY_MAX()):to_list()[1] < 1.0 then
-            extime_disp = (1000 * extime_disp):convert("ms") ; -- Convert to milisecond
-        elseif extime_disp:aggregate_scenarios(BY_MAX()):aggregate_stages(BY_MAX()):to_list()[1] < 3600.0 then
-            extime_disp = extime_disp:convert("s");
+        local unit = "hour";
+        local extime_disp_data = extime_disp:aggregate_scenarios(BY_MAX()):aggregate_stages(BY_MAX()):to_list();
+        
+        if extime_disp_data[1] < 1.0 then
+            unit = "ms";
+        elseif extime_disp_data[1] < 3600.0 then
+            unit = "s";
         end
         
         extime_chart = Chart("Dispersion of execution times per scenario");
-        extime_chart:add_area_range(extime_disp:select_agent(1), extime_disp:select_agent(3), { xUnit="Stage", color = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
-        extime_chart:add_line(extime_disp:select_agent(2), { xUnit="Stage", color = { "#F02720" } }); -- Average
+        extime_chart:add_area_range(extime_disp:select_agent(1):convert(unit),
+                                    extime_disp:select_agent(3):convert(unit), 
+                                    { xUnit = "Stage", color = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
+        extime_chart:add_line(extime_disp:select_agent(2):convert(unit),
+                              { xUnit = "Stage", color = { "#F02720" } });                  -- Average
     end
     if #extime_chart > 0 then
         tab:push(extime_chart);
@@ -951,7 +957,7 @@ local function create_gen_report(col_struct)
         gerter[i] = col_struct.thermal[i]:load("gerter");
         gerhid[i] = col_struct.hydro[i]:load("gerhid");
         gergnd[i] = col_struct.renewable[i]:load("gergnd");
-        gerbat[i] = col_struct.battery[i]:load("gerbat");
+        gerbat[i] = col_struct.battery[i]:load("gerbat"):convert("GWh"); -- Explicitly converting to GWh
         potinj[i] = col_struct.power_injection[i]:load("powinj");
         defcit[i] = col_struct.system[i]:load("defcit");
     end
