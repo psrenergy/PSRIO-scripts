@@ -1144,14 +1144,25 @@ local function create_gen_report(col_struct)
             total_pot_inj   = potinj[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(pinj_agent_name);
  
             -- Renewable generation is broken into 3 types
-            total_other_renw_gen  = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:ne(1) &
-                                                            col_struct.renewable[i].tech_type:ne(2) & 
-                                                            col_struct.renewable[i].tech_type:ne(4));
-                                                    
+            total_other_renw_gen = ifelse(col_struct.renewable[i].tech_type:ne(1) & 
+                                          col_struct.renewable[i].tech_type:ne(2) & 
+                                          col_struct.renewable[i].tech_type:ne(4),
+                                          gergnd[i],
+                                          0);
+            total_wind_gen = ifelse(col_struct.renewable[i].tech_type:eq(1),
+                                          gergnd[i],
+                                          0);
+            total_solar_gen = ifelse(col_struct.renewable[i].tech_type:eq(2),
+                                          gergnd[i],
+                                          0);                                          
+            total_small_hydro_gen = ifelse(col_struct.renewable[i].tech_type:eq(4),
+                                          gergnd[i],
+                                          0);            
+                                          
             total_other_renw_gen  = total_other_renw_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_ot_agent_name);
-            total_wind_gen        = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(1)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_wind_agent_name);
-            total_solar_gen       = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(2)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_solar_agent_name);
-            total_small_hydro_gen = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(4)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_shydro_agent_name);
+            total_wind_gen        = total_wind_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_wind_agent_name);
+            total_solar_gen       = total_solar_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_solar_agent_name);
+            total_small_hydro_gen = total_small_hydro_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_shydro_agent_name);
 
             total_thermal_gen = gerter[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(thermal_agent_name);
 
@@ -1165,13 +1176,13 @@ local function create_gen_report(col_struct)
                 chart_tot_renw_other:add_column(total_other_renw_gen, { xUnit="Stage"});
             end
             if total_wind_gen:loaded() then
-                chart_tot_renw_wind:add_column(total_wind_gen, col_struct.case_dir_list[i], { xUnit="Stage"});
+                chart_tot_renw_wind:add_column(total_wind_gen, { xUnit="Stage"});
             end
             if total_solar_gen:loaded() then
-                chart_tot_renw_solar:add_column(total_solar_gen, col_struct.case_dir_list[i], { xUnit="Stage"});
+                chart_tot_renw_solar:add_column(total_solar_gen, { xUnit="Stage"});
             end
             if total_small_hydro_gen:loaded() then
-                chart_tot_renw_shyd:add_column(total_small_hydro_gen, col_struct.case_dir_list[i], { xUnit="Stage"});
+                chart_tot_renw_shyd:add_column(total_small_hydro_gen, { xUnit="Stage"});
             end
             if total_batt_gen:loaded() then
                 chart_tot_gerbat:add_column(total_batt_gen, { xUnit="Stage"});
@@ -1213,7 +1224,6 @@ local function create_gen_report(col_struct)
             tab:push(chart_tot_defcit);
         end
     end
-    --end
 
     return tab;
 end
