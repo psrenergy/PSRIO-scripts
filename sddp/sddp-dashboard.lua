@@ -560,9 +560,10 @@ local function create_exe_timer_per_scen(tab, col_struct, i)
                                     { xUnit = "Stage", color = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
         extime_chart:add_line(extime_disp:select_agent(2):convert(unit),
                               { xUnit = "Stage", color = { "#F02720" } });                  -- Average
-    end
-    if #extime_chart > 0 then
-        tab:push(extime_chart);
+                              
+        if #extime_chart > 0 then
+            tab:push(extime_chart);
+        end
     end
 end 
 
