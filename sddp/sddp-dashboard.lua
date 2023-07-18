@@ -228,9 +228,11 @@ local function create_tab_summary(col_struct, info_struct)
     local nback_string        = "| Backward series ";
     local hrep_string         = "| Hourly representation ";
     local netrep_string       = "| Network representation ";
+    local typday_string       = "| Typical days representation ";
 
     local hrep_val   = {};
     local netrep_val = {};
+    local typday_val = {};
     local exe_type   = {};
     local case_type  = {};
    
@@ -267,6 +269,12 @@ local function create_tab_summary(col_struct, info_struct)
             netrep_val[i] = "yes";
         end
         netrep_string = netrep_string .. " | " .. netrep_val[i];
+        
+        typday_val[i] = "no";
+        if col_struct.study[i]:get_parameter("TDAY", -1) == 1 then
+            typday_val[i] = "yes";
+        end
+        typday_string = typday_string .. " | " .. typday_val[i];
     end
     header_string       = header_string       .. "|";
     lower_header_string = lower_header_string .. "|";
@@ -279,6 +287,7 @@ local function create_tab_summary(col_struct, info_struct)
     nback_string        = nback_string        .. "|";
     hrep_string         = hrep_string         .. "|";
     netrep_string       = netrep_string       .. "|";
+    typday_string       = typday_string       .. "|";
 
     tab:push(header_string);
     tab:push(lower_header_string);
@@ -291,6 +300,7 @@ local function create_tab_summary(col_struct, info_struct)
     tab:push(nback_string);
     tab:push(hrep_string);
     tab:push(netrep_string);
+    tab:push(typday_string);
 
     tab:push("## Dimensions");
 
