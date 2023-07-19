@@ -389,7 +389,7 @@ local function create_inflow_energy(col_struct)
         end
     else
         -- Confidence interval
-        chart:add_area_range(inferg[1]:select_agent(1), inferg[1]:select_agent(3), { xUnit="Stage", color = { light_global_color[1], light_global_color[1] } });
+        chart:add_area_range(inferg[1]:select_agent(1), inferg[1]:select_agent(3), { xUnit="Stage", colors = { light_global_color[1], light_global_color[1] } });
         chart:add_line(inferg[1]:select_agent(2)); -- average
     end
 
@@ -436,9 +436,9 @@ end
 local function make_convergence_graphs(dashboard, conv_age, systems, horizon)
     for i, conv in ipairs(conv_age) do
         local chart = Chart("Convergence | System: " .. systems[i] .. " | Horizon: " .. horizon[i]);
-        chart:add_area_range(conv:select_agents({ 2 }), conv:select_agents({ 4 }), { color = { "#ACD98D", "#ACD98D" }, xAllowDecimals = false }); -- Confidence interval
-        chart:add_line(conv:select_agents({ 1 }), { color = { "#3CB7CC" }, xAllowDecimals = false }); -- Zinf
-        chart:add_line(conv:select_agents({ 3 }), { color = { "#32A251" }, xAllowDecimals = false }); -- Zsup
+        chart:add_area_range(conv:select_agents({ 2 }), conv:select_agents({ 4 }), { colors = { "#ACD98D", "#ACD98D" }, xAllowDecimals = false }); -- Confidence interval
+        chart:add_line(conv:select_agents({ 1 }), { colors = { "#3CB7CC" }, xAllowDecimals = false }); -- Zinf
+        chart:add_line(conv:select_agents({ 3 }), { colors = { "#32A251" }, xAllowDecimals = false }); -- Zsup
         dashboard:push(chart);
     end
 end
@@ -567,9 +567,9 @@ local function create_exe_timer_per_scen(tab, col_struct, i)
         extime_chart = Chart("Dispersion of execution times per scenario");
         extime_chart:add_area_range(extime_disp:select_agent(1):convert(unit),
                                     extime_disp:select_agent(3):convert(unit), 
-                                    { xUnit = "Stage", color = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
+                                    { xUnit = "Stage", colors = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
         extime_chart:add_line(extime_disp:select_agent(2):convert(unit),
-                              { xUnit = "Stage", color = { "#F02720" } });                  -- Average
+                              { xUnit = "Stage", colors = { "#F02720" } });                  -- Average
                               
         if #extime_chart > 0 then
             tab:push(extime_chart);
@@ -623,13 +623,13 @@ local function create_pol_report(col_struct)
                     time_age = conv_file:select_agents({ 7, 8 }); -- Forw. time, Back. time
     
                     -- Confidence interval
-                    chart_conv:add_area_range(conv_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup - Tol"), conv_age:select_agents({ 4 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup + Tol"), { color = { light_global_color[j], light_global_color[j] }, xUnit = "Iteration", xAllowDecimals = false, showInLegend = true });
+                    chart_conv:add_area_range(conv_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup - Tol"), conv_age:select_agents({ 4 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup + Tol"), { colors = { light_global_color[j], light_global_color[j] }, xUnit = "Iteration", xAllowDecimals = false, showInLegend = true });
     
                     -- Zsup
-                    chart_conv:add_line(conv_age:select_agents({ 3 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup"), { color = { main_global_color[j] }, xAllowDecimals = false });
+                    chart_conv:add_line(conv_age:select_agents({ 3 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup"), { colors = { main_global_color[j] }, xAllowDecimals = false });
     
                     -- Zinf
-                    chart_conv:add_line(conv_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j] .. " - Zinf"), { color = { main_global_color[j] }, xAllowDecimals = false, dashStyle = "dash" }); -- Zinf
+                    chart_conv:add_line(conv_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j] .. " - Zinf"), { colors = { main_global_color[j] }, xAllowDecimals = false, dashStyle = "dash" }); -- Zinf
     
                     -- Cuts - optimality
                     chart_cut_opt:add_column(cuts_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
@@ -699,11 +699,11 @@ local function create_pol_report(col_struct)
             end
 
             local chart = Chart("Convergence");
-            chart:add_area_range(conv_age:select_agents({ 2 }), conv_age:select_agents({ 4 }), { color = { "#ACD98D", "#ACD98D" }, xUnit = "Iteration", xAllowDecimals = false }); -- Confidence interval
-            chart:add_line(conv_age:select_agents({ 1 }), { color = { "#3CB7CC" }, xAllowDecimals = false }); -- Zinf
-            chart:add_line(conv_age:select_agents({ 3 }), { color = { "#32A251" }, xAllowDecimals = false }); -- Zsup
+            chart:add_area_range(conv_age:select_agents({ 2 }), conv_age:select_agents({ 4 }), { colors = { "#ACD98D", "#ACD98D" }, xUnit = "Iteration", xAllowDecimals = false }); -- Confidence interval
+            chart:add_line(conv_age:select_agents({ 1 }), { colors = { "#3CB7CC" }, xAllowDecimals = false }); -- Zinf
+            chart:add_line(conv_age:select_agents({ 3 }), { colors = { "#32A251" }, xAllowDecimals = false }); -- Zsup
             if (graph_sim_cost) then
-                chart:add_line(final_sim_cost, { color = { "#D37295" }, xAllowDecimals = false }); -- Final simulation cost
+                chart:add_line(final_sim_cost, { colors = { "#D37295" }, xAllowDecimals = false }); -- Final simulation cost
             end
             tab:push(chart);
 
@@ -822,13 +822,13 @@ local function create_costs_and_revs(col_struct)
 
         if studies > 1 then
             if is_greater_than_zero(disp) then
-                chart:add_area_range(disp:select_agent(1):add_prefix(col_struct.case_dir_list[i] .. " - "), disp:select_agent(3), { xUnit="Stage", color = light_global_color[i] }); -- Confidence interval
+                chart:add_area_range(disp:select_agent(1):add_prefix(col_struct.case_dir_list[i] .. " - "), disp:select_agent(3), { xUnit="Stage", colors = light_global_color[i] }); -- Confidence interval
                 chart:add_line(disp:select_agent(2):add_prefix(col_struct.case_dir_list[i] .. " - "),{xUnit="Stage"}); -- Average
             end
         else
             if is_greater_than_zero(disp) then
-                chart:add_area_range(disp:select_agent(1), disp:select_agent(3), { xUnit="Stage", color = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
-                chart:add_line(disp:select_agent(2), { xUnit="Stage", color = { "#F02720" } }); -- Average
+                chart:add_area_range(disp:select_agent(1), disp:select_agent(3), { xUnit="Stage", colors = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
+                chart:add_line(disp:select_agent(2), { xUnit="Stage", colors = { "#F02720" } }); -- Average
             end
         end
 
@@ -1070,15 +1070,15 @@ local function create_gen_report(col_struct)
                 chart_tot_defcit:add_column(total_deficit, { xUnit="Stage"});
             end
         else
-            chart:add_area_stacking(total_thermal_gen    , { xUnit="Stage", color = { color_thermal     } });
-            chart:add_area_stacking(total_hydro_gen      , { xUnit="Stage", color = { color_hydro       } });
-            chart:add_area_stacking(total_wind_gen       , { xUnit="Stage", color = { color_wind        } });
-            chart:add_area_stacking(total_solar_gen      , { xUnit="Stage", color = { color_solar       } });
-            chart:add_area_stacking(total_small_hydro_gen, { xUnit="Stage", color = { color_small_hydro } });
-            chart:add_area_stacking(total_other_renw_gen , { xUnit="Stage", color = { color_renw_other  } });
-            chart:add_area_stacking(total_batt_gen       , { xUnit="Stage", color = { color_battery     } });
-            chart:add_area_stacking(total_pot_inj        , { xUnit="Stage", color = { color_pinj        } });
-            chart:add_area_stacking(total_deficit        , { xUnit="Stage", color = { color_deficit     } });
+            chart:add_area_stacking(total_thermal_gen    , { xUnit="Stage", colors = { color_thermal     } });
+            chart:add_area_stacking(total_hydro_gen      , { xUnit="Stage", colors = { color_hydro       } });
+            chart:add_area_stacking(total_wind_gen       , { xUnit="Stage", colors = { color_wind        } });
+            chart:add_area_stacking(total_solar_gen      , { xUnit="Stage", colors = { color_solar       } });
+            chart:add_area_stacking(total_small_hydro_gen, { xUnit="Stage", colors = { color_small_hydro } });
+            chart:add_area_stacking(total_other_renw_gen , { xUnit="Stage", colors = { color_renw_other  } });
+            chart:add_area_stacking(total_batt_gen       , { xUnit="Stage", colors = { color_battery     } });
+            chart:add_area_stacking(total_pot_inj        , { xUnit="Stage", colors = { color_pinj        } });
+            chart:add_area_stacking(total_deficit        , { xUnit="Stage", colors = { color_deficit     } });
         end
     end
 
