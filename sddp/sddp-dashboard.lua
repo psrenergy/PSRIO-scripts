@@ -384,7 +384,7 @@ local function create_inflow_energy(col_struct)
         for i = 1, studies do
 
             -- Confidence interval
-            chart:add_area_range(inferg[i]:select_agent(1):add_prefix(col_struct.case_dir_list[i] .. " - "), inferg[i]:select_agent(3), { xUnit="Stage", color = { light_global_color[i], light_global_color[i] } });
+            chart:add_area_range(inferg[i]:select_agent(1):add_prefix(col_struct.case_dir_list[i] .. " - "), inferg[i]:select_agent(3), { xUnit="Stage", colors = { light_global_color[i], light_global_color[i] } });
             chart:add_line(inferg[i]:select_agent(2):add_prefix(col_struct.case_dir_list[i] .. " - ")); -- average
         end
     else
@@ -954,6 +954,17 @@ local function create_gen_report(col_struct)
     local renw_solar_agent_name;  
     local renw_shydro_agent_name; 
     
+    local hydro_report_name;
+    local thermal_report_name;
+    local battery_report_name;
+    local deficit_report_name;
+    local pinj_report_name;
+    
+    local renw_ot_report_name;
+    local renw_wind_report_name;
+    local renw_solar_report_name;
+    local renw_shydro_report_name;
+    
     local gerter = {};
     local gerhid = {};
     local gergnd = {};
@@ -1115,16 +1126,16 @@ local function create_gen_report(col_struct)
     end
 
     -- Name initialization
-    hydro_agent_name   = "Total Hydro";
-    thermal_agent_name = "Total Thermal";
-    battery_agent_name = "Total Battery";
-    deficit_agent_name = "Total Deficit";
-    pinj_agent_name    = "Total P. Inj.";
+    hydro_report_name   = "Total Hydro";
+    thermal_report_name = "Total Thermal";
+    battery_report_name = "Total Battery";
+    deficit_report_name = "Total Deficit";
+    pinj_report_name    = "Total P. Inj.";
     
-    renw_ot_agent_name     = "Total Renewable - Other tech.";
-    renw_wind_agent_name   = "Total Renewable - Wind";
-    renw_solar_agent_name  = "Total Renewable - Solar";
-    renw_shydro_agent_name = "Total Renewable - Small hydro";
+    renw_ot_report_name     = "Total Renewable - Other tech.";
+    renw_wind_report_name   = "Total Renewable - Wind";
+    renw_solar_report_name  = "Total Renewable - Solar";
+    renw_shydro_report_name = "Total Renewable - Small hydro";
         
     -- Generation per system report
     local agents = col_struct.generic[1]:load("cmgdem"):agents();
@@ -1142,16 +1153,27 @@ local function create_gen_report(col_struct)
         for i = 1, studies do
                 
             if studies > 1 then
-                hydro_agent_name   = col_struct.case_dir_list[i] .. " - " .. hydro_agent_name;
-                thermal_agent_name = col_struct.case_dir_list[i] .. " - " .. thermal_agent_name;
-                battery_agent_name = col_struct.case_dir_list[i] .. " - " .. battery_agent_name;
-                deficit_agent_name = col_struct.case_dir_list[i] .. " - " .. deficit_agent_name;
-                pinj_agent_name    = col_struct.case_dir_list[i] .. " - " .. pinj_agent_name;
+                hydro_agent_name   = col_struct.case_dir_list[i] .. " - " .. hydro_report_name;
+                thermal_agent_name = col_struct.case_dir_list[i] .. " - " .. thermal_report_name;
+                battery_agent_name = col_struct.case_dir_list[i] .. " - " .. battery_report_name;
+                deficit_agent_name = col_struct.case_dir_list[i] .. " - " .. deficit_report_name;
+                pinj_agent_name    = col_struct.case_dir_list[i] .. " - " .. pinj_report_name;
                 
-                renw_ot_agent_name     = col_struct.case_dir_list[i] .. " - " .. renw_ot_agent_name;
-                renw_wind_agent_name   = col_struct.case_dir_list[i] .. " - " .. renw_wind_agent_name;
-                renw_solar_agent_name  = col_struct.case_dir_list[i] .. " - " .. renw_solar_agent_name;
-                renw_shydro_agent_name = col_struct.case_dir_list[i] .. " - " .. renw_shydro_agent_name;               
+                renw_ot_agent_name     = col_struct.case_dir_list[i] .. " - " .. renw_ot_report_name;
+                renw_wind_agent_name   = col_struct.case_dir_list[i] .. " - " .. renw_wind_report_name;
+                renw_solar_agent_name  = col_struct.case_dir_list[i] .. " - " .. renw_solar_report_name;
+                renw_shydro_agent_name = col_struct.case_dir_list[i] .. " - " .. renw_shydro_report_name;               
+            else
+                hydro_agent_name   = hydro_report_name;
+                thermal_agent_name = thermal_report_name;
+                battery_agent_name = battery_report_name;
+                deficit_agent_name = deficit_report_name;
+                pinj_agent_name    = pinj_report_name;
+                
+                renw_ot_agent_name     = renw_ot_report_name;  
+                renw_wind_agent_name   = renw_wind_report_name;
+                renw_solar_agent_name  = renw_solar_report_name;
+                renw_shydro_agent_name = renw_shydro_report_name;
             end
             
             -- Data processing
