@@ -530,10 +530,10 @@ local function create_hourly_sol_status_graph(tab, col_struct, i)
     stopsMin = 0,
     stopsMax = 3,
     dataClasses = {
-                  { color = "#8ACE7E", to = 0, name = "success" },
-                  { color = "#4E79A7", from = 1, to = 2, name = "warning" },
-                  { color = "#C64B3E", from = 2, to = 3, name = "error" },
-                  { color = "#FBEEB3", from = 3, name = "linear" }
+                  { color = "#8ACE7E", to = 0          , name = "MIP optimal"         },
+                  { color = "#4E79A7", from = 1, to = 2, name = "Integer solution"    },
+                  { color = "#FBEEB3", from = 2, to = 3, name = "Linearized solution" },
+                  { color = "#C64B3E", from = 3        , name = "Error"               }
                   }
     };
 
