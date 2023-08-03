@@ -1,3 +1,8 @@
+-- Macros
+EXECUTION_MODE_OPERATION     = 0
+EXECUTION_MODE_EXPANSION_IT  = 1
+EXECUTION_MODE_EXPANSION_SIM = 2
+
 -- Setting global colors
 local main_global_color = { "#4E79A7", "#F28E2B", "#8CD17D", "#B6992D", "#E15759", "#76B7B2", "#FF9DA7", "#D7B5A6", "#B07AA1", "#59A14F", "#F1CE63", "#A0CBE8", "#E15759" };
 local light_global_color = { "#B7C9DD", "#FAD2AA", "#D1EDCB", "#E9DAA4", "#F3BCBD", "#C8E2E0", "#FFD8DC", "#EFE1DB", "#DFCAD9", "#BBDBB7", "#F9EBC1", "#D9EAF6", "#F3BCBD" };
@@ -11,13 +16,13 @@ local studies = PSR.studies();
 -- Auxiliary functions
 -----------------------------------------------------------------------------------------------
 
-local function push_tab_to_tab(tab_from, tab_to)
+function push_tab_to_tab(tab_from, tab_to)
     if #tab_from > 0 then
         tab_to:push(tab_from);
     end 
 end
 
-local function is_greater_than_zero(output)
+function is_greater_than_zero(output)
     local x = output:abs():aggregate_agents(BY_SUM(), "CheckZeros"):aggregate_stages(BY_SUM()):to_list();
     if x[1] > 0.0 then
         return true;
@@ -26,19 +31,21 @@ local function is_greater_than_zero(output)
     end
 end
 
-local function load_info_file(file_name,case_index)
+function load_info_file(file_name,case_index)
 
     -- Initialize struct
-    info_struct = {{model = ""}, {user = ""}, {version = ""}, {hash = ""}, {model = ""}, {status = ""}, {infrep = ""}, {dash_name = ""}};
+    info_struct = {{model = ""}, {user = ""}, {version = ""}, {hash = ""}, {model = ""}, {status = ""}, {infrep = ""}, {dash_name = ""}, {cloud = ""}, {exe_mode=0}};
     
     local toml = Generic(case_index):load_toml(file_name);
-    model      = toml:get_string("model", "---");
-    user       = toml:get_string("user", "---");
-    version    = toml:get_string("version", "---");
-    hash       = toml:get_string("hash", "---");
-    status     = toml:get_string("status", "---");
-    infrep     = toml:get_string("infrep", "---");
-    dash_name  = toml:get_string("dash", "---");
+    model      = toml:get_string("model", "-");
+    user       = toml:get_string("user", "-");
+    version    = toml:get_string("version", "-");
+    hash       = toml:get_string("hash", "-");
+    status     = toml:get_string("status", "-");
+    infrep     = toml:get_string("infrep", "-");
+    dash_name  = toml:get_string("dash", "-");
+    cloud      = toml:get_string("cloud", "-");
+    exe_mode   = toml:get_integer("mode", 0);
     
     info_struct.model     = model;
     info_struct.user      = user;
@@ -47,18 +54,22 @@ local function load_info_file(file_name,case_index)
     info_struct.status    = tonumber(status);
     info_struct.infrep    = infrep;
     info_struct.dash_name = dash_name;
+    info_struct.cloud     = cloud;
+    info_struct.exe_mode  = exe_mode;
       
+    info(info_struct.exe_mode)
+    
     return info_struct;
 end
 
-local function load_model_info(col_struct, info_struct)
+function load_model_info(generic_cols, info_struct)
     local file_exists;
     local info_file_name = "SDDP.info";
     local existence_log = {}
     
     for i = 1, studies do
         -- Verify whether info file exists for each case
-        file_exists = col_struct.generic[i]:file_exists(info_file_name);
+        file_exists = generic_cols[i]:file_exists(info_file_name);
         table.insert(existence_log,file_exists);
         
         -- Loading info files from each case
@@ -70,7 +81,7 @@ local function load_model_info(col_struct, info_struct)
     return existence_log;
 end
 
-local function load_collections(col_struct, info_struct)
+function load_collections(col_struct, info_struct)
     for i = 1, studies do
         table.insert(col_struct.battery        , Battery(i));
         table.insert(col_struct.bus            , Bus(i));
@@ -88,7 +99,7 @@ local function load_collections(col_struct, info_struct)
     end
 end
 
-local function remove_case_info(col_struct, info_struct, case_index)
+function remove_case_info(col_struct, info_struct, case_index)
     table.remove(col_struct.battery        , case_index);
     table.remove(col_struct.bus            , case_index);
     table.remove(col_struct.circuit        , case_index);
@@ -110,7 +121,7 @@ end
 -----------------------------------------------------------------------------------------------
 -- Infeasibility report function
 -----------------------------------------------------------------------------------------------
-local function dash_infeasibility(tab,file_name,case_index)
+function dash_infeasibility(tab,file_name,case_index)
 
     local inv_table = Study(case_index):load_table_without_header(file_name);
     
@@ -135,7 +146,7 @@ end
 -- Case summary report function
 -----------------------------------------------------------------------------------------------
 
-local function create_tab_summary(col_struct, info_struct)
+function create_tab_summary(col_struct, info_struct)
        
     local tab = Tab("Info");
     tab:set_icon("info");
@@ -370,7 +381,7 @@ end
 -- Inflow energy report function
 -----------------------------------------------------------------------------------------------
 
-local function create_inflow_energy(col_struct)
+function create_inflow_energy(col_struct)
     local tab = Tab("Inflow energy");
 
     local inferg = {};
@@ -404,7 +415,7 @@ end
 -- Policy report functions
 -----------------------------------------------------------------------------------------------
 
-local function get_conv_file_info(col_struct, file_name, file_list, systems, horizons, case_index)
+function get_conv_file_info(col_struct, file_name, file_list, systems, horizons, case_index)
     -- Loading file
     local sddppol = col_struct.generic[case_index]:load_table(file_name);
 
@@ -417,7 +428,7 @@ local function get_conv_file_info(col_struct, file_name, file_list, systems, hor
     end
 end
 
-local function get_convergence_file_agents(col_struct, file_list, conv_age, cuts_age, time_age, case_index)
+function get_convergence_file_agents(col_struct, file_list, conv_age, cuts_age, time_age, case_index)
     for i, file in ipairs(file_list) do
         local conv_file = col_struct.generic[case_index]:load(file);
         conv_age[i] = conv_file:select_agents({ 1, 2, 3, 4 }); -- Zinf, Zsup - Tol, Zsup, Zsup + Tol  
@@ -426,14 +437,14 @@ local function get_convergence_file_agents(col_struct, file_list, conv_age, cuts
     end
 end
 
-local function get_convergence_map_status(col_struct, file_list, conv_status, case_index)
+function get_convergence_map_status(col_struct, file_list, conv_status, case_index)
     for i, file in ipairs(file_list) do
         local conv_map_file = col_struct.generic[case_index]:load(file);
         conv_status[i] = conv_map_file; -- Convergence status
     end
 end
 
-local function make_convergence_graphs(dashboard, conv_age, systems, horizon)
+function make_convergence_graphs(dashboard, conv_age, systems, horizon)
     for i, conv in ipairs(conv_age) do
         local chart = Chart("Convergence | System: " .. systems[i] .. " | Horizon: " .. horizon[i]);
         chart:add_area_range(conv:select_agents({ 2 }), conv:select_agents({ 4 }), { colors = { "#ACD98D", "#ACD98D" }, xAllowDecimals = false }); -- Confidence interval
@@ -443,7 +454,7 @@ local function make_convergence_graphs(dashboard, conv_age, systems, horizon)
     end
 end
 
-local function make_added_cuts_graphs(dashboard, cuts_age, systems, horizon)
+function make_added_cuts_graphs(dashboard, cuts_age, systems, horizon)
     for i, cuts in ipairs(cuts_age) do
         local chart = Chart("Number of added cuts | System: " .. systems[i] .. " Horizon: " .. horizon[i]);
         chart:add_column(cuts:select_agents({ 1 }), { xAllowDecimals = false }); -- Opt
@@ -452,7 +463,7 @@ local function make_added_cuts_graphs(dashboard, cuts_age, systems, horizon)
     end
 end
 
-local function calculate_number_of_systems(sys_vec)
+function calculate_number_of_systems(sys_vec)
     local sys_name = sys_vec[1];
     local counter = 1;
     for i, name in ipairs(sys_vec) do
@@ -469,7 +480,7 @@ end
 -- Heatmap report functions
 -----------------------------------------------------------------------------------------------
 
-local function create_penalty_proportion_graph(tab, col_struct, i)
+function create_penalty_proportion_graph(tab, col_struct, i)
     local output_name  = "sddppenp";
     local report_title = "Share of violation penalties and deficit in the cost of each stage/scenario";
     local penp = col_struct.generic[i]:load(output_name);
@@ -486,7 +497,7 @@ local function create_penalty_proportion_graph(tab, col_struct, i)
     tab:push(chart);
 end
 
-local function create_conv_map_graph(tab, file_name, col_struct, i)
+function create_conv_map_graph(tab, file_name, col_struct, i)
     local conv_map = col_struct.generic[i]:load(file_name);
     local report_title = "Convergence map";
 
@@ -513,7 +524,7 @@ local function create_conv_map_graph(tab, file_name, col_struct, i)
     tab:push(chart);
 end
 
-local function create_hourly_sol_status_graph(tab, col_struct, i)
+function create_hourly_sol_status_graph(tab, col_struct, i)
     local output_name  = "hrstat";
     local report_title = "Solution status per stage and scenario";
     local status = col_struct.generic[i]:load(output_name);
@@ -530,10 +541,10 @@ local function create_hourly_sol_status_graph(tab, col_struct, i)
     stopsMin = 0,
     stopsMax = 3,
     dataClasses = {
-                  { color = "#8ACE7E", to = 0, name = "success" },
-                  { color = "#4E79A7", from = 1, to = 2, name = "warning" },
-                  { color = "#C64B3E", from = 2, to = 3, name = "error" },
-                  { color = "#FBEEB3", from = 3, name = "linear" }
+                  { color = "#8ACE7E", to = 0          , name = "MIP optimal"         },
+                  { color = "#4E79A7", from = 1, to = 2, name = "Integer solution"    },
+                  { color = "#FBEEB3", from = 2, to = 3, name = "Linearized solution" },
+                  { color = "#C64B3E", from = 3        , name = "Error"               }
                   }
     };
 
@@ -543,7 +554,7 @@ local function create_hourly_sol_status_graph(tab, col_struct, i)
 end
 
 -- Execution times per scenario (dispersion)
-local function create_exe_timer_per_scen(tab, col_struct, i)
+function create_exe_timer_per_scen(tab, col_struct, i)
     local extime_chart;
     local output_name  = "extime";
     local extime = col_struct.generic[i]:load(output_name);
@@ -577,7 +588,7 @@ local function create_exe_timer_per_scen(tab, col_struct, i)
     end
 end 
 
-local function create_pol_report(col_struct)
+function create_pol_report(col_struct)
     local tab = Tab("Policy");
 
     local total_cost_age;
@@ -733,7 +744,7 @@ end
 -- Simulation objetive function cost terms report function
 -----------------------------------------------------------------------------------------------
 
-local function create_sim_report(col_struct)
+function create_sim_report(col_struct)
     local tab = Tab("Simulation");
 
     local costs;
@@ -801,7 +812,7 @@ end
 -- Simulation costs report function
 -----------------------------------------------------------------------------------------------
 
-local function create_costs_and_revs(col_struct)
+function create_costs_and_revs(col_struct)
     local tab = Tab("Costs & revenues");
 
     local chart = Chart("Dispersion of operating costs per stage");
@@ -854,7 +865,7 @@ end
 -- Marginal cost report function
 -----------------------------------------------------------------------------------------------
 
-local function create_marg_costs(col_struct)
+function create_marg_costs(col_struct)
     local tab = Tab("Marginal costs");
 
     local cmg = {};
@@ -910,7 +921,7 @@ end
 -- Generation report function
 -----------------------------------------------------------------------------------------------
 
-local function create_gen_report(col_struct)
+function create_gen_report(col_struct)
     local tab = Tab("Generation");
 
     -- Color preferences
@@ -1267,7 +1278,7 @@ local function create_gen_report(col_struct)
     return tab;
 end
 
-local function create_risk_report(col_struct)
+function create_risk_report(col_struct)
     local tab = Tab("Deficit risk");
     local chart = Chart("Deficit risk by sub-system");
     local chart = Chart("Deficit risk by sub-system");
@@ -1295,43 +1306,7 @@ end
 -- Violation reports data and methods
 -----------------------------------------------------------------------------------------------
 
-local viol_report_structs = {
-    { name = "defcit"  , title = "Deficit" },
-    { name = "nedefc"  , title = "Deficit associated to non-electrical gas demand" },
-    { name = "defbus"  , title = "Deficit per bus (% of load)" },
-    { name = "gncivio" , title = "General interpolation constraint violation" },
-    { name = "gncvio"  , title = "General constraint: linear" },
-    { name = "vrestg"  , title = "Generation constraint violation" },
-    { name = "excbus"  , title = "Generation excess per AC bus" },
-    { name = "excsis"  , title = "Generation excess per system" },
-    { name = "vvaler"  , title = "Alert storage violation" },
-    { name = "vioguide", title = "Guide curve violation per hydro reservoir" },
-    { name = "vriego"  , title = "Hydro: irrigation" },
-    { name = "vmxost"  , title = "Hydro: maximum operative storage" },
-    { name = "vimxsp"  , title = "Hydro: maximum spillage" },
-    { name = "vdefmx"  , title = "Hydro: maximum total outflow" },
-    { name = "vvolmn"  , title = "Hydro: minimum storage" },
-    { name = "vdefmn"  , title = "Hydro: minimum total outflow" },
-    { name = "vturmn"  , title = "Hydro: minimum turbining outflow" },
-    { name = "vimnsp"  , title = "Hydro: mininum spillage" },
-    { name = "rampvio" , title = "Hydro: outflow ramp" },
-    { name = "vreseg"  , title = "Reserve: joint requirement" },
-    { name = "vsarhd"  , title = "RAS target storage violation %" },
-    { name = "vsarhden", title = "RAS target storage violation GWh" },
-    { name = "viocar"  , title = "Risk Aversion Curve" },
-    { name = "vgmint"  , title = "Thermal: minimum generation" },
-    { name = "vgmntt"  , title = "NE" },
-    { name = "vioemiq" , title = "Emission budget violation" },
-    { name = "vsecset" , title = "Reservoir set: security energy constraint" },
-    { name = "valeset" , title = "Reservoir set: alert energy constraint" },
-    { name = "vespset" , title = "Reservoir set: flood control energy constraint" },
-    { name = "fcoffvio", title = "Fuel contract minimum offtake rate violation" },
-    { name = "vflmnww" , title = "Minimum hydro bypass flow violation" },
-    { name = "vflmxww" , title = "Maximum hydro bypass flow violation" },
-    { name = "finjvio" , title = "NE" }
-}
-
-local function create_viol_report(tab, col_struct, viol_struct, suffix)
+function create_viol_report(tab, col_struct, viol_struct, suffix)
     local file_name;
     local viol_file;
 
@@ -1367,7 +1342,7 @@ local function create_viol_report(tab, col_struct, viol_struct, suffix)
     end
 end
 
-local function create_viol_report_from_list(tab, col_struct, viol_list, viol_struct, suffix)
+function create_viol_report_from_list(tab, col_struct, viol_list, viol_struct, suffix)
     local viol_name;
     local tokens = {};
 
@@ -1387,204 +1362,267 @@ local function create_viol_report_from_list(tab, col_struct, viol_list, viol_str
     end
 end
 
--- Collection arrays struct
-local col_struct = {
-    battery         = {},
-    bus             = {},
-    circuit         = {},
-    generic         = {},
-    hydro           = {},
-    interconnection = {},
-    power_injection = {},
-    renewable       = {},
-    study           = {},
-    system          = {},
-    thermal         = {},
-    case_dir_list   = {}  -- Cases' directory names
-};
+function create_operation_report(dashboard, studies, info_struct, info_existence_log)
 
--- Model info structure
-local info_struct = {};
-
-load_collections(col_struct);
-local info_existence_log = load_model_info(col_struct, info_struct);
-
--- If at least one case does not have the .info file, info report is not displayed
-local create_info_report = true;
-for i = 1, #info_existence_log do
-    if not info_existence_log[i] then
-        create_info_report = false;
-        break;
+    -- Collection arrays struct
+    local col_struct = {
+        battery         = {},
+        bus             = {},
+        circuit         = {},
+        generic         = {},
+        hydro           = {},
+        interconnection = {},
+        power_injection = {},
+        renewable       = {},
+        study           = {},
+        system          = {},
+        thermal         = {},
+        case_dir_list   = {}  -- Cases' directory names
+    };
+    
+    -- Violation outputs and titles struct
+    local viol_report_structs = {
+        { name = "defcit"  , title = "Deficit" },
+        { name = "nedefc"  , title = "Deficit associated to non-electrical gas demand" },
+        { name = "defbus"  , title = "Deficit per bus (% of load)" },
+        { name = "gncivio" , title = "General interpolation constraint violation" },
+        { name = "gncvio"  , title = "General constraint: linear" },
+        { name = "vrestg"  , title = "Generation constraint violation" },
+        { name = "excbus"  , title = "Generation excess per AC bus" },
+        { name = "excsis"  , title = "Generation excess per system" },
+        { name = "vvaler"  , title = "Alert storage violation" },
+        { name = "vioguide", title = "Guide curve violation per hydro reservoir" },
+        { name = "vriego"  , title = "Hydro: irrigation" },
+        { name = "vmxost"  , title = "Hydro: maximum operative storage" },
+        { name = "vimxsp"  , title = "Hydro: maximum spillage" },
+        { name = "vdefmx"  , title = "Hydro: maximum total outflow" },
+        { name = "vvolmn"  , title = "Hydro: minimum storage" },
+        { name = "vdefmn"  , title = "Hydro: minimum total outflow" },
+        { name = "vturmn"  , title = "Hydro: minimum turbining outflow" },
+        { name = "vimnsp"  , title = "Hydro: mininum spillage" },
+        { name = "rampvio" , title = "Hydro: outflow ramp" },
+        { name = "vreseg"  , title = "Reserve: joint requirement" },
+        { name = "vsarhd"  , title = "RAS target storage violation %" },
+        { name = "vsarhden", title = "RAS target storage violation GWh" },
+        { name = "viocar"  , title = "Risk Aversion Curve" },
+        { name = "vgmint"  , title = "Thermal: minimum generation" },
+        { name = "vgmntt"  , title = "NE" },
+        { name = "vioemiq" , title = "Emission budget violation" },
+        { name = "vsecset" , title = "Reservoir set: security energy constraint" },
+        { name = "valeset" , title = "Reservoir set: alert energy constraint" },
+        { name = "vespset" , title = "Reservoir set: flood control energy constraint" },
+        { name = "fcoffvio", title = "Fuel contract minimum offtake rate violation" },
+        { name = "vflmnww" , title = "Minimum hydro bypass flow violation" },
+        { name = "vflmxww" , title = "Maximum hydro bypass flow violation" },
+        { name = "finjvio" , title = "NE" }
+    }
+    
+    -- Loading study collections
+    load_collections(col_struct);
+    
+    -- If at least one case does not have the .info file, info report is not displayed
+    local create_info_report = true;
+    for i = 1, #info_existence_log do
+        if not info_existence_log[i] then
+            create_info_report = false;
+            break;
+        end
     end
-end
-
------------------------------------------------------------------------------------------------
--- Dashboard tab configuration
------------------------------------------------------------------------------------------------
-
-local dashboard = Dashboard();
-
--- Dashboard name configuration
-local dashboard_name = "SDDP";
-if #info_struct > 0 and not (info_struct[1].dash_name == "---") then
-    dashboard_name = info_struct[1].dash_name;
-end
-
-if studies > 1 then
-    dashboard_name = dashboard_name .. "-compare";
-end
-
-----------------
--- Infeasibility
-----------------
-local tab_inf = Tab("Infeasibility report");
-tab_inf:set_icon("alert-triangle");
-
--- Infeasibility report
-if create_info_report then
-    local has_inf = {};
-    if studies == 1 then
-        if info_struct[1].status > 0 then
-            dash_infeasibility(tab_inf,info_struct[1].infrep .. ".out",1);
-            push_tab_to_tab(tab_inf,dashboard);                                     -- Infeasibility
-            push_tab_to_tab(create_tab_summary(col_struct, info_struct),dashboard); -- Case information summary
-            dashboard:save(dashboard_name);
-            
-            return
-        end
-    else
-        for i = 1, studies do
-            if info_struct[i].status > 0 then
-                table.insert(has_inf, i)
-            end
-        end
-        
-        if #has_inf > 0 then
-            for i = 1, #has_inf do
-                j = has_inf[i]; -- Pointer to case
-                local tab_inf_sub = Tab(col_struct.case_dir_list[j]);
-                dash_infeasibility(tab_inf_sub,info_struct[j].infrep .. ".out",j);
-                
-                tab_inf:push(tab_inf_sub);
-                
-                -- Remove from vectors
-                remove_case_info(col_struct, info_struct, j);
-            end
-            
-            studies = studies - #has_inf;
-                
-            -- If only one study was successful, comparison does not exist
-            if studies == 1 then
-                push_tab_to_tab(tab_inf,dashboard);
+    
+    -----------------------------------------------------------------------------------------------
+    -- Dashboard tabs configuration
+    -----------------------------------------------------------------------------------------------
+    
+    -- Dashboard name configuration
+    local dashboard_name = "SDDP";
+    info("Aqui 1");
+    info(dashboard_name);
+    if #info_struct > 0 and not (info_struct[1].dash_name == "-") then
+        info("Aqui 1.1");
+        info(info_struct);
+        dashboard_name = info_struct[1].dash_name;
+    end
+    
+    if studies > 1 then
+        dashboard_name = dashboard_name .. "-compare";
+    end
+    
+    info("Aqui 2");
+    info(dashboard_name);
+    
+    ----------------
+    -- Infeasibility
+    ----------------
+    local tab_inf = Tab("Infeasibility report");
+    tab_inf:set_icon("alert-triangle");
+    
+    -- Infeasibility report
+    if create_info_report then
+        local has_inf = {};
+        if studies == 1 then
+            if info_struct[1].status > 0 then
+                dash_infeasibility(tab_inf,info_struct[1].infrep .. ".out",1);
+                push_tab_to_tab(tab_inf,dashboard);                                     -- Infeasibility
                 push_tab_to_tab(create_tab_summary(col_struct, info_struct),dashboard); -- Case information summary
                 dashboard:save(dashboard_name);
+                
                 return
             end
+        else
+            for i = 1, studies do
+                if info_struct[i].status > 0 then
+                    table.insert(has_inf, i)
+                end
+            end
+            
+            if #has_inf > 0 then
+                for i = 1, #has_inf do
+                    j = has_inf[i]; -- Pointer to case
+                    local tab_inf_sub = Tab(col_struct.case_dir_list[j]);
+                    dash_infeasibility(tab_inf_sub,info_struct[j].infrep .. ".out",j);
+                    
+                    tab_inf:push(tab_inf_sub);
+                    
+                    -- Remove from vectors
+                    remove_case_info(col_struct, info_struct, j);
+                end
+                
+                studies = studies - #has_inf;
+                    
+                -- If only one study was successful, comparison does not exist
+                if studies == 1 then
+                    push_tab_to_tab(tab_inf,dashboard);
+                    push_tab_to_tab(create_tab_summary(col_struct, info_struct),dashboard); -- Case information summary
+                    dashboard:save(dashboard_name);
+                    return
+                end
+            end
+            
         end
         
-    end
-    
-    -- If infeasibilities are present, dashboard
-    if #has_inf > 0 then
-        push_tab_to_tab(tab_inf,dashboard);
-    end
-end
-
--------------------
--- Solution quality
--------------------
-
-local tab_solution_quality = Tab("Solution quality");
-tab_solution_quality:set_collapsed(false);
-tab_solution_quality:set_disabled();
-tab_solution_quality:set_icon("alert-triangle");
-
-local create_policy_report = true;
-local pol_file_name = "sddppol.csv"
-for i = 1, studies do
-    if not col_struct.study[i]:get_parameter("SCEN", 0) == 0 or 
-       not col_struct.generic[i]:file_exists(pol_file_name) then 
-        create_policy_report = false;
-    end 
-end
-
--- Policy report
-if create_policy_report then -- SDDP scenarios does not have policy phase
-    push_tab_to_tab(create_pol_report(col_struct),tab_solution_quality);
-else
-    info("file " .. pol_file_name .. " does not exist. Policy report will not be displayed.");
-end
-
--- Simulation report
-push_tab_to_tab(create_sim_report(col_struct),tab_solution_quality);
-
-push_tab_to_tab(tab_solution_quality, dashboard);
-
-------------
--- Violation
-------------
-
--- Violation tabs
-local tab_violations = Tab("Violations");
-local tab_viol_avg   = Tab("Average");
-local tab_viol_max   = Tab("Maximum");
-
-tab_violations:set_collapsed(true);
-tab_violations:set_disabled();
-tab_violations:set_icon("siren");
-
-if studies == 1 then
-    local viol_files;
-    local viol_list = {};
-    
-    local viol_file_name = "sddp_viol.out";
-    
-    -- Load list of violations
-    viol_files = col_struct.generic[1]:load_table_without_header(viol_file_name);
-    
-    -- Check if violation list file is present
-    if #viol_files > 0 then
-        -- Create list of violation outputs to be considered
-        for lin = 1, #viol_files do
-            file = viol_files[lin][1];
-            table.insert(viol_list,file);
+        -- If infeasibilities are present, dashboard
+        if #has_inf > 0 then
+            push_tab_to_tab(tab_inf,dashboard);
         end
-        
-        create_viol_report_from_list(tab_viol_avg, col_struct, viol_list, viol_report_structs, "avg");
-        create_viol_report_from_list(tab_viol_max, col_struct, viol_list, viol_report_structs, "max");
+    end
+    
+    -------------------
+    -- Solution quality
+    -------------------
+    
+    local tab_solution_quality = Tab("Solution quality");
+    tab_solution_quality:set_collapsed(false);
+    tab_solution_quality:set_disabled();
+    tab_solution_quality:set_icon("alert-triangle");
+    
+    local create_policy_report = true;
+    local pol_file_name = "sddppol.csv"
+    for i = 1, studies do
+        if not col_struct.study[i]:get_parameter("SCEN", 0) == 0 or 
+        not col_struct.generic[i]:file_exists(pol_file_name) then 
+            create_policy_report = false;
+        end 
+    end
+    
+    -- Policy report
+    if create_policy_report then -- SDDP scenarios does not have policy phase
+        push_tab_to_tab(create_pol_report(col_struct),tab_solution_quality);
     else
-        create_viol_report(tab_viol_avg, col_struct, viol_report_structs, "avg");
-        create_viol_report(tab_viol_max, col_struct, viol_report_structs, "max");
-    end 
+        info("file " .. pol_file_name .. " does not exist. Policy report will not be displayed.");
+    end
     
-    push_tab_to_tab(tab_viol_avg,tab_violations);
-    push_tab_to_tab(tab_viol_max,tab_violations);
+    -- Simulation report
+    push_tab_to_tab(create_sim_report(col_struct),tab_solution_quality);
     
-    push_tab_to_tab(tab_violations,dashboard);
+    push_tab_to_tab(tab_solution_quality, dashboard);
+    
+    ------------
+    -- Violation
+    ------------
+    
+    -- Violation tabs
+    local tab_violations = Tab("Violations");
+    local tab_viol_avg   = Tab("Average");
+    local tab_viol_max   = Tab("Maximum");
+    
+    tab_violations:set_collapsed(true);
+    tab_violations:set_disabled();
+    tab_violations:set_icon("siren");
+    
+    if studies == 1 then
+        local viol_files;
+        local viol_list = {};
+        
+        local viol_file_name = "sddp_viol.out";
+        
+        -- Load list of violations
+        viol_files = col_struct.generic[1]:load_table_without_header(viol_file_name);
+        
+        -- Check if violation list file is present
+        if #viol_files > 0 then
+            -- Create list of violation outputs to be considered
+            for lin = 1, #viol_files do
+                file = viol_files[lin][1];
+                table.insert(viol_list,file);
+            end
+            
+            create_viol_report_from_list(tab_viol_avg, col_struct, viol_list, viol_report_structs, "avg");
+            create_viol_report_from_list(tab_viol_max, col_struct, viol_list, viol_report_structs, "max");
+        else
+            create_viol_report(tab_viol_avg, col_struct, viol_report_structs, "avg");
+            create_viol_report(tab_viol_max, col_struct, viol_report_structs, "max");
+        end 
+        
+        push_tab_to_tab(tab_viol_avg,tab_violations);
+        push_tab_to_tab(tab_viol_max,tab_violations);
+        
+        push_tab_to_tab(tab_violations,dashboard);
+    end
+    
+    ----------
+    -- Results
+    ----------
+    
+    local tab_results = Tab("Results");
+    tab_results:set_collapsed(true);
+    tab_results:set_disabled();
+    tab_results:set_icon("line-chart");
+    
+    push_tab_to_tab(create_costs_and_revs(col_struct),tab_results);
+    push_tab_to_tab(create_marg_costs(col_struct)    ,tab_results);
+    push_tab_to_tab(create_gen_report(col_struct)    ,tab_results);
+    push_tab_to_tab(create_risk_report(col_struct)   ,tab_results);
+    push_tab_to_tab(create_inflow_energy(col_struct) ,tab_results);
+    
+    push_tab_to_tab(tab_results,dashboard);
+    
+    ---------------------------
+    -- Case information summary
+    ---------------------------
+    if create_info_report then
+        push_tab_to_tab(create_tab_summary(col_struct, info_struct),dashboard);
+    end
+    
+    -- Save dashboard and return execution mode
+    dashboard:save(dashboard_name);
+    
 end
 
-----------
--- Results
-----------
+-- Model info structure
+local generic_collections = {};
+local info_struct = {};    
 
-local tab_results = Tab("Results");
-tab_results:set_collapsed(true);
-tab_results:set_disabled();
-tab_results:set_icon("line-chart");
-
-push_tab_to_tab(create_costs_and_revs(col_struct),tab_results);
-push_tab_to_tab(create_marg_costs(col_struct)    ,tab_results);
-push_tab_to_tab(create_gen_report(col_struct)    ,tab_results);
-push_tab_to_tab(create_risk_report(col_struct)   ,tab_results);
-push_tab_to_tab(create_inflow_energy(col_struct) ,tab_results);
-
-push_tab_to_tab(tab_results,dashboard);
-
----------------------------
--- Case information summary
----------------------------
-if create_info_report then
-    push_tab_to_tab(create_tab_summary(col_struct, info_struct),dashboard);
+for i = 1, studies do
+    generic_collections[i] = Generic(i);
 end
 
-dashboard:save(dashboard_name);
+local info_existence_log = load_model_info(generic_collections, info_struct);
+    
+if info_struct[1].exe_mode == EXECUTION_MODE_OPERATION then
+    info("Entrou auqi 1");
+    local dashboard = Dashboard();
+    create_operation_report(dashboard, studies, info_struct, info_existence_log);
+else
+    info("Entrou auqi 2");
+    return create_operation_report;
+end
