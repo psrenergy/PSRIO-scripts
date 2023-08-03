@@ -2,6 +2,7 @@ PSR.assert_version(">0.20.0");
 
 local function save_inputs()
     local demand = Demand();
+    local hydro = Hydro();
     local study = Study();
     local has_flexible_demand = study:has_flexible_demand();
 
@@ -38,13 +39,13 @@ local function save_inputs()
     lshmin:save("lshmin", { force = has_flexible_demand });
 
     -- -- FLOOD_CONTROL_HISTORICAL_SCENARIOS
-    -- hydro.flood_control_historical_scenarios:save("flood_control_historical_scenarios", { horizon = true });
+    hydro.flood_control_historical_scenarios:save("flood_control_historical_scenarios", { horizon = true });
 
     -- -- MIN_STORAGE_HISTORICAL_SCENARIOS
-    -- hydro.vmin_chronological_historical_scenarios:save("min_storage_historical_scenarios", { horizon = true });
+    hydro.min_operative_storage_historical_scenarios:save("min_storage_historical_scenarios", { horizon = true });
 
     -- -- MAX_STORAGE_HISTORICAL_SCENARIOS
-    -- hydro.vmax_chronological_historical_scenarios:save("max_storage_historical_scenarios", { horizon = true });
+    hydro.max_operative_storage_historical_scenarios:save("max_storage_historical_scenarios", { horizon = true });
 end
 
 local function save_hydro_violation(label, suffixes)
