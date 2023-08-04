@@ -530,10 +530,10 @@ local function create_hourly_sol_status_graph(tab, col_struct, i)
     stopsMin = 0,
     stopsMax = 3,
     dataClasses = {
-                  { color = "#8ACE7E", to = 0          , name = "MIP optimal"         },
-                  { color = "#4E79A7", from = 1, to = 2, name = "Integer solution"    },
-                  { color = "#FBEEB3", from = 2, to = 3, name = "Linearized solution" },
-                  { color = "#C64B3E", from = 3        , name = "Error"               }
+                  { color = "#8ACE7E", to = 0          , name = "Optimal solution" },
+                  { color = "#4E79A7", from = 1, to = 2, name = "Feasible solution"},
+                  { color = "#FBEEB3", from = 2, to = 3, name = "Relaxed solution" },
+                  { color = "#C64B3E", from = 3        , name = "No solution"      }
                   }
     };
 
@@ -871,7 +871,7 @@ local function create_marg_costs(col_struct)
     end
 
     -- Marginal cost aggregated by average
-    local chart = Chart("Annual marginal cost by sub-system");
+    local chart = Chart("Annual marginal cost by system");
     if studies > 1 then
         for i = 1, studies do
             cmg_aggyear = cmg[i]:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_AVERAGE(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM);
@@ -886,7 +886,7 @@ local function create_marg_costs(col_struct)
     tab:push(chart);
 
     if studies > 1 then
-        tab:push("## Average marginal costs per stage per subsystem");
+        tab:push("## Average marginal costs per stage per system");
         local agents = cmg[1]:agents();
         for i, agent in ipairs(agents) do
             local chart = Chart(agent);
@@ -897,7 +897,7 @@ local function create_marg_costs(col_struct)
             tab:push(chart);
         end
     else
-        local chart = Chart("Average marginal costs per stage per subsystem");
+        local chart = Chart("Average marginal costs per stage per system");
         cmg_aggsum = cmg[1]:aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE());
         chart:add_column(cmg_aggsum,{xUnit="Stage"});
         tab:push(chart);
@@ -1234,7 +1234,7 @@ local function create_gen_report(col_struct)
             end
         end
 
-        tab:push("## Total generation per subsystem - " .. agent);
+        tab:push("## Total generation per system - " .. agent);
         if #chart_tot_gerhid > 0 then
             tab:push(chart_tot_gerhid);
         end
@@ -1269,8 +1269,7 @@ end
 
 local function create_risk_report(col_struct)
     local tab = Tab("Deficit risk");
-    local chart = Chart("Deficit risk by sub-system");
-    local chart = Chart("Deficit risk by sub-system");
+    local chart = Chart("Deficit risk by system");
 
     if studies > 1 then
         for i = 1, studies do
