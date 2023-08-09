@@ -502,9 +502,9 @@ local function create_conv_map_graph(tab, file_name, col_struct, i)
     stopsMin = 0,
     stopsMax = 2,
     dataClasses = {
-                  { color = "#4E79A7", to = 0  , name = "converged" },
-                  { color = "#FBEEB3", from = 1, to = 2, name = "warning" },
-                  { color = "#C64B3E", from = 2, name = "not converged" }
+                  { color = "#C64B3E", to = 0  , name = "not converged" },
+                  { color = "#4E79A7", from = 1, to = 2, name = "converged" },
+                  { color = "#FBEEB3", from = 2, name = "warning" }
                   }
     };
 
@@ -681,6 +681,7 @@ local function create_pol_report(col_struct)
                 local objcop = col_struct.generic[1]:load("objcop");
                 local discount_rate = require("sddp/discount_rate")(1);
 
+                immediate_cost = 0.0;
                 if col_struct.study[1]:get_parameter("SIMH", -1) == 2 then -- Hourly model writes objcop with different columns
                     -- Remove first column(Future cost) of hourly objcop
                     immediate_cost = (objcop:remove_agent(1) / discount_rate):aggregate_agents(BY_SUM(), "Immediate cost"):aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):to_list()[1];
