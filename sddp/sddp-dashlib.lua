@@ -56,8 +56,6 @@ function load_info_file(file_name,case_index)
     info_struct.dash_name = dash_name;
     info_struct.cloud     = cloud;
     info_struct.exe_mode  = exe_mode;
-      
-    info(info_struct.exe_mode)
     
     return info_struct;
 end
@@ -1362,14 +1360,14 @@ function create_viol_report_from_list(tab, col_struct, viol_list, viol_struct, s
     end
 end
 
-function create_operation_report(dashboard, studies, info_struct, info_existence_log,is_optgen)
+function create_operation_report(dashboard, studies, info_struct, info_existence_log, create_dashboard)
     
     -- Function parameters
     -- dashboard: tab or dashboard object
     -- studies: number of studies loaded by PSRIO
     -- info_struct: struct containing SDDP execution information
     -- info_existence_log: array cointaing flags whether the information was loaded or not
-    -- is_optgen: flag that indicates if case is optgen ones 
+    -- create_dashboard: flag that indicates if dashboard html must be created
 
     -- Collection arrays struct
     local col_struct = {
@@ -1442,20 +1440,13 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     
     -- Dashboard name configuration
     local dashboard_name = "SDDP";
-    info("Aqui 1");
-    info(dashboard_name);
     if #info_struct > 0 and not (info_struct[1].dash_name == "-") then
-        info("Aqui 1.1");
-        info(info_struct);
         dashboard_name = info_struct[1].dash_name;
     end
     
     if studies > 1 then
         dashboard_name = dashboard_name .. "-compare";
     end
-    
-    info("Aqui 2");
-    info(dashboard_name);
     
     ----------------
     -- Infeasibility
@@ -1612,7 +1603,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     
     -- Save dashboard and return execution mode
     -- All cases must be of the same type (operation or expansion)
-    if not is_optgen then
+    if create_dashboard then
         dashboard:save(dashboard_name);
     end
 
