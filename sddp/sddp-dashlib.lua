@@ -1362,13 +1362,14 @@ function create_viol_report_from_list(tab, col_struct, viol_list, viol_struct, s
     end
 end
 
-function create_operation_report(dashboard, studies, info_struct, info_existence_log)
+function create_operation_report(dashboard, studies, info_struct, info_existence_log,is_optgen)
     
     -- Function parameters
     -- dashboard: tab or dashboard object
     -- studies: number of studies loaded by PSRIO
     -- info_struct: struct containing SDDP execution information
     -- info_existence_log: array cointaing flags whether the information was loaded or not
+    -- is_optgen: flag that indicates if case is optgen ones 
 
     -- Collection arrays struct
     local col_struct = {
@@ -1611,9 +1612,8 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     
     -- Save dashboard and return execution mode
     -- All cases must be of the same type (operation or expansion)
-    if #info_struct > 0 then
-        if info_struct[1].exe_mode == 0 then
-            dashboard:save(dashboard_name);
-        end
+    if not is_optgen then
+        dashboard:save(dashboard_name);
     end
+
 end
