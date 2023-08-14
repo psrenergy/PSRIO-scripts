@@ -1610,6 +1610,10 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     end
     
     -- Save dashboard and return execution mode
-    dashboard:save(dashboard_name);
-    
+    -- All cases must be of the same type (operation or expansion)
+    if #info_struct > 0 then
+        if info_struct[1].exe_mode == 0 then
+            dashboard:save(dashboard_name);
+        end
+    end
 end
