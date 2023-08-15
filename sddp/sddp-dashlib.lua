@@ -593,6 +593,7 @@ function create_pol_report(col_struct)
     local total_cost_age;
     local future_cost_age;
     local immediate_cost;
+    local fcf_last_stage_cost;
     
     local file_list = {};
     local convm_file_list = {};
@@ -605,6 +606,9 @@ function create_pol_report(col_struct)
     conv_status     = {};
 
     local conv_file;
+    
+    local has_results_for_add_years = col_struct.study[1]:get_parameter("NumeroAnosAdicionaisParm2",-1) == 1;
+    local zsup_is_visible = has_results_for_add_years;
 
     -- Convergence map report
     get_conv_file_info(col_struct, "sddpconvm.csv", convm_file_list, systems, horizon, 1);
@@ -633,10 +637,10 @@ function create_pol_report(col_struct)
                     time_age = conv_file:select_agents({ 7, 8 }); -- Forw. time, Back. time
     
                     -- Confidence interval
-                    chart_conv:add_area_range(conv_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup - Tol"), conv_age:select_agents({ 4 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup + Tol"), { colors = { light_global_color[j], light_global_color[j] }, xUnit = "Iteration", xAllowDecimals = false, showInLegend = true });
+                    chart_conv:add_area_range(conv_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup - Tol"), conv_age:select_agents({ 4 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup + Tol"), { colors = { light_global_color[j], light_global_color[j] }, xUnit = "Iteration", xAllowDecimals = false, showInLegend = true, visible = zsup_is_visible });
     
                     -- Zsup
-                    chart_conv:add_line(conv_age:select_agents({ 3 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup"), { colors = { main_global_color[j] }, xAllowDecimals = false });
+                    chart_conv:add_line(conv_age:select_agents({ 3 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup"), { colors = { main_global_color[j] }, xAllowDecimals = false, visible = zsup_is_visible });
     
                     -- Zinf
                     chart_conv:add_line(conv_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j] .. " - Zinf"), { colors = { main_global_color[j] }, xAllowDecimals = false, dashStyle = "dash" }); -- Zinf
@@ -653,6 +657,16 @@ function create_pol_report(col_struct)
     
                     -- Execution time - backward
                     chart_time_back:add_column(time_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
+                    
+                    if not has_results_for_add_years then
+                        conv_age = conv_file:select_agents({ 9, 10, 11}); -- Zinf        ,Zsup - Tol  ,Zsup        ,Zsup + Tol  
+
+                        -- Confidence interval
+                        chart_conv:add_area_range(conv_age:select_agents({ 9 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup - Tol"), conv_age:select_agents({ 11 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup + Tol (FCF)"), { colors = { light_global_color[j], light_global_color[j] }, xUnit = "Iteration", xAllowDecimals = false, showInLegend = true });
+    
+                        -- Zsup
+                        chart_conv:add_line(conv_age:select_agents({ 10 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup (FCF)"), { colors = { main_global_color[j] }, xAllowDecimals = false });
+                    end
                 else
                     info("Comparing cases have different policy horizons! Policy will only contain the main case data.");
                 end
@@ -693,26 +707,54 @@ function create_pol_report(col_struct)
 
                 immediate_cost = 0.0;
                 if col_struct.study[1]:get_parameter("SIMH", -1) == 2 then -- Hourly model writes objcop with different columns
+                    if not has_results_for_add_years then
+                        future_cost_age = objcop:select_agent(1):aggregate_scenarios(BY_AVERAGE());
+                    end
+                    
                     -- Remove first column(Future cost) of hourly objcop
                     immediate_cost = (objcop:remove_agent(1) / discount_rate):aggregate_agents(BY_SUM(), "Immediate cost"):aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):to_list()[1];
                 else
                     -- Select total cost and future cost agents
                     total_cost_age = objcop:select_agent(1):aggregate_scenarios(BY_AVERAGE());
                     future_cost_age = objcop:select_agent(-1):aggregate_scenarios(BY_AVERAGE());
-
+                    
                     -- Calculating total cost as sum of immediate costs per stage
                     immediate_cost = ((total_cost_age - future_cost_age) / discount_rate):aggregate_stages(BY_SUM()):rename_agent("Total cost"):to_list()[1];
                 end
 
+                if not has_results_for_add_years then
+                    fcf_last_stage_index = future_cost_age:last_stage();
+                    fcf_last_stage_cost  = future_cost_age:select_stage(fcf_last_stage_index):to_list()[1];
+                    last_stage_disc      = discount_rate:select_stage(fcf_last_stage_index):to_list()[1];
+                    
+                    immediate_cost = immediate_cost + fcf_last_stage_cost / last_stage_disc;
+                end
+                
                 -- Take expression and use it as mask for "final_sim_cost"
                 conv_age_aux = conv_age:select_agent(1):rename_agent("Final simulation");
                 final_sim_cost = conv_age_aux:fill(immediate_cost);
+               
             end
-
+            
             local chart = Chart("Convergence");
-            chart:add_area_range(conv_age:select_agents({ 2 }), conv_age:select_agents({ 4 }), { colors = { "#ACD98D", "#ACD98D" }, xUnit = "Iteration", xAllowDecimals = false }); -- Confidence interval
+
             chart:add_line(conv_age:select_agents({ 1 }), { colors = { "#3CB7CC" }, xAllowDecimals = false }); -- Zinf
-            chart:add_line(conv_age:select_agents({ 3 }), { colors = { "#32A251" }, xAllowDecimals = false }); -- Zsup
+            chart:add_line(conv_age:select_agents({ 3 }), { colors = { "#32A251" }, xAllowDecimals = false, visible = zsup_is_visible }); -- Zsup
+            chart:add_area_range(conv_age:select_agents({ 2 }), conv_age:select_agents({ 4 }), { colors = { "#ACD98D", "#ACD98D" }, xUnit = "Iteration", xAllowDecimals = false, visible = zsup_is_visible }); -- Confidence interval
+            
+            if not has_results_for_add_years then
+                conv_age = conv_file:select_agents({ 9, 10, 11}); -- Zsup - Tol  ,Zsup        ,Zsup + Tol   (With FCF added in the last stage before additional years)
+                
+                -- Zsup
+                chart:add_line(conv_age:select_agents({ 2 }):rename_agent("Zsup (FCF)"), { colors = { "#FF9DA7" }, xAllowDecimals = false });
+                
+                -- Confidence interval
+                chart:add_area_range(conv_age:select_agents({ 1 }):rename_agent("Zsup-Tol"), conv_age:select_agents({ 3 }):rename_agent("Zsup+Tol (FCF)"), { colors = { "#FFD8DC", "#FFD8DC" }, xUnit = "Iteration", xAllowDecimals = false, showInLegend = true });
+                
+                tab:push("**Additional years were not considered in the simulation**");
+                tab:push("Auxiliary convergence has been added -ZSup (FCF): sum of immediate costs up to the last stage of the simulation, plus the future cost from the last stage");
+            end
+                    
             if (graph_sim_cost) then
                 chart:add_line(final_sim_cost, { colors = { "#D37295" }, xAllowDecimals = false }); -- Final simulation cost
             end
