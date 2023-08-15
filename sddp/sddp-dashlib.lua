@@ -633,9 +633,6 @@ function create_pol_report(col_struct)
             local chart_time_back = Chart("Execution time - Backward");
 
             for j = 1, studies do
-            
-                has_results_for_add_years = col_struct.study[j]:get_parameter("NumeroAnosAdicionaisParm2",-1) == 1;
-                zsup_is_visible = has_results_for_add_years;
                 
                 conv_file = col_struct.generic[j]:load(file);
                 if conv_file:loaded() then
@@ -664,16 +661,6 @@ function create_pol_report(col_struct)
     
                     -- Execution time - backward
                     chart_time_back:add_column(time_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
-                    
-                    if not has_results_for_add_years then
-                        conv_age = conv_file:select_agents({ 9, 10, 11}); -- Zinf        ,Zsup - Tol  ,Zsup        ,Zsup + Tol  
-
-                        -- Confidence interval
-                        chart_conv:add_area_range(conv_age:select_agents({ 9 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup - Tol"), conv_age:select_agents({ 11 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup + Tol (FCF)"), { colors = { light_global_color[j], light_global_color[j] }, xUnit = "Iteration", xAllowDecimals = false, showInLegend = true });
-    
-                        -- Zsup
-                        chart_conv:add_line(conv_age:select_agents({ 10 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup (FCF)"), { colors = { main_global_color[j] }, xAllowDecimals = false });
-                    end
                 else
                     info("Comparing cases have different policy horizons! Policy will only contain the main case data.");
                 end
@@ -750,17 +737,17 @@ function create_pol_report(col_struct)
             local chart = Chart("Convergence");
 
             chart:add_line(conv_age:select_agents({ 1 }), { colors = { "#3CB7CC" }, xAllowDecimals = false }); -- Zinf
-            chart:add_line(conv_age:select_agents({ 3 }), { colors = { "#32A251" }, xAllowDecimals = false, visible = zsup_is_visible }); -- Zsup
-            chart:add_area_range(conv_age:select_agents({ 2 }), conv_age:select_agents({ 4 }), { colors = { "#ACD98D", "#ACD98D" }, xUnit = "Iteration", xAllowDecimals = false, visible = zsup_is_visible }); -- Confidence interval
+            chart:add_line(conv_age:select_agents({ 3 }):rename_agent("Zsup (IC)"), { colors = { "#32A251" }, xAllowDecimals = false, visible = zsup_is_visible }); -- Zsup
+            chart:add_area_range(conv_age:select_agents({ 2 }):rename_agent(""), conv_age:select_agents({ 4 }):rename_agent("Zsup (IC) +- Tol"), { colors = { "#ACD98D", "#ACD98D" }, xUnit = "Iteration", xAllowDecimals = false, visible = zsup_is_visible }); -- Confidence interval
             
             if not has_results_for_add_years then
                 conv_age = conv_file:select_agents({ 9, 10, 11}); -- Zsup - Tol  ,Zsup        ,Zsup + Tol   (With FCF added in the last stage before additional years)
                 
                 -- Zsup
-                chart:add_line(conv_age:select_agents({ 2 }):rename_agent("Zsup (FCF)"), { colors = { "#FF9DA7" }, xAllowDecimals = false });
+                chart:add_line(conv_age:select_agents({ 2 }):rename_agent("Zsup (IC+FCF)"), { colors = { "#FF9DA7" }, xAllowDecimals = false });
                 
                 -- Confidence interval
-                chart:add_area_range(conv_age:select_agents({ 1 }):rename_agent("Zsup-Tol"), conv_age:select_agents({ 3 }):rename_agent("Zsup+Tol (FCF)"), { colors = { "#FFD8DC", "#FFD8DC" }, xUnit = "Iteration", xAllowDecimals = false, showInLegend = true });
+                chart:add_area_range(conv_age:select_agents({ 1 }):rename_agent(""), conv_age:select_agents({ 3 }):rename_agent("Zsup (IC+FCF) +- Tol"), { colors = { "#FFD8DC", "#FFD8DC" }, xUnit = "Iteration", xAllowDecimals = false, showInLegend = true });
             end
                     
             if (graph_sim_cost) then
@@ -788,8 +775,9 @@ function create_pol_report(col_struct)
             -- Place legend below the graph
             if not has_results_for_add_years then
                 tab:push("**Additional years were not considered in the simulation**");
-                tab:push("Auxiliary convergence line has been added - ZSup (FCF): sum of immediate costs up to the last stage of the simulation, plus the future cost from the last stage");
+                tab:push("ZSup (IC + FCF): sum of immediate costs up to the last stage of the simulation, plus the future cost from the last stage");
             end
+            tab:push("ZSup (IC): sum of immediate costs up to the last stage of the policy considering additional years");
 
             chart = Chart("New cuts per iteration");
             
