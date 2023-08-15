@@ -3,6 +3,8 @@ EXECUTION_MODE_OPERATION     = 0
 EXECUTION_MODE_EXPANSION_IT  = 1
 EXECUTION_MODE_EXPANSION_SIM = 2
 
+REP_DIFF_TOL = 0.1 -- 10%
+
 -- Setting global colors
 main_global_color = { "#4E79A7", "#F28E2B", "#8CD17D", "#B6992D", "#E15759", "#76B7B2", "#FF9DA7", "#D7B5A6", "#B07AA1", "#59A14F", "#F1CE63", "#A0CBE8", "#E15759" };
 light_global_color = { "#B7C9DD", "#FAD2AA", "#D1EDCB", "#E9DAA4", "#F3BCBD", "#C8E2E0", "#FFD8DC", "#EFE1DB", "#DFCAD9", "#BBDBB7", "#F9EBC1", "#D9EAF6", "#F3BCBD" };
@@ -594,6 +596,7 @@ function create_pol_report(col_struct)
     local future_cost_age;
     local immediate_cost;
     local fcf_last_stage_cost;
+    local rel_diff;
     
     local file_list = {};
     local convm_file_list = {};
@@ -607,8 +610,8 @@ function create_pol_report(col_struct)
 
     local conv_file;
     
-    local has_results_for_add_years = col_struct.study[1]:get_parameter("NumeroAnosAdicionaisParm2",-1) == 1;
-    local zsup_is_visible = has_results_for_add_years;
+    local has_results_for_add_years;
+    local zsup_is_visible;
 
     -- Convergence map report
     get_conv_file_info(col_struct, "sddpconvm.csv", convm_file_list, systems, horizon, 1);
@@ -630,6 +633,10 @@ function create_pol_report(col_struct)
             local chart_time_back = Chart("Execution time - Backward");
 
             for j = 1, studies do
+            
+                has_results_for_add_years = col_struct.study[j]:get_parameter("NumeroAnosAdicionaisParm2",-1) == 1;
+                zsup_is_visible = has_results_for_add_years;
+                
                 conv_file = col_struct.generic[j]:load(file);
                 if conv_file:loaded() then
                     conv_age = conv_file:select_agents({ 1, 2, 3, 4 }); -- Zinf        ,Zsup - Tol  ,Zsup        ,Zsup + Tol  
@@ -688,6 +695,10 @@ function create_pol_report(col_struct)
                 tab:push(chart_time_back);
             end
         else
+        
+            has_results_for_add_years = col_struct.study[1]:get_parameter("NumeroAnosAdicionaisParm2",-1) == 1;
+            zsup_is_visible = has_results_for_add_years;    
+                
             -- Get operation mode parameter
             oper_mode = col_struct.study[1]:get_parameter("Opcion", -1); -- 1=AIS; 2=COO; 3=INT;    
 
@@ -750,15 +761,35 @@ function create_pol_report(col_struct)
                 
                 -- Confidence interval
                 chart:add_area_range(conv_age:select_agents({ 1 }):rename_agent("Zsup-Tol"), conv_age:select_agents({ 3 }):rename_agent("Zsup+Tol (FCF)"), { colors = { "#FFD8DC", "#FFD8DC" }, xUnit = "Iteration", xAllowDecimals = false, showInLegend = true });
-                
-                tab:push("**Additional years were not considered in the simulation**");
-                tab:push("Auxiliary convergence has been added -ZSup (FCF): sum of immediate costs up to the last stage of the simulation, plus the future cost from the last stage");
             end
                     
             if (graph_sim_cost) then
                 chart:add_line(final_sim_cost, { colors = { "#D37295" }, xAllowDecimals = false }); -- Final simulation cost
+                
+                -- Get last ZSup
+                zsup = conv_file:select_agent(3):abs();
+                last_zsup_index = zsup:last_stage()
+                last_zsup = zsup:to_list()[last_zsup_index];
+                
+                -- Get immediate cost module
+                if immediate_cost < 0 then
+                    immediate_cost = -immediate_cost;
+                end
+                
+                rel_diff = (immediate_cost - last_zsup)/immediate_cost;
+                if rel_diff > REP_DIFF_TOL then
+                    tab:push("**Attention**");
+                    tab:push("This case presents significant representation differences between policy and simulation. Your policy may not lead to adequate operating decisions");
+                    tab:push("Relative difference: " .. string.format("%.2f",100*rel_diff) .. " %");
+                end
             end
             tab:push(chart);
+            
+            -- Place legend below the graph
+            if not has_results_for_add_years then
+                tab:push("**Additional years were not considered in the simulation**");
+                tab:push("Auxiliary convergence line has been added - ZSup (FCF): sum of immediate costs up to the last stage of the simulation, plus the future cost from the last stage");
+            end
 
             chart = Chart("New cuts per iteration");
             
