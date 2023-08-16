@@ -736,7 +736,7 @@ function create_pol_report(col_struct)
             
             local chart = Chart("Convergence");
 
-            chart:add_line(conv_age:select_agents({ 1 }), { colors = { "#3CB7CC" }, xAllowDecimals = false }); -- Zinf
+            chart:add_line(conv_age:select_agents({ 1 }), { xUnit = "Iteration", colors = { "#3CB7CC" }, xAllowDecimals = false }); -- Zinf
             chart:add_line(conv_age:select_agents({ 3 }):rename_agent("Zsup (IC)"), { colors = { "#32A251" }, xAllowDecimals = false, visible = zsup_is_visible }); -- Zsup
             chart:add_area_range(conv_age:select_agents({ 2 }):rename_agent(""), conv_age:select_agents({ 4 }):rename_agent("Zsup (IC) +- Tol"), { colors = { "#ACD98D", "#ACD98D" }, xUnit = "Iteration", xAllowDecimals = false, visible = zsup_is_visible }); -- Confidence interval
             
@@ -751,7 +751,16 @@ function create_pol_report(col_struct)
             end
                     
             if (graph_sim_cost) then
-                chart:add_line(final_sim_cost, { colors = { "#D37295" }, xAllowDecimals = false }); -- Final simulation cost
+                local final_sim_suffix;
+                
+                final_sim_suffix = " (IC";
+                if not has_results_for_add_years then
+                    final_sim_suffix = final_sim_suffix .. "+FCF)"
+                else
+                    final_sim_suffix = final_sim_suffix .. ")"
+                end
+                
+                chart:add_line(final_sim_cost:rename_agent("Final simulation" .. final_sim_suffix), { colors = { "#D37295" }, xAllowDecimals = false }); -- Final simulation cost
                 
                 -- Get last ZSup
                 zsup = conv_file:select_agent(3):abs();
@@ -775,9 +784,12 @@ function create_pol_report(col_struct)
             -- Place legend below the graph
             if not has_results_for_add_years then
                 tab:push("**Additional years were not considered in the simulation**");
-                tab:push("ZSup (IC + FCF): sum of immediate costs up to the last stage of the simulation, plus the future cost from the last stage");
+                tab:push("Final simulation (IC + FCF): sum of final simulation immediate costs up to the last stage plus the future cost function for additional years");
+                tab:push("Zsup (IC + FCF): sum of policy immediate costs up to the last stage plus the future cost function for additional years");
+            else
+                tab:push("Final simulation (IC): sum of final simulation immediate costs for the whole horizon including additional years");
             end
-            tab:push("ZSup (IC): sum of immediate costs up to the last stage of the policy considering additional years");
+            tab:push("Zsup (IC): sum of policy immediate costs for the whole horizon including additional years");
 
             chart = Chart("New cuts per iteration");
             
