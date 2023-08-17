@@ -611,7 +611,7 @@ function create_pol_report(col_struct)
     local conv_file;
     
     local has_results_for_add_years;
-    local zsup_is_visible;
+    local zsup_is_visible = true;
 
     -- Convergence map report
     get_conv_file_info(col_struct, "sddpconvm.csv", convm_file_list, systems, horizon, 1);
@@ -682,13 +682,11 @@ function create_pol_report(col_struct)
                 tab:push(chart_time_back);
             end
         else
-        
-            has_results_for_add_years = col_struct.study[1]:get_parameter("NumeroAnosAdicionaisParm2",-1) == 1;
-            zsup_is_visible = has_results_for_add_years;    
-                
             -- Get operation mode parameter
             oper_mode = col_struct.study[1]:get_parameter("Opcion", -1); -- 1=AIS; 2=COO; 3=INT;    
 
+            has_results_for_add_years = col_struct.study[1]:get_parameter("NumeroAnosAdicionaisParm2",-1) == 1;
+            
             nsys = calculate_number_of_systems(systems);
             graph_sim_cost = false;
 
@@ -700,6 +698,7 @@ function create_pol_report(col_struct)
             -- If there is only one FCF file in the case, print final simulation cost as columns
             if ((oper_mode < 3 and nsys == 1) or oper_mode == 3) then
                 graph_sim_cost = true;
+
                 local objcop = col_struct.generic[1]:load("objcop");
                 local discount_rate = require("sddp/discount_rate")(1);
 
@@ -733,25 +732,29 @@ function create_pol_report(col_struct)
                 final_sim_cost = conv_age_aux:fill(immediate_cost);
                
             end
-            
+                       
             local chart = Chart("Convergence");
 
+            if graph_sim_cost then
+                zsup_is_visible = has_results_for_add_years;  
+            end
+           
             chart:add_line(conv_age:select_agents({ 1 }), { xUnit = "Iteration", colors = { "#3CB7CC" }, xAllowDecimals = false }); -- Zinf
             chart:add_line(conv_age:select_agents({ 3 }):rename_agent("Zsup (IC)"), { colors = { "#32A251" }, xAllowDecimals = false, visible = zsup_is_visible }); -- Zsup
             chart:add_area_range(conv_age:select_agents({ 2 }):rename_agent(""), conv_age:select_agents({ 4 }):rename_agent("Zsup (IC) +- Tol"), { colors = { "#ACD98D", "#ACD98D" }, xUnit = "Iteration", xAllowDecimals = false, visible = zsup_is_visible }); -- Confidence interval
-            
-            if not has_results_for_add_years then
-                conv_age = conv_file:select_agents({ 9, 10, 11}); -- Zsup - Tol  ,Zsup        ,Zsup + Tol   (With FCF added in the last stage before additional years)
-                
-                -- Zsup
-                chart:add_line(conv_age:select_agents({ 2 }):rename_agent("Zsup (IC+FCF)"), { colors = { "#FF9DA7" }, xAllowDecimals = false });
-                
-                -- Confidence interval
-                chart:add_area_range(conv_age:select_agents({ 1 }):rename_agent(""), conv_age:select_agents({ 3 }):rename_agent("Zsup (IC+FCF) +- Tol"), { colors = { "#FFD8DC", "#FFD8DC" }, xUnit = "Iteration", xAllowDecimals = false, showInLegend = true });
-            end
-                    
+                                
             if (graph_sim_cost) then
                 local final_sim_suffix;
+                
+                if not has_results_for_add_years then
+                    conv_age = conv_file:select_agents({ 9, 10, 11}); -- Zsup - Tol  ,Zsup        ,Zsup + Tol   (With FCF added in the last stage before additional years)
+                    
+                    -- Zsup
+                    chart:add_line(conv_age:select_agents({ 2 }):rename_agent("Zsup (IC+FCF)"), { colors = { "#FF9DA7" }, xAllowDecimals = false });
+                    
+                    -- Confidence interval
+                    chart:add_area_range(conv_age:select_agents({ 1 }):rename_agent(""), conv_age:select_agents({ 3 }):rename_agent("Zsup (IC+FCF) +- Tol"), { colors = { "#FFD8DC", "#FFD8DC" }, xUnit = "Iteration", xAllowDecimals = false, showInLegend = true });
+                end
                 
                 final_sim_suffix = " (IC";
                 if not has_results_for_add_years then
@@ -782,12 +785,14 @@ function create_pol_report(col_struct)
             tab:push(chart);
             
             -- Place legend below the graph
-            if not has_results_for_add_years then
-                tab:push("**Additional years were not considered in the simulation**");
-                tab:push("Final simulation (IC + FCF): sum of final simulation immediate costs up to the last stage plus the future cost function for additional years");
-                tab:push("Zsup (IC + FCF): sum of policy immediate costs up to the last stage plus the future cost function for additional years");
-            else
-                tab:push("Final simulation (IC): sum of final simulation immediate costs for the whole horizon including additional years");
+            if (graph_sim_cost) then
+                if not has_results_for_add_years then
+                    tab:push("**Additional years were not considered in the simulation**");
+                    tab:push("Final simulation (IC + FCF): sum of final simulation immediate costs up to the last stage plus the future cost function for additional years");
+                    tab:push("Zsup (IC + FCF): sum of policy immediate costs up to the last stage plus the future cost function for additional years");
+                else
+                    tab:push("Final simulation (IC): sum of final simulation immediate costs for the whole horizon including additional years");
+                end
             end
             tab:push("Zsup (IC): sum of policy immediate costs for the whole horizon including additional years");
 
