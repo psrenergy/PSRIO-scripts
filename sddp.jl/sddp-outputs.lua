@@ -53,7 +53,7 @@ local function save_hydro_violation(label, suffixes)
 
     for _, suffix in ipairs(suffixes) do
         local unit_violation_cost = hydro:load(label .. "_unit_violation_cost" .. suffix);
-        local violation = hydro:load(label .. "_violation" .. suffix);
+        local violation = hydro:load(label .. "_violation" .. suffix):convert("hm3");
 
         if not unit_violation_cost:loaded() and violation:is_hourly() then
             unit_violation_cost = hydro:load(label .. "_unit_violation_cost__week"):to_hour(BY_REPEATING());
