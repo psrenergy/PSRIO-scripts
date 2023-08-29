@@ -81,6 +81,7 @@
         "Chart",
         "Tab",
         "Dashboard",
-        "ifelse"
+        "ifelse",
+        "concatenate_blocks"
     ]
 }
