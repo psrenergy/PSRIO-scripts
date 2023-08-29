@@ -959,9 +959,9 @@ local function chart_defict_risk(case)
 
     local dathisc = load_dathisc(case);
     if dathisc then
-        defict = ifelse(defict:gt(0),dathisc,0):aggregate_scenarios(BY_SUM()):convert("%"):round(0);
+        defict = ifelse(defict:gt(0), dathisc, 0):aggregate_scenarios(BY_SUM()):convert("%"):round(0);
     else
-        defict = ifelse(defict:gt(0),1,0):aggregate_scenarios(BY_AVERAGE()):convert("%"):round(0);
+        defict = ifelse(defict:gt(0), 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):round(0);
     end
 
     local chart = create_chart("", case);
