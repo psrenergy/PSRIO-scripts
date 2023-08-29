@@ -380,9 +380,9 @@ end
 --=================================================--
 local language<const> = load_language();
 
-local IS_OPT2 = is_opt2();
+local IS_OPT2<const> = is_opt2();
 
-local HAS_NETWORK = has_network();
+local HAS_NETWORK<const> = has_network();
 
 --=================================================--
 -- Utils
@@ -1350,7 +1350,7 @@ local function tab_expansion_result()
     tab:push(tab_investiment_report());
 
     if IS_OPT2 then
-        tab:push(tab_optgen2_reports()); 
+        tab:push(tab_optgen2_reports());
     end
 
     tab:push(tab_risk_result());
