@@ -48,12 +48,12 @@ local function save_inputs()
     hydro.max_operative_storage_historical_scenarios:save("max_storage_historical_scenarios", { horizon = true });
 end
 
-local function save_hydro_violation(label, suffixes)
+local function save_hydro_violation(label, suffixes, unit_conversion)
     local hydro = Hydro();
 
     for _, suffix in ipairs(suffixes) do
         local unit_violation_cost = hydro:load(label .. "_unit_violation_cost" .. suffix);
-        local violation = hydro:load(label .. "_violation" .. suffix):convert("hm3");
+        local violation = hydro:load(label .. "_violation" .. suffix):convert(unit_conversion);
 
         if not unit_violation_cost:loaded() and violation:is_hourly() then
             unit_violation_cost = hydro:load(label .. "_unit_violation_cost__week"):to_hour(BY_REPEATING());
@@ -131,22 +131,22 @@ local function save_outputs()
     end
 
     local violations = {
-        "alert_storage",
-        "discharge_rate",
-        "irrigation",
-        "max_oper_stge",   -- "max_operative_storage",
-        "max_spill",       -- "max_spillage",
-        "max_total_otflw", -- "max_total_outflow",
-        "min_oper_stge",   -- "min_operative_storage",
-        "min_spill_pct",   -- "min_spillage_percentage",
-        "min_spill",       -- "min_spillage",
-        "min_total_otflw", -- "min_total_outflow",
-        "minimum_turbine",
-        "target_storage"
+       { label = "alert_storage", unit_conversion = "hm3" },
+       { label = "discharge_rate", unit_conversion = "(m3/s)/hour" },
+       { label = "irrigation", unit_conversion = "hm3" },
+       { label = "max_oper_stge", unit_conversion = "hm3" },   -- "max_operative_storage",
+       { label = "max_spill", unit_conversion = "hm3" },       -- "max_spillage",
+       { label = "max_total_otflw", unit_conversion = "hm3" }, -- "max_total_outflow",
+       { label = "min_oper_stge", unit_conversion = "hm3" },   -- "min_operative_storage",
+       { label = "min_spill_pct", unit_conversion = "hm3" },   -- "min_spillage_percentage",
+       { label = "min_spill", unit_conversion = "hm3" },       -- "min_spillage",
+       { label = "min_total_otflw", unit_conversion = "hm3" }, -- "min_total_outflow",
+       { label = "minimum_turbine", unit_conversion = "hm3" },
+       { label = "target_storage", unit_conversion = "hm3" }
     };
 
-    for _, label in ipairs(violations) do
-        save_hydro_violation(label, suffixes)
+    for _, violation in ipairs(violations) do
+        save_hydro_violation(violation.label, suffixes, violation.unit_conversion)
     end
 
     -- Custom violations
