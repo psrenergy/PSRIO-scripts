@@ -86,6 +86,7 @@ function load_collections(col_struct, info_struct)
         table.insert(col_struct.battery        , Battery(i));
         table.insert(col_struct.bus            , Bus(i));
         table.insert(col_struct.circuit        , Circuit(i));
+        table.insert(col_struct.dclink         , DCLink(i));
         table.insert(col_struct.generic        , Generic(i));
         table.insert(col_struct.hydro          , Hydro(i));
         table.insert(col_struct.interconnection, Interconnection(i));
@@ -103,6 +104,7 @@ function remove_case_info(col_struct, info_struct, case_index)
     table.remove(col_struct.battery        , case_index);
     table.remove(col_struct.bus            , case_index);
     table.remove(col_struct.circuit        , case_index);
+    table.insert(col_struct.dclink         , case_index);
     table.remove(col_struct.generic        , case_index);
     table.remove(col_struct.hydro          , case_index);
     table.remove(col_struct.interconnection, case_index);
@@ -256,6 +258,8 @@ function create_tab_summary(col_struct, info_struct)
     local typday_val = {};
     local exe_type   = {};
     local case_type  = {};
+    
+    local show_net_data = false;
    
     for i = 1, studies do
         header_string = header_string             .. " | " .. col_struct.case_dir_list[i];
@@ -288,6 +292,9 @@ function create_tab_summary(col_struct, info_struct)
         netrep_val[i] = "no";
         if col_struct.study[i]:get_parameter("Rede", -1) == 1 then
             netrep_val[i] = "yes";
+            if not show_net_data then
+                show_net_data = true
+            end
         end
         netrep_string = netrep_string .. " | " .. netrep_val[i];
         
@@ -325,26 +332,28 @@ function create_tab_summary(col_struct, info_struct)
 
     tab:push("## Dimensions");
 
-    local sys_string      = "| Systems ";
-    local battery_string  = "| Batteries ";
-    local bus_string      = "| Buses ";
-    local circuit_string  = "| Circuits ";
-    local interc_string   = "| Interconnections ";
-    local hydro_string    = "| Hydro plants ";
-    local pinj_string     = "| Power injections ";
-    local renw_w_string   = "| Renewable plants - Wind ";
-    local renw_s_string   = "| Renewable plants - Solar";
-    local renw_sh_string  = "| Renewable plants - Small hydro";
-    local renw_oth_string = "| Renewable plants - Other tech.";
-    local thermal_string  = "| Thermal plants ";
+    local sys_string        = "| Systems ";
+    local battery_string    = "| Batteries ";
+    local bus_string        = "| Buses ";
+    local ac_circuit_string = "| AC circuits ";
+    local dc_circuit_string = "| DC circuits ";
+    local interc_string     = "| Interconnections ";
+    local hydro_string      = "| Hydro plants ";
+    local pinj_string       = "| Power injections ";
+    local renw_w_string     = "| Renewable plants - Wind ";
+    local renw_s_string     = "| Renewable plants - Solar";
+    local renw_sh_string    = "| Renewable plants - Small hydro";
+    local renw_oth_string   = "| Renewable plants - Other tech.";
+    local thermal_string    = "| Thermal plants ";
 
     for i = 1, studies do
         sys_string = sys_string             .. " | " .. tostring(#col_struct.system[i]:labels());
         battery_string = battery_string     .. " | " .. tostring(#col_struct.battery[i]:labels());
                                             
-        if netrep_val == "yes" then         
-            bus_string = bus_string         .. " | " .. tostring(#col_struct.bus[i]:labels());
-            circuit_string = circuit_string .. " | " .. tostring(#col_struct.circuit[i]:labels());
+        if show_net_data then         
+            bus_string        = bus_string        .. " | " .. tostring(#col_struct.bus[i]:labels());
+            ac_circuit_string = ac_circuit_string .. " | " .. tostring(#col_struct.circuit[i]:labels());
+            dc_circuit_string = dc_circuit_string .. " | " .. tostring(#col_struct.dclink[i]:labels());
         else
             interc_string = interc_string   .. " | " .. tostring(#col_struct.interconnection[i]:labels());
         end
@@ -377,9 +386,10 @@ function create_tab_summary(col_struct, info_struct)
     tab:push(renw_oth_string);
     tab:push(battery_string);
     tab:push(pinj_string);
-    if netrep_val == "yes" then
+    if show_net_data then
         tab:push(bus_string);
-        tab:push(circuit_string);
+        tab:push(ac_circuit_string);
+        tab:push(dc_circuit_string);
     else
         tab:push(interc_string);
     end
@@ -1530,6 +1540,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
         battery         = {},
         bus             = {},
         circuit         = {},
+        dclink          = {},
         generic         = {},
         hydro           = {},
         interconnection = {},
