@@ -146,6 +146,16 @@ end
 -- Case summary report function
 -----------------------------------------------------------------------------------------------
 
+function get_nonconv_info(col_struct, file_name, nonconv_list, dimension, case_index)
+    -- Loading file
+    local nonconv = col_struct.generic[case_index]:load_table(file_name);
+    
+    for i = 1, #nonconv do
+        nonconv_list[i] = nonconv[i]["Type"];
+        dimension[i]    = nonconv[i]["Dimension"];
+    end
+end
+
 function create_tab_summary(col_struct, info_struct)
        
     local tab = Tab("Info");
@@ -374,6 +384,51 @@ function create_tab_summary(col_struct, info_struct)
         tab:push(interc_string);
     end
 
+    -- Non-convexities dimension report    
+    tab:push("## Non-convexities dimensions");
+    
+    header_string       = "| Non-convexity Type";
+    lower_header_string = "|-------------------";
+    
+    -- Use first case to build non-convexities type column
+    local nconv_file_name = "nonconvrep.csv";
+    local nonconv_list = {};
+    local dimension    = {};
+    local nconv_table_strings = {};
+        
+    get_nonconv_info(col_struct,nconv_file_name,nonconv_list,dimension,1);
+    for i = 1, #nonconv_list do
+        nconv_table_strings[i] = nonconv_list[i] .. "|" .. tostring(dimension[i]);
+    end
+           
+    if studies == 1 then
+        header_string       = header_string .. "| Dimension ";
+        lower_header_string = lower_header_string .. "|-------------------";
+    else
+        header_string       = header_string       .. "|" .. col_struct.case_dir_list[1];
+        lower_header_string = lower_header_string .. "|-------------------";
+        
+        for i = 2, studies do
+            header_string       = header_string .. "|" .. col_struct.case_dir_list[i];
+            lower_header_string = lower_header_string .. "|-------------------";
+    
+            get_nonconv_info(col_struct,nconv_file_name,nonconv_list,dimension,i); 
+            for j = 1, #nonconv_list do
+                nconv_table_strings[j] = nconv_table_strings[j] .. " | " .. tostring(dimension[j]);
+            end
+        end
+    end 
+    
+    header_string       = header_string       .. "|";
+    lower_header_string = lower_header_string .. "|";
+    tab:push(header_string);
+    tab:push(lower_header_string);
+    
+    for i = 1, #nonconv_list do
+        nconv_table_strings[i] = nconv_table_strings[i] .. "|";
+        tab:push(nconv_table_strings[i]);
+    end
+    
     return tab;
 end
 
