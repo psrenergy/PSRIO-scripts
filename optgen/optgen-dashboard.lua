@@ -387,23 +387,6 @@ local has_network<const> = identify_if_has_network();
 --=================================================--
 -- Utils
 --=================================================--
-local function load_dathisc(case) -- vai deixar de existir
-    local scenarios = study[case]:scenarios();
-    local dathisc = generic[case]:load_table_without_header("dathisc.csv");
-
-    if dathisc then
-        local aux_table = {};
-        for scn = 1, scenarios do
-            local data = generic[case]:create("SCN_" .. scn, "pu", { tonumber(dathisc[1 + scn][3]) });
-            table.insert(aux_table, data);
-        end
-
-        return concatenate_scenarios(aux_table);
-    end
-
-    return nil;
-end
-
 local function by_day(data) -- vai deixar de existir
     if data:loaded() then
         local block_base = 24;
@@ -439,7 +422,7 @@ local function by_day(data) -- vai deixar de existir
                   data, data, data, data, data,
                   data, data, data, data, data,
                   data, data, data, data, data
-                }
+                };
 end
 
 local function read_opt2_optgcoped(case) -- vai deixar de existir
@@ -957,7 +940,7 @@ local function chart_defict_risk(case)
                          :aggregate_stages(BY_SUM(), Profile.PER_YEAR)
                          :remove_zeros();
 
-    local dathisc = load_dathisc(case);
+    local dathisc = generic[case]:load("opt2_optgscen");
     if dathisc then
         defict = ifelse(defict:gt(0), dathisc, 0):aggregate_scenarios(BY_SUM()):convert("%"):round(0);
     else
@@ -999,7 +982,7 @@ local function chart_generation_in_season(case)
     local defict        = generic[case]:load("opt2_deficitmw"):aggregate_blocks(BY_AVERAGE())
                                 :aggregate_blocks(BY_SUM()):round(0);
 
-    local dathisc = load_dathisc(case);
+    local dathisc = generic[case]:load("opt2_optgscen");
     if dathisc then
         thermal_gen   = (thermal_gen   * dathisc):aggregate_scenarios(BY_SUM());
         hidro_gen     = (hidro_gen     * dathisc):aggregate_scenarios(BY_SUM());
@@ -1062,7 +1045,7 @@ local function chart_hourly_generation_typical_day(case)
     local defict        = generic[case]:load("opt2_deficitmw") -- com problema
                                  :aggregate_agents(BY_SUM(),dictionary.deficit[language]);
 
-    local dathisc = load_dathisc(case);
+    local dathisc = generic[case]:load("opt2_optgscen");
     if dathisc then
         thermal_gen   = (thermal_gen   * dathisc):aggregate_scenarios(BY_SUM());
         hidro_gen     = (hidro_gen     * dathisc):aggregate_scenarios(BY_SUM());
