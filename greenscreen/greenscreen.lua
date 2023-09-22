@@ -1,7 +1,7 @@
 ﻿gergnd = Generic():load("gergnd");
-gergnd = gergnd:aggregate_agents(BY_SUM(), "Total Generation");
-prod = Generic():load("h2_prod"):aggregate_agents(BY_SUM(),"H2 generation");
-exp = Generic():load("line_export"):aggregate_agents(BY_SUM(), "Total Export");
+gergnd = gergnd:aggregate_agents(BY_SUM(), "Total Power Generation");
+prod = Generic():load("h2_prod"):aggregate_agents(BY_SUM(),"Electrolyser consumption");
+exp = Generic():load("line_export"):aggregate_agents(BY_SUM(), "Export");
 imp = Generic():load("line_import"):aggregate_agents(BY_SUM(), "Import");
 storage = Generic():load("ess_volf"):aggregate_agents(BY_SUM(), "Final storage");
 
