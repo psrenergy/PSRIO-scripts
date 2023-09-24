@@ -21,7 +21,7 @@ studies = PSR.studies();
 function push_tab_to_tab(tab_from, tab_to)
     if #tab_from > 0 then
         tab_to:push(tab_from);
-    end 
+    end
 end
 
 function is_greater_than_zero(output)
@@ -37,7 +37,7 @@ function load_info_file(file_name,case_index)
 
     -- Initialize struct
     info_struct = {{model = ""}, {user = ""}, {version = ""}, {hash = ""}, {model = ""}, {status = ""}, {infrep = ""}, {dash_name = ""}, {cloud = ""}, {exe_mode=0}};
-    
+
     local toml = Generic(case_index):load_toml(file_name);
     model      = toml:get_string("model", "-");
     user       = toml:get_string("user", "-");
@@ -48,7 +48,7 @@ function load_info_file(file_name,case_index)
     dash_name  = toml:get_string("dash", "-");
     cloud      = toml:get_string("cloud", "-");
     exe_mode   = toml:get_integer("mode", 0);
-    
+
     info_struct.model     = model;
     info_struct.user      = user;
     info_struct.version   = version;
@@ -58,7 +58,7 @@ function load_info_file(file_name,case_index)
     info_struct.dash_name = dash_name;
     info_struct.cloud     = cloud;
     info_struct.exe_mode  = exe_mode;
-    
+
     return info_struct;
 end
 
@@ -66,18 +66,18 @@ function load_model_info(generic_cols, info_struct)
     local file_exists;
     local info_file_name = "SDDP.info";
     local existence_log = {}
-    
+
     for i = 1, studies do
         -- Verify whether info file exists for each case
         file_exists = generic_cols[i]:file_exists(info_file_name);
         table.insert(existence_log,file_exists);
-        
+
         -- Loading info files from each case
         if existence_log[i] then
             info_struct[i] = load_info_file(info_file_name,i);
         end
     end
-    
+
     return existence_log;
 end
 
@@ -95,7 +95,7 @@ function load_collections(col_struct, info_struct)
         table.insert(col_struct.study          , Study(i));
         table.insert(col_struct.system         , System(i));
         table.insert(col_struct.thermal        , Thermal(i));
-        
+
         table.insert(col_struct.case_dir_list  , Generic(i):dirname());
     end
 end
@@ -113,12 +113,12 @@ function remove_case_info(col_struct, info_struct, case_index)
     table.remove(col_struct.study          , case_index);
     table.remove(col_struct.system         , case_index);
     table.remove(col_struct.thermal        , case_index);
-          
+
     table.remove(col_struct.case_dir_list  , case_index);
-    
+
     -- Loading info files from each case
     table.remove(info_struct, case_index);
-end 
+end
 
 -----------------------------------------------------------------------------------------------
 -- Infeasibility report function
@@ -126,7 +126,7 @@ end
 function dash_infeasibility(tab,file_name,case_index)
 
     local inv_table = Study(case_index):load_table_without_header(file_name);
-    
+
     for lin=1,#inv_table do
         local data=(inv_table[lin][1]);
         local col = 2
@@ -151,7 +151,7 @@ end
 function get_nonconv_info(col_struct, file_name, nonconv_list, dimension, case_index)
     -- Loading file
     local nonconv = col_struct.generic[case_index]:load_table(file_name);
-    
+
     for i = 1, #nonconv do
         nonconv_list[i] = nonconv[i]["Type"];
         dimension[i]    = nonconv[i]["Dimension"];
@@ -159,14 +159,14 @@ function get_nonconv_info(col_struct, file_name, nonconv_list, dimension, case_i
 end
 
 function create_tab_summary(col_struct, info_struct)
-       
+
     local tab = Tab("Info");
     tab:set_icon("info");
-    
+
     tab:push("# Case summary");
 
     local exe_status_str;
-    
+
     local label = {};
     local path = {};
 
@@ -192,7 +192,7 @@ function create_tab_summary(col_struct, info_struct)
             if info_struct[i].status > 0 then
                 exe_status_str = "FAIL";
             end
-            
+
             tab:push("| " .. label[i] .. " | " .. path[i].. " | " .. exe_status_str);
         end
     else
@@ -203,7 +203,7 @@ function create_tab_summary(col_struct, info_struct)
             if info_struct[i].status > 0 then
                 exe_status_str = "FAIL";
             end
-            
+
             tab:push("| " .. i .. " | " .. label[i] .. " | " .. path[i] .. " | " .. exe_status_str);
         end
     end
@@ -258,31 +258,31 @@ function create_tab_summary(col_struct, info_struct)
     local typday_val = {};
     local exe_type   = {};
     local case_type  = {};
-    
+
     local show_net_data = false;
-   
+
     for i = 1, studies do
         header_string = header_string             .. " | " .. col_struct.case_dir_list[i];
         lower_header_string = lower_header_string .. "|-----------";
-        
+
         exe_type[i] = "Policy";
         if col_struct.study[i]:get_parameter("Objetivo", -1) == 2 then
             exe_type[i] = "Simulation";
         end
         exe_type_string = exe_type_string .. " | " .. exe_type[i];
-        
+
         case_type[i] = "Monthly";
         if col_struct.study[i]:stage_type() == 1 then
             case_type[i] = "Weekly";
         end
         case_type_string = case_type_string .. " | " .. case_type[i];
-        
+
         nstg_string      = nstg_string      .. " | " .. tostring(col_struct.study[i]:stages());
         ini_year_string  = ini_year_string  .. " | " .. tostring(col_struct.study[i]:initial_year());
         nblk_string      = nblk_string      .. " | " .. tostring(col_struct.study[i]:get_parameter("NumberBlocks", -1));
         nforw_string     = nforw_string     .. " | " .. tostring(col_struct.study[i]:scenarios());
         nback_string     = nback_string     .. " | " .. tostring(col_struct.study[i]:openings());
- 
+
         hrep_val[i] = "no";
         if col_struct.study[i]:get_parameter("SIMH", -1) == 2 then
             hrep_val[i] = "yes";
@@ -297,7 +297,7 @@ function create_tab_summary(col_struct, info_struct)
             end
         end
         netrep_string = netrep_string .. " | " .. netrep_val[i];
-        
+
         typday_val[i] = "no";
         if col_struct.study[i]:get_parameter("TDAY", -1) == 1 then
             typday_val[i] = "yes";
@@ -349,8 +349,8 @@ function create_tab_summary(col_struct, info_struct)
     for i = 1, studies do
         sys_string = sys_string             .. " | " .. tostring(#col_struct.system[i]:labels());
         battery_string = battery_string     .. " | " .. tostring(#col_struct.battery[i]:labels());
-                                            
-        if show_net_data then         
+
+        if show_net_data then
             bus_string        = bus_string        .. " | " .. tostring(#col_struct.bus[i]:labels());
             ac_circuit_string = ac_circuit_string .. " | " .. tostring(#col_struct.circuit[i]:labels());
             dc_circuit_string = dc_circuit_string .. " | " .. tostring(#col_struct.dclink[i]:labels());
@@ -360,18 +360,18 @@ function create_tab_summary(col_struct, info_struct)
 
         hydro_string    = hydro_string    .. " | " .. tostring(#col_struct.hydro[i]:labels());
         pinj_string     = pinj_string     .. " | " .. tostring(#col_struct.power_injection[i]:labels());
-        
+
         total_renw = #col_struct.renewable[i]:labels();
         renw_wind  = col_struct.renewable[i].tech_type:select_agents(col_struct.renewable[i].tech_type:eq(1)):agents_size();
         renw_solar = col_struct.renewable[i].tech_type:select_agents(col_struct.renewable[i].tech_type:eq(2)):agents_size();
         renw_sh    = col_struct.renewable[i].tech_type:select_agents(col_struct.renewable[i].tech_type:eq(4)):agents_size();
         renw_oth   = total_renw - renw_wind - renw_solar - renw_sh;
-        
+
         renw_sh_string  = renw_sh_string  .. " | " .. tostring(renw_sh);
         renw_w_string   = renw_w_string   .. " | " .. tostring(renw_wind);
         renw_s_string   = renw_s_string   .. " | " .. tostring(renw_solar);
         renw_oth_string = renw_oth_string .. " | " .. tostring(renw_oth);
-        
+
         thermal_string  = thermal_string  .. " | " .. tostring(#col_struct.thermal[i]:labels());
     end
 
@@ -394,73 +394,73 @@ function create_tab_summary(col_struct, info_struct)
         tab:push(interc_string);
     end
 
-    -- Non-convexities dimension report    
-    
+    -- Non-convexities dimension report
+
     -- Use first case to build non-convexities type column
     local nconv_file_name = "nonconvrep.csv";
     local nonconv_list = {};
     local dimension    = {};
     local nconv_table_strings = {};
     local has_nconv_data = {};
-        
+
     get_nonconv_info(col_struct,nconv_file_name,nonconv_list,dimension,1);
-    
+
     has_nconv_data[1] = false;
     if #nonconv_list > 0 then
         has_nconv_data[1] = true;
-        
+
         for i = 1, #nonconv_list do
             nconv_table_strings[i] = nonconv_list[i] .. "|" .. tostring(dimension[i]);
         end
     end
-           
+
     if has_nconv_data[1] then
         tab:push("## Non-convexities dimensions");
-    
+
         header_string       = "| Non-convexity Type";
         lower_header_string = "|-------------------";
-    
+
         if studies == 1 then
             header_string       = header_string       .. "| Dimension ";
             lower_header_string = lower_header_string .. "|-------------------";
         else
             header_string       = header_string       .. "|" .. col_struct.case_dir_list[1];
             lower_header_string = lower_header_string .. "|-------------------";
-            
+
             for i = 2, studies do
                 nonconv_list = {};
                 dimension    = {};
-                
-                get_nonconv_info(col_struct,nconv_file_name,nonconv_list,dimension,i); 
-                
+
+                get_nonconv_info(col_struct,nconv_file_name,nonconv_list,dimension,i);
+
                 has_nconv_data[i] = false;
                 if #nonconv_list > 0 then
                     has_nconv_data[i] = true;
-                    
+
                     header_string       = header_string       .. "|" .. col_struct.case_dir_list[i];
                     lower_header_string = lower_header_string .. "|-------------------";
-        
+
                     for j = 1, #nonconv_list do
                         nconv_table_strings[j] = nconv_table_strings[j] .. " | " .. tostring(dimension[j]);
                     end
                 end
-                
+
             end
-        end 
+        end
     end
-    
+
     if has_nconv_data[1] then
         header_string       = header_string       .. "|";
         lower_header_string = lower_header_string .. "|";
         tab:push(header_string);
         tab:push(lower_header_string);
-        
+
         for i = 1, #nconv_table_strings do
             nconv_table_strings[i] = nconv_table_strings[i] .. "|";
             tab:push(nconv_table_strings[i]);
         end
     end
-    
+
     return tab;
 end
 
@@ -518,8 +518,8 @@ end
 function get_convergence_file_agents(col_struct, file_list, conv_age, cuts_age, time_age, case_index)
     for i, file in ipairs(file_list) do
         local conv_file = col_struct.generic[case_index]:load(file);
-        conv_age[i] = conv_file:select_agents({ 1, 2, 3, 4 }); -- Zinf, Zsup - Tol, Zsup, Zsup + Tol  
-        cuts_age[i] = conv_file:select_agents({ 5, 6 }); -- Optimality, Feasibility 
+        conv_age[i] = conv_file:select_agents({ 1, 2, 3, 4 }); -- Zinf, Zsup - Tol, Zsup, Zsup + Tol
+        cuts_age[i] = conv_file:select_agents({ 5, 6 }); -- Optimality, Feasibility
         time_age[i] = conv_file:select_agents({ 7, 8 }); -- Forw. time, Back. time
     end
 end
@@ -571,14 +571,14 @@ function create_penalty_proportion_graph(tab, col_struct, i)
     local output_name  = "sddppenp";
     local report_title = "Share of violation penalties and deficit in the cost of each stage/scenario";
     local penp = col_struct.generic[i]:load(output_name);
-    
+
     if not penp:loaded() then
         info(output_name .. " could not be loaded. ".. "'" .. report_title .. "'" .. "report will not be displayed");
         return
     end
-    
+
     penp:convert("%");
-    
+
     local chart = Chart(report_title .. " (%)");
     chart:add_heatmap_series(penp, { yLabel = "Scenario", xLabel = "Stage", showInLegend = false, stops = { { 0.0, "#4E79A7" }, { 0.5, "#FBEEB3" }, { 1.0, "#C64B3E" } }, stopsMin = 0.0, stopsMax = 100.0 });
     tab:push(chart);
@@ -592,7 +592,7 @@ function create_conv_map_graph(tab, file_name, col_struct, i)
         info(file_name .. " could not be loaded. ".. "'" .. report_title .. "'" .. "report will not be displayed");
         return
     end
-    
+
     local options = {
     yLabel = "Iteration",
     xLabel = "Stage",
@@ -616,12 +616,12 @@ function create_hourly_sol_status_graph(tab, col_struct, i)
     local output_name  = "hrstat";
     local report_title = "Solution status per stage and scenario";
     local status = col_struct.generic[i]:load(output_name);
-    
+
     if not status:loaded() then
         info(output_name .. " output could not be loaded. ".. "'" .. report_title .. "'" .. "report will not be displayed");
         return
     end
-    
+
     local options = {
     yLabel = "Scenario",
     xLabel = "Stage",
@@ -646,35 +646,35 @@ function create_exe_timer_per_scen(tab, col_struct, i)
     local extime_chart;
     local output_name  = "extime";
     local extime = col_struct.generic[i]:load(output_name);
-    
+
     if not extime:loaded() then
         info(output_name .. " output could not be loaded. 'Dispersion of execution times per scenario' report will not be displayed");
         return
     end
-    
+
     local extime_disp = concatenate(extime:aggregate_agents(BY_SUM(), "P10"):aggregate_scenarios(BY_PERCENTILE(10)), extime:aggregate_agents(BY_SUM(), "Average"):aggregate_scenarios(BY_AVERAGE()), extime:aggregate_agents(BY_SUM(), "P90"):aggregate_scenarios(BY_PERCENTILE(90)));
     if is_greater_than_zero(extime_disp) then
         local unit = "hour";
         local extime_disp_data = extime_disp:aggregate_scenarios(BY_MAX()):aggregate_stages(BY_MAX()):to_list();
-        
+
         if extime_disp_data[1] < 1.0 then
             unit = "ms";
         elseif extime_disp_data[1] < 3600.0 then
             unit = "s";
         end
-        
+
         extime_chart = Chart("Dispersion of execution times per scenario");
         extime_chart:add_area_range(extime_disp:select_agent(1):convert(unit),
-                                    extime_disp:select_agent(3):convert(unit), 
+                                    extime_disp:select_agent(3):convert(unit),
                                     { xUnit = "Stage", colors = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
         extime_chart:add_line(extime_disp:select_agent(2):convert(unit),
                               { xUnit = "Stage", colors = { "#F02720" } });                  -- Average
-                              
+
         if #extime_chart > 0 then
             tab:push(extime_chart);
         end
     end
-end 
+end
 
 function create_pol_report(col_struct)
     local tab = Tab("Policy");
@@ -684,7 +684,7 @@ function create_pol_report(col_struct)
     local immediate_cost;
     local fcf_last_stage_cost;
     local rel_diff;
-    
+
     local file_list = {};
     local convm_file_list = {};
     local systems = {};
@@ -696,18 +696,18 @@ function create_pol_report(col_struct)
     conv_status     = {};
 
     local conv_file;
-    
+
     local has_results_for_add_years;
     local zsup_is_visible = true;
 
     -- Convergence map report
     get_conv_file_info(col_struct, "sddpconvm.csv", convm_file_list, systems, horizon, 1);
     get_convergence_map_status(col_struct, convm_file_list, conv_status, 1);
-            
+
     -- Convergence report
     get_conv_file_info(col_struct, "sddppol.csv", file_list, systems, horizon, 1);
     get_convergence_file_agents(col_struct, file_list, conv_data, cuts_data, time_data, 1);
-    
+
     -- Creating policy report
     for i, file in ipairs(file_list) do
         tab:push("## System: " .. systems[i] .. " | Horizon: " .. horizon[i]);
@@ -720,32 +720,32 @@ function create_pol_report(col_struct)
             local chart_time_back = Chart("Execution time - Backward");
 
             for j = 1, studies do
-                
+
                 conv_file = col_struct.generic[j]:load(file);
                 if conv_file:loaded() then
-                    conv_age = conv_file:select_agents({ 1, 2, 3, 4 }); -- Zinf        ,Zsup - Tol  ,Zsup        ,Zsup + Tol  
-                    cuts_age = conv_file:select_agents({ 5, 6 }); -- Optimality  ,Feasibility 
+                    conv_age = conv_file:select_agents({ 1, 2, 3, 4 }); -- Zinf        ,Zsup - Tol  ,Zsup        ,Zsup + Tol
+                    cuts_age = conv_file:select_agents({ 5, 6 }); -- Optimality  ,Feasibility
                     time_age = conv_file:select_agents({ 7, 8 }); -- Forw. time, Back. time
-    
+
                     -- Confidence interval
                     chart_conv:add_area_range(conv_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup - Tol"), conv_age:select_agents({ 4 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup + Tol"), { colors = { light_global_color[j], light_global_color[j] }, xUnit = "Iteration", xAllowDecimals = false, showInLegend = true, visible = zsup_is_visible });
-    
+
                     -- Zsup
                     chart_conv:add_line(conv_age:select_agents({ 3 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup"), { colors = { main_global_color[j] }, xAllowDecimals = false, visible = zsup_is_visible });
-    
+
                     -- Zinf
                     chart_conv:add_line(conv_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j] .. " - Zinf"), { colors = { main_global_color[j] }, xAllowDecimals = false, dashStyle = "dash" }); -- Zinf
-    
+
                     -- Cuts - optimality
                     chart_cut_opt:add_column(cuts_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
-    
+
                     -- Cuts - feasibility
                     if is_greater_than_zero(cuts_age:select_agents({ 2 })) then
                         chart_cut_feas:add_column(cuts_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
-                    end 
+                    end
                     -- Execution time - forward
                     chart_time_forw:add_column(time_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
-    
+
                     -- Execution time - backward
                     chart_time_back:add_column(time_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
                 else
@@ -770,16 +770,16 @@ function create_pol_report(col_struct)
             end
         else
             -- Get operation mode parameter
-            oper_mode = col_struct.study[1]:get_parameter("Opcion", -1); -- 1=AIS; 2=COO; 3=INT;    
+            oper_mode = col_struct.study[1]:get_parameter("Opcion", -1); -- 1=AIS; 2=COO; 3=INT;
 
             has_results_for_add_years = col_struct.study[1]:get_parameter("NumeroAnosAdicionaisParm2",-1) == 1;
-            
+
             nsys = calculate_number_of_systems(systems);
             graph_sim_cost = false;
 
             conv_file = col_struct.generic[1]:load(file);
-            conv_age = conv_file:select_agents({ 1, 2, 3, 4 }); -- Zinf        ,Zsup - Tol  ,Zsup        ,Zsup + Tol  
-            cuts_age = conv_file:select_agents({ 5, 6 }); -- Optimality  ,Feasibility 
+            conv_age = conv_file:select_agents({ 1, 2, 3, 4 }); -- Zinf        ,Zsup - Tol  ,Zsup        ,Zsup + Tol
+            cuts_age = conv_file:select_agents({ 5, 6 }); -- Optimality  ,Feasibility
             time_age = conv_file:select_agents({ 7, 8 }); -- Forw. time, Back. time
 
             -- If there is only one FCF file in the case, print final simulation cost as columns
@@ -794,14 +794,14 @@ function create_pol_report(col_struct)
                     if not has_results_for_add_years then
                         future_cost_age = objcop:select_agent(1):aggregate_scenarios(BY_AVERAGE());
                     end
-                    
+
                     -- Remove first column(Future cost) of hourly objcop
                     immediate_cost = (objcop:remove_agent(1) / discount_rate):aggregate_agents(BY_SUM(), "Immediate cost"):aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):to_list()[1];
                 else
                     -- Select total cost and future cost agents
                     total_cost_age = objcop:select_agent(1):aggregate_scenarios(BY_AVERAGE());
                     future_cost_age = objcop:select_agent(-1):aggregate_scenarios(BY_AVERAGE());
-                    
+
                     -- Calculating total cost as sum of immediate costs per stage
                     immediate_cost = ((total_cost_age - future_cost_age) / discount_rate):aggregate_stages(BY_SUM()):rename_agent("Total cost"):to_list()[1];
                 end
@@ -810,58 +810,58 @@ function create_pol_report(col_struct)
                     fcf_last_stage_index = future_cost_age:last_stage();
                     fcf_last_stage_cost  = future_cost_age:select_stage(fcf_last_stage_index):to_list()[1];
                     last_stage_disc      = discount_rate:select_stage(fcf_last_stage_index):to_list()[1];
-                    
+
                     immediate_cost = immediate_cost + fcf_last_stage_cost / last_stage_disc;
                 end
-                
+
                 -- Take expression and use it as mask for "final_sim_cost"
                 conv_age_aux = conv_age:select_agent(1):rename_agent("Final simulation");
                 final_sim_cost = conv_age_aux:fill(immediate_cost);
-               
+
             end
-                       
+
             local chart = Chart("Convergence");
 
             if graph_sim_cost then
-                zsup_is_visible = has_results_for_add_years;  
+                zsup_is_visible = has_results_for_add_years;
             end
-           
+
             chart:add_line(conv_age:select_agents({ 1 }), { xUnit = "Iteration", colors = { "#3CB7CC" }, xAllowDecimals = false }); -- Zinf
             chart:add_line(conv_age:select_agents({ 3 }):rename_agent("Zsup (IC)"), { colors = { "#32A251" }, xAllowDecimals = false, visible = zsup_is_visible }); -- Zsup
             chart:add_area_range(conv_age:select_agents({ 2 }):rename_agent(""), conv_age:select_agents({ 4 }):rename_agent("Zsup (IC) +- Tol"), { colors = { "#ACD98D", "#ACD98D" }, xUnit = "Iteration", xAllowDecimals = false, visible = zsup_is_visible }); -- Confidence interval
-                                
+
             if (graph_sim_cost) then
                 local final_sim_suffix;
-                
+
                 if not has_results_for_add_years then
                     conv_age = conv_file:select_agents({ 9, 10, 11}); -- Zsup - Tol  ,Zsup        ,Zsup + Tol   (With FCF added in the last stage before additional years)
-                    
+
                     -- Zsup
                     chart:add_line(conv_age:select_agents({ 2 }):rename_agent("Zsup (IC+FCF)"), { colors = { "#FF9DA7" }, xAllowDecimals = false });
-                    
+
                     -- Confidence interval
                     chart:add_area_range(conv_age:select_agents({ 1 }):rename_agent(""), conv_age:select_agents({ 3 }):rename_agent("Zsup (IC+FCF) +- Tol"), { colors = { "#FFD8DC", "#FFD8DC" }, xUnit = "Iteration", xAllowDecimals = false, showInLegend = true });
                 end
-                
+
                 final_sim_suffix = " (IC";
                 if not has_results_for_add_years then
                     final_sim_suffix = final_sim_suffix .. "+FCF)"
                 else
                     final_sim_suffix = final_sim_suffix .. ")"
                 end
-                
+
                 chart:add_line(final_sim_cost:rename_agent("Final simulation" .. final_sim_suffix), { colors = { "#D37295" }, xAllowDecimals = false }); -- Final simulation cost
-                
+
                 -- Get last ZSup
                 zsup = conv_file:select_agent(3):abs();
                 last_zsup_index = zsup:last_stage()
                 last_zsup = zsup:to_list()[last_zsup_index];
-                
+
                 -- Get immediate cost module
                 if immediate_cost < 0 then
                     immediate_cost = -immediate_cost;
                 end
-                
+
                 rel_diff = (immediate_cost - last_zsup)/immediate_cost;
                 if rel_diff > REP_DIFF_TOL then
                     tab:push("**Attention**");
@@ -870,7 +870,7 @@ function create_pol_report(col_struct)
                 end
             end
             tab:push(chart);
-            
+
             -- Place legend below the graph
             if (graph_sim_cost) then
                 if not has_results_for_add_years then
@@ -884,9 +884,9 @@ function create_pol_report(col_struct)
             tab:push("Zsup (IC): sum of policy immediate costs for the whole horizon including additional years");
 
             chart = Chart("New cuts per iteration");
-            
+
             chart:add_column(cuts_age:select_agents({ 1 }), { xUnit = "Iteration", xAllowDecimals = false }); -- Optimality
-            
+
             -- For feas. cuts, plot only if at least one cut
             if is_greater_than_zero(cuts_age:select_agents({ 2 })) then
                 chart:add_column(cuts_age:select_agents({ 2 }), { xUnit = "Iteration", xAllowDecimals = false }); -- Feasibility
@@ -896,7 +896,7 @@ function create_pol_report(col_struct)
             chart = Chart("Forward and backward execution times");
             chart:add_line(time_age:rename_agents({"Forward","Backward"}), { xUnit = "Iteration", xAllowDecimals = false }); -- Forw. and Back. times
             tab:push(chart);
-                    
+
             -- Convergence map
             create_conv_map_graph(tab, convm_file_list[i], col_struct, 1);
         end
@@ -915,7 +915,7 @@ function create_sim_report(col_struct)
     local costs;
     local costs_agg;
     local exe_times;
-    
+
     local cost_chart = Chart("Breakdown of total operating costs");
     local exet_chart = Chart("Execution times");
 
@@ -929,7 +929,7 @@ function create_sim_report(col_struct)
             -- sddp_dashboard_cost_tot
             costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
             cost_chart:add_categories(costs_agg, col_struct.case_dir_list[i]);
-            
+
             -- Execution times (sim, post-processing and total time)
             exe_times = col_struct.generic[i]:load("sddptimes");
             exet_chart:add_categories(exe_times, col_struct.case_dir_list[i]);
@@ -941,7 +941,7 @@ function create_sim_report(col_struct)
         if is_greater_than_zero(costs_agg) then
             cost_chart:add_pie(costs_agg);
         end
-        
+
         -- Execution times (sim, post-processing and total time)
         exe_times = col_struct.generic[1]:load("sddptimes");
         exet_chart:add_column(exe_times);
@@ -950,26 +950,26 @@ function create_sim_report(col_struct)
     if #cost_chart > 0 then
         tab:push(cost_chart);
     end
-    
+
     if #exet_chart > 0 then
         tab:push(exet_chart);
     end
-    
+
     -- Heatmap after the pizza graph in dashboard
     if studies == 1 then
         -- Creating simulation heatmap graphics
         if col_struct.study[1]:get_parameter("SIMH", -1) == 2 then
             create_hourly_sol_status_graph(tab, col_struct, 1);
         end
-        
+
         -- Execution times per scenario
         if col_struct.study[1]:get_parameter("SCEN", 0) == 0 then -- SDDP scenarios does not have execution times per scenario
             create_exe_timer_per_scen(tab, col_struct, 1);
         end
-        
+
         create_penalty_proportion_graph(tab, col_struct, 1);
     end
-    
+
     return tab;
 end
 
@@ -1018,7 +1018,7 @@ function create_costs_and_revs(col_struct)
     if #chart_avg > 0 then
         tab:push(chart_avg);
     end
-    
+
     if #chart > 0 then
         tab:push(chart);
     end
@@ -1053,7 +1053,7 @@ function create_marg_costs(col_struct)
             cmg_aggyear = cmg[i]:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_AVERAGE(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM);
 
             -- Add marginal costs outputs
-            chart:add_categories(cmg_aggyear, col_struct.case_dir_list[i], { xUnit="Year" }); -- Annual Marg. cost     
+            chart:add_categories(cmg_aggyear, col_struct.case_dir_list[i], { xUnit="Year" }); -- Annual Marg. cost
         end
     else
         cmg_aggyear = cmg[1]:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_AVERAGE(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE());
@@ -1119,28 +1119,28 @@ function create_gen_report(col_struct)
     local total_solar_gen_age;
     local total_small_hydro_gen_age;
     local total_thermal_gen_age;
-    
+
     local hydro_agent_name;
     local thermal_agent_name;
     local battery_agent_name;
     local deficit_agent_name;
-    local pinj_agent_name;   
-    local renw_ot_agent_name;     
-    local renw_wind_agent_name;   
-    local renw_solar_agent_name;  
-    local renw_shydro_agent_name; 
-    
+    local pinj_agent_name;
+    local renw_ot_agent_name;
+    local renw_wind_agent_name;
+    local renw_solar_agent_name;
+    local renw_shydro_agent_name;
+
     local hydro_report_name;
     local thermal_report_name;
     local battery_report_name;
     local deficit_report_name;
     local pinj_report_name;
-    
+
     local renw_ot_report_name;
     local renw_wind_report_name;
     local renw_solar_report_name;
     local renw_shydro_report_name;
-    
+
     local gerter = {};
     local gerhid = {};
     local gergnd = {};
@@ -1188,7 +1188,7 @@ function create_gen_report(col_struct)
             total_solar_gen_age       = col_struct.case_dir_list[i] .. " - ";
             total_small_hydro_gen_age = col_struct.case_dir_list[i] .. " - ";
             total_thermal_gen_age     = col_struct.case_dir_list[i] .. " - ";
-        else 
+        else
             total_hydro_gen_age       = "";
             total_batt_gen_age        = "";
             total_deficit_age         = "";
@@ -1218,9 +1218,9 @@ function create_gen_report(col_struct)
 
         -- Renewable generation is broken into 3 types
         total_other_renw_gen  = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:ne(1) &
-                                                        col_struct.renewable[i].tech_type:ne(2) & 
+                                                        col_struct.renewable[i].tech_type:ne(2) &
                                                         col_struct.renewable[i].tech_type:ne(4));
-                                                        
+
         total_other_renw_gen  = total_other_renw_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_other_renw_gen_age);
         total_wind_gen        = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(1)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_wind_gen_age);
         total_solar_gen       = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(2)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_solar_gen_age);
@@ -1307,12 +1307,12 @@ function create_gen_report(col_struct)
     battery_report_name = "Total Battery";
     deficit_report_name = "Total Deficit";
     pinj_report_name    = "Total P. Inj.";
-    
+
     renw_ot_report_name     = "Total Renewable - Other tech.";
     renw_wind_report_name   = "Total Renewable - Wind";
     renw_solar_report_name  = "Total Renewable - Solar";
     renw_shydro_report_name = "Total Renewable - Small hydro";
-        
+
     -- Generation per system report
     local agents = col_struct.generic[1]:load("cmgdem"):agents();
     for i, agent in ipairs(agents) do
@@ -1325,42 +1325,42 @@ function create_gen_report(col_struct)
         chart_tot_gerbat     = Chart("Total Battery");
         chart_tot_potinj     = Chart("Total Power Injection");
         chart_tot_defcit     = Chart("Total Deficit");
-            
+
         for i = 1, studies do
-                
+
             if studies > 1 then
                 hydro_agent_name   = col_struct.case_dir_list[i] .. " - " .. hydro_report_name;
                 thermal_agent_name = col_struct.case_dir_list[i] .. " - " .. thermal_report_name;
                 battery_agent_name = col_struct.case_dir_list[i] .. " - " .. battery_report_name;
                 deficit_agent_name = col_struct.case_dir_list[i] .. " - " .. deficit_report_name;
                 pinj_agent_name    = col_struct.case_dir_list[i] .. " - " .. pinj_report_name;
-                
+
                 renw_ot_agent_name     = col_struct.case_dir_list[i] .. " - " .. renw_ot_report_name;
                 renw_wind_agent_name   = col_struct.case_dir_list[i] .. " - " .. renw_wind_report_name;
                 renw_solar_agent_name  = col_struct.case_dir_list[i] .. " - " .. renw_solar_report_name;
-                renw_shydro_agent_name = col_struct.case_dir_list[i] .. " - " .. renw_shydro_report_name;               
+                renw_shydro_agent_name = col_struct.case_dir_list[i] .. " - " .. renw_shydro_report_name;
             else
                 hydro_agent_name   = hydro_report_name;
                 thermal_agent_name = thermal_report_name;
                 battery_agent_name = battery_report_name;
                 deficit_agent_name = deficit_report_name;
                 pinj_agent_name    = pinj_report_name;
-                
-                renw_ot_agent_name     = renw_ot_report_name;  
+
+                renw_ot_agent_name     = renw_ot_report_name;
                 renw_wind_agent_name   = renw_wind_report_name;
                 renw_solar_agent_name  = renw_solar_report_name;
                 renw_shydro_agent_name = renw_shydro_report_name;
             end
-            
+
             -- Data processing
             total_hydro_gen = gerhid[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(hydro_agent_name);
             total_batt_gen  = gerbat[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(battery_agent_name);
             total_deficit   = defcit[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(deficit_agent_name);
             total_pot_inj   = potinj[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(pinj_agent_name);
- 
+
             -- Renewable generation is broken into 3 types
-            total_other_renw_gen = ifelse(col_struct.renewable[i].tech_type:ne(1) & 
-                                          col_struct.renewable[i].tech_type:ne(2) & 
+            total_other_renw_gen = ifelse(col_struct.renewable[i].tech_type:ne(1) &
+                                          col_struct.renewable[i].tech_type:ne(2) &
                                           col_struct.renewable[i].tech_type:ne(4),
                                           gergnd[i],
                                           0);
@@ -1369,11 +1369,11 @@ function create_gen_report(col_struct)
                                           0);
             total_solar_gen = ifelse(col_struct.renewable[i].tech_type:eq(2),
                                           gergnd[i],
-                                          0);                                          
+                                          0);
             total_small_hydro_gen = ifelse(col_struct.renewable[i].tech_type:eq(4),
                                           gergnd[i],
-                                          0);            
-                                          
+                                          0);
+
             total_other_renw_gen  = total_other_renw_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_ot_agent_name);
             total_wind_gen        = total_wind_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_wind_agent_name);
             total_solar_gen       = total_solar_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_solar_agent_name);
@@ -1452,7 +1452,7 @@ function create_risk_report(col_struct)
             risk_file = col_struct.system[i]:load("sddprisk"):aggregate_agents(BY_AVERAGE(), Collection.SYSTEM);
 
             -- Add marginal costs outputs
-            chart:add_categories(risk_file, col_struct.case_dir_list[i]); -- Annual Marg. cost     
+            chart:add_categories(risk_file, col_struct.case_dir_list[i]); -- Annual Marg. cost
         end
     else
         risk_file = col_struct.system[1]:load("sddprisk");
@@ -1500,7 +1500,7 @@ function create_viol_report(tab, col_struct, viol_struct, suffix)
             if viol_file:loaded() then
                 local chart = Chart(struct.title);
                 chart:add_column_stacking(viol_file, {xUnit="Stage"});
-                tab:push(chart); 
+                tab:push(chart);
             end
         end
     end
@@ -1519,7 +1519,7 @@ function create_viol_report_from_list(tab, col_struct, viol_list, viol_struct, s
                 if viol_file:loaded() then
                     local chart = Chart(struct.title);
                     chart:add_column_stacking(viol_file, {xUnit="Stage"});
-                    tab:push(chart); 
+                    tab:push(chart);
                 end
             end
         end
@@ -1527,7 +1527,7 @@ function create_viol_report_from_list(tab, col_struct, viol_list, viol_struct, s
 end
 
 function create_operation_report(dashboard, studies, info_struct, info_existence_log, create_dashboard)
-    
+
     -- Function parameters
     -- dashboard: tab or dashboard object
     -- studies: number of studies loaded by PSRIO
@@ -1551,7 +1551,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
         thermal         = {},
         case_dir_list   = {}  -- Cases' directory names
     };
-    
+
     -- Violation outputs and titles struct
     local viol_report_structs = {
         { name = "defcit"  , title = "Deficit" },
@@ -1588,10 +1588,10 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
         { name = "vflmxww" , title = "Maximum hydro bypass flow violation" },
         { name = "finjvio" , title = "NE" }
     }
-    
+
     -- Loading study collections
     load_collections(col_struct);
-    
+
     -- If at least one case does not have the .info file, info report is not displayed
     local create_info_report = true;
     for i = 1, #info_existence_log do
@@ -1600,27 +1600,27 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
             break;
         end
     end
-    
+
     -----------------------------------------------------------------------------------------------
     -- Dashboard tabs configuration
     -----------------------------------------------------------------------------------------------
-    
+
     -- Dashboard name configuration
     local dashboard_name = "SDDP";
     if #info_struct > 0 and not (info_struct[1].dash_name == "-") then
         dashboard_name = info_struct[1].dash_name;
     end
-    
+
     if studies > 1 then
         dashboard_name = dashboard_name .. "-compare";
     end
-    
+
     ----------------
     -- Infeasibility
     ----------------
     local tab_inf = Tab("Infeasibility report");
     tab_inf:set_icon("alert-triangle");
-    
+
     -- Infeasibility report
     if create_info_report then
         local has_inf = {};
@@ -1630,7 +1630,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
                 push_tab_to_tab(tab_inf,dashboard);                                     -- Infeasibility
                 push_tab_to_tab(create_tab_summary(col_struct, info_struct),dashboard); -- Case information summary
                 dashboard:save(dashboard_name);
-                
+
                 return
             end
         else
@@ -1639,21 +1639,21 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
                     table.insert(has_inf, i)
                 end
             end
-            
+
             if #has_inf > 0 then
                 for i = 1, #has_inf do
                     j = has_inf[i]; -- Pointer to case
                     local tab_inf_sub = Tab(col_struct.case_dir_list[j]);
                     dash_infeasibility(tab_inf_sub,info_struct[j].infrep .. ".out",j);
-                    
+
                     tab_inf:push(tab_inf_sub);
-                    
+
                     -- Remove from vectors
                     remove_case_info(col_struct, info_struct, j);
                 end
-                
+
                 studies = studies - #has_inf;
-                    
+
                 -- If only one study was successful, comparison does not exist
                 if studies == 1 then
                     push_tab_to_tab(tab_inf,dashboard);
@@ -1662,67 +1662,67 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
                     return
                 end
             end
-            
+
         end
-        
+
         -- If infeasibilities are present, dashboard
         if #has_inf > 0 then
             push_tab_to_tab(tab_inf,dashboard);
         end
     end
-    
+
     -------------------
     -- Solution quality
     -------------------
-    
+
     local tab_solution_quality = Tab("Solution quality");
     tab_solution_quality:set_collapsed(false);
     tab_solution_quality:set_disabled();
     tab_solution_quality:set_icon("alert-triangle");
-    
+
     local create_policy_report = true;
     local pol_file_name = "sddppol.csv"
     for i = 1, studies do
-        if not col_struct.study[i]:get_parameter("SCEN", 0) == 0 or 
-        not col_struct.generic[i]:file_exists(pol_file_name) then 
+        if not col_struct.study[i]:get_parameter("SCEN", 0) == 0 or
+        not col_struct.generic[i]:file_exists(pol_file_name) then
             create_policy_report = false;
-        end 
+        end
     end
-    
+
     -- Policy report
     if create_policy_report then -- SDDP scenarios does not have policy phase
         push_tab_to_tab(create_pol_report(col_struct),tab_solution_quality);
     else
         info("file " .. pol_file_name .. " does not exist. Policy report will not be displayed.");
     end
-    
+
     -- Simulation report
     push_tab_to_tab(create_sim_report(col_struct),tab_solution_quality);
-    
+
     push_tab_to_tab(tab_solution_quality, dashboard);
-    
+
     ------------
     -- Violation
     ------------
-    
+
     -- Violation tabs
     local tab_violations = Tab("Violations");
     local tab_viol_avg   = Tab("Average");
     local tab_viol_max   = Tab("Maximum");
-    
+
     tab_violations:set_collapsed(true);
     tab_violations:set_disabled();
     tab_violations:set_icon("siren");
-    
+
     if studies == 1 then
         local viol_files;
         local viol_list = {};
-        
+
         local viol_file_name = "sddp_viol.out";
-        
+
         -- Load list of violations
         viol_files = col_struct.generic[1]:load_table_without_header(viol_file_name);
-        
+
         -- Check if violation list file is present
         if #viol_files > 0 then
             -- Create list of violation outputs to be considered
@@ -1730,44 +1730,44 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
                 file = viol_files[lin][1];
                 table.insert(viol_list,file);
             end
-            
+
             create_viol_report_from_list(tab_viol_avg, col_struct, viol_list, viol_report_structs, "avg");
             create_viol_report_from_list(tab_viol_max, col_struct, viol_list, viol_report_structs, "max");
         else
             create_viol_report(tab_viol_avg, col_struct, viol_report_structs, "avg");
             create_viol_report(tab_viol_max, col_struct, viol_report_structs, "max");
-        end 
-        
+        end
+
         push_tab_to_tab(tab_viol_avg,tab_violations);
         push_tab_to_tab(tab_viol_max,tab_violations);
-        
+
         push_tab_to_tab(tab_violations,dashboard);
     end
-    
+
     ----------
     -- Results
     ----------
-    
+
     local tab_results = Tab("Results");
     tab_results:set_collapsed(true);
     tab_results:set_disabled();
     tab_results:set_icon("line-chart");
-    
+
     push_tab_to_tab(create_costs_and_revs(col_struct),tab_results);
     push_tab_to_tab(create_marg_costs(col_struct)    ,tab_results);
     push_tab_to_tab(create_gen_report(col_struct)    ,tab_results);
     push_tab_to_tab(create_risk_report(col_struct)   ,tab_results);
     push_tab_to_tab(create_inflow_energy(col_struct) ,tab_results);
-    
+
     push_tab_to_tab(tab_results,dashboard);
-    
+
     ---------------------------
     -- Case information summary
     ---------------------------
     if create_info_report then
         push_tab_to_tab(create_tab_summary(col_struct, info_struct),dashboard);
     end
-    
+
     -- Save dashboard and return execution mode
     -- All cases must be of the same type (operation or expansion)
     if create_dashboard then

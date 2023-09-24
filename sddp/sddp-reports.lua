@@ -7,7 +7,7 @@ local function violation_aggregation(log_viol,viol_struct,aggregation,suffix,tol
 
     generic = Generic();
     violation = generic:load(viol_struct.name);
-    
+
     if violation:loaded() then
     	x = violation:aggregate_scenarios(aggregation):aggregate_blocks(viol_struct.aggregation):aggregate_agents(BY_SUM(),"Total"):aggregate_stages(BY_SUM()):to_list()[1];
     	if x > tol then
@@ -48,17 +48,17 @@ local function violation_output(log_viol, out_list, viol_structs, tol)
                 file_exists = true;
             end
         end
-        
+
         if file_exists then
             has_at_least_one_out = true;
-            
+
 --          Aggregation by Max
             violation_aggregation(log_viol,viol_struct,BY_MAX(),"max",tol)
 --          Aggregation by Average
             violation_aggregation(log_viol,viol_struct,BY_AVERAGE(),"avg",tol)
         end
     end
-    
+
     if log_viol.nrec == 0 then
         info("Entrou aqui");
         if log_viol.file:is_open() then
@@ -104,10 +104,10 @@ local costs = ifelse(objcop():ge(0), objcop(), 0);
 if( costs:loaded() ) then
     -- sddp_dashboard_cost_tot. Considering discount rate in the cost aggregation
     (costs/discount_rate()):aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros():save("sddp_dashboard_cost_tot", {csv=true});
-    
+
     -- sddp_dashboard_cost_avg
     costs:aggregate_scenarios(BY_AVERAGE()):remove_zeros():save("sddp_dashboard_cost_avg", {csv=true});
-    
+
     -- sddp_dashboard_cost_disp
     disp = concatenate(
         costs:aggregate_agents(BY_SUM(), "P10"):aggregate_scenarios(BY_PERCENTILE(10)),
@@ -128,10 +128,10 @@ local revenues = ifelse(objcop():le(0), -objcop(), 0);
 if( revenues:loaded() ) then
     -- sddp_dashboard_rev_tot. Considering discount rate in the revenue aggregation
     (revenues/discount_rate()):aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros():save("sddp_dashboard_rev_tot", {csv=true});
-    
+
     -- sddp_dashboard_rev_avg
     revenues:aggregate_scenarios(BY_AVERAGE()):remove_zeros():save("sddp_dashboard_rev_avg", {csv=true});
-    
+
     -- sddp_dashboard_rev_disp
     disp = concatenate(
         revenues:aggregate_agents(BY_SUM(), "P10"):aggregate_scenarios(BY_PERCENTILE(10)),
