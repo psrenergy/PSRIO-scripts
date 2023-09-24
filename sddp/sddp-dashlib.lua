@@ -846,27 +846,24 @@ function create_pol_report(col_struct)
                 final_sim_suffix = " (IC";
                 if not has_results_for_add_years then
                     final_sim_suffix = final_sim_suffix .. "+FCF)"
+                    zsup_column = 10
                 else
                     final_sim_suffix = final_sim_suffix .. ")"
+                    zsup_column = 3
                 end
 
                 chart:add_line(final_sim_cost:rename_agent("Final simulation" .. final_sim_suffix), { colors = { "#D37295" }, xAllowDecimals = false }); -- Final simulation cost
 
                 -- Get last ZSup
-                zsup = conv_file:select_agent(3):abs();
+                zsup = conv_file:select_agent(zsup_column);
                 last_zsup_index = zsup:last_stage()
                 last_zsup = zsup:to_list()[last_zsup_index];
 
-                -- Get immediate cost module
-                if immediate_cost < 0 then
-                    immediate_cost = -immediate_cost;
-                end
-
                 rel_diff = (immediate_cost - last_zsup)/immediate_cost;
-                if rel_diff > REP_DIFF_TOL then
-                    tab:push("**Attention**");
-                    tab:push("This case presents significant representation differences between policy and simulation. Your policy may not lead to adequate operating decisions");
-                    tab:push("Relative difference: " .. string.format("%.2f",100*rel_diff) .. " %");
+                if rel_diff > REP_DIFF_TOL or -rel_diff < -REP_DIFF_TOL then
+                    tab:push("**WARNING**");
+                    tab:push("The objective function value of the final simulation deviates by " .. string.format("%.1f",100*rel_diff) .. "% from objective function of the last iteration of the policy phase.");
+                    tab:push("This indicates that the policy representation lacks critical system characteristics, potentially resulting in a suboptimal solution in final simulation.");
                 end
             end
             tab:push(chart);
