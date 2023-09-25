@@ -415,13 +415,13 @@ function create_tab_summary(col_struct, info_struct)
     end
 
     if has_nconv_data[1] then
-        tab:push("## Non-convexities dimensions");
+        tab:push("## Non-convexities");
 
-        header_string       = "| Non-convexity Type";
+        header_string       = "| Non-convexity type";
         lower_header_string = "|-------------------";
 
         if studies == 1 then
-            header_string       = header_string       .. "| Dimension ";
+            header_string       = header_string       .. "| Count ";
             lower_header_string = lower_header_string .. "|-------------------";
         else
             header_string       = header_string       .. "|" .. col_struct.case_dir_list[1];
