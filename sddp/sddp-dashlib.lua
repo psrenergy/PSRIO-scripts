@@ -15,6 +15,17 @@ PSR.set_global_colors(main_global_color);
 studies = PSR.studies();
 
 -----------------------------------------------------------------------------------------------
+-- Overloads
+-----------------------------------------------------------------------------------------------
+
+-- Temporary solution to SDDP remap executions (including typical days)
+function Expression.aggregate_blocks_by_duracipu(self,i)
+    local generic = Generic(i or 1);
+    local duracipu = generic:load("duracipu");
+    return (self * duracipu):aggregate_blocks(BY_SUM());
+end
+
+-----------------------------------------------------------------------------------------------
 -- Auxiliary functions
 -----------------------------------------------------------------------------------------------
 
@@ -1055,13 +1066,13 @@ function create_marg_costs(col_struct)
     local chart = Chart("Annual marginal cost by system");
     if studies > 1 then
         for i = 1, studies do
-            cmg_aggyear = cmg[i]:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_AVERAGE(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM);
+            cmg_aggyear = cmg[i]:aggregate_blocks_by_duracipu(i):aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[i].hours, Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM);
 
             -- Add marginal costs outputs
             chart:add_categories(cmg_aggyear, col_struct.case_dir_list[i], { xUnit="Year" }); -- Annual Marg. cost
         end
     else
-        cmg_aggyear = cmg[1]:aggregate_blocks(BY_AVERAGE()):aggregate_stages(BY_AVERAGE(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE());
+        cmg_aggyear = cmg[1]:aggregate_blocks_by_duracipu():aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[1].hours, Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE());
         chart:add_column(cmg_aggyear, { xUnit="Year" });
     end
     tab:push(chart);
@@ -1072,14 +1083,14 @@ function create_marg_costs(col_struct)
         for i, agent in ipairs(agents) do
             local chart = Chart(agent);
             for j = 1, studies do
-                cmg_aggsum = cmg[j]:select_agent(agent):rename_agent(col_struct.case_dir_list[j]):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE())
+                cmg_aggsum = cmg[j]:select_agent(agent):rename_agent(col_struct.case_dir_list[j]):aggregate_blocks_by_duracipu(i):aggregate_scenarios(BY_AVERAGE())
                 chart:add_line(cmg_aggsum,{xUnit="Stage"}); -- Average marg. cost per stage
             end
             tab:push(chart);
         end
     else
         local chart = Chart("Average marginal costs per stage per system");
-        cmg_aggsum = cmg[1]:aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE());
+        cmg_aggsum = cmg[1]:aggregate_blocks_by_duracipu():aggregate_scenarios(BY_AVERAGE());
         chart:add_column(cmg_aggsum,{xUnit="Stage"});
         tab:push(chart);
     end
