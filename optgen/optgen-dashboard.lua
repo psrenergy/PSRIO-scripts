@@ -1,4 +1,4 @@
--- C:\Users\iury\Desktop\PSRio_Atual\psrio.exe --model OPTGEN -r "D:\SDDP_1\sddp\psrio-scripts\sddp\sddp-dashlib.lua,D:\PSRIO-scripts\optgen\optgen-dashboard.lua" "D:\Dropbox (PSR)\PSR_main\OPTGEN\DASHBOARD\caso_teste_new"
+-- C:\PSR\GraphModule\Oper\psrplot\psrio\psrio.exe --model OPTGEN -r "D:\SDDP_1\sddp\psrio-scripts\sddp\sddp-dashlib.lua,D:\PSRIO-scripts\optgen\optgen-dashboard.lua" "C:\PSR\Optgen8.1\Example\Typical_Day\3_typday"
 --=================================================--
 -- Create Vectors of collections
 --=================================================--
@@ -152,8 +152,8 @@ local dictionary<const> = {
     },
     circuit_accumulated_capacity = {
         en = "Circuit accumulated capacity",
-        es = "Capacidad acumulada  de circuitos",
-        pt = "Capacidade acumulada  de circuitos"
+        es = "Capacidad acumulada de circuitos",
+        pt = "Capacidade acumulada de circuitos"
     },
     total_costs = {
         en = "Total costs",
@@ -398,6 +398,7 @@ end
 local language<const> = load_language();
 
 local is_opt2<const> = identify_if_opt2();
+local risk_results = true;
 local has_network<const> = identify_if_has_network();
 
 --=================================================--
@@ -441,18 +442,6 @@ local function by_day(data) -- vai deixar de existir
                 }
 end
 
-local function read_opt2_optgcoped(case) -- vai deixar de existir
-    local opt2_optgcoped = generic[case]:load_table_without_header("opt2_optgcoped.csv");
-    local N_col = #opt2_optgcoped[3];
-    local aux_table = {};
-    for col = 2, N_col do
-        local data = generic[case]:create(opt2_optgcoped[3][col], "M$", { tonumber(opt2_optgcoped[4][col]) });
-        table.insert(aux_table, data);
-    end
-
-    return concatenate(aux_table);
-end
-
 local function opt2_format_to_chart_scatterplot(year_vec, data_vec, col_name_vec, chart, unit, case) -- vai deixar de existir
     if #col_name_vec ~= #data_vec then
         warn("Vector Column name and Vector Data has not the same size in opt2_format function");
@@ -467,11 +456,11 @@ local function opt2_format_to_chart_scatterplot(year_vec, data_vec, col_name_vec
         end
     end
 
-    local intial_year = year_vec[1];
+    local initial_year = year_vec[1];
     local final_year  = year_vec[#year_vec]
     local data_x_aux  = {};
     local data_y_aux  = {};
-    for year = intial_year, final_year do
+    for year = initial_year, final_year do
         for i, data_year in ipairs(year_vec) do
             if tonumber(year) == tonumber(data_year) then
                 table.insert(data_x_aux, tonumber(data_vec[1][i]));
@@ -537,7 +526,7 @@ local function chart_accumulated_capacity(case)
     chart:add_column_stacking(battery_cap:aggregate_agents(BY_SUM(), dictionary.total_battery[language]), { color = colors.total_generation.battery });
 
     if #chart <= 0 then
-        return dictionary.data_not_exist[language];
+        return 
     end
 
     return chart;
@@ -556,7 +545,7 @@ local function chart_circuit_accumulated_capacity(case)
     chart:add_column_stacking(dc_cap:aggregate_agents(BY_SUM(), dictionary.total_hydro[language]):remove_zeros():round(0), { color = colors.total_circuit.dc });
 
     if #chart <= 0 then
-        return dictionary.data_not_exist[language];
+        return 
     end
 
     return chart;
@@ -609,7 +598,7 @@ local function chart_total_cost(case)
     chart_b:add_pie(inv_dc:aggregate_agents(BY_SUM(), dictionary.total_dc_circuit[language]), { color = colors.total_costs.dc });
 
     if #chart_a == 0 or #chart_b == 0 then
-        return dictionary.data_not_exist[language];
+        return
     end
     
     return { chart_a, chart_b };
@@ -641,7 +630,7 @@ local function chart_total_installed_capacity(case)
     chart:add_area_spline_stacking(bat_cap:aggregate_agents(BY_SUM(), dictionary.total_battery[language]), { color = colors.total_generation.battery });
 
     if #chart <= 0 then
-        return dictionary.data_not_exist[language];
+        return 
     end
 
     return chart;
@@ -686,7 +675,7 @@ local function chart_total_installed_capacity_mix(case)
         chart:add_pie(bat_cap_annual:aggregate_agents(BY_SUM(), dictionary.total_battery[language]), { color = colors.total_generation.battery });
 
         if #chart <= 0 then
-            return dictionary.data_not_exist[language];
+            return 
         end
 
         table.insert(vector_of_charts, chart);
@@ -718,7 +707,7 @@ local function chart_firm_capacity(case)
     chart:add_area_spline_stacking(firm_capacity_batte:aggregate_agents(BY_SUM(), dictionary.total_battery[language]), { color = colors.total_generation.battery });
 
     if #chart <= 0 then
-        return dictionary.data_not_exist[language];
+        return 
     end
 
     return chart;
@@ -762,7 +751,7 @@ local function chart_firm_capacity_mix(case)
         chart:add_pie(bat_cap_annual:aggregate_agents(BY_SUM(), dictionary.total_battery[language]), { color = colors.total_generation.battery });
 
         if #chart <= 0 then
-            return dictionary.data_not_exist[language];
+            return 
         end
 
         table.insert(vector_of_charts, chart);
@@ -795,7 +784,7 @@ local function chart_firm_energy(case)
     chart:add_area_spline_stacking(firm_energy_batte:aggregate_agents(BY_SUM(), dictionary.total_battery[language]), { color = colors.total_generation.battery });
 
     if #chart <= 0 then
-        return dictionary.data_not_exist[language];
+        return 
     end
 
     return chart;
@@ -840,7 +829,7 @@ local function chart_firm_energy_mix(case)
         chart:add_pie(bat_cap_annual:aggregate_agents(BY_SUM(), dictionary.total_battery[language]), { color = colors.total_generation.battery });
 
         if #chart <= 0 then
-            return dictionary.data_not_exist[language];
+            return 
         end
 
         table.insert(vector_of_charts, chart);
@@ -866,7 +855,7 @@ local function chart_annual_marginal_cost(case)
     chart:add_line(cmgdem, { color = colors.generic });
 
     if #chart <= 0 then
-        return dictionary.data_not_exist[language];
+        return 
     end
 
     return chart;
@@ -888,7 +877,7 @@ local function chart_monthly_marginal_cost(case)
     chart:add_line(cmgdem, { color = colors.generic });
 
     if #chart <= 0 then
-        return dictionary.data_not_exist[language];
+        return 
     end
 
     return chart;
@@ -918,7 +907,7 @@ local function chart_hourly_marginal_cost_per_typical_day(case)
         table.insert(vector_of_charts, chart);
 
         if #chart <= 0 then
-            return dictionary.data_not_exist[language];
+            return 
         end
     end
 
@@ -932,10 +921,8 @@ local function chart_defict_risk(case)
     else
         defict = system[case]:load("opt2_deficitmw");
     end
-
     defict = defict:aggregate_blocks(BY_AVERAGE())
-                         :aggregate_stages(BY_SUM(), Profile.PER_YEAR)
-                         :remove_zeros();
+                         :aggregate_stages(BY_SUM(), Profile.PER_YEAR);
 
     local stage_type;
     if defict:loaded() then
@@ -944,17 +931,18 @@ local function chart_defict_risk(case)
         stage_type = 1;
     end
     local dathisc = generic[case]:load("opt2_optgscen"):select_stage(1):set_stage_type(stage_type);
+
     if dathisc then
-        defict = ifelse(defict:gt(0), dathisc, 0):aggregate_scenarios(BY_SUM()):convert("%"):remove_zeros():round(0);
+        defict = ifelse(defict:gt(0), dathisc, 0):aggregate_scenarios(BY_SUM()):convert("%"):round(0);
     else
-        defict = ifelse(defict:gt(0), 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):remove_zeros():round(0);
+        defict = ifelse(defict:gt(0), 1, 0):aggregate_scenarios(BY_AVERAGE()):convert("%"):round(0);
     end
 
     local chart = create_chart("", case);
     chart:add_line(defict, { color = colors.risk.deficit });
 
     if #chart <= 0 then
-        return dictionary.data_not_exist[language];
+        return 
     end
 
     return chart;
@@ -1018,7 +1006,7 @@ local function chart_generation_in_season(case)
     chart:add_area_spline_stacking(defict:aggregate_agents(BY_SUM(), dictionary.deficit[language]), { color = colors.total_generation.defict });
 
     if #chart <= 0 then
-        return dictionary.data_not_exist[language];
+        return 
     end
 
     return chart;
@@ -1097,7 +1085,7 @@ local function chart_hourly_generation_typical_day(case)
         end
 
         if year == final_year then
-            final_stga = (study[case]:stages() - study[case]:intial_stage())%study[case]:stages_per_year();
+            final_stga = (study[case]:stages() - study[case]:initial_stage())%study[case]:stages_per_year();
         end
 
         for stg = first_stg, first_stg do
@@ -1124,7 +1112,7 @@ local function chart_hourly_generation_typical_day(case)
                 chart:add_area_spline_stacking(year_day_defict       , { color = colors.total_generation.defict });
 
                 if #chart <= 0 then
-                    return dictionary.data_not_exist[language];
+                    return 
                 end
 
                 table.insert(vector_of_chart, chart);
@@ -1136,13 +1124,15 @@ local function chart_hourly_generation_typical_day(case)
 end
 
 local function chart_objective_value(case)
-    local opt2_optgcoped = read_opt2_optgcoped(case);
+    local interest = (1 + study[case].discount_rate) ^ ((study[case].stage_in_year - 1) / study[case]:stages_per_year());
+    local dathisc = generic[case]:load("opt2_optgscen"):select_stage(1);
+    local opt2_optgcoped = (generic[case]:load("opt2_optgcope") * interest * dathisc):aggregate_stages(BY_SUM());
 
     local chart = create_chart("", case);
     chart:add_pie(opt2_optgcoped, { color = colors.generic });
 
     if #chart <= 0 then
-        return dictionary.data_not_exist[language];
+        return 
     end
 
     return chart;
@@ -1167,7 +1157,8 @@ local function chart_risk_curve(case)
     end
 
     if #chart <= 0 then
-        return dictionary.data_not_exist[language];
+        risk_results = false;
+        return 
     end
 
     return chart;
@@ -1181,7 +1172,7 @@ local function chart_convergence(case)
     chart:add_line(gap);
 
     if #chart <= 0 then
-        return dictionary.data_not_exist[language];
+        return 
     end
 
     return chart;
@@ -1194,74 +1185,110 @@ local function tab_investiment_report()
     local tab<const> = create_tab(dictionary.investment_report[language], "arrow-right");     
 
     if plot.accumulated_capacity then
-        tab:push("### " .. dictionary.accumulated_capacity[language]);
         for case = 1, cases do
             local chart = chart_accumulated_capacity(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.accumulated_capacity[language]);
+                end
+                tab:push(chart);
+            end
         end
     end
 
     if plot.circuit_accumulated_capacity then
-        tab:push("### " .. dictionary.circuit_accumulated_capacity[language]);
         for case = 1, cases do
             local chart = chart_circuit_accumulated_capacity(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.circuit_accumulated_capacity[language]);
+                end
+               tab:push(chart);
+            end
         end
     end
 
     if plot.total_cost then
-        tab:push("### " .. dictionary.total_costs[language]);
         for case = 1, cases do
             local chart = chart_total_cost(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.total_costs[language]);
+                end
+               tab:push(chart);
+            end
         end
     end
 
     if plot.total_installed_capacity then
-        tab:push("### " .. dictionary.total_installed_capacity[language]);
         for case = 1, cases do
             local chart = chart_total_installed_capacity(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.total_installed_capacity[language]);
+                end
+               tab:push(chart);
+            end
         end
     end
 
     if plot.total_installed_capacity_mix then
-        tab:push("### " .. dictionary.total_installed_capacity_mix[language]);
         for case = 1, cases do
             local chart = chart_total_installed_capacity_mix(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.total_installed_capacity_mix[language]);
+                end
+               tab:push(chart);
+            end
         end
     end
 
     if plot.firm_capacity then
-        tab:push("### " .. dictionary.firm_capacity[language]);
         for case = 1, cases do
             local chart = chart_firm_capacity(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.firm_capacity[language]);
+                end
+               tab:push(chart);
+            end
         end
     end
 
     if plot.firm_capacity_mix then
-        tab:push("### " .. dictionary.firm_capacity_mix[language]);
         for case = 1, cases do
             local chart = chart_firm_capacity_mix(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.firm_capacity_mix[language]);
+                end
+               tab:push(chart);
+            end
         end
     end
 
     if plot.firm_energy then
-        tab:push("### " .. dictionary.firm_energy[language]);
         for case = 1, cases do
             local chart = chart_firm_energy(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.firm_energy[language]);
+                end
+               tab:push(chart);
+            end
         end
     end
 
     if plot.firm_energy_mix then
-        tab:push("### " .. dictionary.firm_capacity_mix[language]);
         for case = 1, cases do
             local chart = chart_firm_energy_mix(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.firm_capacity_mix[language]);
+                end
+               tab:push(chart);
+            end
         end
     end
 
@@ -1272,68 +1299,100 @@ local function tab_optgen2_reports()
     local tab<const> = create_tab(dictionary.optgen_2_reports[language], "arrow-right");
 
     if plot.annual_marginal_cost then
-        tab:push("### " .. dictionary.annual_marginal_cost[language]);
         for case = 1, cases do
             local chart = chart_annual_marginal_cost(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.annual_marginal_cost[language]);
+                end
+               tab:push(chart);
+            end
         end
     end
 
     if plot.monthly_marginal_cost then
-        tab:push("### " .. dictionary.monthly_marginal_cost[language]);
         for case = 1, cases do
             local chart = chart_monthly_marginal_cost(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.monthly_marginal_cost[language]);
+                end
+               tab:push(chart);
+            end
         end
     end
 
     if plot.hourly_generation_typical then
-        tab:push("### " .. dictionary.hourly_marginal_cost_typical[language]);
         for case = 1, cases do
             local chart = chart_hourly_marginal_cost_per_typical_day(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.hourly_marginal_cost_typical[language]);
+                end
+               tab:push(chart);
+            end
         end
     end
 
     if plot.deficit_risk then
-        tab:push("### " .. dictionary.deficit_risk[language]);
         for case = 1, cases do
             local chart = chart_defict_risk(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.deficit_risk[language]);
+                end
+               tab:push(chart);
+            end
         end
     end
 
     if plot.generation_in_each_season then
-        tab:push("### " .. dictionary.generation_in_season[language]);
         for case = 1, cases do
             local chart = chart_generation_in_season(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.generation_in_season[language]);
+                end
+               tab:push(chart);
+            end
         end
     end
 
     if plot.hourly_generation_typical then
-        tab:push("### " .. dictionary.generation_per_typical_day[language]);
         for case = 1, cases do
             local chart = chart_hourly_generation_typical_day(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.generation_per_typical_day[language]);
+                end
+               tab:push(chart);
+            end
 
         end
     end
 
     if plot.objective_function then
-        tab:push("### " .. dictionary.objective_functions[language]);
         for case = 1, cases do
             local chart = chart_objective_value(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.objective_functions[language]);
+                end
+               tab:push(chart);
+            end
 
         end
     end
 
     if plot.convergence then
-        tab:push("### " .. dictionary.convergence[language]);
         for case = 1, cases do
             local chart = chart_convergence(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.convergence[language]);
+                end
+               tab:push(chart);
+            end
         end
     end
 
@@ -1344,10 +1403,14 @@ local function tab_risk_result()
     local tab<const> = create_tab(dictionary.optgen_risk[language], "arrow-right");
 
     if plot.risk_curve then
-        tab:push("### " .. dictionary.optgen_risk[language]);
         for case = 1, cases do
             local chart = chart_risk_curve(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.optgen_risk[language]);
+                end
+               tab:push(chart);
+            end
 
         end
     end
@@ -1365,7 +1428,10 @@ local function tab_expansion_result()
         tab:push(tab_optgen2_reports());
     end
 
-    tab:push(tab_risk_result());
+    local risk_tab = tab_risk_result();
+    if risk_results then
+        tab:push(risk_tab);
+    end
 
     return tab;
 end
