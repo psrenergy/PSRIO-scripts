@@ -1,4 +1,4 @@
--- C:\Users\iury\Desktop\PSRio_Atual\psrio.exe --model SDDP -r "D:\PSRIO-scripts\md\input_summary.lua" "D:\Dropbox (PSR)\PSR_main\PSR_Brasil\CSV_teste\caso_4"
+-- C:\Users\iury\Desktop\PSRio_Atual\psrio.exe --model SDDP -r "D:\PSRIO-scripts\md\input_summary.lua" "C:\PSR\Sddp17.2\Example\Hourly_representation\Case27"
 
 local studies<const> = PSR.studies();
 
@@ -217,6 +217,22 @@ local function get_language(case)
 end
 local language = get_language(1);
 
+local function demand_hourly(case)
+    local generic = Generic(case);
+    local sddp = generic:load_table_without_header("sddp.dat");
+
+    for key = 1,#sddp do
+        if string.sub(sddp[key][1],1,9) == "DCHR LOAD" then
+            if string.sub(sddp[key][1],11,11) == "1" then
+                return true
+            end
+        end
+    end
+
+    return false
+end
+local demand_is_hourly = demand_hourly(1)
+
 local function create_tab(label, icon)
     local tab = Tab(label);
     tab:set_icon(icon);
@@ -239,7 +255,7 @@ local function demand_chart(case, tab)
     local system = system[case];
 
     local demand_data;
-    if study:is_hourly() then
+    if demand_is_hourly then
         demand_data = system.sensitivity * demand.inelastic_hour:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_blocks(BY_SUM()):aggregate_stages(BY_SUM(),Profile.PER_YEAR);
     else
         demand_data = system.sensitivity * demand.inelastic_block:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_blocks(BY_SUM()):aggregate_stages(BY_SUM(),Profile.PER_YEAR);
