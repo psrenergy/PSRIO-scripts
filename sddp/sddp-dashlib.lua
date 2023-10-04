@@ -103,6 +103,7 @@ function load_collections(col_struct, info_struct)
         table.insert(col_struct.interconnection, Interconnection(i));
         table.insert(col_struct.power_injection, PowerInjection(i));
         table.insert(col_struct.renewable      , Renewable(i));
+        table.insert(col_struct.csp            , ConcentratedSolarPower(i));
         table.insert(col_struct.study          , Study(i));
         table.insert(col_struct.system         , System(i));
         table.insert(col_struct.thermal        , Thermal(i));
@@ -354,6 +355,7 @@ function create_tab_summary(col_struct, info_struct)
     local renw_w_string     = "| Renewable plants - Wind ";
     local renw_s_string     = "| Renewable plants - Solar";
     local renw_sh_string    = "| Renewable plants - Small hydro";
+    local renw_csp_string   = "| Renewable plants - CSP";
     local renw_oth_string   = "| Renewable plants - Other tech.";
     local thermal_string    = "| Thermal plants ";
 
@@ -378,9 +380,12 @@ function create_tab_summary(col_struct, info_struct)
         renw_sh    = col_struct.renewable[i].tech_type:select_agents(col_struct.renewable[i].tech_type:eq(4)):agents_size();
         renw_oth   = total_renw - renw_wind - renw_solar - renw_sh;
 
+        renw_csp = #col_struct.csp[i]:labels();
+
         renw_sh_string  = renw_sh_string  .. " | " .. tostring(renw_sh);
         renw_w_string   = renw_w_string   .. " | " .. tostring(renw_wind);
         renw_s_string   = renw_s_string   .. " | " .. tostring(renw_solar);
+        renw_csp_string = renw_csp_string .. " | " .. tostring(renw_csp);
         renw_oth_string = renw_oth_string .. " | " .. tostring(renw_oth);
 
         thermal_string  = thermal_string  .. " | " .. tostring(#col_struct.thermal[i]:labels());
@@ -395,6 +400,7 @@ function create_tab_summary(col_struct, info_struct)
     tab:push(renw_s_string);
     tab:push(renw_sh_string)
     tab:push(renw_oth_string);
+    tab:push(renw_csp_string);
     tab:push(battery_string);
     tab:push(pinj_string);
     if show_net_data then
@@ -1112,6 +1118,7 @@ function create_gen_report(col_struct)
     local color_wind = '#8CD17D';
     local color_solar = '#F1CE63';
     local color_small_hydro = '#A0CBE8';
+    local color_csp = '#70AD47';
     local color_battery = '#B07AA1';
     local color_deficit = '#000000';
     local color_pinj = '#BAB0AC';
@@ -1124,6 +1131,7 @@ function create_gen_report(col_struct)
     local total_wind_gen;
     local total_solar_gen;
     local total_small_hydro_gen;
+    local total_csp_gen;
     local total_thermal_gen;
 
     local total_hydro_gen_age;
@@ -1135,6 +1143,7 @@ function create_gen_report(col_struct)
     local total_solar_gen_age;
     local total_small_hydro_gen_age;
     local total_thermal_gen_age;
+    local total_csp_gen_age;
 
     local hydro_agent_name;
     local thermal_agent_name;
@@ -1145,6 +1154,7 @@ function create_gen_report(col_struct)
     local renw_wind_agent_name;
     local renw_solar_agent_name;
     local renw_shydro_agent_name;
+    local renw_csp_agent_name;
 
     local hydro_report_name;
     local thermal_report_name;
@@ -1160,6 +1170,7 @@ function create_gen_report(col_struct)
     local gerter = {};
     local gerhid = {};
     local gergnd = {};
+    local gercsp = {};
     local wind = {};
     local solar = {};
     local gerbat = {};
@@ -1171,6 +1182,7 @@ function create_gen_report(col_struct)
         gerter[i] = col_struct.thermal[i]:load("gerter");
         gerhid[i] = col_struct.hydro[i]:load("gerhid");
         gergnd[i] = col_struct.renewable[i]:load("gergnd");
+        gercsp[i] = col_struct.csp[i]:load("cspgen"):convert("GWh");
         gerbat[i] = col_struct.battery[i]:load("gerbat"):convert("GWh"); -- Explicitly converting to GWh
         potinj[i] = col_struct.power_injection[i]:load("powinj");
         defcit[i] = col_struct.system[i]:load("defcit");
@@ -1184,6 +1196,7 @@ function create_gen_report(col_struct)
         chart_tot_renw_wind  = Chart("Total Renewable - Wind");
         chart_tot_renw_solar = Chart("Total Renewable - Solar");
         chart_tot_renw_shyd  = Chart("Total Renewable - Small hydro");
+        chart_tot_renw_csp   = Chart("Total Renewable - CSP");
         chart_tot_gerbat     = Chart("Total Battery");
         chart_tot_potinj     = Chart("Total Power Injection");
         chart_tot_defcit     = Chart("Total Deficit");
@@ -1204,6 +1217,7 @@ function create_gen_report(col_struct)
             total_solar_gen_age       = col_struct.case_dir_list[i] .. " - ";
             total_small_hydro_gen_age = col_struct.case_dir_list[i] .. " - ";
             total_thermal_gen_age     = col_struct.case_dir_list[i] .. " - ";
+            total_csp_gen_age         = col_struct.case_dir_list[i] .. " - ";
         else
             total_hydro_gen_age       = "";
             total_batt_gen_age        = "";
@@ -1214,6 +1228,7 @@ function create_gen_report(col_struct)
             total_solar_gen_age       = "";
             total_small_hydro_gen_age = "";
             total_thermal_gen_age     = "";
+            total_csp_gen_age         = "";
         end
 
         total_hydro_gen_age       = total_hydro_gen_age       .. "Total Hydro";
@@ -1225,6 +1240,7 @@ function create_gen_report(col_struct)
         total_solar_gen_age       = total_solar_gen_age       .. "Total Renewable - Solar";
         total_small_hydro_gen_age = total_small_hydro_gen_age .. "Total Renewable - Small hydro";
         total_thermal_gen_age     = total_thermal_gen_age     .. "Total Thermal";
+        total_csp_gen_age         = total_csp_gen_age         .. "Total Renewable - CSP";
 
         -- Data processing
         total_hydro_gen = gerhid[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_hydro_gen_age);
@@ -1241,7 +1257,7 @@ function create_gen_report(col_struct)
         total_wind_gen        = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(1)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_wind_gen_age);
         total_solar_gen       = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(2)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_solar_gen_age);
         total_small_hydro_gen = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(4)):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_small_hydro_gen_age);
-
+        total_csp_gen         = gercsp[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_csp_gen_age);
         total_thermal_gen = gerter[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_thermal_gen_age);
 
         if studies > 1 then
@@ -1263,6 +1279,9 @@ function create_gen_report(col_struct)
             if total_small_hydro_gen:loaded() then
                 chart_tot_renw_shyd:add_column(total_small_hydro_gen, { xUnit="Stage"});
             end
+            if total_csp_gen:loaded() then
+                chart_tot_renw_csp:add_column(total_csp_gen, { xUnit="Stage"});
+            end
             if total_batt_gen:loaded() then
                 chart_tot_gerbat:add_column(total_batt_gen, { xUnit="Stage"});
             end
@@ -1278,6 +1297,7 @@ function create_gen_report(col_struct)
             chart:add_area_stacking(total_wind_gen       , { xUnit="Stage", colors = { color_wind        } });
             chart:add_area_stacking(total_solar_gen      , { xUnit="Stage", colors = { color_solar       } });
             chart:add_area_stacking(total_small_hydro_gen, { xUnit="Stage", colors = { color_small_hydro } });
+            chart:add_area_stacking(total_csp_gen        , { xUnit="Stage", colors = { color_csp } });
             chart:add_area_stacking(total_other_renw_gen , { xUnit="Stage", colors = { color_renw_other  } });
             chart:add_area_stacking(total_batt_gen       , { xUnit="Stage", colors = { color_battery     } });
             chart:add_area_stacking(total_pot_inj        , { xUnit="Stage", colors = { color_pinj        } });
@@ -1304,6 +1324,9 @@ function create_gen_report(col_struct)
         if #chart_tot_renw_shyd > 0 then
             tab:push(chart_tot_renw_shyd);
         end
+        if #chart_tot_renw_csp > 0 then
+            tab:push(chart_tot_renw_csp);
+        end
         if #chart_tot_gerbat > 0 then
             tab:push(chart_tot_gerbat);
         end
@@ -1328,6 +1351,7 @@ function create_gen_report(col_struct)
     renw_wind_report_name   = "Total Renewable - Wind";
     renw_solar_report_name  = "Total Renewable - Solar";
     renw_shydro_report_name = "Total Renewable - Small hydro";
+    renw_csp_report_name = "Total Renewable - CSP";
 
     -- Generation per system report
     local agents = col_struct.generic[1]:load("cmgdem"):agents();
@@ -1338,6 +1362,7 @@ function create_gen_report(col_struct)
         chart_tot_renw_wind  = Chart("Total Renewable - Wind");
         chart_tot_renw_solar = Chart("Total Renewable - Solar");
         chart_tot_renw_shyd  = Chart("Total Renewable - Small hydro");
+        chart_tot_renw_csp   = Chart("Total Renewable - CSP");
         chart_tot_gerbat     = Chart("Total Battery");
         chart_tot_potinj     = Chart("Total Power Injection");
         chart_tot_defcit     = Chart("Total Deficit");
@@ -1355,6 +1380,7 @@ function create_gen_report(col_struct)
                 renw_wind_agent_name   = col_struct.case_dir_list[i] .. " - " .. renw_wind_report_name;
                 renw_solar_agent_name  = col_struct.case_dir_list[i] .. " - " .. renw_solar_report_name;
                 renw_shydro_agent_name = col_struct.case_dir_list[i] .. " - " .. renw_shydro_report_name;
+                renw_csp_agent_name    = col_struct.case_dir_list[i] .. " - " .. renw_csp_report_name;
             else
                 hydro_agent_name   = hydro_report_name;
                 thermal_agent_name = thermal_report_name;
@@ -1366,6 +1392,7 @@ function create_gen_report(col_struct)
                 renw_wind_agent_name   = renw_wind_report_name;
                 renw_solar_agent_name  = renw_solar_report_name;
                 renw_shydro_agent_name = renw_shydro_report_name;
+                renw_csp_agent_name    = renw_csp_report_name;
             end
 
             -- Data processing
@@ -1373,6 +1400,7 @@ function create_gen_report(col_struct)
             total_batt_gen  = gerbat[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(battery_agent_name);
             total_deficit   = defcit[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(deficit_agent_name);
             total_pot_inj   = potinj[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(pinj_agent_name);
+            total_csp_gen   = gercsp[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_csp_agent_name);
 
             -- Renewable generation is broken into 3 types
             total_other_renw_gen = ifelse(col_struct.renewable[i].tech_type:ne(1) &
@@ -1394,8 +1422,7 @@ function create_gen_report(col_struct)
             total_wind_gen        = total_wind_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_wind_agent_name);
             total_solar_gen       = total_solar_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_solar_agent_name);
             total_small_hydro_gen = total_small_hydro_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_shydro_agent_name);
-
-            total_thermal_gen = gerter[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(thermal_agent_name);
+            total_thermal_gen     = gerter[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(thermal_agent_name);
 
             if total_hydro_gen:loaded() then
                 chart_tot_gerhid:add_column(total_hydro_gen, { xUnit="Stage"});
@@ -1414,6 +1441,9 @@ function create_gen_report(col_struct)
             end
             if total_small_hydro_gen:loaded() then
                 chart_tot_renw_shyd:add_column(total_small_hydro_gen, { xUnit="Stage"});
+            end
+            if total_csp_gen:loaded() then
+                chart_tot_renw_csp:add_column(total_csp_gen, { xUnit="Stage"});
             end
             if total_batt_gen:loaded() then
                 chart_tot_gerbat:add_column(total_batt_gen, { xUnit="Stage"});
@@ -1444,6 +1474,9 @@ function create_gen_report(col_struct)
         end
         if #chart_tot_renw_shyd > 0 then
             tab:push(chart_tot_renw_shyd);
+        end
+        if #chart_tot_renw_csp > 0 then
+            tab:push(chart_tot_renw_csp);
         end
         if #chart_tot_gerbat > 0 then
             tab:push(chart_tot_gerbat);
@@ -1562,6 +1595,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
         interconnection = {},
         power_injection = {},
         renewable       = {},
+        csp             = {},
         study           = {},
         system          = {},
         thermal         = {},
