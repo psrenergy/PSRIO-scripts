@@ -27,6 +27,17 @@ else
   potgnd:save("potgnd", {csv=is_csv});
 end
 
+-- POTCSP - CSP capacity scenario
+csp = ConcentratedSolarPower();
+cspscen = csp:load("cspscen");
+capacity = csp:load_vector("PotInst", "MW");
+potcsp = cspscen * capacity;
+if potcsp:is_hourly() then
+  potcsp:save("potcsp", {variable_by_block=2, csv=is_csv});
+else
+  potcsp:save("potcsp", {csv=is_csv});
+end
+
 -- OEMGND - Renewable O&M unitary cost
 renewable = Renewable();
 oemgnd = renewable.om_cost;
