@@ -946,7 +946,8 @@ function create_sim_report(col_struct)
 
     if studies > 1 then
         for i = 1, studies do
-            costs = ifelse(objcop(i):ge(0), objcop(i), 0) / discount_rate(i);
+            local stages_without_buffer_years = col_struct.study[i]:stages_without_buffer_years();
+            costs = ifelse(objcop(i):ge(0), objcop(i), 0) / discount_rate(i):select_stages(1,stages_without_buffer_years);
 
             -- sddp_dashboard_cost_tot
             costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
@@ -957,7 +958,8 @@ function create_sim_report(col_struct)
             exet_chart:add_categories(exe_times, col_struct.case_dir_list[i]);
         end
     else
-        costs = ifelse(objcop():ge(0), objcop(), 0) / discount_rate();
+        local stages_without_buffer_years = col_struct.study[1]:stages_without_buffer_years();
+        costs = ifelse(objcop():ge(0), objcop(), 0) / discount_rate():select_stages(1,stages_without_buffer_years);
         costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
 
         if is_greater_than_zero(costs_agg) then
@@ -1006,9 +1008,11 @@ function create_costs_and_revs(col_struct)
     local chart_avg = Chart("Average operating costs per stage");
 
     for i = 1, studies do
+        local stages_without_buffer_years = col_struct.study[i]:stages_without_buffer_years();
+
         local objcop = require("sddp/costs");
         local discount_rate = require("sddp/discount_rate");
-        local costs = ifelse(objcop(i):ge(0), objcop(i), 0) / discount_rate(i);
+        local costs = ifelse(objcop(i):ge(0), objcop(i), 0) / discount_rate(i):select_stages(1,stages_without_buffer_years);
 
         -- sddp_dashboard_cost_tot
         costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM());
@@ -1072,13 +1076,15 @@ function create_marg_costs(col_struct)
     local chart = Chart("Annual marginal cost by system");
     if studies > 1 then
         for i = 1, studies do
-            cmg_aggyear = cmg[i]:aggregate_blocks_by_duracipu(i):aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[i].hours, Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM);
+            local stages_without_buffer_years = col_struct.study[i]:stages_without_buffer_years();
+            cmg_aggyear = cmg[i]:aggregate_blocks_by_duracipu(i):aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[i].hours:select_stages(1,stages_without_buffer_years), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM);
 
             -- Add marginal costs outputs
             chart:add_categories(cmg_aggyear, col_struct.case_dir_list[i], { xUnit="Year" }); -- Annual Marg. cost
         end
     else
-        cmg_aggyear = cmg[1]:aggregate_blocks_by_duracipu():aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[1].hours, Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE());
+        local stages_without_buffer_years = col_struct.study[1]:stages_without_buffer_years();
+        cmg_aggyear = cmg[1]:aggregate_blocks_by_duracipu():aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[1].hours:select_stages(1,stages_without_buffer_years), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE());
         chart:add_column(cmg_aggyear, { xUnit="Year" });
     end
     tab:push(chart);
@@ -1179,13 +1185,15 @@ function create_gen_report(col_struct)
 
     -- Loading generations files
     for i = 1, studies do
-        gerter[i] = col_struct.thermal[i]:load("gerter");
-        gerhid[i] = col_struct.hydro[i]:load("gerhid");
-        gergnd[i] = col_struct.renewable[i]:load("gergnd");
-        gercsp[i] = col_struct.csp[i]:load("cspgen"):convert("GWh");
-        gerbat[i] = col_struct.battery[i]:load("gerbat"):convert("GWh"); -- Explicitly converting to GWh
-        potinj[i] = col_struct.power_injection[i]:load("powinj");
-        defcit[i] = col_struct.system[i]:load("defcit");
+        local stages_without_buffer_years = col_struct.study[i]:stages_without_buffer_years();
+
+        gerter[i] = col_struct.thermal[i]:load("gerter"):select_stages(1,stages_without_buffer_years);
+        gerhid[i] = col_struct.hydro[i]:load("gerhid"):select_stages(1,stages_without_buffer_years);
+        gergnd[i] = col_struct.renewable[i]:load("gergnd"):select_stages(1,stages_without_buffer_years);
+        gercsp[i] = col_struct.csp[i]:load("cspgen"):convert("GWh"):select_stages(1,stages_without_buffer_years);
+        gerbat[i] = col_struct.battery[i]:load("gerbat"):convert("GWh"):select_stages(1,stages_without_buffer_years); -- Explicitly converting to GWh
+        potinj[i] = col_struct.power_injection[i]:load("powinj"):select_stages(1,stages_without_buffer_years);
+        defcit[i] = col_struct.system[i]:load("defcit"):select_stages(1,stages_without_buffer_years);
     end
 
     if studies > 1 then
@@ -1403,18 +1411,20 @@ function create_gen_report(col_struct)
             total_csp_gen   = gercsp[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_csp_agent_name);
 
             -- Renewable generation is broken into 3 types
-            total_other_renw_gen = ifelse(col_struct.renewable[i].tech_type:ne(1) &
-                                          col_struct.renewable[i].tech_type:ne(2) &
-                                          col_struct.renewable[i].tech_type:ne(4),
+            local stages_without_buffer_years = col_struct.study[i]:stages_without_buffer_years();
+
+            total_other_renw_gen = ifelse(col_struct.renewable[i].tech_type:ne(1):select_stages(1,stages_without_buffer_years) &
+                                          col_struct.renewable[i].tech_type:ne(2):select_stages(1,stages_without_buffer_years) &
+                                          col_struct.renewable[i].tech_type:ne(4):select_stages(1,stages_without_buffer_years),
                                           gergnd[i],
                                           0);
-            total_wind_gen = ifelse(col_struct.renewable[i].tech_type:eq(1),
+            total_wind_gen = ifelse(col_struct.renewable[i].tech_type:eq(1):select_stages(1,stages_without_buffer_years),
                                           gergnd[i],
                                           0);
-            total_solar_gen = ifelse(col_struct.renewable[i].tech_type:eq(2),
+            total_solar_gen = ifelse(col_struct.renewable[i].tech_type:eq(2):select_stages(1,stages_without_buffer_years),
                                           gergnd[i],
                                           0);
-            total_small_hydro_gen = ifelse(col_struct.renewable[i].tech_type:eq(4),
+            total_small_hydro_gen = ifelse(col_struct.renewable[i].tech_type:eq(4):select_stages(1,stages_without_buffer_years),
                                           gergnd[i],
                                           0);
 
