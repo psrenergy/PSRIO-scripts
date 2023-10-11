@@ -2,6 +2,7 @@
 EXECUTION_MODE_OPERATION     = 0
 EXECUTION_MODE_EXPANSION_IT  = 1
 EXECUTION_MODE_EXPANSION_SIM = 2
+LANGUAGE = "en"
 
 REP_DIFF_TOL = 0.05 -- 10%
 
@@ -132,6 +133,23 @@ function remove_case_info(col_struct, info_struct, case_index)
     table.remove(info_struct, case_index);
 end
 
+local function load_language()
+    local language = Study(1):get_parameter("Idioma", 0);
+
+    if language == 1 then
+        return "es";
+    elseif language == 2 then
+        return "pt";
+    else -- language == 0
+        return "en";
+    end
+end
+
+-----------------------------------------------------------------------------------------------
+-- Get language
+-----------------------------------------------------------------------------------------------
+local LANGUAGE = load_language();
+
 -----------------------------------------------------------------------------------------------
 -- Infeasibility report function
 -----------------------------------------------------------------------------------------------
@@ -172,10 +190,10 @@ end
 
 function create_tab_summary(col_struct, info_struct)
 
-    local tab = Tab("Info");
+    local tab = Tab(dictionary.tab_info[LANGUAGE]);
     tab:set_icon("info");
 
-    tab:push("# Case summary");
+    tab:push("# " .. dictionary.case_summary[LANGUAGE]);
 
     local exe_status_str;
 
@@ -196,11 +214,21 @@ function create_tab_summary(col_struct, info_struct)
         table.insert(description, study:get_parameter("Descricao", ""));
     end
 
-    if studies == 1 then
-        tab:push("| Directory Name | Path | Execution status |");
+    local case = dictionary.cell_case[LANGUAGE];
+    local directory_name = dictionary.cell_directory_name[LANGUAGE];
+    local path_cell = dictionary.cell_path[LANGUAGE];
+    local execution_status = dictionary.cell_execution_status[LANGUAGE];
+    local model = dictionary.cell_model[LANGUAGE];
+    local user = dictionary.cell_user[LANGUAGE];
+    local version = dictionary.cell_version[LANGUAGE];
+    local ID = dictionary.cell_ID[LANGUAGE];
+    local title = dictionary.cell_title[LANGUAGE];
+
+    if studies == 1 then 
+        tab:push("| " .. directory_name .. " | " .. path_cell .. " | " .. execution_status .. " |");
         tab:push("|:--------------:|:----:|:----------------:|");
         for i = 1, studies do
-            exe_status_str = "SUCCESS";
+            exe_status_str = dictionary.cell_success[LANGUAGE];
             if info_struct[i].status > 0 then
                 exe_status_str = "FAIL";
             end
@@ -208,10 +236,10 @@ function create_tab_summary(col_struct, info_struct)
             tab:push("| " .. label[i] .. " | " .. path[i].. " | " .. exe_status_str);
         end
     else
-        tab:push("| Case | Directory Name | Path | Execution status |");
+        tab:push("| " .. case .. " | " .. directory_name .. " | " .. path_cell .. " | " .. execution_status .. " |");
         tab:push("|:----:|:--------------:|:----:|:----------------:|");
         for i = 1, studies do
-            exe_status_str = "SUCCESS";
+            exe_status_str = dictionary.cell_success[LANGUAGE];
             if info_struct[i].status > 0 then
                 exe_status_str = "FAIL";
             end
@@ -220,50 +248,50 @@ function create_tab_summary(col_struct, info_struct)
         end
     end
 
-    tab:push("## About the model");
+    tab:push("## " .. dictionary.about_model[LANGUAGE]);
     if studies == 1 then
-        tab:push("| Model | User | Version | ID |");
+        tab:push("| " .. model .. " | " .. user .. " | " .. version .. " | " .. ID .. " |");
         tab:push("|:-----:|:----:|:-------:|:----:|");
         for i = 1, studies do
             tab:push("| " .. info_struct[i].model .. " | " .. info_struct[i].user .. " | " .. info_struct[i].version .. " | " .. info_struct[i].hash .. " |");
         end
     else
-        tab:push("| Case | Model | User | Version | ID |");
+        tab:push("| " .. case .. " | " .. model .. " | " .. user .. " | " .. version .." | " .. ID .. " |");
         tab:push("|:----:|:-----:|:----:|:-------:|:----:|");
         for i = 1, studies do
             tab:push("| " .. i .. " | " .. info_struct[i].model .. " | " .. info_struct[i].user .. " | " .. info_struct[i].version .. " | " .. info_struct[i].hash .. " |");
         end
     end
 
-    tab:push("## Case title");
+    tab:push("## " .. dictionary.case_title[LANGUAGE]);
     if studies == 1 then
-        tab:push("| Title |");
+        tab:push("| " .. title .. " |");
         tab:push("|:-----------:|");
         for i = 1, studies do
             tab:push("| " .. description[i] .. " | ");
         end
     else
-        tab:push("| Case | Title |");
+        tab:push("| " .. case .. " | " .. title .. " |");
         tab:push("|:----:|:-----------:|");
         for i = 1, studies do
             tab:push("| " .. i .. " | " .. description[i] .. " | ");
         end
     end
 
-    tab:push("## Horizon, resolution and execution options");
+    tab:push("## " .. dictionary.hor_resol_exec[LANGUAGE]);
 
-    local header_string       = "| Case parameter ";
+    local header_string       = "| " .. dictionary.cell_case_parameters[LANGUAGE];
     local lower_header_string = "|---------------";
-    local exe_type_string     = "| Execution type ";
-    local case_type_string    = "| Case type ";
-    local nstg_string         = "| Stages ";
-    local ini_year_string     = "| Initial year of study ";
-    local nblk_string         = "| Blocks ";
-    local nforw_string        = "| Forward series ";
-    local nback_string        = "| Backward series ";
-    local hrep_string         = "| Hourly representation ";
-    local netrep_string       = "| Network representation ";
-    local typday_string       = "| Typical days representation ";
+    local exe_type_string     = "| " .. dictionary.cell_execution_type[LANGUAGE];
+    local case_type_string    = "| " .. dictionary.cell_case_type[LANGUAGE];
+    local nstg_string         = "| " .. dictionary.cell_stages[LANGUAGE];
+    local ini_year_string     = "| " .. dictionary.cell_ini_year[LANGUAGE];
+    local nblk_string         = "| " .. dictionary.cell_blocks[LANGUAGE];
+    local nforw_string        = "| " .. dictionary.cell_fwd_series[LANGUAGE];
+    local nback_string        = "| " .. dictionary.cell_bwd_series[LANGUAGE];
+    local hrep_string         = "| " .. dictionary.cell_hourly_representation[LANGUAGE];
+    local netrep_string       = "| " .. dictionary.cell_network_representation[LANGUAGE];
+    local typday_string       = "| " .. dictionary.cell_typicalday_representation[LANGUAGE];
 
     local hrep_val   = {};
     local netrep_val = {};
@@ -277,15 +305,15 @@ function create_tab_summary(col_struct, info_struct)
         header_string = header_string             .. " | " .. col_struct.case_dir_list[i];
         lower_header_string = lower_header_string .. "|-----------";
 
-        exe_type[i] = "Policy";
+        exe_type[i] = dictionary.cell_policy[LANGUAGE];
         if col_struct.study[i]:get_parameter("Objetivo", -1) == 2 then
-            exe_type[i] = "Simulation";
+            exe_type[i] = dictionary.cell_simulation[LANGUAGE];
         end
         exe_type_string = exe_type_string .. " | " .. exe_type[i];
 
-        case_type[i] = "Monthly";
+        case_type[i] = dictionary.cell_monthly[LANGUAGE];
         if col_struct.study[i]:stage_type() == 1 then
-            case_type[i] = "Weekly";
+            case_type[i] = dictionary.cell_weekly[LANGUAGE];
         end
         case_type_string = case_type_string .. " | " .. case_type[i];
 
@@ -295,24 +323,24 @@ function create_tab_summary(col_struct, info_struct)
         nforw_string     = nforw_string     .. " | " .. tostring(col_struct.study[i]:scenarios());
         nback_string     = nback_string     .. " | " .. tostring(col_struct.study[i]:openings());
 
-        hrep_val[i] = "no";
+        hrep_val[i] = "❌";
         if col_struct.study[i]:get_parameter("SIMH", -1) == 2 then
-            hrep_val[i] = "yes";
+            hrep_val[i] = "✔️";
         end
         hrep_string = hrep_string .. " | " .. hrep_val[i];
 
-        netrep_val[i] = "no";
+        netrep_val[i] = "❌";
         if col_struct.study[i]:get_parameter("Rede", -1) == 1 then
-            netrep_val[i] = "yes";
+            netrep_val[i] = "✔️";
             if not show_net_data then
                 show_net_data = true
             end
         end
         netrep_string = netrep_string .. " | " .. netrep_val[i];
 
-        typday_val[i] = "no";
+        typday_val[i] = "❌";
         if col_struct.study[i]:get_parameter("TDAY", -1) == 1 then
-            typday_val[i] = "yes";
+            typday_val[i] = "✔️";
         end
         typday_string = typday_string .. " | " .. typday_val[i];
     end
@@ -342,22 +370,22 @@ function create_tab_summary(col_struct, info_struct)
     tab:push(netrep_string);
     tab:push(typday_string);
 
-    tab:push("## Dimensions");
+    tab:push("## " .. dictionary.dimentions[LANGUAGE]);
 
-    local sys_string        = "| Systems ";
-    local battery_string    = "| Batteries ";
-    local bus_string        = "| Buses ";
-    local ac_circuit_string = "| AC circuits ";
-    local dc_circuit_string = "| DC circuits ";
-    local interc_string     = "| Interconnections ";
-    local hydro_string      = "| Hydro plants ";
-    local pinj_string       = "| Power injections ";
-    local renw_w_string     = "| Renewable plants - Wind ";
-    local renw_s_string     = "| Renewable plants - Solar";
-    local renw_sh_string    = "| Renewable plants - Small hydro";
-    local renw_csp_string   = "| Renewable plants - CSP";
-    local renw_oth_string   = "| Renewable plants - Other tech.";
-    local thermal_string    = "| Thermal plants ";
+    local sys_string        = "| " .. dictionary.cell_system[LANGUAGE];
+    local battery_string    = "| " .. dictionary.cell_batteries[LANGUAGE];
+    local bus_string        = "| " .. dictionary.cell_buses[LANGUAGE];
+    local ac_circuit_string = "| " .. dictionary.cell_ac_circuits[LANGUAGE];
+    local dc_circuit_string = "| " .. dictionary.cell_dc_circuits[LANGUAGE];
+    local interc_string     = "| " .. dictionary.cell_interconnections[LANGUAGE];
+    local hydro_string      = "| " .. dictionary.cell_hydro_plants[LANGUAGE];
+    local pinj_string       = "| " .. dictionary.cell_power_injections[LANGUAGE];
+    local renw_w_string     = "| " .. dictionary.cell_renewable_wind[LANGUAGE];
+    local renw_s_string     = "| " .. dictionary.cell_renewable_solar[LANGUAGE];
+    local renw_sh_string    = "| " .. dictionary.cell_renewable_small_hydro[LANGUAGE];
+    local renw_csp_string   = "| " .. dictionary.cell_renewable_csp[LANGUAGE];
+    local renw_oth_string   = "| " .. dictionary.cell_renewable_other[LANGUAGE];
+    local thermal_string    = "| " .. dictionary.cell_thermal_plants[LANGUAGE];
 
     for i = 1, studies do
         sys_string = sys_string             .. " | " .. tostring(#col_struct.system[i]:labels());
@@ -432,13 +460,13 @@ function create_tab_summary(col_struct, info_struct)
     end
 
     if has_nconv_data[1] then
-        tab:push("## Non-convexities");
+        tab:push("## " .. dictionary.non_convexities[LANGUAGE]);
 
-        header_string       = "| Non-convexity type";
+        header_string       = "| " .. dictionary.cell_non_convexities_type[LANGUAGE];
         lower_header_string = "|-------------------";
 
         if studies == 1 then
-            header_string       = header_string       .. "| Count ";
+            header_string       = header_string       .. "| " .. dictionary.cell_count[LANGUAGE];
             lower_header_string = lower_header_string .. "|-------------------";
         else
             header_string       = header_string       .. "|" .. col_struct.case_dir_list[1];
@@ -486,7 +514,7 @@ end
 -----------------------------------------------------------------------------------------------
 
 function create_inflow_energy(col_struct)
-    local tab = Tab("Inflow energy");
+    local tab = Tab(dictionary.tab_inflow_energy[LANGUAGE]);
 
     local inferg = {};
     for i = 1, studies do
@@ -494,17 +522,17 @@ function create_inflow_energy(col_struct)
     end
 
     -- Color vectors
-    local chart = Chart("Total inflow energy");
+    local chart = Chart(dictionary.inflow_energy[LANGUAGE]);
     if studies > 1 then
         for i = 1, studies do
 
             -- Confidence interval
-            chart:add_area_range(inferg[i]:select_agent(1):add_prefix(col_struct.case_dir_list[i] .. " - "), inferg[i]:select_agent(3), { xUnit="Stage", colors = { light_global_color[i], light_global_color[i] } });
+            chart:add_area_range(inferg[i]:select_agent(1):add_prefix(col_struct.case_dir_list[i] .. " - "), inferg[i]:select_agent(3), { xUnit=dictionary.cell_stages[LANGUAGE], colors = { light_global_color[i], light_global_color[i] } });
             chart:add_line(inferg[i]:select_agent(2):add_prefix(col_struct.case_dir_list[i] .. " - ")); -- average
         end
     else
         -- Confidence interval
-        chart:add_area_range(inferg[1]:select_agent(1), inferg[1]:select_agent(3), { xUnit="Stage", colors = { light_global_color[1], light_global_color[1] } });
+        chart:add_area_range(inferg[1]:select_agent(1), inferg[1]:select_agent(3), { xUnit=dictionary.cell_stages[LANGUAGE], colors = { light_global_color[1], light_global_color[1] } });
         chart:add_line(inferg[1]:select_agent(2)); -- average
     end
 
@@ -550,7 +578,7 @@ end
 
 function make_convergence_graphs(dashboard, conv_age, systems, horizon)
     for i, conv in ipairs(conv_age) do
-        local chart = Chart("Convergence | System: " .. systems[i] .. " | Horizon: " .. horizon[i]);
+        local chart = Chart(dictionary.convergence[LANGUAGE] .. " | " .. dictionary.system[LANGUAGE] .. " : " .. systems[i] .. " | " .. dictionary.horizon[LANGUAGE] .. " : " .. horizon[i]);
         chart:add_area_range(conv:select_agents({ 2 }), conv:select_agents({ 4 }), { colors = { "#ACD98D", "#ACD98D" }, xAllowDecimals = false }); -- Confidence interval
         chart:add_line(conv:select_agents({ 1 }), { colors = { "#3CB7CC" }, xAllowDecimals = false }); -- Zinf
         chart:add_line(conv:select_agents({ 3 }), { colors = { "#32A251" }, xAllowDecimals = false }); -- Zsup
@@ -560,7 +588,7 @@ end
 
 function make_added_cuts_graphs(dashboard, cuts_age, systems, horizon)
     for i, cuts in ipairs(cuts_age) do
-        local chart = Chart("Number of added cuts | System: " .. systems[i] .. " Horizon: " .. horizon[i]);
+        local chart = Chart(dictionary.number_of_added_cut[LANGUAGE] .. " | " .. dictionary.system[LANGUAGE] .. " : " .. systems[i] .. dictionary.horizon[LANGUAGE] .. " : " .. horizon[i]);
         chart:add_column(cuts:select_agents({ 1 }), { xAllowDecimals = false }); -- Opt
         chart:add_column(cuts:select_agents({ 2 }), { xAllowDecimals = false }); -- Feas
         dashboard:push(chart);
@@ -586,7 +614,7 @@ end
 
 function create_penalty_proportion_graph(tab, col_struct, i)
     local output_name  = "sddppenp";
-    local report_title = "Share of violation penalties and deficit in the cost of each stage/scenario";
+    local report_title = dictionary.violation_penalties[LANGUAGE];
     local penp = col_struct.generic[i]:load(output_name);
 
     if not penp:loaded() then
@@ -597,13 +625,13 @@ function create_penalty_proportion_graph(tab, col_struct, i)
     penp:convert("%");
 
     local chart = Chart(report_title .. " (%)");
-    chart:add_heatmap_series(penp, { yLabel = "Scenario", xLabel = "Stage", showInLegend = false, stops = { { 0.0, "#4E79A7" }, { 0.5, "#FBEEB3" }, { 1.0, "#C64B3E" } }, stopsMin = 0.0, stopsMax = 100.0 });
+    chart:add_heatmap_series(penp, { yLabel = "Scenario", xLabel = dictionary.cell_stages[LANGUAGE], showInLegend = false, stops = { { 0.0, "#4E79A7" }, { 0.5, "#FBEEB3" }, { 1.0, "#C64B3E" } }, stopsMin = 0.0, stopsMax = 100.0 });
     tab:push(chart);
 end
 
 function create_conv_map_graph(tab, file_name, col_struct, i)
     local conv_map = col_struct.generic[i]:load(file_name);
-    local report_title = "Convergence map";
+    local report_title = dictionary.convergence_map[LANGUAGE];
 
     if not conv_map:loaded() then
         info(file_name .. " could not be loaded. ".. "'" .. report_title .. "'" .. "report will not be displayed");
@@ -612,7 +640,7 @@ function create_conv_map_graph(tab, file_name, col_struct, i)
 
     local options = {
     yLabel = "Iteration",
-    xLabel = "Stage",
+    xLabel = dictionary.cell_stages[LANGUAGE],
     showInLegend = false,
     stopsMin = 0,
     stopsMax = 2,
@@ -631,7 +659,7 @@ end
 
 function create_hourly_sol_status_graph(tab, col_struct, i)
     local output_name  = "hrstat";
-    local report_title = "Solution status per stage and scenario";
+    local report_title = dictionary.solution_status[LANGUAGE];
     local status = col_struct.generic[i]:load(output_name);
 
     if not status:loaded() then
@@ -641,7 +669,7 @@ function create_hourly_sol_status_graph(tab, col_struct, i)
 
     local options = {
     yLabel = "Scenario",
-    xLabel = "Stage",
+    xLabel = dictionary.cell_stages[LANGUAGE],
     showInLegend = false,
     stopsMin = 0,
     stopsMax = 3,
@@ -680,12 +708,12 @@ function create_exe_timer_per_scen(tab, col_struct, i)
             unit = "s";
         end
 
-        extime_chart = Chart("Dispersion of execution times per scenario");
+        extime_chart = Chart(dictionary.dispersion_of_time[LANGUAGE]);
         extime_chart:add_area_range(extime_disp:select_agent(1):convert(unit),
                                     extime_disp:select_agent(3):convert(unit),
-                                    { xUnit = "Stage", colors = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
+                                    { xUnit = dictionary.cell_stages[LANGUAGE], colors = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
         extime_chart:add_line(extime_disp:select_agent(2):convert(unit),
-                              { xUnit = "Stage", colors = { "#F02720" } });                  -- Average
+                              { xUnit = dictionary.cell_stages[LANGUAGE], colors = { "#F02720" } });                  -- Average
 
         if #extime_chart > 0 then
             tab:push(extime_chart);
@@ -694,7 +722,7 @@ function create_exe_timer_per_scen(tab, col_struct, i)
 end
 
 function create_pol_report(col_struct)
-    local tab = Tab("Policy");
+    local tab = Tab(dictionary.tab_policy[LANGUAGE]);
 
     local total_cost_age;
     local future_cost_age;
@@ -727,14 +755,14 @@ function create_pol_report(col_struct)
 
     -- Creating policy report
     for i, file in ipairs(file_list) do
-        tab:push("## System: " .. systems[i] .. " | Horizon: " .. horizon[i]);
+        tab:push("## " .. dictionary.system[LANGUAGE] .. ": " .. systems[i] .. " | " .. dictionary.horizon[LANGUAGE] .. ": " .. horizon[i]);
 
         if studies > 1 then
-            local chart_conv      = Chart("Convergence");
-            local chart_cut_opt   = Chart("New cuts per iteration - Optimality");
-            local chart_cut_feas  = Chart("New cuts per iteration - Feasibility");
-            local chart_time_forw = Chart("Execution time - Forward");
-            local chart_time_back = Chart("Execution time - Backward");
+            local chart_conv      = Chart(dictionary.convergence[LANGUAGE]);
+            local chart_cut_opt   = Chart(dictionary.new_cut_per_iteration_optimality[LANGUAGE]);
+            local chart_cut_feas  = Chart(dictionary.new_cut_per_iteration_feasibility[LANGUAGE]);
+            local chart_time_forw = Chart(dictionary.forward_time[LANGUAGE]);
+            local chart_time_back = Chart(dictionary.backward_time[LANGUAGE]);
 
             for j = 1, studies do
 
@@ -840,7 +868,7 @@ function create_pol_report(col_struct)
             -----------------------------------------------------------------------------------------------------------
             -- Convergence chart
             -----------------------------------------------------------------------------------------------------------
-            local chart = Chart("Convergence");
+            local chart = Chart(dictionary.convergence[LANGUAGE]);
             -- Zinf
             chart:add_line(conv_age:select_agents({ 1 }), { xUnit = "Iteration", colors = { "#3CB7CC" }, xAllowDecimals = false });
             -- Zsup
@@ -867,7 +895,7 @@ function create_pol_report(col_struct)
             -- Final simulation chart
             -----------------------------------------------------------------------------------------------------------
             if (show_sim_cost and not has_results_for_add_years) then
-                local chart = Chart("Policy x Final simulation objective functions");
+                local chart = Chart(dictionary.policy_simulation[LANGUAGE]);
 
                 conv_age = conv_file:select_agents({ 9, 10, 11}); -- Zsup - Tol  ,Zsup        ,Zsup + Tol   (With FCF added in the last stage before additional years)
 
@@ -900,7 +928,7 @@ function create_pol_report(col_struct)
             -----------------------------------------------------------------------------------------------------------
             -- Cuts per iteration
             -----------------------------------------------------------------------------------------------------------
-            chart = Chart("New cuts per iteration");
+            chart = Chart(dictionary.new_cuts_per_iteration[LANGUAGE]);
 
             chart:add_column(cuts_age:select_agents({ 1 }), { xUnit = "Iteration", xAllowDecimals = false }); -- Optimality
 
@@ -913,7 +941,7 @@ function create_pol_report(col_struct)
             -----------------------------------------------------------------------------------------------------------
             -- Forward and backward execution times
             -----------------------------------------------------------------------------------------------------------
-            chart = Chart("Forward and backward execution times");
+            chart = Chart(dictionary.fwd_bwd_time[LANGUAGE]);
             chart:add_line(time_age:rename_agents({"Forward","Backward"}), { xUnit = "Iteration", xAllowDecimals = false }); -- Forw. and Back. times
             tab:push(chart);
 
@@ -932,14 +960,14 @@ end
 -----------------------------------------------------------------------------------------------
 
 function create_sim_report(col_struct)
-    local tab = Tab("Simulation");
+    local tab = Tab(dictionary.tab_simulation[LANGUAGE]);
 
     local costs;
     local costs_agg;
     local exe_times;
 
-    local cost_chart = Chart("Breakdown of total operating costs");
-    local exet_chart = Chart("Execution times");
+    local cost_chart = Chart(dictionary.breakdwon_time[LANGUAGE]);
+    local exet_chart = Chart(dictionary.excution_times[LANGUAGE]);
 
     local objcop = require("sddp/costs");
     local discount_rate = require("sddp/discount_rate");
@@ -1002,10 +1030,10 @@ end
 -----------------------------------------------------------------------------------------------
 
 function create_costs_and_revs(col_struct)
-    local tab = Tab("Costs & revenues");
+    local tab = Tab(dictionary.tab_cost_revenues[LANGUAGE]);
 
-    local chart = Chart("Dispersion of operating costs per stage");
-    local chart_avg = Chart("Average operating costs per stage");
+    local chart = Chart(dictionary.disp_of_operation_cost[LANGUAGE]);
+    local chart_avg = Chart(dictionary.avg_operation_cost[LANGUAGE]);
 
     for i = 1, studies do
         local stages_without_buffer_years = col_struct.study[i]:stages_without_buffer_years();
@@ -1024,20 +1052,20 @@ function create_costs_and_revs(col_struct)
 
         if studies > 1 then
             if is_greater_than_zero(disp) then
-                chart:add_area_range(disp:select_agent(1):add_prefix(col_struct.case_dir_list[i] .. " - "), disp:select_agent(3), { xUnit="Stage", colors = light_global_color[i] }); -- Confidence interval
-                chart:add_line(disp:select_agent(2):add_prefix(col_struct.case_dir_list[i] .. " - "),{xUnit="Stage"}); -- Average
+                chart:add_area_range(disp:select_agent(1):add_prefix(col_struct.case_dir_list[i] .. " - "), disp:select_agent(3), { xUnit=dictionary.cell_stages[LANGUAGE], colors = light_global_color[i] }); -- Confidence interval
+                chart:add_line(disp:select_agent(2):add_prefix(col_struct.case_dir_list[i] .. " - "),{xUnit=dictionary.cell_stages[LANGUAGE]}); -- Average
             end
         else
             if is_greater_than_zero(disp) then
-                chart:add_area_range(disp:select_agent(1), disp:select_agent(3), { xUnit="Stage", colors = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
-                chart:add_line(disp:select_agent(2), { xUnit="Stage", colors = { "#F02720" } }); -- Average
+                chart:add_area_range(disp:select_agent(1), disp:select_agent(3), { xUnit=dictionary.cell_stages[LANGUAGE], colors = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
+                chart:add_line(disp:select_agent(2), { xUnit=dictionary.cell_stages[LANGUAGE], colors = { "#F02720" } }); -- Average
             end
         end
 
         -- sddp_dashboard_cost_avg
         local costs_avg = costs:aggregate_scenarios(BY_AVERAGE()):remove_zeros();
         if studies == 1 and is_greater_than_zero(costs_avg) then
-            chart_avg:add_column_stacking(costs_avg,{xUnit="Stage"});
+            chart_avg:add_column_stacking(costs_avg,{xUnit=dictionary.cell_stages[LANGUAGE]});
         end
     end
 
@@ -1057,7 +1085,7 @@ end
 -----------------------------------------------------------------------------------------------
 
 function create_marg_costs(col_struct)
-    local tab = Tab("Marginal costs");
+    local tab = Tab(dictionary.tab_cmo[LANGUAGE]);
 
     local cmg = {};
     local cmg_aggsum;
@@ -1073,37 +1101,37 @@ function create_marg_costs(col_struct)
     end
 
     -- Marginal cost aggregated by average
-    local chart = Chart("Annual marginal cost by system");
+    local chart = Chart(dictionary.annual_cmo[LANGUAGE]);
     if studies > 1 then
         for i = 1, studies do
             local stages_without_buffer_years = col_struct.study[i]:stages_without_buffer_years();
             cmg_aggyear = cmg[i]:aggregate_blocks_by_duracipu(i):aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[i].hours:select_stages(1,stages_without_buffer_years), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM);
 
             -- Add marginal costs outputs
-            chart:add_categories(cmg_aggyear, col_struct.case_dir_list[i], { xUnit="Year" }); -- Annual Marg. cost
+            chart:add_categories(cmg_aggyear, col_struct.case_dir_list[i], { xUnit=dictionary.cell_year[LANGUAGE] }); -- Annual Marg. cost
         end
     else
         local stages_without_buffer_years = col_struct.study[1]:stages_without_buffer_years();
         cmg_aggyear = cmg[1]:aggregate_blocks_by_duracipu():aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[1].hours:select_stages(1,stages_without_buffer_years), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE());
-        chart:add_column(cmg_aggyear, { xUnit="Year" });
+        chart:add_column(cmg_aggyear, { xUnit=dictionary.cell_year[LANGUAGE] });
     end
     tab:push(chart);
 
     if studies > 1 then
-        tab:push("## Average marginal costs per stage per system");
+        tab:push("## " .. dictionary.stg_cmo[LANGUAGE]);
         local agents = cmg[1]:agents();
         for i, agent in ipairs(agents) do
             local chart = Chart(agent);
             for j = 1, studies do
                 cmg_aggsum = cmg[j]:select_agent(agent):rename_agent(col_struct.case_dir_list[j]):aggregate_blocks_by_duracipu(i):aggregate_scenarios(BY_AVERAGE())
-                chart:add_line(cmg_aggsum,{xUnit="Stage"}); -- Average marg. cost per stage
+                chart:add_line(cmg_aggsum,{xUnit=dictionary.cell_stages[LANGUAGE]}); -- Average marg. cost per stage
             end
             tab:push(chart);
         end
     else
-        local chart = Chart("Average marginal costs per stage per system");
+        local chart = Chart(dictionary.stg_cmo[LANGUAGE]);
         cmg_aggsum = cmg[1]:aggregate_blocks_by_duracipu():aggregate_scenarios(BY_AVERAGE());
-        chart:add_column(cmg_aggsum,{xUnit="Stage"});
+        chart:add_column(cmg_aggsum,{xUnit=dictionary.cell_stages[LANGUAGE]});
         tab:push(chart);
     end
 
@@ -1115,7 +1143,7 @@ end
 -----------------------------------------------------------------------------------------------
 
 function create_gen_report(col_struct)
-    local tab = Tab("Generation");
+    local tab = Tab(dictionary.tab_generation[LANGUAGE]);
 
     -- Color preferences
     local color_hydro = '#4E79A7';
@@ -1197,19 +1225,19 @@ function create_gen_report(col_struct)
     end
 
     if studies > 1 then
-        chart_tot_gerhid     = Chart("Total Hydro");
-        chart_tot_sml_hid    = Chart("Total Small Hydro");
-        chart_tot_gerter     = Chart("Total Thermal");
-        chart_tot_other_renw = Chart("Total Renewable - Other tech.");
-        chart_tot_renw_wind  = Chart("Total Renewable - Wind");
-        chart_tot_renw_solar = Chart("Total Renewable - Solar");
-        chart_tot_renw_shyd  = Chart("Total Renewable - Small hydro");
-        chart_tot_renw_csp   = Chart("Total Renewable - CSP");
-        chart_tot_gerbat     = Chart("Total Battery");
-        chart_tot_potinj     = Chart("Total Power Injection");
-        chart_tot_defcit     = Chart("Total Deficit");
+        chart_tot_gerhid     = Chart(dictionary.total_hydro[LANGUAGE]);
+        chart_tot_sml_hid    = Chart(dictionary.total_small_hydro[LANGUAGE]);
+        chart_tot_gerter     = Chart(dictionary.total_thermal[LANGUAGE]);
+        chart_tot_other_renw = Chart(dictionary.total_renewable_other[LANGUAGE]);
+        chart_tot_renw_wind  = Chart(dictionary.total_renewable_wind[LANGUAGE]);
+        chart_tot_renw_solar = Chart(dictionary.total_renewable_solar[LANGUAGE]);
+        chart_tot_renw_shyd  = Chart(dictionary.total_renewable_small_hydro[LANGUAGE]);
+        chart_tot_renw_csp   = Chart(dictionary.total_renewable_csp[LANGUAGE]);
+        chart_tot_gerbat     = Chart(dictionary.total_battery[LANGUAGE]);
+        chart_tot_potinj     = Chart(dictionary.total_power_injection[LANGUAGE]);
+        chart_tot_defcit     = Chart(dictionary.total_deficit[LANGUAGE]);
     else
-        chart = Chart("Total generation");
+        chart = Chart(dictionary.total_generation[LANGUAGE]);
     end
 
     -- Total generation report
@@ -1270,46 +1298,46 @@ function create_gen_report(col_struct)
 
         if studies > 1 then
             if total_hydro_gen:loaded() then
-                chart_tot_gerhid:add_column(total_hydro_gen, { xUnit="Stage"});
+                chart_tot_gerhid:add_column(total_hydro_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
             end
             if total_thermal_gen:loaded() then
-                chart_tot_gerter:add_column(total_thermal_gen, { xUnit="Stage"});
+                chart_tot_gerter:add_column(total_thermal_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
             end
             if total_other_renw_gen:loaded() then
-                chart_tot_other_renw:add_column(total_other_renw_gen, { xUnit="Stage"});
+                chart_tot_other_renw:add_column(total_other_renw_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
             end
             if total_wind_gen:loaded() then
-                chart_tot_renw_wind:add_column(total_wind_gen, { xUnit="Stage"});
+                chart_tot_renw_wind:add_column(total_wind_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
             end
             if total_solar_gen:loaded() then
-                chart_tot_renw_solar:add_column(total_solar_gen, { xUnit="Stage"});
+                chart_tot_renw_solar:add_column(total_solar_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
             end
             if total_small_hydro_gen:loaded() then
-                chart_tot_renw_shyd:add_column(total_small_hydro_gen, { xUnit="Stage"});
+                chart_tot_renw_shyd:add_column(total_small_hydro_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
             end
             if total_csp_gen:loaded() then
-                chart_tot_renw_csp:add_column(total_csp_gen, { xUnit="Stage"});
+                chart_tot_renw_csp:add_column(total_csp_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
             end
             if total_batt_gen:loaded() then
-                chart_tot_gerbat:add_column(total_batt_gen, { xUnit="Stage"});
+                chart_tot_gerbat:add_column(total_batt_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
             end
             if total_pot_inj:loaded() then
-                chart_tot_potinj:add_column(total_pot_inj, { xUnit="Stage"});
+                chart_tot_potinj:add_column(total_pot_inj, { xUnit=dictionary.cell_stages[LANGUAGE]});
             end
             if total_deficit:loaded() then
-                chart_tot_defcit:add_column(total_deficit, { xUnit="Stage"});
+                chart_tot_defcit:add_column(total_deficit, { xUnit=dictionary.cell_stages[LANGUAGE]});
             end
         else
-            chart:add_area_stacking(total_thermal_gen    , { xUnit="Stage", colors = { color_thermal     } });
-            chart:add_area_stacking(total_hydro_gen      , { xUnit="Stage", colors = { color_hydro       } });
-            chart:add_area_stacking(total_wind_gen       , { xUnit="Stage", colors = { color_wind        } });
-            chart:add_area_stacking(total_solar_gen      , { xUnit="Stage", colors = { color_solar       } });
-            chart:add_area_stacking(total_small_hydro_gen, { xUnit="Stage", colors = { color_small_hydro } });
-            chart:add_area_stacking(total_csp_gen        , { xUnit="Stage", colors = { color_csp } });
-            chart:add_area_stacking(total_other_renw_gen , { xUnit="Stage", colors = { color_renw_other  } });
-            chart:add_area_stacking(total_batt_gen       , { xUnit="Stage", colors = { color_battery     } });
-            chart:add_area_stacking(total_pot_inj        , { xUnit="Stage", colors = { color_pinj        } });
-            chart:add_area_stacking(total_deficit        , { xUnit="Stage", colors = { color_deficit     } });
+            chart:add_area_stacking(total_thermal_gen    , { xUnit=dictionary.cell_stages[LANGUAGE], colors = { color_thermal     } });
+            chart:add_area_stacking(total_hydro_gen      , { xUnit=dictionary.cell_stages[LANGUAGE], colors = { color_hydro       } });
+            chart:add_area_stacking(total_wind_gen       , { xUnit=dictionary.cell_stages[LANGUAGE], colors = { color_wind        } });
+            chart:add_area_stacking(total_solar_gen      , { xUnit=dictionary.cell_stages[LANGUAGE], colors = { color_solar       } });
+            chart:add_area_stacking(total_small_hydro_gen, { xUnit=dictionary.cell_stages[LANGUAGE], colors = { color_small_hydro } });
+            chart:add_area_stacking(total_csp_gen        , { xUnit=dictionary.cell_stages[LANGUAGE], colors = { color_csp } });
+            chart:add_area_stacking(total_other_renw_gen , { xUnit=dictionary.cell_stages[LANGUAGE], colors = { color_renw_other  } });
+            chart:add_area_stacking(total_batt_gen       , { xUnit=dictionary.cell_stages[LANGUAGE], colors = { color_battery     } });
+            chart:add_area_stacking(total_pot_inj        , { xUnit=dictionary.cell_stages[LANGUAGE], colors = { color_pinj        } });
+            chart:add_area_stacking(total_deficit        , { xUnit=dictionary.cell_stages[LANGUAGE], colors = { color_deficit     } });
         end
     end
 
@@ -1349,31 +1377,31 @@ function create_gen_report(col_struct)
     end
 
     -- Name initialization
-    hydro_report_name   = "Total Hydro";
-    thermal_report_name = "Total Thermal";
-    battery_report_name = "Total Battery";
-    deficit_report_name = "Total Deficit";
-    pinj_report_name    = "Total P. Inj.";
+    hydro_report_name   = dictionary.total_hydro[LANGUAGE];
+    thermal_report_name = dictionary.total_thermal[LANGUAGE];
+    battery_report_name = dictionary.total_battery[LANGUAGE];
+    deficit_report_name = dictionary.total_deficit[LANGUAGE];
+    pinj_report_name    = dictionary.total_power_injection[LANGUAGE];
 
-    renw_ot_report_name     = "Total Renewable - Other tech.";
-    renw_wind_report_name   = "Total Renewable - Wind";
-    renw_solar_report_name  = "Total Renewable - Solar";
-    renw_shydro_report_name = "Total Renewable - Small hydro";
-    renw_csp_report_name = "Total Renewable - CSP";
+    renw_ot_report_name     = dictionary.total_renewable_other[LANGUAGE];
+    renw_wind_report_name   = dictionary.total_renewable_wind[LANGUAGE];
+    renw_solar_report_name  = dictionary.total_renewable_solar[LANGUAGE];
+    renw_shydro_report_name = dictionary.total_small_hydro[LANGUAGE];
+    renw_csp_report_name = dictionary.total_renewable_csp[LANGUAGE];
 
     -- Generation per system report
     local agents = col_struct.generic[1]:load("cmgdem"):agents();
     for i, agent in ipairs(agents) do
-        chart_tot_gerhid     = Chart("Total Hydro");
-        chart_tot_gerter     = Chart("Total Thermal");
-        chart_tot_renw_other = Chart("Total Renewable - Other tech.");
-        chart_tot_renw_wind  = Chart("Total Renewable - Wind");
-        chart_tot_renw_solar = Chart("Total Renewable - Solar");
-        chart_tot_renw_shyd  = Chart("Total Renewable - Small hydro");
-        chart_tot_renw_csp   = Chart("Total Renewable - CSP");
-        chart_tot_gerbat     = Chart("Total Battery");
-        chart_tot_potinj     = Chart("Total Power Injection");
-        chart_tot_defcit     = Chart("Total Deficit");
+        chart_tot_gerhid     =  Chart(dictionary.total_hydro[LANGUAGE]);
+        chart_tot_gerter     =  Chart(dictionary.total_thermal[LANGUAGE]);
+        chart_tot_renw_other =  Chart(dictionary.total_renewable_other[LANGUAGE]);
+        chart_tot_renw_wind  =  Chart(dictionary.total_renewable_wind[LANGUAGE]);
+        chart_tot_renw_solar =  Chart(dictionary.total_renewable_solar[LANGUAGE]);
+        chart_tot_renw_shyd  =  Chart(dictionary.total_renewable_small_hydro[LANGUAGE]);
+        chart_tot_renw_csp   =  Chart(dictionary.total_renewable_csp[LANGUAGE]);
+        chart_tot_gerbat     =  Chart(dictionary.total_battery[LANGUAGE]);
+        chart_tot_potinj     =  Chart(dictionary.total_power_injection[LANGUAGE]);
+        chart_tot_defcit     =  Chart(dictionary.total_deficit[LANGUAGE]);
 
         for i = 1, studies do
 
@@ -1435,38 +1463,38 @@ function create_gen_report(col_struct)
             total_thermal_gen     = gerter[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(thermal_agent_name);
 
             if total_hydro_gen:loaded() then
-                chart_tot_gerhid:add_column(total_hydro_gen, { xUnit="Stage"});
+                chart_tot_gerhid:add_column(total_hydro_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
             end
             if total_thermal_gen:loaded() then
-                chart_tot_gerter:add_column(total_thermal_gen, { xUnit="Stage"});
+                chart_tot_gerter:add_column(total_thermal_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
             end
             if total_other_renw_gen:loaded() then
-                chart_tot_renw_other:add_column(total_other_renw_gen, { xUnit="Stage"});
+                chart_tot_renw_other:add_column(total_other_renw_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
             end
             if total_wind_gen:loaded() then
-                chart_tot_renw_wind:add_column(total_wind_gen, { xUnit="Stage"});
+                chart_tot_renw_wind:add_column(total_wind_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
             end
             if total_solar_gen:loaded() then
-                chart_tot_renw_solar:add_column(total_solar_gen, { xUnit="Stage"});
+                chart_tot_renw_solar:add_column(total_solar_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
             end
             if total_small_hydro_gen:loaded() then
-                chart_tot_renw_shyd:add_column(total_small_hydro_gen, { xUnit="Stage"});
+                chart_tot_renw_shyd:add_column(total_small_hydro_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
             end
             if total_csp_gen:loaded() then
-                chart_tot_renw_csp:add_column(total_csp_gen, { xUnit="Stage"});
+                chart_tot_renw_csp:add_column(total_csp_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
             end
             if total_batt_gen:loaded() then
-                chart_tot_gerbat:add_column(total_batt_gen, { xUnit="Stage"});
+                chart_tot_gerbat:add_column(total_batt_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
             end
             if total_pot_inj:loaded() then
-                chart_tot_potinj:add_column(total_pot_inj, { xUnit="Stage"});
+                chart_tot_potinj:add_column(total_pot_inj, { xUnit=dictionary.cell_stages[LANGUAGE]});
             end
             if total_deficit:loaded() then
-                chart_tot_defcit:add_column(total_deficit, { xUnit="Stage"});
+                chart_tot_defcit:add_column(total_deficit, { xUnit=dictionary.cell_stages[LANGUAGE]});
             end
         end
 
-        tab:push("## Total generation per system - " .. agent);
+        tab:push("## ".. dictionary.total_generation_system[LANGUAGE] .. " - " .. agent);
         if #chart_tot_gerhid > 0 then
             tab:push(chart_tot_gerhid);
         end
@@ -1503,8 +1531,8 @@ function create_gen_report(col_struct)
 end
 
 function create_risk_report(col_struct)
-    local tab = Tab("Deficit risk");
-    local chart = Chart("Deficit risk by system");
+    local tab = Tab(dictionary.tab_defict_risk[LANGUAGE]);
+    local chart = Chart(dictionary.total_defict_risk[LANGUAGE]);
 
     if studies > 1 then
         for i = 1, studies do
@@ -1546,7 +1574,7 @@ function create_viol_report(tab, col_struct, viol_struct, suffix)
                 for k = 1, studies do
                     viol_file = col_struct.generic[k]:load(file_name):select_agent(agent):rename_agent(case_dir_list[k]);
                     if viol_file:loaded() then
-                        chart:add_column_stacking(viol_file, {xUnit="Stage"});
+                        chart:add_column_stacking(viol_file, {xUnit=dictionary.cell_stages[LANGUAGE]});
                     end
                 end
                 tab:push(chart);
@@ -1558,7 +1586,7 @@ function create_viol_report(tab, col_struct, viol_struct, suffix)
             viol_file = col_struct.generic[1]:load(file_name);
             if viol_file:loaded() then
                 local chart = Chart(struct.title);
-                chart:add_column_stacking(viol_file, {xUnit="Stage"});
+                chart:add_column_stacking(viol_file, {xUnit=dictionary.cell_stages[LANGUAGE]});
                 tab:push(chart);
             end
         end
@@ -1577,7 +1605,7 @@ function create_viol_report_from_list(tab, col_struct, viol_list, viol_struct, s
                 viol_file = col_struct.generic[1]:load(file);
                 if viol_file:loaded() then
                     local chart = Chart(struct.title);
-                    chart:add_column_stacking(viol_file, {xUnit="Stage"});
+                    chart:add_column_stacking(viol_file, {xUnit=dictionary.cell_stages[LANGUAGE]});
                     tab:push(chart);
                 end
             end
@@ -1614,39 +1642,39 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
 
     -- Violation outputs and titles struct
     local viol_report_structs = {
-        { name = "defcit"  , title = "Deficit" },
-        { name = "nedefc"  , title = "Deficit associated to non-electrical gas demand" },
-        { name = "defbus"  , title = "Deficit per bus (% of load)" },
-        { name = "gncivio" , title = "General interpolation constraint violation" },
-        { name = "gncvio"  , title = "General constraint: linear" },
-        { name = "vrestg"  , title = "Generation constraint violation" },
-        { name = "excbus"  , title = "Generation excess per AC bus" },
-        { name = "excsis"  , title = "Generation excess per system" },
-        { name = "vvaler"  , title = "Alert storage violation" },
-        { name = "vioguide", title = "Guide curve violation per hydro reservoir" },
-        { name = "vriego"  , title = "Hydro: irrigation" },
-        { name = "vmxost"  , title = "Hydro: maximum operative storage" },
-        { name = "vimxsp"  , title = "Hydro: maximum spillage" },
-        { name = "vdefmx"  , title = "Hydro: maximum total outflow" },
-        { name = "vvolmn"  , title = "Hydro: minimum storage" },
-        { name = "vdefmn"  , title = "Hydro: minimum total outflow" },
-        { name = "vturmn"  , title = "Hydro: minimum turbining outflow" },
-        { name = "vimnsp"  , title = "Hydro: mininum spillage" },
-        { name = "rampvio" , title = "Hydro: outflow ramp" },
-        { name = "vreseg"  , title = "Reserve: joint requirement" },
-        { name = "vsarhd"  , title = "RAS target storage violation %" },
-        { name = "vsarhden", title = "RAS target storage violation GWh" },
-        { name = "viocar"  , title = "Risk Aversion Curve" },
-        { name = "vgmint"  , title = "Thermal: minimum generation" },
-        { name = "vgmntt"  , title = "NE" },
-        { name = "vioemiq" , title = "Emission budget violation" },
-        { name = "vsecset" , title = "Reservoir set: security energy constraint" },
-        { name = "valeset" , title = "Reservoir set: alert energy constraint" },
-        { name = "vespset" , title = "Reservoir set: flood control energy constraint" },
-        { name = "fcoffvio", title = "Fuel contract minimum offtake rate violation" },
-        { name = "vflmnww" , title = "Minimum hydro bypass flow violation" },
-        { name = "vflmxww" , title = "Maximum hydro bypass flow violation" },
-        { name = "finjvio" , title = "NE" }
+        { name = "defcit"  , title = dictionary.defcit[LANGUAGE]},
+        { name = "nedefc"  , title = dictionary.nedefc[LANGUAGE]},
+        { name = "defbus"  , title = dictionary.defbus[LANGUAGE]},
+        { name = "gncivio" , title = dictionary.gncivio[LANGUAGE]},
+        { name = "gncvio"  , title = dictionary.gncvio[LANGUAGE]},
+        { name = "vrestg"  , title = dictionary.vrestg[LANGUAGE]},
+        { name = "excbus"  , title = dictionary.excbus[LANGUAGE]},
+        { name = "excsis"  , title = dictionary.excsis[LANGUAGE]},
+        { name = "vvaler"  , title = dictionary.vvaler[LANGUAGE]},
+        { name = "vioguide", title = dictionary.vioguide[LANGUAGE]},
+        { name = "vriego"  , title = dictionary.vriego[LANGUAGE]},
+        { name = "vmxost"  , title = dictionary.vmxost[LANGUAGE]},
+        { name = "vimxsp"  , title = dictionary.vimxsp[LANGUAGE]},
+        { name = "vdefmx"  , title = dictionary.vdefmx[LANGUAGE]},
+        { name = "vvolmn"  , title = dictionary.vvolmn[LANGUAGE]},
+        { name = "vdefmn"  , title = dictionary.vdefmn[LANGUAGE]},
+        { name = "vturmn"  , title = dictionary.vturmn[LANGUAGE]},
+        { name = "vimnsp"  , title = dictionary.vimnsp[LANGUAGE]},
+        { name = "rampvio" , title = dictionary.rampvio[LANGUAGE]},
+        { name = "vreseg"  , title = dictionary.vreseg[LANGUAGE]},
+        { name = "vsarhd"  , title = dictionary.vsarhd[LANGUAGE]},
+        { name = "vsarhden", title = dictionary.vsarhden[LANGUAGE]},
+        { name = "viocar"  , title = dictionary.viocar[LANGUAGE]},
+        { name = "vgmint"  , title = dictionary.vgmint[LANGUAGE]},
+        { name = "vgmntt"  , title = dictionary.vgmntt[LANGUAGE]},
+        { name = "vioemiq" , title = dictionary.vioemiq[LANGUAGE]},
+        { name = "vsecset" , title = dictionary.vsecset[LANGUAGE]},
+        { name = "valeset" , title = dictionary.valeset[LANGUAGE]},
+        { name = "vespset" , title = dictionary.vespset[LANGUAGE]},
+        { name = "fcoffvio", title = dictionary.fcoffvio[LANGUAGE]},
+        { name = "vflmnww" , title = dictionary.vflmnww[LANGUAGE]},
+        { name = "vflmxww" , title = dictionary.vflmxww[LANGUAGE]},
+        { name = "finjvio" , title = dictionary.finjvio[LANGUAGE]}
     }
 
     -- Loading study collections
@@ -1678,7 +1706,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     ----------------
     -- Infeasibility
     ----------------
-    local tab_inf = Tab("Infeasibility report");
+    local tab_inf = Tab(dictionary.tab_infeasibility[LANGUAGE]);
     tab_inf:set_icon("alert-triangle");
 
     -- Infeasibility report
@@ -1735,7 +1763,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     -- Solution quality
     -------------------
 
-    local tab_solution_quality = Tab("Solution quality");
+    local tab_solution_quality = Tab(dictionary.tab_solution_quality[LANGUAGE]);
     tab_solution_quality:set_collapsed(false);
     tab_solution_quality:set_disabled();
     tab_solution_quality:set_icon("alert-triangle");
@@ -1766,9 +1794,9 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     ------------
 
     -- Violation tabs
-    local tab_violations = Tab("Violations");
-    local tab_viol_avg   = Tab("Average");
-    local tab_viol_max   = Tab("Maximum");
+    local tab_violations = Tab(dictionary.tab_violations[LANGUAGE]);
+    local tab_viol_avg   = Tab(dictionary.tab_average[LANGUAGE]);
+    local tab_viol_max   = Tab(dictionary.tab_maximum[LANGUAGE]);
 
     tab_violations:set_collapsed(true);
     tab_violations:set_disabled();
@@ -1808,7 +1836,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     -- Results
     ----------
 
-    local tab_results = Tab("Results");
+    local tab_results = Tab(dictionary.tab_results[LANGUAGE]);
     tab_results:set_collapsed(true);
     tab_results:set_disabled();
     tab_results:set_icon("line-chart");
