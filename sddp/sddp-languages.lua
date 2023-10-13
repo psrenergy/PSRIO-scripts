@@ -49,8 +49,8 @@ dictionary = {
     },
     tab_inflow_energy = {
         en = "Inflow energy",
-        es = "Energía entrante",
-        pt = "Energia de entrada"
+        es = "Energía afluente",
+        pt = "Energia afluente"
     },
     tab_cmo = {
         en = "Marginal costs",
@@ -74,8 +74,8 @@ dictionary = {
     },
     inflow_energy = {
         en = "Total inflow energy",
-        es = "Energía total de aporte",
-        pt = "Energia total de afluência"
+        es = "Energía total aporte",
+        pt = "Energia total afluência"
     },
     convergence = {
         en = "Convergence",
