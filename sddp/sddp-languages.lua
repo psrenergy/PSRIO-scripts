@@ -656,5 +656,27 @@ dictionary = {
         en = "SUCCESS",
         es = "ÉXITO",
         pt = "SUCESSO"
+    },
+    additional_years_mensage = {
+        en = "Additional years were not considered in the final simulation",
+        es = "No se consideraron años adicionales en la simulación final",
+        pt = "Anos adicionais não foram considerados na simulação final"
+    },
+    final_simulation = {
+        en = "Final simulation",
+        es = "Simulación final",
+        pt = "Simulação final"
+    },
+    final_simulation_mensage = {
+        en = "Sum of the final simulation immediate costs up to the last stage plus the future cost function for additional years",
+        es = "Suma de los costos inmediatos de la simulación final hasta la última etapa más la función de costos futuros para años adicionales",
+        pt = "Soma dos custos imediatos da simulação final até a última etapa mais a função de custo futura para anos adicionais"
+    },
+    zsup_mensage = {
+        en = "Sum of policy immediate costs up to the last stage plus the future cost function for additional years",
+        es = "Suma de los costos inmediatos de la política hasta la última etapa más la función de costos futuros para años adicionales",
+        pt = "Soma dos custos imediatos da política até a última etapa mais a função de custo futura para anos adicionais"
     }
+    
+    
 };

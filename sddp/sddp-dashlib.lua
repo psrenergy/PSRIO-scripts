@@ -920,9 +920,9 @@ function create_pol_report(col_struct)
 
                 tab:push(chart);
 
-                tab:push("**Additional years were not considered in final simulation**");
-                tab:push("* **Final simulation**: sum of final simulation immediate costs up to the last stage plus the future cost function for additional years");
-                tab:push("* **Zsup (IC + FCF)**: sum of policy immediate costs up to the last stage plus the future cost function for additional years");
+                tab:push("**" ..dictionary.additional_years_mensage[LANGUAGE].."**");
+                tab:push("* **"..dictionary.final_simulation[LANGUAGE].."**: "..dictionary.final_simulation_mensage[LANGUAGE]);
+                tab:push("* **Zsup (IC + FCF)**: "..dictionary.zsup_mensage[LANGUAGE]);
             end
 
             -----------------------------------------------------------------------------------------------------------
