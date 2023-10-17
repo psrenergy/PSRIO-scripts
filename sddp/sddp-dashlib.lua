@@ -16,6 +16,14 @@ PSR.set_global_colors(main_global_color);
 studies = PSR.studies();
 
 -----------------------------------------------------------------------------------------------
+--Usefull fuctions
+-----------------------------------------------------------------------------------------------
+
+function trim(s)
+    return (s:gsub("^%s*(.-)%s*$", "%1"))
+end
+
+-----------------------------------------------------------------------------------------------
 -- Overloads
 -----------------------------------------------------------------------------------------------
 
@@ -183,8 +191,8 @@ function get_nonconv_info(col_struct, file_name, nonconv_list, dimension, case_i
     local nonconv = col_struct.generic[case_index]:load_table(file_name);
 
     for i = 1, #nonconv do
-        nonconv_list[i] = nonconv[i]["Type"];
-        dimension[i]    = nonconv[i]["Dimension"];
+        nonconv_list[i] = trim(nonconv[i]["Type"]);
+        dimension[i]    = trim(nonconv[i]["Dimension"]);
     end
 end
 
