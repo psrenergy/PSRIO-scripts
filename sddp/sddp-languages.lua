@@ -1,6 +1,6 @@
---=================================================--
--- Dicionários de Nomes
---=================================================--
+---------------------
+-- Label dictionaries
+---------------------
 dictionary = {
     tab_solution_quality = {
         en = "Solution quality",
@@ -99,7 +99,7 @@ dictionary = {
     },
     violation_penalties = {
         en = "Share of violation penalties and deficit in the cost of each stage/scenario",
-        es = "Parte de las penalizaciones por violación y déficit en el costo de cada etapa/escenario",
+        es = "Participación de las penalizaciones por violación y déficit en el costo de cada etapa/escenario",
         pt = "Participação das penalidades de violação e déficit no custo de cada estágio/cenário"
     },
     convergence_map = {
