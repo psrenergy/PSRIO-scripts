@@ -39,7 +39,7 @@ dictionary = {
     },
     tab_cost_revenues = {
         en = "Costs & revenues",
-        es = "Costos y ganancias",
+        es = "Costos y ingresos",
         pt = "Custos e receitas"
     },
     tab_info = {
@@ -74,8 +74,8 @@ dictionary = {
     },
     inflow_energy = {
         en = "Total inflow energy",
-        es = "Energía total aporte",
-        pt = "Energia total afluência"
+        es = "Energía total afluente",
+        pt = "Energia total afluente"
     },
     convergence = {
         en = "Convergence",
@@ -144,18 +144,18 @@ dictionary = {
     },
     policy_simulation = {
         en = "Policy x Final simulation objective functions",
-        es = "Política x Funciones objetivo de simulación final",
-        pt = "Política x Funções objetivas de simulação final"
+        es = "Política x Funciones objetivo de la simulación final",
+        pt = "Política x Funções objetivo da simulação final"
     },
     fwd_bwd_time = {
         en = "Forward and backward execution times",
-        es = "Tiempos de ejecución hacia adelante y hacia atrás",
-        pt = "Tempos de execução para a frente e para trás"
+        es = "Tiempos de ejecución Forward y Backward",
+        pt = "Tempos de execução Forward e Backward"
     },
     breakdwon_time = {
         en = "Breakdown of total operating costs",
-        es = "Desglose de los costos operativos totales",
-        pt = "Desagregação dos custos operacionais totais"
+        es = "Porciones de los costos operativos totales",
+        pt = "Parcelas dos custos operacionais totais"
     },
     excution_times = {
         en = "Execution times",
@@ -198,9 +198,9 @@ dictionary = {
         pt = "Térmico total"
     },
     total_renewable_other = {
-        en = "Total Renewable - Other tech.",
-        es = "Renovable total - Otra tecnología",
-        pt = "Renovável total - Outra tecnologia"
+        en = "Total Renewable - Other technologies",
+        es = "Renovable total - Otras tecnologías",
+        pt = "Renovável total - Outras tecnologias"
     },
     total_renewable_wind = {
         en = "Total Renewable - Wind",
@@ -354,13 +354,13 @@ dictionary = {
     },
     vsarhd = {
         en = "RAS target storage violation %",
-        es = "Violación del almacenamiento objetivo de RAS %",
-        pt = "Violação do armazenamento alvo do RAS %"
+        es = "Violación del almacenamiento objetivo de SAR %",
+        pt = "Violação do armazenamento alvo da SAR %"
     },
     vsarhden = {
         en = "RAS target storage violation GWh",
-        es = "Violación del almacenamiento objetivo de RAS GWh",
-        pt = "Violação do armazenamento alvo do RAS GWh"
+        es = "Violación del almacenamiento objetivo de SAR GWh",
+        pt = "Violação do armazenamento alvo da SAR GWh"
     },
     viocar = {
         en = "Risk Aversion Curve",
@@ -369,13 +369,13 @@ dictionary = {
     },
     vgmint = {
         en = "Thermal: minimum generation",
-        es = "Térmico: generación mínima",
-        pt = "Térmico: geração mínima"
+        es = "Térmica: generación mínima",
+        pt = "Térmica: geração mínima"
     },
     vgmntt = {
-        en = "NE",
-        es = "NE",
-        pt = "NE"
+        en = "Thermal: minimum technical generation",
+        es = "Térmica: generacion minima tecnica",
+        pt = "Térmica: geracao minima tecnica"
     },
     vioemiq = {
         en = "Emission budget violation",
@@ -413,9 +413,9 @@ dictionary = {
         pt = "Violação do fluxo máximo de bypass hidrelétrico"
     },
     finjvio = {
-        en = "NE",
-        es = "NE",
-        pt = "NE"
+        en = "Power injection: fixed injection",
+        es = "Inyeccion de potencia: inyeccion fixa",
+        pt = "Injecao de potencia: injecao fixa"
     },
     case_summary = {
         en = "Case summary",
