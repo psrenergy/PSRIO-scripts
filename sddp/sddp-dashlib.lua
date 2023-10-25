@@ -23,6 +23,9 @@ function trim(s)
     return (s:gsub("^%s*(.-)%s*$", "%1"))
 end
 
+function subrange(t, first, last)
+    return table.move(t, first, last, 1, {})
+end
 -----------------------------------------------------------------------------------------------
 -- Overloads
 -----------------------------------------------------------------------------------------------
@@ -974,8 +977,9 @@ function create_sim_report(col_struct)
     local costs_agg;
     local exe_times;
 
-    local cost_chart = Chart(dictionary.breakdwon_time[LANGUAGE]);
-    local exet_chart = Chart(dictionary.excution_times[LANGUAGE]);
+    local cost_chart    = Chart(dictionary.breakdwon_cost_time[LANGUAGE]);
+    local revenue_chart = Chart(dictionary.breakdwon_revenue_time[LANGUAGE]);
+    local exet_chart    = Chart(dictionary.excution_times[LANGUAGE]);
 
     local objcop = require("sddp/costs");
     local discount_rate = require("sddp/discount_rate");
@@ -983,8 +987,7 @@ function create_sim_report(col_struct)
     if studies > 1 then
         for i = 1, studies do
             local stages_without_buffer_years = col_struct.study[i]:stages_without_buffer_years();
-            costs = ifelse(objcop(i):ge(0), objcop(i), 0) / discount_rate(i):select_stages(1,stages_without_buffer_years);
-
+            costs = objcop(i) / discount_rate(i):select_stages(1,stages_without_buffer_years);
             -- sddp_dashboard_cost_tot
             costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
             cost_chart:add_categories(costs_agg, col_struct.case_dir_list[i]);
@@ -995,11 +998,16 @@ function create_sim_report(col_struct)
         end
     else
         local stages_without_buffer_years = col_struct.study[1]:stages_without_buffer_years();
-        costs = ifelse(objcop():ge(0), objcop(), 0) / discount_rate():select_stages(1,stages_without_buffer_years);
+        costs = objcop() / discount_rate():select_stages(1,stages_without_buffer_years);
         costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
 
         if is_greater_than_zero(costs_agg) then
-            cost_chart:add_pie(costs_agg);
+            cost_chart:add_pie(ifelse(costs_agg:gt(0), costs_agg, 0):remove_zeros(), {colors = main_global_color});
+            revenue_chart:add_pie(ifelse(costs_agg:lt(0), costs_agg, 0):remove_zeros():abs(), {colors = subrange(main_global_color, #cost_chart + 1, #main_global_color)});
+            
+            if #revenue_chart > 0 then
+                cost_chart = {cost_chart,revenue_chart};
+            end
         end
 
         -- Execution times (sim, post-processing and total time)
