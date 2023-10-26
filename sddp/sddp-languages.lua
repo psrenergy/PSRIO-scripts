@@ -152,10 +152,15 @@ dictionary = {
         es = "Tiempos de ejecución Forward y Backward",
         pt = "Tempos de execução Forward e Backward"
     },
-    breakdwon_time = {
+    breakdwon_cost_time = {
         en = "Breakdown of total operating costs",
         es = "Porciones de los costos operativos totales",
         pt = "Parcelas dos custos operacionais totais"
+    },
+    breakdwon_revenue_time = {
+        en = "Breakdown of total operating revenues",
+        es = "Porciones de los ingresos operativos totales",
+        pt = "Parcelas das receitas operacionais totais"
     },
     excution_times = {
         en = "Execution times",
