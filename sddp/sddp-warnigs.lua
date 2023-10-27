@@ -1,4 +1,4 @@
-local language<const> = "en";
+-- local LANGUAGE<const> = "en";
 
 local dictionary<const> = {
     error_reports = {
@@ -128,12 +128,18 @@ function Advisor.new()
     return self;
 end
 
-function Advisor:push_error(id)
-    table.insert(self.errors, statements[id][language]);
+function Advisor:push_error(id, level)
+    table.insert(self.errors, {message = statements[id][LANGUAGE], 
+                               level   = ( level or (1 / 0) ) });
 end
 
-function Advisor:push_warning(id)
-    table.insert(self.warnings, statements[id][language]);
+function Advisor:push_warning(id, level)
+    table.insert(self.warnings, {message = statements[id][LANGUAGE],
+                                 level   = ( level or (1 / 0) ) });
+end
+
+function Advisor.sort_messages(val_a, val_b)
+    return val_a.level < val_b.level
 end
 
 function Tab.push_advices(self, advisor)
@@ -142,29 +148,30 @@ function Tab.push_advices(self, advisor)
     end
 
     if #advisor.errors > 0 then
-        self:push("# " .. dictionary.error_reports[language] .. " ❌");
-
-        for _, message in ipairs(advisor.errors) do
-            self:push(message);
+        self:push("# " .. dictionary.error_reports[LANGUAGE] .. " ❌");
+        table.sort(advisor.errors, Advisor.sort_messages)
+        for _, statement in ipairs(advisor.errors) do
+            self:push(statement.message);
         end
     end
 
     if #advisor.warnings > 0 then
-        self:push("# " .. dictionary.warnings_reports[language] .. " ⚠️");
-
-        for _, message in ipairs(advisor.warnings) do
-            self:push(message);
+        self:push("# " .. dictionary.warnings_reports[LANGUAGE] .. " ⚠️");
+        table.sort(advisor.warnings, Advisor.sort_messages)
+        for _, statement in ipairs(advisor.warnings) do
+            self:push(statement.message);
         end
     end
 end
 
-local advisor = Advisor();
-advisor:push_warning("simulation_cost");
-advisor:push_warning("convergence_gap");
+-- Example
+-- local advisor = Advisor();
+-- advisor:push_warning("simulation_cost");
+-- advisor:push_warning("convergence_gap",1);
 
-local tab = Tab("teste");
-tab:push_advices(advisor);
+-- local tab = Tab("teste");
+-- tab:push_advices(advisor);
 
-local dash = Dashboard();
-dash:push(tab);
-dash:save("teste");
+-- local dash = Dashboard();
+-- dash:push(tab);
+-- dash:save("teste");
