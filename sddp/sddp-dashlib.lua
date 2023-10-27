@@ -1658,6 +1658,7 @@ end
 function create_warning_and_errors_tab()
     local tab = Tab(dictionary.error_and_warnings_tab[LANGUAGE]);
     tab:push_advices(advisor);
+    return tab
 end
 
 function create_operation_report(dashboard, studies, info_struct, info_existence_log, create_dashboard)
@@ -1901,6 +1902,14 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     ---------------------------
     if create_info_report then
         push_tab_to_tab(create_tab_summary(col_struct, info_struct),dashboard);
+    end
+
+    ---------------------------
+    -- Warning and error
+    ---------------------------
+    local warning_error_tab = create_warning_and_errors_tab();
+    if #warning_error_tab > 0 then
+        push_tab_to_tab(warning_error_tab,dashboard);
     end
 
     -- Save dashboard and return execution mode
