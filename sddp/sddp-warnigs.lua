@@ -16,7 +16,7 @@ local dictionary<const> = {
 local statements<const> = {
     convergence_gap = {
         en = [[
-### The convergence gap was not met according to Convergence chart in Policy tab; please consider the following options:
+The convergence gap was not met according to Convergence chart in Policy tab; please consider the following options:
 
 🠊 Increase the number of forward simulations in execution.
 ```
@@ -30,7 +30,7 @@ local statements<const> = {
 ```
 ]],
         es = [[
-### El espacio de convergencia no se cumplió; considere las siguientes opciones:            
+El espacio de convergencia no se cumplió; considere las siguientes opciones:            
 
 🠊 Aumenta el número de simulaciones forward en tu ejecución.
 ```
@@ -44,7 +44,7 @@ local statements<const> = {
 ```
 ]],
         pt = [[
-### O gap de convergência não foi atendido; por favor, considere as seguintes opções:
+O gap de convergência não foi atendido; por favor, considere as seguintes opções:
 
 🠊 Aumente o número de simulações forward em sua execução.
 ```
@@ -60,7 +60,7 @@ local statements<const> = {
     },
     simulation_cost = {
         en = [[
-### The estimated cost in the operating policy does not match the simulation cost according to Policy x Final simulation objective functions chart in Policy tab; please consider the following options:
+The estimated cost in the operating policy does not match the simulation cost according to Policy x Final simulation objective functions chart in Policy tab; please consider the following options:
 
 🠊 Consider nonlinearities during the calculation of the policy made by the model.
 ```
@@ -76,7 +76,7 @@ policy calculation and Production coefficient in final simulation (in respective
 ```
 ]],
         es = [[
-### El costo estimado en la política de operación no coincide con el costo de la simulación; considere las siguientes opciones:
+El costo estimado en la política de operación no coincide con el costo de la simulación; considere las siguientes opciones:
 
 🠊 Considere las no linealidades durante el cálculo de la política realizada por el modelo.
 ```
@@ -92,7 +92,7 @@ policy calculation and Production coefficient in final simulation (in respective
 ```
 ]],
         pt = [[
-### O custo estimado na política de operação não condiz com o custo da simulação; por favor, considere as seguintes opções:
+O custo estimado na política de operação não condiz com o custo da simulação; por favor, considere as seguintes opções:
 
 🠊 Considere as não linearidades durante o cálculo da política feita pelo modelo.
 ```
@@ -150,21 +150,21 @@ function Tab.push_advices(self, advisor)
     if #advisor.errors > 0 then
         self:push("# " .. dictionary.error_reports[LANGUAGE] .. " ❌");
         table.sort(advisor.errors, Advisor.sort_messages)
-        for _, statement in ipairs(advisor.errors) do
-            self:push(statement.message);
+        for i, statement in ipairs(advisor.errors) do
+            self:push("### " .. i .. ") " .. statement.message);
         end
     end
 
     if #advisor.warnings > 0 then
         self:push("# " .. dictionary.warnings_reports[LANGUAGE] .. " ⚠️");
         table.sort(advisor.warnings, Advisor.sort_messages)
-        for _, statement in ipairs(advisor.warnings) do
-            self:push(statement.message);
+        for i, statement in ipairs(advisor.warnings) do
+            self:push("### " .. i .. ") " .. statement.message);
         end
     end
 end
 
--- Example
+-- -- Example
 -- local advisor = Advisor();
 -- advisor:push_warning("simulation_cost");
 -- advisor:push_warning("convergence_gap",1);
