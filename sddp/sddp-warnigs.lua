@@ -1,5 +1,3 @@
--- local LANGUAGE<const> = "en";
-
 local dictionary<const> = {
     error_reports = {
         en = "Error reports",
@@ -110,7 +108,7 @@ de produção no cálculo da política de operação e no coeficiente de produç
     }
 }
 
-local Advisor = {};
+Advisor = {};
 Advisor.__index = Advisor
 
 setmetatable(
@@ -163,15 +161,3 @@ function Tab.push_advices(self, advisor)
         end
     end
 end
-
--- -- Example
--- local advisor = Advisor();
--- advisor:push_warning("simulation_cost");
--- advisor:push_warning("convergence_gap",1);
-
--- local tab = Tab("teste");
--- tab:push_advices(advisor);
-
--- local dash = Dashboard();
--- dash:push(tab);
--- dash:save("teste");

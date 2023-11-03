@@ -893,12 +893,11 @@ function create_pol_report(col_struct)
             local tolerance_for_convergence = tonumber(col_struct.study[1]:get_parameter("CriterioConvergencia", -1));
 
             local total_iter = conv_age:stages();
-            local zinf_final = tonumber(conv_age:select_agents({ 1 }):select_stages(total_iter):to_list()[1]);
-            local zsup_final = tonumber(conv_age:select_agents({ 3 }):select_stages(total_iter):to_list()[1]);
+            local zinf_final = tonumber(conv_age:select_agents({ 1 }):select_stage(total_iter):to_list()[1]);
+            local zsup_final = tonumber(conv_age:select_agents({ 3 }):select_stage(total_iter):to_list()[1]);
             local gap = ( zsup_final - zinf_final );
-
             if gap > 0 then
-                if gap + 0.0000001 > tolerance_for_convergence then
+                if (gap + 0.0000001) > tolerance_for_convergence then
                     advisor:push_warning("convergence_gap",1);
                 end
             else
@@ -1657,6 +1656,7 @@ end
 
 function create_warning_and_errors_tab()
     local tab = Tab(dictionary.error_and_warnings_tab[LANGUAGE]);
+    tab:set_icon("shield-alert");
     tab:push_advices(advisor);
     return tab
 end
@@ -1756,7 +1756,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     ----------------
     local tab_inf = Tab(dictionary.tab_infeasibility[LANGUAGE]);
     tab_inf:set_icon("alert-triangle");
-
+    
     -- Infeasibility report
     if create_info_report then
         local has_inf = {};
@@ -1898,18 +1898,18 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     push_tab_to_tab(tab_results,dashboard);
 
     ---------------------------
-    -- Case information summary
-    ---------------------------
-    if create_info_report then
-        push_tab_to_tab(create_tab_summary(col_struct, info_struct),dashboard);
-    end
-
-    ---------------------------
     -- Warning and error
     ---------------------------
     local warning_error_tab = create_warning_and_errors_tab();
     if #warning_error_tab > 0 then
         push_tab_to_tab(warning_error_tab,dashboard);
+    end
+
+    ---------------------------
+    -- Case information summary
+    ---------------------------
+    if create_info_report then
+        push_tab_to_tab(create_tab_summary(col_struct, info_struct),dashboard);
     end
 
     -- Save dashboard and return execution mode
