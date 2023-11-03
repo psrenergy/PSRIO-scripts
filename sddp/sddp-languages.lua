@@ -127,7 +127,7 @@ dictionary = {
         es = "Nuevos cortes por iteración - Factibilidad",
         pt = "Novos cortes por iteração - Viabilidade"
     },
-    foward_time = {
+    forward_time = {
         en = "Execution time - Forward",
         es = "Tiempo de ejecución - Adelante",
         pt = "Tempo de execução - Direção à frente"
