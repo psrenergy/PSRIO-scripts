@@ -977,8 +977,8 @@ function create_sim_report(col_struct)
     local costs_agg;
     local exe_times;
 
-    local cost_chart    = Chart(dictionary.breakdwon_cost_time[LANGUAGE]);
-    local revenue_chart = Chart(dictionary.breakdwon_revenue_time[LANGUAGE]);
+    local cost_chart    = Chart(dictionary.breakdown_cost_time[LANGUAGE]);
+    local revenue_chart = Chart(dictionary.breakdown_revenue_time[LANGUAGE]);
     local exet_chart    = Chart(dictionary.excution_times[LANGUAGE]);
 
     local objcop = require("sddp/costs");
