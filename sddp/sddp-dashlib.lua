@@ -839,7 +839,7 @@ function create_pol_report(col_struct)
             
             -- If there is only one FCF file in the case and no rolling horizons, print final simulation cost as columns
             show_sim_cost = false;
-            if ( ((oper_mode < 3 and nsys == 1) or oper_mode == 3) and col_struct.study[1]:get_parameter("RHRZ", -1) == -1) then
+            if ( ((oper_mode < 3 and nsys == 1) or oper_mode == 3) and col_struct.study[1]:get_parameter("RHRZ", 0) == 0) then
                 show_sim_cost = true;
 
                 local objcop = col_struct.generic[1]:load("objcop");
