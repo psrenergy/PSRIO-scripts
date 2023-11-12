@@ -650,18 +650,17 @@ function create_conv_map_graph(tab, file_name, col_struct, i)
     end
 
     local options = {
-    yLabel = "Iteration",
-    xLabel = dictionary.cell_stages[LANGUAGE],
-    showInLegend = false,
-    stopsMin = 0,
-    stopsMax = 2,
-    dataClasses = {
-                  { color = "#C64B3E", to = 0  , name = "not converged" },
-                  { color = "#4E79A7", from = 1, to = 2, name = "converged" },
-                  { color = "#FBEEB3", from = 2, name = "warning" }
-                  }
+        yLabel = "Iteration",
+        xLabel = dictionary.cell_stages[LANGUAGE],
+        showInLegend = false,
+        stopsMin = 0,
+        stopsMax = 2,
+        dataClasses = {
+            { color = "#C64B3E", from = -0.5, to = 0.5, name = "not converged" },
+            { color = "#4E79A7", from =  0.5, to = 1.5, name = "converged"     },
+            { color = "#FBEEB3", from =  1.5, to = 2.5, name = "warning"       }
+        }
     };
-
 
     local chart = Chart(report_title);
     chart:add_heatmap(conv_map,options);
