@@ -698,6 +698,10 @@ function create_hourly_sol_status_graph(tab, col_struct, i)
     local chart = Chart(report_title);
     chart:add_heatmap(status,options);
     tab:push(chart);
+
+    if status:remove_zeros():loaded() then
+        advisor:push_warning("mip_convergence");
+    end
 end
 
 -- Execution times per scenario (dispersion)

@@ -105,6 +105,53 @@ O custo estimado na política de operação não condiz com o custo da simulaç�
 de produção no cálculo da política de operação e no coeficiente de produção na simulação final (nas respectivas caixas de seleção).
 ```
 ]]
+    },
+    mip_convergence = {
+        en = [[
+The MIP gap was not met for some solutions, as indicated by the Solution Status per Stage and Scenario chart in the Simulation tab. Please consider the following options:
+
+🠊 Increase the MIP maximum execution time
+```
+1. Navigate to Execution Options -> Economic Dispatch -> Solution Strategy.
+2. In Optimization Parameters, increase the number of MIP maximum execution time (s) text boxes.
+```
+🠊 Reduce the Slice Duration
+```
+1. Navigate to Execution Options -> Economic Dispatch -> Solution Strategy.
+2. In Intra-stage Representation, select the checkbox "Decompose stages in slice."
+3. Decrease the Slice Duration (hour) text box value.
+```
+]],
+        es = [[
+La brecha MIP no se cumplió para algunas soluciones, según lo indica el gráfico de Estado de la Solución por Etapa y Escenario en la pestaña de Simulación. Considere las siguientes opciones:
+
+🠊 Aumentar el tiempo máximo de ejecución de MIP
+```
+1. Vaya a Opciones de Ejecución -> Despacho Económico -> Estrategia de Solución.
+2. En Parámetros de Optimización, incremente el número de cajas de texto "Tiempo máximo de ejecución de MIP (s)".
+```
+🠊 Reducir la Duración de la Fracción
+```
+1. Vaya a Opciones de Ejecución -> Despacho Económico -> Estrategia de Solución.
+2. En Representación Intraetapa, seleccione la casilla "Duración de las sub-etapas".
+3. Disminuya el valor de la caja de texto "Duración de las sub-etapas (hora)".
+```
+]],
+        pt = [[
+A margem de otimização (MIP gap) não foi atendida para algumas soluções, conforme indicado pelo gráfico de Status da Solução por Estágio e Cenário na guia de Simulação. Considere as seguintes opções:
+
+🠊 Aumentar o tempo máximo de execução do MIP
+```
+1. Acesse Opções de Execução -> Despacho Econômico -> Estratégia de Solução.
+2. Em Parâmetros de Otimização, aumente o número de caixas de texto "Tempo máximo de execução do MIP (s)".
+```
+🠊 Reduzir a Duração da Fatia
+```
+1. Acesse Opções de Execução -> Despacho Econômico -> Estratégia de Solução.
+2. Em Representação Intraestágio, marque a caixa de seleção "Duração dos Sub-subtágios".
+3. Diminua o valor da caixa de texto "Duração dos Sub-subtágios (hora)".
+```
+]]
     }
 }
 
