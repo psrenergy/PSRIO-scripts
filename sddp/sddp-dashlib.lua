@@ -41,6 +41,92 @@ end
 -- Auxiliary functions
 -----------------------------------------------------------------------------------------------
 
+function fix_conv_map_file(file_name, col_struct, study_index)
+
+    -- Local
+    local convertion_status = -1; -- -1: unsuccessful, 0: successful
+    local header            = {};
+    local indexes           = {};
+    local input_lines       = {};
+    local output_lines      = {};
+    local stage_indexes     = {};
+    local scenario_indexes  = {};
+    
+    local file_name_csv = file_name .. ".csv";
+    local reader = col_struct.generic[study_index]:create_reader(file_name_csv);
+    
+    if(not reader:is_open()) then
+        return convertion_status;
+    end
+   
+    -- Read graph file header (first 4 lines)
+    table.insert(header,reader:get_line()); 
+    table.insert(header,reader:get_line());
+    table.insert(header,reader:get_line());
+    table.insert(header,reader:get_line());
+    
+    -- Iterate over remaining lines
+    local counter = 0;
+    while reader:good() do
+        counter = counter + 1;
+        table.insert(indexes, counter);
+        
+        local row = reader:get_line();
+        table.insert(input_lines,row);
+        
+        -- Get stage and scenario indexes (1st and 2nd columns)
+        columns          = string.gmatch(row, '([^,]+),');
+        col1 = columns();
+        col2 = columns();
+        
+        if col1 == nil or col2 == nil then
+            break;
+        end
+        
+        table.insert(stage_indexes   ,tonumber(col1));
+        table.insert(scenario_indexes,tonumber(col2));
+    end
+    reader:close();
+    
+    -- Apply sorting procedure using stage and scenario indexes as criteria
+    table.sort(indexes, function(a,b)
+                            if stage_indexes[a] ~= nil and scenario_indexes[b] ~= nil then
+                                if stage_indexes[a] == stage_indexes[b] then
+                                    return scenario_indexes[a] < scenario_indexes[b];
+                                elseif stage_indexes[a] < stage_indexes[b] then
+                                    return true;
+                                else
+                                    return false;
+                                end
+                            end
+                        end);
+    
+    -- Load sorted lines into array
+    for _,i in ipairs(indexes) do
+        table.insert(output_lines,input_lines[i]);
+    end
+    
+    -- Write fixed file
+    local writer = generic:create_writer(file_name_csv);
+    
+    local is_open = writer:is_open();
+    
+    if is_open then
+        for iheader = 1, #header do
+            writer:write_line(header[iheader]);
+        end
+        for iline = 1, #output_lines do
+            writer:write_line(output_lines[iline]);
+        end
+        writer:close();
+        
+        convertion_status = 0;
+    end
+
+    return convertion_status;
+end
+
+
 function push_tab_to_tab(tab_from, tab_to)
     if #tab_from > 0 then
         tab_to:push(tab_from);
@@ -591,10 +677,22 @@ function get_convergence_file_agents(col_struct, file_list, conv_age, cuts_age, 
 end
 
 function get_convergence_map_status(col_struct, file_list, conv_status, case_index)
+    local convertion_status = {};
     for i, file in ipairs(file_list) do
+        -- Rewrite file
+        local status = fix_conv_map_file(file,col_struct,case_index);
+        table.insert(convertion_status,status);
+        
+        -- Load file
         local conv_map_file = col_struct.generic[case_index]:load(file);
         conv_status[i] = conv_map_file; -- Convergence status
     end
+    
+    for i = 1, #convertion_status do
+        info("Convergence map rewrite status" .. tostring(convertion_status[i]));
+    end
+    
+    return convertion_status;
 end
 
 function make_convergence_graphs(dashboard, conv_age, systems, horizon)
@@ -755,10 +853,11 @@ function create_pol_report(col_struct)
     local systems = {};
     local horizon = {};
 
-    local conv_data = {};
-    local cuts_data = {};
-    local time_data = {};
-    conv_status     = {};
+    local conv_data         = {};
+    local cuts_data         = {};
+    local time_data         = {};
+    local conv_status       = {};
+    local convertion_status = {};
 
     local conv_file;
 
@@ -767,8 +866,13 @@ function create_pol_report(col_struct)
 
     -- Convergence map report
     get_conv_file_info(col_struct, "sddpconvm.csv", convm_file_list, systems, horizon, 1);
-    get_convergence_map_status(col_struct, convm_file_list, conv_status, 1);
-
+    convertion_status = get_convergence_map_status(col_struct, convm_file_list, conv_status, 1);
+    for i = 1, #convertion_status do
+        if not convertion_status[i] then
+            error("Error converting convergence map file " .. convm_file_list[i]);
+        end
+    end
+    
     -- Convergence report
     get_conv_file_info(col_struct, "sddppol.csv", file_list, systems, horizon, 1);
     get_convergence_file_agents(col_struct, file_list, conv_data, cuts_data, time_data, 1);
