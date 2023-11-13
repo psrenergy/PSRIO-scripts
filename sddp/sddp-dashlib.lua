@@ -1252,7 +1252,7 @@ function create_marg_costs(col_struct)
         for i, agent in ipairs(agents) do
             local chart = Chart(agent);
             for j = 1, studies do
-                cmg_aggsum = cmg[j]:select_agent(agent):rename_agent(col_struct.case_dir_list[j]):aggregate_blocks_by_duracipu(i):aggregate_scenarios(BY_AVERAGE())
+                cmg_aggsum = cmg[j]:select_agent(agent):rename_agent(col_struct.case_dir_list[j]):aggregate_blocks_by_duracipu(j):aggregate_scenarios(BY_AVERAGE())
                 chart:add_line(cmg_aggsum,{xUnit=dictionary.cell_stages[LANGUAGE]}); -- Average marg. cost per stage
             end
             tab:push(chart);
