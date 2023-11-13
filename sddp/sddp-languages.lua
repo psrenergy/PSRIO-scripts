@@ -662,6 +662,11 @@ dictionary = {
         es = "ÉXITO",
         pt = "SUCESSO"
     },
+    cell_loss_representation = {
+        en = "Losses representation",
+        es = "Representación de pérdidas",
+        pt = "Representação de perdas"
+    },
     additional_years_mensage = {
         en = "Additional years were not considered in the final simulation",
         es = "No se consideraron años adicionales en la simulación final",

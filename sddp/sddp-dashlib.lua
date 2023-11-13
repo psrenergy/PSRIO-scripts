@@ -303,10 +303,12 @@ function create_tab_summary(col_struct, info_struct)
     local hrep_string         = "| " .. dictionary.cell_hourly_representation[LANGUAGE];
     local netrep_string       = "| " .. dictionary.cell_network_representation[LANGUAGE];
     local typday_string       = "| " .. dictionary.cell_typicalday_representation[LANGUAGE];
+    local loss_representation = "| " .. dictionary.cell_loss_representation[LANGUAGE];
 
     local hrep_val   = {};
     local netrep_val = {};
     local typday_val = {};
+    local loss_repr  = {};
     local exe_type   = {};
     local case_type  = {};
 
@@ -354,19 +356,26 @@ function create_tab_summary(col_struct, info_struct)
             typday_val[i] = "✔️";
         end
         typday_string = typday_string .. " | " .. typday_val[i];
+
+        loss_repr[i] = "❌";
+        if col_struct.study[i]:get_parameter("Perdas", -1) == 1 then
+            loss_repr[i] = "✔️";
+        end
+        loss_representation_string = loss_representation .. " | " .. loss_repr[i];
     end
-    header_string       = header_string       .. "|";
-    lower_header_string = lower_header_string .. "|";
-    exe_type_string     = exe_type_string     .. "|";
-    case_type_string    = case_type_string    .. "|";
-    nstg_string         = nstg_string         .. "|";
-    ini_year_string     = ini_year_string     .. "|";
-    nblk_string         = nblk_string         .. "|";
-    nforw_string        = nforw_string        .. "|";
-    nback_string        = nback_string        .. "|";
-    hrep_string         = hrep_string         .. "|";
-    netrep_string       = netrep_string       .. "|";
-    typday_string       = typday_string       .. "|";
+    header_string                    = header_string              .. "|";
+    lower_header_string              = lower_header_string        .. "|";
+    exe_type_string                  = exe_type_string            .. "|";
+    case_type_string                 = case_type_string           .. "|";
+    nstg_string                      = nstg_string                .. "|";
+    ini_year_string                  = ini_year_string            .. "|";
+    nblk_string                      = nblk_string                .. "|";
+    nforw_string                     = nforw_string               .. "|";
+    nback_string                     = nback_string               .. "|";
+    hrep_string                      = hrep_string                .. "|";
+    netrep_string                    = netrep_string              .. "|";
+    typday_string                    = typday_string              .. "|";
+    loss_representation_string       = loss_representation_string .. "|";
 
     tab:push(header_string);
     tab:push(lower_header_string);
@@ -380,6 +389,7 @@ function create_tab_summary(col_struct, info_struct)
     tab:push(hrep_string);
     tab:push(netrep_string);
     tab:push(typday_string);
+    tab:push(loss_representation_string);
 
     tab:push("## " .. dictionary.dimentions[LANGUAGE]);
 
