@@ -44,6 +44,92 @@ end
 -- Auxiliary functions
 -----------------------------------------------------------------------------------------------
 
+function fix_conv_map_file(file_name, col_struct, study_index)
+
+    -- Local
+    local convertion_status = -1; -- -1: unsuccessful, 0: successful
+    local header            = {};
+    local indexes           = {};
+    local input_lines       = {};
+    local output_lines      = {};
+    local stage_indexes     = {};
+    local scenario_indexes  = {};
+    
+    local file_name_csv = file_name .. ".csv";
+    local reader = col_struct.generic[study_index]:create_reader(file_name_csv);
+    
+    if(not reader:is_open()) then
+        return convertion_status;
+    end
+   
+    -- Read graph file header (first 4 lines)
+    table.insert(header,reader:get_line()); 
+    table.insert(header,reader:get_line());
+    table.insert(header,reader:get_line());
+    table.insert(header,reader:get_line());
+    
+    -- Iterate over remaining lines
+    local counter = 0;
+    while reader:good() do
+        counter = counter + 1;
+        table.insert(indexes, counter);
+        
+        local row = reader:get_line();
+        table.insert(input_lines,row);
+        
+        -- Get stage and scenario indexes (1st and 2nd columns)
+        columns          = string.gmatch(row, '([^,]+),');
+        col1 = columns();
+        col2 = columns();
+        
+        if col1 == nil or col2 == nil then
+            break;
+        end
+        
+        table.insert(stage_indexes   ,tonumber(col1));
+        table.insert(scenario_indexes,tonumber(col2));
+    end
+    reader:close();
+    
+    -- Apply sorting procedure using stage and scenario indexes as criteria
+    table.sort(indexes, function(a,b)
+                            if stage_indexes[a] ~= nil and scenario_indexes[b] ~= nil then
+                                if stage_indexes[a] == stage_indexes[b] then
+                                    return scenario_indexes[a] < scenario_indexes[b];
+                                elseif stage_indexes[a] < stage_indexes[b] then
+                                    return true;
+                                else
+                                    return false;
+                                end
+                            end
+                        end);
+    
+    -- Load sorted lines into array
+    for _,i in ipairs(indexes) do
+        table.insert(output_lines,input_lines[i]);
+    end
+    
+    -- Write fixed file
+    local writer = generic:create_writer(file_name_csv);
+    
+    local is_open = writer:is_open();
+    
+    if is_open then
+        for iheader = 1, #header do
+            writer:write_line(header[iheader]);
+        end
+        for iline = 1, #output_lines do
+            writer:write_line(output_lines[iline]);
+        end
+        writer:close();
+        
+        convertion_status = 0;
+    end
+
+    return convertion_status;
+end
+
+
 function push_tab_to_tab(tab_from, tab_to)
     if #tab_from > 0 then
         tab_to:push(tab_from);
@@ -306,10 +392,12 @@ function create_tab_summary(col_struct, info_struct)
     local hrep_string         = "| " .. dictionary.cell_hourly_representation[LANGUAGE];
     local netrep_string       = "| " .. dictionary.cell_network_representation[LANGUAGE];
     local typday_string       = "| " .. dictionary.cell_typicalday_representation[LANGUAGE];
+    local loss_representation = "| " .. dictionary.cell_loss_representation[LANGUAGE];
 
     local hrep_val   = {};
     local netrep_val = {};
     local typday_val = {};
+    local loss_repr  = {};
     local exe_type   = {};
     local case_type  = {};
 
@@ -357,19 +445,26 @@ function create_tab_summary(col_struct, info_struct)
             typday_val[i] = "✔️";
         end
         typday_string = typday_string .. " | " .. typday_val[i];
+
+        loss_repr[i] = "❌";
+        if col_struct.study[i]:get_parameter("Perdas", -1) == 1 then
+            loss_repr[i] = "✔️";
+        end
+        loss_representation_string = loss_representation .. " | " .. loss_repr[i];
     end
-    header_string       = header_string       .. "|";
-    lower_header_string = lower_header_string .. "|";
-    exe_type_string     = exe_type_string     .. "|";
-    case_type_string    = case_type_string    .. "|";
-    nstg_string         = nstg_string         .. "|";
-    ini_year_string     = ini_year_string     .. "|";
-    nblk_string         = nblk_string         .. "|";
-    nforw_string        = nforw_string        .. "|";
-    nback_string        = nback_string        .. "|";
-    hrep_string         = hrep_string         .. "|";
-    netrep_string       = netrep_string       .. "|";
-    typday_string       = typday_string       .. "|";
+    header_string                    = header_string              .. "|";
+    lower_header_string              = lower_header_string        .. "|";
+    exe_type_string                  = exe_type_string            .. "|";
+    case_type_string                 = case_type_string           .. "|";
+    nstg_string                      = nstg_string                .. "|";
+    ini_year_string                  = ini_year_string            .. "|";
+    nblk_string                      = nblk_string                .. "|";
+    nforw_string                     = nforw_string               .. "|";
+    nback_string                     = nback_string               .. "|";
+    hrep_string                      = hrep_string                .. "|";
+    netrep_string                    = netrep_string              .. "|";
+    typday_string                    = typday_string              .. "|";
+    loss_representation_string       = loss_representation_string .. "|";
 
     tab:push(header_string);
     tab:push(lower_header_string);
@@ -383,6 +478,7 @@ function create_tab_summary(col_struct, info_struct)
     tab:push(hrep_string);
     tab:push(netrep_string);
     tab:push(typday_string);
+    tab:push(loss_representation_string);
 
     tab:push("## " .. dictionary.dimentions[LANGUAGE]);
 
@@ -584,10 +680,22 @@ function get_convergence_file_agents(col_struct, file_list, conv_age, cuts_age, 
 end
 
 function get_convergence_map_status(col_struct, file_list, conv_status, case_index)
+    local convertion_status = {};
     for i, file in ipairs(file_list) do
+        -- Rewrite file
+        local status = fix_conv_map_file(file,col_struct,case_index);
+        table.insert(convertion_status,status);
+        
+        -- Load file
         local conv_map_file = col_struct.generic[case_index]:load(file);
         conv_status[i] = conv_map_file; -- Convergence status
     end
+    
+    for i = 1, #convertion_status do
+        info("Convergence map rewrite status" .. tostring(convertion_status[i]));
+    end
+    
+    return convertion_status;
 end
 
 function make_convergence_graphs(dashboard, conv_age, systems, horizon)
@@ -653,18 +761,17 @@ function create_conv_map_graph(tab, file_name, col_struct, i)
     end
 
     local options = {
-    yLabel = "Iteration",
-    xLabel = dictionary.cell_stages[LANGUAGE],
-    showInLegend = false,
-    stopsMin = 0,
-    stopsMax = 2,
-    dataClasses = {
-                  { color = "#C64B3E", to = 0  , name = "not converged" },
-                  { color = "#4E79A7", from = 1, to = 2, name = "converged" },
-                  { color = "#FBEEB3", from = 2, name = "warning" }
-                  }
+        yLabel = "Iteration",
+        xLabel = dictionary.cell_stages[LANGUAGE],
+        showInLegend = false,
+        stopsMin = 0,
+        stopsMax = 2,
+        dataClasses = {
+            { color = "#C64B3E", from = -0.5, to = 0.5, name = "not converged" },
+            { color = "#4E79A7", from =  0.5, to = 1.5, name = "converged"     },
+            { color = "#FBEEB3", from =  1.5, to = 2.5, name = "warning"       }
+        }
     };
-
 
     local chart = Chart(report_title);
     chart:add_heatmap(conv_map,options);
@@ -753,10 +860,11 @@ function create_pol_report(col_struct)
     local systems = {};
     local horizon = {};
 
-    local conv_data = {};
-    local cuts_data = {};
-    local time_data = {};
-    conv_status     = {};
+    local conv_data         = {};
+    local cuts_data         = {};
+    local time_data         = {};
+    local conv_status       = {};
+    local convertion_status = {};
 
     local conv_file;
 
@@ -765,8 +873,13 @@ function create_pol_report(col_struct)
 
     -- Convergence map report
     get_conv_file_info(col_struct, "sddpconvm.csv", convm_file_list, systems, horizon, 1);
-    get_convergence_map_status(col_struct, convm_file_list, conv_status, 1);
-
+    convertion_status = get_convergence_map_status(col_struct, convm_file_list, conv_status, 1);
+    for i = 1, #convertion_status do
+        if not convertion_status[i] then
+            error("Error converting convergence map file " .. convm_file_list[i]);
+        end
+    end
+    
     -- Convergence report
     get_conv_file_info(col_struct, "sddppol.csv", file_list, systems, horizon, 1);
     get_convergence_file_agents(col_struct, file_list, conv_data, cuts_data, time_data, 1);
@@ -846,7 +959,7 @@ function create_pol_report(col_struct)
             
             -- If there is only one FCF file in the case and no rolling horizons, print final simulation cost as columns
             show_sim_cost = false;
-            if ( ((oper_mode < 3 and nsys == 1) or oper_mode == 3) and col_struct.study[1]:get_parameter("RHRZ", -1) == -1) then
+            if ( ((oper_mode < 3 and nsys == 1) or oper_mode == 3) and col_struct.study[1]:get_parameter("RHRZ", 0) == 0) then
                 show_sim_cost = true;
 
                 local objcop = col_struct.generic[1]:load("objcop");
@@ -1002,8 +1115,8 @@ function create_sim_report(col_struct)
     local costs_agg;
     local exe_times;
 
-    local cost_chart    = Chart(dictionary.breakdwon_cost_time[LANGUAGE]);
-    local revenue_chart = Chart(dictionary.breakdwon_revenue_time[LANGUAGE]);
+    local cost_chart    = Chart(dictionary.breakdown_cost_time[LANGUAGE]);
+    local revenue_chart = Chart(dictionary.breakdown_revenue_time[LANGUAGE]);
     local exet_chart    = Chart(dictionary.excution_times[LANGUAGE]);
 
     local objcop = require("sddp/costs");
@@ -1164,7 +1277,7 @@ function create_marg_costs(col_struct)
         for i, agent in ipairs(agents) do
             local chart = Chart(agent);
             for j = 1, studies do
-                cmg_aggsum = cmg[j]:select_agent(agent):rename_agent(col_struct.case_dir_list[j]):aggregate_blocks_by_duracipu(i):aggregate_scenarios(BY_AVERAGE())
+                cmg_aggsum = cmg[j]:select_agent(agent):rename_agent(col_struct.case_dir_list[j]):aggregate_blocks_by_duracipu(j):aggregate_scenarios(BY_AVERAGE())
                 chart:add_line(cmg_aggsum,{xUnit=dictionary.cell_stages[LANGUAGE]}); -- Average marg. cost per stage
             end
             tab:push(chart);

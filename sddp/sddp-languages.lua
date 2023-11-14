@@ -152,12 +152,12 @@ dictionary = {
         es = "Tiempos de ejecución Forward y Backward",
         pt = "Tempos de execução Forward e Backward"
     },
-    breakdwon_cost_time = {
+    breakdown_cost_time = {
         en = "Breakdown of total operating costs",
         es = "Porciones de los costos operativos totales",
         pt = "Parcelas dos custos operacionais totais"
     },
-    breakdwon_revenue_time = {
+    breakdown_revenue_time = {
         en = "Breakdown of total operating revenues",
         es = "Porciones de los ingresos operativos totales",
         pt = "Parcelas das receitas operacionais totais"
@@ -628,7 +628,7 @@ dictionary = {
         pt = "Usinas térmicas",
     },
     cell_non_convexities_type = {
-        en = "Non convecities type",
+        en = "Non convexities type",
         es = "Tipo de no-convexidades",
         pt = "Tipo de não-convexidades",
     },
@@ -662,6 +662,11 @@ dictionary = {
         es = "ÉXITO",
         pt = "SUCESSO"
     },
+    cell_loss_representation = {
+        en = "Losses representation",
+        es = "Representación de pérdidas",
+        pt = "Representação de perdas"
+    },
     additional_years_mensage = {
         en = "Additional years were not considered in the final simulation",
         es = "No se consideraron años adicionales en la simulación final",
@@ -687,6 +692,4 @@ dictionary = {
         es = "Errores y advertencias",
         pt = "Erros e avisos"
     }
-    
-    
 };
