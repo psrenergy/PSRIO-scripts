@@ -133,7 +133,7 @@ La brecha MIP no se cumplió para algunas soluciones, según lo indica el gráfi
 🠊 Reducir la Duración de la Fracción
 ```
 1. Vaya a Opciones de Ejecución -> Despacho Económico -> Estrategia de Solución.
-2. En Representación Intraetapa, seleccione la casilla "Duración de las sub-etapas".
+2. En Representación Intra-etapa, seleccione la casilla "Duración de las sub-etapas".
 3. Disminuya el valor de la caja de texto "Duración de las sub-etapas (hora)".
 ```
 ]],
@@ -148,8 +148,8 @@ A margem de otimização (MIP gap) não foi atendida para algumas soluções, co
 🠊 Reduzir a Duração da Fatia
 ```
 1. Acesse Opções de Execução -> Despacho Econômico -> Estratégia de Solução.
-2. Em Representação Intraestágio, marque a caixa de seleção "Duração dos Sub-subtágios".
-3. Diminua o valor da caixa de texto "Duração dos Sub-subtágios (hora)".
+2. Em Representação Intra-estágio, marque a caixa de seleção "Duração dos sub-subtágios".
+3. Diminua o valor da caixa de texto "Duração dos sub-subtágios (hora)".
 ```
 ]]
     }
