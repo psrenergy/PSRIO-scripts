@@ -1,4 +1,4 @@
--- C:\Users\iury\Desktop\PSRio_Atual\psrio.exe --model OPTGEN -r "D:\PSRIO-scripts\md\input_relatory.lua" "D:\Dropbox (PSR)\PSR_main\OPTGEN\DASHBOARD\caso_timing"
+-- C:\Users\iury\Desktop\PSRio_Atual\psrio.exe -r "D:\PSRIO-scripts\md\input_relatory.lua,D:\PSRIO-scripts\md\input_demand.lua" "D:\Dropbox (PSR)\PSR_main\OPTGEN\DASHBOARD\caso_timing"
 
 local studies<const> = PSR.studies();
 
@@ -152,7 +152,15 @@ function Tab.push_collections_size(self, label, collection)
     self:push(row);
 end
 
-local function tab_info()
+function Tab.plot_column_if_data(self, chart_name, data)
+    if data:remove_zeros():loaded() then
+        local chart = Chart(chart_name);
+        chart:add_column(data);
+        self:push(chart);
+    end
+end
+
+function tab_info()
     local tab<const> = create_tab("Info", "info");
 
     tab:push("## Summary");
@@ -251,6 +259,31 @@ local function tab_info()
     return tab;
 end
 
-local dashboard<const> = Dashboard();
-dashboard:push(tab_info());
-dashboard:save("dashboard");
+function tab_demand()
+
+    local tab<const> = create_tab("Demand", "bar-chart");
+
+    for i = 1, studies do
+        tab:plot_column_if_data("Inelastic hour demand",demand[i].inelastic_hour);
+        tab:plot_column_if_data("Inelastic block demand",demand[i].inelastic_block);
+        tab:plot_column_if_data("Maximum increase of demand",demand[i].max_increase);
+        tab:plot_column_if_data("Maximum decrease of demand",demand[i].max_decrease);
+        tab:plot_column_if_data("Curtailment cost of demand",demand[i].curtailment_cost);
+        tab:plot_column_if_data("Maximum curtailment cost of demand",demand[i].max_curtailment);
+    end
+    return tab;
+end
+
+function tab_fuel()
+
+    local tab<const> = create_tab("Fuel", "bar-chart");
+
+    for i = 1, studies do
+        tab:plot_column_if_data("Fuel cost",fuel[i].cost);
+        tab:plot_column_if_data("Fuels emission factor",fuel[i].emission_factor);
+        tab:plot_column_if_data("Fuels Minimum consumption",fuel[i].min_consumption);
+        tab:plot_column_if_data("Fuels maximum consumption",fuel[i].max_consumption);
+        tab:plot_column_if_data("Fuel availability",fuel[i].availability);
+    end
+    return tab;
+end
