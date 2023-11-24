@@ -110,7 +110,7 @@ function fix_conv_map_file(file_name, col_struct, study_index)
     end
     
     -- Write fixed file
-    local writer = generic:create_writer(file_name_csv);
+    local writer = col_struct.generic[study_index]:create_writer(file_name_csv);
     
     local is_open = writer:is_open();
     
@@ -137,6 +137,11 @@ function push_tab_to_tab(tab_from, tab_to)
 end
 
 function is_greater_than_zero(output)
+
+    if not output:loaded() then
+        return false;
+    end 
+    
     local x = output:abs():aggregate_agents(BY_SUM(), "CheckZeros"):aggregate_stages(BY_SUM()):to_list();
     if x[1] > 0.0 then
         return true;
@@ -1197,7 +1202,7 @@ function create_costs_and_revs(col_struct)
         local costs = ifelse(objcop(i):ge(0), objcop(i), 0) / discount_rate(i):select_stages(1,stages_without_buffer_years);
 
         -- sddp_dashboard_cost_tot
-        costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM());
+        costs = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM());
         if studies == 1 then
             costs:remove_zeros():save("sddp_dashboard_cost_tot", { csv = true });
         end
