@@ -1596,8 +1596,6 @@ function create_gen_report(col_struct)
             total_small_hydro_gen = total_small_hydro_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_shydro_agent_name);
             total_thermal_gen     = gerter[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(thermal_agent_name);
 
-            -- col_struct.hydro[i].system:eq(s):save("teste111",{fast_csv = true});
-            -- error("blabalba");
             if total_hydro_gen:loaded() and col_struct.hydro[i].system:eq(code[s]):remove_zeros():loaded() then
                 chart_tot_gerhid:add_column(total_hydro_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
             end
