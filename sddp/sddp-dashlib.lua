@@ -1177,7 +1177,6 @@ function create_costs_and_revs(col_struct)
         local costs = ifelse(objcop(i):ge(0), objcop(i), 0) / discount_rate(i):select_stages(1,stages_without_buffer_years);
 
         -- sddp_dashboard_cost_tot
-        costs = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM());
         if studies == 1 then
             costs:remove_zeros():save("sddp_dashboard_cost_tot", { csv = true });
         end

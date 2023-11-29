@@ -269,8 +269,8 @@ dictionary = {
     },
     defbus = {
         en = "Deficit per bus (% of load)",
-        es = "Déficit por bus (% de carga)",
-        pt = "Déficit por barramento (% da carga)"
+        es = "Déficit por barra (% de carga)",
+        pt = "Déficit por barra (% da carga)"
     },
     gncivio = {
         en = "General interpolation constraint violation",
