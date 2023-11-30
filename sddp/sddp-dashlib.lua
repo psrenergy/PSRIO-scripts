@@ -1184,29 +1184,34 @@ function create_costs_and_revs(col_struct)
         local discount_rate = require("sddp/discount_rate");
         local costs = ifelse(objcop(i):ge(0), objcop(i), 0) / discount_rate(i):select_stages_of_outputs();
 
+        local recipes = ifelse(objcop(i):lt(0), objcop(i), 0) / discount_rate(i):select_stages(1,stages_without_buffer_years);
+        
         -- sddp_dashboard_cost_tot
         if studies == 1 then
             costs:remove_zeros():save("sddp_dashboard_cost_tot", { csv = true });
+            recipes:remove_zeros():save("sddp_dashboard_recipes_tot", { csv = true });
         end
 
-        local disp = concatenate(costs:aggregate_agents(BY_SUM(), "P10"):aggregate_scenarios(BY_PERCENTILE(10)), costs:aggregate_agents(BY_SUM(), "Average"):aggregate_scenarios(BY_AVERAGE()), costs:aggregate_agents(BY_SUM(), "P90"):aggregate_scenarios(BY_PERCENTILE(90)));
+        local disp_cost = concatenate(costs:aggregate_agents(BY_SUM(), "P10"):aggregate_scenarios(BY_PERCENTILE(10)), costs:aggregate_agents(BY_SUM(), "Average"):aggregate_scenarios(BY_AVERAGE()), costs:aggregate_agents(BY_SUM(), "P90"):aggregate_scenarios(BY_PERCENTILE(90)));
 
         if studies > 1 then
-            if is_greater_than_zero(disp) then
-                chart:add_area_range(disp:select_agent(1):add_prefix(col_struct.case_dir_list[i] .. " - "), disp:select_agent(3), { xUnit=dictionary.cell_stages[LANGUAGE], colors = light_global_color[i] }); -- Confidence interval
-                chart:add_line(disp:select_agent(2):add_prefix(col_struct.case_dir_list[i] .. " - "),{xUnit=dictionary.cell_stages[LANGUAGE]}); -- Average
+            if is_greater_than_zero(disp_cost) then
+                chart:add_area_range(disp_cost:select_agent(1):add_prefix(col_struct.case_dir_list[i] .. " - "), disp_cost:select_agent(3), { xUnit=dictionary.cell_stages[LANGUAGE], colors = light_global_color[i] }); -- Confidence interval
+                chart:add_line(disp_cost:select_agent(2):add_prefix(col_struct.case_dir_list[i] .. " - "),{xUnit=dictionary.cell_stages[LANGUAGE]}); -- Average
             end
         else
-            if is_greater_than_zero(disp) then
-                chart:add_area_range(disp:select_agent(1), disp:select_agent(3), { xUnit=dictionary.cell_stages[LANGUAGE], colors = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
-                chart:add_line(disp:select_agent(2), { xUnit=dictionary.cell_stages[LANGUAGE], colors = { "#F02720" } }); -- Average
+            if is_greater_than_zero(disp_cost) then
+                chart:add_area_range(disp_cost:select_agent(1), disp_cost:select_agent(3), { xUnit=dictionary.cell_stages[LANGUAGE], colors = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
+                chart:add_line(disp_cost:select_agent(2), { xUnit=dictionary.cell_stages[LANGUAGE], colors = { "#F02720" } }); -- Average
             end
         end
 
         -- sddp_dashboard_cost_avg
         local costs_avg = costs:aggregate_scenarios(BY_AVERAGE()):remove_zeros();
+        local recipes_avg = recipes:aggregate_scenarios(BY_AVERAGE()):remove_zeros();
         if studies == 1 and is_greater_than_zero(costs_avg) then
             chart_avg:add_column_stacking(costs_avg,{xUnit=dictionary.cell_stages[LANGUAGE]});
+            chart_avg:add_column_stacking(recipes_avg,{xUnit=dictionary.cell_stages[LANGUAGE]});
         end
     end
 
