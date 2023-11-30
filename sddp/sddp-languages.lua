@@ -153,9 +153,9 @@ dictionary = {
         pt = "Tempos de execução Forward e Backward"
     },
     breakdown_cost_time = {
-        en = "Breakdown of total operating costs",
-        es = "Porciones de los costos operativos totales",
-        pt = "Parcelas dos custos operacionais totais"
+        en = "Breakdown of total operating cost",
+        es = "Porciones de el costo operativo total",
+        pt = "Parcelas do custo operacional total"
     },
     breakdown_revenue_time = {
         en = "Breakdown of total operating revenues",

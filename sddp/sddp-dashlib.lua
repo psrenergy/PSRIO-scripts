@@ -247,6 +247,18 @@ local function load_language()
     end
 end
 
+function Expression.select_stages_of_outputs(self)
+    if self:loaded() then
+        local index = self:study_index();
+        local last_stage = Study(index):stages_without_buffer_years();
+        if Study(index):get_parameter("NumeroAnosAdicionaisParm2",-1) == 1 then
+            last_stage = Study(index):stages();
+        end
+
+        return self:select_stages(1,last_stage)
+    end
+    return self
+end
 -----------------------------------------------------------------------------------------------
 -- Get language
 -----------------------------------------------------------------------------------------------
@@ -819,8 +831,8 @@ function create_exe_timer_per_scen(tab, col_struct, i)
         info(output_name .. " output could not be loaded. 'Dispersion of execution times per scenario' report will not be displayed");
         return
     end
-
-    local extime_disp = concatenate(extime:aggregate_agents(BY_SUM(), "P10"):aggregate_scenarios(BY_PERCENTILE(10)), extime:aggregate_agents(BY_SUM(), "Average"):aggregate_scenarios(BY_AVERAGE()), extime:aggregate_agents(BY_SUM(), "P90"):aggregate_scenarios(BY_PERCENTILE(90)));
+    
+    local extime_disp = concatenate(extime:aggregate_agents(BY_SUM(), "MIN"):aggregate_scenarios(BY_MIN()), extime:aggregate_agents(BY_SUM(), "Average"):aggregate_scenarios(BY_AVERAGE()), extime:aggregate_agents(BY_SUM(), "MAX"):aggregate_scenarios(BY_MAX()));
     if is_greater_than_zero(extime_disp) then
         local unit = "hour";
         local extime_disp_data = extime_disp:aggregate_scenarios(BY_MAX()):aggregate_stages(BY_MAX()):to_list();
@@ -832,10 +844,10 @@ function create_exe_timer_per_scen(tab, col_struct, i)
         end
 
         extime_chart = Chart(dictionary.dispersion_of_time[LANGUAGE]);
-        extime_chart:add_area_range(extime_disp:select_agent(1):convert(unit),
-                                    extime_disp:select_agent(3):convert(unit),
+        extime_chart:add_area_range(extime_disp:select_agent("MIN"):convert(unit),
+                                    extime_disp:select_agent("MAX"):convert(unit),
                                     { xUnit = dictionary.cell_stages[LANGUAGE], colors = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
-        extime_chart:add_line(extime_disp:select_agent(2):convert(unit),
+        extime_chart:add_line(extime_disp:select_agent("Average"):convert(unit),
                               { xUnit = dictionary.cell_stages[LANGUAGE], colors = { "#F02720" } });                  -- Average
 
         if #extime_chart > 0 then
@@ -1104,8 +1116,7 @@ function create_sim_report(col_struct)
 
     if studies > 1 then
         for i = 1, studies do
-            local stages_without_buffer_years = col_struct.study[i]:stages_without_buffer_years();
-            costs = objcop(i) / discount_rate(i):select_stages(1,stages_without_buffer_years);
+            costs = objcop(i) / discount_rate(i):select_stages_of_outputs();
             -- sddp_dashboard_cost_tot
             costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
             cost_chart:add_categories(costs_agg, col_struct.case_dir_list[i]);
@@ -1115,8 +1126,7 @@ function create_sim_report(col_struct)
             exet_chart:add_categories(exe_times, col_struct.case_dir_list[i]);
         end
     else
-        local stages_without_buffer_years = col_struct.study[1]:stages_without_buffer_years();
-        costs = objcop() / discount_rate():select_stages(1,stages_without_buffer_years);
+        costs = objcop() / discount_rate():select_stages_of_outputs();
         costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
 
         if is_greater_than_zero(costs_agg) then
@@ -1170,11 +1180,9 @@ function create_costs_and_revs(col_struct)
     local chart_avg = Chart(dictionary.avg_operation_cost[LANGUAGE]);
 
     for i = 1, studies do
-        local stages_without_buffer_years = col_struct.study[i]:stages_without_buffer_years();
-
         local objcop = require("sddp/costs");
         local discount_rate = require("sddp/discount_rate");
-        local costs = ifelse(objcop(i):ge(0), objcop(i), 0) / discount_rate(i):select_stages(1,stages_without_buffer_years);
+        local costs = ifelse(objcop(i):ge(0), objcop(i), 0) / discount_rate(i):select_stages_of_outputs();
 
         -- sddp_dashboard_cost_tot
         if studies == 1 then
@@ -1237,15 +1245,13 @@ function create_marg_costs(col_struct)
     local chart = Chart(dictionary.annual_cmo[LANGUAGE]);
     if studies > 1 then
         for i = 1, studies do
-            local stages_without_buffer_years = col_struct.study[i]:stages_without_buffer_years();
-            cmg_aggyear = cmg[i]:aggregate_blocks_by_duracipu(i):aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[i].hours:select_stages(1,stages_without_buffer_years), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM);
+            cmg_aggyear = cmg[i]:aggregate_blocks_by_duracipu(i):aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[i].hours:select_stages_of_outputs(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM);
 
             -- Add marginal costs outputs
             chart:add_categories(cmg_aggyear, col_struct.case_dir_list[i], { xUnit=dictionary.cell_year[LANGUAGE] }); -- Annual Marg. cost
         end
     else
-        local stages_without_buffer_years = col_struct.study[1]:stages_without_buffer_years();
-        cmg_aggyear = cmg[1]:aggregate_blocks_by_duracipu():aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[1].hours:select_stages(1,stages_without_buffer_years), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE());
+        cmg_aggyear = cmg[1]:aggregate_blocks_by_duracipu():aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[1].hours:select_stages_of_outputs(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE());
         chart:add_column(cmg_aggyear, { xUnit=dictionary.cell_year[LANGUAGE] });
     end
     tab:push(chart);
@@ -1348,13 +1354,13 @@ function create_gen_report(col_struct)
     for i = 1, studies do
         local stages_without_buffer_years = col_struct.study[i]:stages_without_buffer_years();
 
-        gerter[i] = col_struct.thermal[i]:load("gerter"):select_stages(1,stages_without_buffer_years);
-        gerhid[i] = col_struct.hydro[i]:load("gerhid"):select_stages(1,stages_without_buffer_years);
-        gergnd[i] = col_struct.renewable[i]:load("gergnd"):select_stages(1,stages_without_buffer_years);
-        gercsp[i] = col_struct.csp[i]:load("cspgen"):convert("GWh"):select_stages(1,stages_without_buffer_years);
-        gerbat[i] = col_struct.battery[i]:load("gerbat"):convert("GWh"):select_stages(1,stages_without_buffer_years); -- Explicitly converting to GWh
-        potinj[i] = col_struct.power_injection[i]:load("powinj"):select_stages(1,stages_without_buffer_years);
-        defcit[i] = col_struct.system[i]:load("defcit"):select_stages(1,stages_without_buffer_years);
+        gerter[i] = col_struct.thermal[i]:load("gerter"):select_stages_of_outputs();
+        gerhid[i] = col_struct.hydro[i]:load("gerhid"):select_stages_of_outputs();
+        gergnd[i] = col_struct.renewable[i]:load("gergnd"):select_stages_of_outputs();
+        gercsp[i] = col_struct.csp[i]:load("cspgen"):convert("GWh"):select_stages_of_outputs();
+        gerbat[i] = col_struct.battery[i]:load("gerbat"):convert("GWh"):select_stages_of_outputs(); -- Explicitly converting to GWh
+        potinj[i] = col_struct.power_injection[i]:load("powinj"):select_stages_of_outputs();
+        defcit[i] = col_struct.system[i]:load("defcit"):select_stages_of_outputs();
     end
 
     if studies > 1 then
@@ -1575,18 +1581,18 @@ function create_gen_report(col_struct)
             -- Renewable generation is broken into 3 types
             local stages_without_buffer_years = col_struct.study[i]:stages_without_buffer_years();
 
-            total_other_renw_gen = ifelse(col_struct.renewable[i].tech_type:ne(1):select_stages(1,stages_without_buffer_years) &
-                                          col_struct.renewable[i].tech_type:ne(2):select_stages(1,stages_without_buffer_years) &
-                                          col_struct.renewable[i].tech_type:ne(4):select_stages(1,stages_without_buffer_years),
+            total_other_renw_gen = ifelse(col_struct.renewable[i].tech_type:ne(1):select_stages_of_outputs() &
+                                          col_struct.renewable[i].tech_type:ne(2):select_stages_of_outputs() &
+                                          col_struct.renewable[i].tech_type:ne(4):select_stages_of_outputs(),
                                           gergnd[i],
                                           0);
-            total_wind_gen = ifelse(col_struct.renewable[i].tech_type:eq(1):select_stages(1,stages_without_buffer_years),
+            total_wind_gen = ifelse(col_struct.renewable[i].tech_type:eq(1):select_stages_of_outputs(),
                                           gergnd[i],
                                           0);
-            total_solar_gen = ifelse(col_struct.renewable[i].tech_type:eq(2):select_stages(1,stages_without_buffer_years),
+            total_solar_gen = ifelse(col_struct.renewable[i].tech_type:eq(2):select_stages_of_outputs(),
                                           gergnd[i],
                                           0);
-            total_small_hydro_gen = ifelse(col_struct.renewable[i].tech_type:eq(4):select_stages(1,stages_without_buffer_years),
+            total_small_hydro_gen = ifelse(col_struct.renewable[i].tech_type:eq(4):select_stages_of_outputs(),
                                           gergnd[i],
                                           0);
 
@@ -1733,9 +1739,9 @@ function create_viol_report_from_list(tab, col_struct, viol_list, viol_struct, s
     local viol_name;
     local tokens = {};
 
-    for i, file in ipairs(viol_list) do
+    for _, file in ipairs(viol_list) do
         -- Look for file title in violation structure
-        for j, struct in ipairs(viol_struct) do
+        for _, struct in ipairs(viol_struct) do
             viol_name = "sddp_dashboard_viol_" .. suffix .. "_" .. struct.name;
             if file == viol_name then
                 viol_file = col_struct.generic[1]:load(file);
