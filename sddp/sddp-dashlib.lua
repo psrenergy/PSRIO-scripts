@@ -1678,7 +1678,7 @@ function create_risk_report(col_struct)
 
     if studies > 1 then
         for i = 1, studies do
-            risk_file = col_struct.system[i]:load("sddprisk"):aggregate_agents(BY_AVERAGE(), Collection.SYSTEM);
+            risk_file = col_struct.system[i]:load("sddprisk"):aggregate_agents(BY_AVERAGE(), Collection.SYSTEM):aggregate_stages(BY_AVERAGE());
 
             -- Add marginal costs outputs
             chart:add_categories(risk_file, col_struct.case_dir_list[i]); -- Annual Marg. cost
