@@ -32,7 +32,7 @@ ca = concatenate(
 ca:save("opt1_installedcapacity") -- Capacidade instalada a cada mês
 ca:aggregate_stages(BY_MAX(), Profile.PER_YEAR):save("opt1_yearly_instCap") -- Capacidade instalada a cada ano
 
-outidec = project:load("outidec")
+outidec = generic:load("outidec")
 addedcapacity = concatenate(
     outidec:select_agents(Collection.HYDRO):aggregate_agents(BY_SUM(), "Total hydro"),
     outidec:select_agents(Collection.THERMAL):aggregate_agents(BY_SUM(), "Total thermal"),
@@ -76,9 +76,17 @@ end
 
 study_outdbtot = outdbtot:aggregate_agents(BY_SUM(), "Inv. Cost."); -- Custos totais de investimento
 study_outdfact = outdfact:aggregate_agents(BY_SUM(), "PSRStudy"); -- Taxa de desconto
-total_cost = concatenate(
-    (costs:aggregate_agents(BY_SUM(), "Ope. Cost"):aggregate_scenarios(BY_AVERAGE()) * study_outdfact):aggregate_stages(BY_SUM()),
-    (study_outdbtot * study_outdfact):aggregate_stages(BY_SUM())
-); -- Concatena os valores totais da simulação de operação e investimento
 
+ope_cost = (costs:aggregate_agents(BY_SUM(), "Ope. Cost"):aggregate_scenarios(BY_AVERAGE()) * study_outdfact):aggregate_stages(BY_SUM());
+inv_cost = (study_outdbtot * study_outdfact):aggregate_stages(BY_SUM())
+
+if not ope_cost:loaded() then
+	ope_cost = generic:create("Ope. Cost", "M$", {0});
+end
+
+if not inv_cost:loaded() then
+	inv_cost = generic:create("Inv. Cost.", "M$", {0});
+end
+
+total_cost = concatenate(ope_cost, inv_cost); -- Concatena os valores totais da simulação de operação e investimento
 total_cost:convert("M$"):save("opt1_totalcosts"); -- Pizza dos custos totais

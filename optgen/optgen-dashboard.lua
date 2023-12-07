@@ -1,4 +1,4 @@
--- C:\Users\iury\Desktop\PSRio_Atual\psrio.exe --model OPTGEN -r "D:\SDDP_1\sddp\psrio-scripts\sddp\sddp-dashlib.lua,D:\PSRIO-scripts\optgen\optgen-dashboard.lua" "D:\Dropbox (PSR)\PSR_main\OPTGEN\DASHBOARD\caso_timing"
+-- C:\PSR\GraphModule\Oper\psrplot\psrio\psrio.exe --model OPTGEN -r "D:\SDDP_1\sddp\psrio-scripts\sddp\sddp-dashlib.lua,D:\PSRIO-scripts\optgen\optgen-dashboard.lua" "C:\PSR\Optgen8.1\Example\Typical_Day\3_typday"
 --=================================================--
 -- Create Vectors of collections
 --=================================================--
@@ -40,6 +40,7 @@ end
 --=================================================--
 -- Dictionary of Colors
 --=================================================--
+
 local colors<const> = {
     total_generation = {
         thermal = "#F28E2B",
@@ -97,7 +98,7 @@ local colors<const> = {
     },
     obj_function = {
         operative_cost = "#D3D3D3",
-        investiment_cost = "#2F4F4F",
+        investment_cost = "#2F4F4F",
         deficit_cost = "#4682B4",
         gas_tranport = "#8B4513",
         min_storage_penalty = "#B22222",
@@ -126,14 +127,14 @@ local dictionary<const> = {
         pt = "Reporte de investimentos"
     },
     optgen_2_reports = {
-        en = "OPTGEN 2 reports",
-        es = "Informes OPTGEN 2",
-        pt = "Reportes OPTGEN 2"
+        en = "OptGen 2 reports",
+        es = "Informes OptGen 2",
+        pt = "Relatórios OptGen 2"
     },
     optgen_risk = {
         en = "Risk reports",
         es = "Informes de riesgo",
-        pt = "Reportes de risco"
+        pt = "Relatórios de risco"
     },
     expansion_results = {
         en = "Expansion results",
@@ -143,7 +144,7 @@ local dictionary<const> = {
     sddp = {
         en = "SDDP reports",
         es = "Informes SDDP",
-        pt = "Reportes SDDP"
+        pt = "Relatórios SDDP"
     },
     accumulated_capacity = {
         en = "Accumulated capacity",
@@ -152,8 +153,8 @@ local dictionary<const> = {
     },
     circuit_accumulated_capacity = {
         en = "Circuit accumulated capacity",
-        es = "Capacidad acumulada  de circuitos",
-        pt = "Capacidade acumulada  de circuitos"
+        es = "Capacidad acumulada de circuitos",
+        pt = "Capacidade acumulada de circuitos"
     },
     total_costs = {
         en = "Total costs",
@@ -177,8 +178,8 @@ local dictionary<const> = {
     },
     total_hydro = {
         en = "Total hydro",
-        es = "Total hydro",
-        pt = "Total hydro"
+        es = "Total hidro",
+        pt = "Total hidro"
     },
     total_renewable = {
         en = "Total others renewable",
@@ -314,6 +315,21 @@ local dictionary<const> = {
         en = "Objective function",
         es = "Función objetivo",
         pt = "Função objetivo"
+    },
+    data_not_exist = {
+        en = "None data to graph",
+        es = "Ningún dato para graficar",
+        pt = "Nenhum dado para graficar"
+    },
+    GAP = {
+        en = "GAP",
+        es = "GAP",
+        pt = "GAP"
+    },
+    convergence = {
+        en = "Convergence",
+        es = "Convergencia",
+        pt = "Convergência"
     }
 };
 
@@ -329,6 +345,7 @@ local plot<const> = {
     firm_capacity                = true,
     firm_capacity_mix            = true,
     firm_energy                  = true,
+    firm_energy_mix              = true,
     annual_marginal_cost         = true,
     monthly_marginal_cost        = true,
     hourly_marginal_cost_typical = true,
@@ -336,7 +353,8 @@ local plot<const> = {
     generation_in_each_season    = true,
     hourly_generation_typical    = true,
     objective_function           = true,
-    risk_curve                   = true
+    risk_curve                   = true,
+    convergence                  = true
 };
 --=================================================--
 -- Get parameters Functions
@@ -356,7 +374,7 @@ end
 
 local function identify_if_opt2()
     for case = 1, cases do
-        if not study[case]:get_parameter("Keywords", "OPTG", -1) == 2 then
+        if study[case]:get_parameter("Keywords", "OPTG", -1) ~= 2 then
             return false;
         end
     end
@@ -381,29 +399,12 @@ end
 local language<const> = load_language();
 
 local is_opt2<const> = identify_if_opt2();
-
+local risk_results = true;
 local has_network<const> = identify_if_has_network();
 
 --=================================================--
 -- Utils
 --=================================================--
-local function load_dathisc(case) -- vai deixar de existir
-    local scenarios = study[case]:scenarios();
-    local dathisc = generic[case]:load_table_without_header("dathisc.csv");
-
-    if dathisc then
-        local aux_table = {};
-        for scn = 1, scenarios do
-            local data = generic[case]:create("SCN_" .. scn, "pu", { tonumber(dathisc[1 + scn][3]) });
-            table.insert(aux_table, data);
-        end
-
-        return concatenate_scenarios(aux_table);
-    end
-
-    return nil;
-end
-
 local function by_day(data) -- vai deixar de existir
     if data:loaded() then
         local block_base = 24;
@@ -442,18 +443,6 @@ local function by_day(data) -- vai deixar de existir
                 }
 end
 
-local function read_opt2_optgcoped(case) -- vai deixar de existir
-    local opt2_optgcoped = generic[case]:load_table_without_header("opt2_optgcoped.csv");
-
-    local aux_table = {};
-    for col = 2, 15 do
-        local data = generic[case]:create(opt2_optgcoped[3][col], "M$", { tonumber(opt2_optgcoped[4][col]) });
-        table.insert(aux_table, data);
-    end
-
-    return concatenate(aux_table);
-end
-
 local function opt2_format_to_chart_scatterplot(year_vec, data_vec, col_name_vec, chart, unit, case) -- vai deixar de existir
     if #col_name_vec ~= #data_vec then
         warn("Vector Column name and Vector Data has not the same size in opt2_format function");
@@ -468,11 +457,11 @@ local function opt2_format_to_chart_scatterplot(year_vec, data_vec, col_name_vec
         end
     end
 
-    local intial_year = year_vec[1];
+    local initial_year = year_vec[1];
     local final_year  = year_vec[#year_vec]
     local data_x_aux  = {};
     local data_y_aux  = {};
-    for year = intial_year, final_year do
+    for year = initial_year, final_year do
         for i, data_year in ipairs(year_vec) do
             if tonumber(year) == tonumber(data_year) then
                 table.insert(data_x_aux, tonumber(data_vec[1][i]));
@@ -510,30 +499,22 @@ end
 -- Create Charts Functions
 --=================================================--
 local function chart_accumulated_capacity(case)
-    local thermal_agents = thermal[case]:labels();
-    local hydro_agents   = hydro[case]:labels();
-    local battery_agents = battery[case]:labels();
-    local solar_agents   = renewable[case].tech_type:eq(1):remove_zeros():agents();
-    local wind_agents    = renewable[case].state:select_agents(renewable[case].tech_type:eq(2)):agents();
-    local csp_agents     = renewable[case].state:select_agents(renewable[case].tech_type:eq(5)):agents();
-    local others_agents  = renewable[case].state:remove_agents(solar_agents):remove_agents(wind_agents):remove_agents(csp_agents):agents();
+    local outidec = expansionproject[case]:load("outidec");
 
-    local outidec = generic[case]:load("outidec");
-
-    local thermal_cap   = outidec:select_agents(thermal_agents)
-                                :aggregate_stages(BY_LAST_VALUE(),Profile.PER_YEAR):round(0);
-    local hydro_cap     = outidec:select_agents(hydro_agents)
-                                :aggregate_stages(BY_LAST_VALUE(),Profile.PER_YEAR):round(0);
-    local renewable_cap = outidec:select_agents(others_agents)
-                                :aggregate_stages(BY_LAST_VALUE(),Profile.PER_YEAR):round(0);
-    local solar_cap     = outidec:select_agents(solar_agents)
-                                :aggregate_stages(BY_LAST_VALUE(),Profile.PER_YEAR):round(0);
-    local wind_cap      = outidec:select_agents(wind_agents)
-                                :aggregate_stages(BY_LAST_VALUE(),Profile.PER_YEAR):round(0);
-    local csp_cap       = outidec:select_agents(csp_agents)
-                                :aggregate_stages(BY_LAST_VALUE(),Profile.PER_YEAR):round(0);
-    local battery_cap   = outidec:select_agents(battery_agents)
-                                :aggregate_stages(BY_LAST_VALUE(),Profile.PER_YEAR):round(0);
+    local thermal_cap   = outidec:select_agents(Collection.THERMAL)
+                                :aggregate_stages(BY_LAST_VALUE(),Profile.PER_YEAR):remove_zeros():round(0);
+    local hydro_cap     = outidec:select_agents(Collection.HYDRO)
+                                :aggregate_stages(BY_LAST_VALUE(),Profile.PER_YEAR):remove_zeros():round(0);
+    local renewable_cap = outidec:select_agents(Collection.RENEWABLE):select_agents(renewable[case].tech_type:ne(1 | 2 | 5))
+                                :aggregate_stages(BY_LAST_VALUE(),Profile.PER_YEAR):remove_zeros():round(0);
+    local solar_cap     = outidec:select_agents(Collection.RENEWABLE):select_agents(renewable[case].tech_type:eq(2))
+                                :aggregate_stages(BY_LAST_VALUE(),Profile.PER_YEAR):remove_zeros():round(0);
+    local wind_cap      = outidec:select_agents(Collection.RENEWABLE):select_agents(renewable[case].tech_type:eq(1))
+                                :aggregate_stages(BY_LAST_VALUE(),Profile.PER_YEAR):remove_zeros():round(0);
+    local csp_cap       = outidec:select_agents(Collection.RENEWABLE):select_agents(renewable[case].tech_type:eq(5))
+                                :aggregate_stages(BY_LAST_VALUE(),Profile.PER_YEAR):remove_zeros():round(0);
+    local battery_cap   = outidec:select_agents(Collection.BATTERY)
+                                :aggregate_stages(BY_LAST_VALUE(),Profile.PER_YEAR):remove_zeros():round(0);
 
 
     local chart = create_chart("", case);
@@ -545,49 +526,36 @@ local function chart_accumulated_capacity(case)
     chart:add_column_stacking(csp_cap:aggregate_agents(BY_SUM(), dictionary.total_csp[language]), { color = colors.total_generation.csp });
     chart:add_column_stacking(battery_cap:aggregate_agents(BY_SUM(), dictionary.total_battery[language]), { color = colors.total_generation.battery });
 
-    if #chart == 0 then
-        plot.accumulated_capacity = false;
+    if #chart <= 0 then
+        return 
     end
 
     return chart;
 end
 
 local function chart_circuit_accumulated_capacity(case)
-    local circuit_agents = circuit[case]:labels();
-    local dclink_agents  = dclink[case]:labels();
+    local outidec = expansionproject[case]:load("outidec");
 
-    local outidec = generic[case]:load("outidec");
-
-    local ac_cap   = outidec:select_agents(circuit_agents)
+    local ac_cap   = outidec:select_agents(Collection.CIRCUIT)
                                 :aggregate_stages(BY_LAST_VALUE(),Profile.PER_YEAR);
-    local dc_cap   = outidec:select_agents(dclink_agents)
+    local dc_cap   = outidec:select_agents(Collection.DCLINK)
                                 :aggregate_stages(BY_LAST_VALUE(),Profile.PER_YEAR);
 
     local chart = create_chart("", case);
-    chart:add_column_stacking(ac_cap:aggregate_agents(BY_SUM(), dictionary.total_ac_circuit[language]):round(0), { color = colors.total_circuit.ac });
-    chart:add_column_stacking(dc_cap:aggregate_agents(BY_SUM(), dictionary.total_hydro[language]):round(0), { color = colors.total_circuit.dc });
+    chart:add_column_stacking(ac_cap:aggregate_agents(BY_SUM(), dictionary.total_ac_circuit[language]):remove_zeros():round(0), { color = colors.total_circuit.ac });
+    chart:add_column_stacking(dc_cap:aggregate_agents(BY_SUM(), dictionary.total_hydro[language]):remove_zeros():round(0), { color = colors.total_circuit.dc });
 
-    if #chart == 0 then
-        plot.circuit_accumulated_capacity = false;
+    if #chart <= 0 then
+        return 
     end
 
     return chart;
 end
 
 local function chart_total_cost(case)
-    local thermal_agents = thermal[case]:labels();
-    local hydro_agents   = hydro[case]:labels();
-    local battery_agents = battery[case]:labels();
-    local solar_agents   = renewable[case].tech_type:eq(1):remove_zeros():agents();
-    local wind_agents    = renewable[case].state:select_agents(renewable[case].tech_type:eq(2)):agents();
-    local csp_agents     = renewable[case].state:select_agents(renewable[case].tech_type:eq(5)):agents();
-    local others_agents  = renewable[case].state:remove_agents(solar_agents):remove_agents(wind_agents):remove_agents(csp_agents):agents();
-    local circuit_agents = circuit[case]:labels();
-    local dclink_agents  = dclink[case]:labels();
-
     local objcop   = generic[case]:load("objcop"):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE());
     local outdfact = generic[case]:load("outdfact");
-    local outdisbu = generic[case]:load("outdisbu"):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()) * outdfact;
+    local outdisbu = expansionproject[case]:load("outdisbu"):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()) * outdfact;
 
     local costs;
     if study[case]:is_hourly() then
@@ -596,16 +564,24 @@ local function chart_total_cost(case)
         costs = (objcop:remove_agents({1}):remove_agents({-1}) * outdfact):aggregate_stages(BY_SUM()); -- remove total cost -- remove future cost
     end
 
-    local inv_total = outdisbu:aggregate_stages(BY_SUM()):round(0);
-    local inv_therm = outdisbu:select_agents(thermal_agents):aggregate_stages(BY_SUM()):round(0);
-    local inv_hydro = outdisbu:select_agents(hydro_agents  ):aggregate_stages(BY_SUM()):round(0);
-    local inv_batte = outdisbu:select_agents(battery_agents):aggregate_stages(BY_SUM()):round(0);
-    local inv_solar = outdisbu:select_agents(solar_agents  ):aggregate_stages(BY_SUM()):round(0);
-    local inv_wind  = outdisbu:select_agents(wind_agents   ):aggregate_stages(BY_SUM()):round(0);
-    local inv_csp   = outdisbu:select_agents(csp_agents    ):aggregate_stages(BY_SUM()):round(0);
-    local inv_other = outdisbu:select_agents(others_agents ):aggregate_stages(BY_SUM()):round(0);
-    local inv_ac    = outdisbu:select_agents(circuit_agents):aggregate_stages(BY_SUM()):round(0);
-    local inv_dc    = outdisbu:select_agents(dclink_agents ):aggregate_stages(BY_SUM()):round(0);
+    local inv_total = outdisbu:aggregate_stages(BY_SUM()):remove_zeros():round(0);
+    local inv_therm = outdisbu:select_agents(Collection.THERMAL):aggregate_stages(BY_SUM()):remove_zeros():round(0);
+    local inv_hydro = outdisbu:select_agents(Collection.HYDRO  ):aggregate_stages(BY_SUM()):remove_zeros():round(0);
+    local inv_batte = outdisbu:select_agents(Collection.BATTERY):aggregate_stages(BY_SUM()):remove_zeros():round(0);
+    local inv_solar = outdisbu:select_agents(Collection.RENEWABLE)
+                              :select_agents(renewable[case].tech_type:eq(2) )
+                              :aggregate_stages(BY_SUM()):remove_zeros():round(0);
+    local inv_wind  = outdisbu:select_agents(Collection.RENEWABLE)
+                              :select_agents(renewable[case].tech_type:eq(1) )
+                              :aggregate_stages(BY_SUM()):remove_zeros():round(0);
+    local inv_csp   = outdisbu:select_agents(Collection.RENEWABLE)
+                              :select_agents(renewable[case].tech_type:eq(5) )
+                              :aggregate_stages(BY_SUM()):remove_zeros():round(0);
+    local inv_other = outdisbu:select_agents(Collection.RENEWABLE)
+                              :select_agents(renewable[case].tech_type:ne(1 | 2 | 5) )
+                              :aggregate_stages(BY_SUM()):remove_zeros():round(0);
+    local inv_ac    = outdisbu:select_agents(Collection.CIRCUIT):aggregate_stages(BY_SUM()):remove_zeros():round(0);
+    local inv_dc    = outdisbu:select_agents(Collection.DCLINK ):aggregate_stages(BY_SUM()):remove_zeros():round(0);
 
     local chart_a = create_chart("", case);
     chart_a:add_pie(costs:aggregate_agents(BY_SUM(), dictionary.total_operational_costs[language]), { color = colors.total_costs.operational });
@@ -623,28 +599,27 @@ local function chart_total_cost(case)
     chart_b:add_pie(inv_dc:aggregate_agents(BY_SUM(), dictionary.total_dc_circuit[language]), { color = colors.total_costs.dc });
 
     if #chart_a == 0 or #chart_b == 0 then
-        plot.total_cost = false;
+        return
     end
-
+    
     return { chart_a, chart_b };
 end
 
 local function chart_total_installed_capacity(case)
-    local solar_agents   = renewable[case].tech_type:eq(1):remove_zeros():agents();
-    local wind_agents    = renewable[case].state:select_agents(renewable[case].tech_type:eq(2)):agents();
-    local csp_agents     = renewable[case].state:select_agents(renewable[case].tech_type:eq(5)):agents();
-    local others_agents  = renewable[case].state:remove_agents(solar_agents):remove_agents(wind_agents):remove_agents(csp_agents):agents();
-
     local renewable_cap_ind = renewable[case]:load("pnomnd");
 
-    local thermal_cap   = thermal[case]:load("pnomtr"):round(0);
-    local hydro_cap     = hydro[case]:load("pnomhd"):round(0);
-    local batte_cap     = battery[case]:load("pnombat"):round(0);
-    local renewable_cap = renewable_cap_ind:select_agents(others_agents):aggregate_scenarios(BY_AVERAGE()):round(0);
-    local solar_cap     = renewable_cap_ind:select_agents(solar_agents):aggregate_scenarios(BY_AVERAGE()):round(0);
-    local wind_cap      = renewable_cap_ind:select_agents(wind_agents):aggregate_scenarios(BY_AVERAGE()):round(0);
-    local csp_cap       = renewable_cap_ind:select_agents(csp_agents):aggregate_scenarios(BY_AVERAGE()):round(0);
-    local bat_cap       = batte_cap:select_agents(batte_cap):aggregate_scenarios(BY_AVERAGE()):round(0);
+    local thermal_cap   = thermal[case]:load("pnomtr"):remove_zeros():round(0);
+    local hydro_cap     = hydro[case]:load("pnomhd"):remove_zeros():round(0);
+    local batte_cap     = battery[case]:load("pnombat"):remove_zeros():round(0);
+    local renewable_cap = renewable_cap_ind:select_agents(renewable[case].tech_type:ne(1 | 2 | 5) )
+                                           :aggregate_scenarios(BY_AVERAGE()):remove_zeros():round(0);
+    local solar_cap     = renewable_cap_ind:select_agents(renewable[case].tech_type:eq(2) )
+                                           :aggregate_scenarios(BY_AVERAGE()):remove_zeros():round(0);
+    local wind_cap      = renewable_cap_ind:select_agents(renewable[case].tech_type:eq(1) )
+                                           :aggregate_scenarios(BY_AVERAGE()):remove_zeros():round(0);
+    local csp_cap       = renewable_cap_ind:select_agents(renewable[case].tech_type:eq(5) )
+                                           :aggregate_scenarios(BY_AVERAGE()):remove_zeros():round(0);
+    local bat_cap       = batte_cap:aggregate_scenarios(BY_AVERAGE()):remove_zeros():round(0);
 
     local chart = create_chart("", case);
     chart:add_area_spline_stacking(thermal_cap:aggregate_agents(BY_SUM(), dictionary.total_thermal[language]), { color = colors.total_generation.thermal });
@@ -655,33 +630,32 @@ local function chart_total_installed_capacity(case)
     chart:add_area_spline_stacking(csp_cap:aggregate_agents(BY_SUM(), dictionary.total_csp[language]), { color = colors.total_generation.csp });
     chart:add_area_spline_stacking(bat_cap:aggregate_agents(BY_SUM(), dictionary.total_battery[language]), { color = colors.total_generation.battery });
 
-    if #chart == 0 then
-        plot.total_installed_capacity = false;
+    if #chart <= 0 then
+        return 
     end
 
     return chart;
 end
 
 local function chart_total_installed_capacity_mix(case)
-    local solar_agents   = renewable[case].tech_type:eq(1):remove_zeros():agents();
-    local wind_agents    = renewable[case].state:select_agents(renewable[case].tech_type:eq(2)):agents();
-    local csp_agents     = renewable[case].state:select_agents(renewable[case].tech_type:eq(5)):agents();
-    local others_agents  = renewable[case].state:remove_agents(solar_agents):remove_agents(wind_agents):remove_agents(csp_agents):agents();
-
     local renewable_cap_ind = renewable[case]:load("pnomnd"):aggregate_stages(BY_MAX());
 
-    local thermal_cap   = thermal[case]:load("pnomtr"):aggregate_stages(BY_MAX()):round(0);
-    local hydro_cap     = hydro[case]:load("pnomhd"):aggregate_stages(BY_MAX()):round(0);
-    local batte_cap     = battery[case]:load("pnombat"):aggregate_stages(BY_MAX()):round(0);
-    local renewable_cap = renewable_cap_ind:select_agents(others_agents):aggregate_scenarios(BY_AVERAGE()):round(0);
-    local solar_cap     = renewable_cap_ind:select_agents(solar_agents):aggregate_scenarios(BY_AVERAGE()):round(0);
-    local wind_cap      = renewable_cap_ind:select_agents(wind_agents):aggregate_scenarios(BY_AVERAGE()):round(0);
-    local csp_cap       = renewable_cap_ind:select_agents(csp_agents):aggregate_scenarios(BY_AVERAGE()):round(0);
-    local bat_cap       = batte_cap:select_agents(batte_cap):aggregate_stages(BY_MAX()):aggregate_scenarios(BY_AVERAGE()):round(0);
+    local thermal_cap   = thermal[case]:load("pnomtr"):aggregate_stages(BY_MAX()):remove_zeros():round(0);
+    local hydro_cap     = hydro[case]:load("pnomhd"):aggregate_stages(BY_MAX()):remove_zeros():round(0);
+    local batte_cap     = battery[case]:load("pnombat"):aggregate_stages(BY_MAX()):remove_zeros():round(0);
+    local renewable_cap = renewable_cap_ind:select_agents(renewable[case].tech_type:ne(1 | 2 | 5) )
+                                           :aggregate_scenarios(BY_AVERAGE()):remove_zeros():round(0);
+    local solar_cap     = renewable_cap_ind:select_agents(renewable[case].tech_type:eq(2) )
+                                           :aggregate_scenarios(BY_AVERAGE()):remove_zeros():round(0);
+    local wind_cap      = renewable_cap_ind:select_agents(renewable[case].tech_type:eq(1) )
+                                           :aggregate_scenarios(BY_AVERAGE()):remove_zeros():round(0);
+    local csp_cap       = renewable_cap_ind:select_agents(renewable[case].tech_type:eq(5) )
+                                           :aggregate_scenarios(BY_AVERAGE()):remove_zeros():round(0);
+    local bat_cap       = batte_cap:aggregate_scenarios(BY_AVERAGE()):remove_zeros():round(0);
 
     local vector_of_charts = {};
     local initial_year = study[case]:initial_year();
-    local final_year   = thermal_cap:final_year();
+    local final_year   = study[case]:final_year();
     -- for year = initial_year,final_year do
     for _, year in ipairs({ initial_year, final_year }) do
         local chart = create_chart("Year - "..year, case);
@@ -701,8 +675,8 @@ local function chart_total_installed_capacity_mix(case)
         chart:add_pie(csp_cap_annual:aggregate_agents(BY_SUM(), dictionary.total_csp[language]), { color = colors.total_generation.csp });
         chart:add_pie(bat_cap_annual:aggregate_agents(BY_SUM(), dictionary.total_battery[language]), { color = colors.total_generation.battery });
 
-        if #chart == 0 then
-            plot.accumulated_capacity = false;
+        if #chart <= 0 then
+            return 
         end
 
         table.insert(vector_of_charts, chart);
@@ -711,20 +685,19 @@ local function chart_total_installed_capacity_mix(case)
 end
 
 local function chart_firm_capacity(case)
-    local solar_agents   = renewable[case].tech_type:eq(1):remove_zeros():agents();
-    local wind_agents    = renewable[case].state:select_agents(renewable[case].tech_type:eq(2)):agents();
-    local csp_agents     = renewable[case].state:select_agents(renewable[case].tech_type:eq(5)):agents();
-    local others_agents  = renewable[case].state:remove_agents(solar_agents):remove_agents(wind_agents):remove_agents(csp_agents):agents();
-
-    local firm_capacity_renew = renewable[case]:load("outrpa"):round(0);
-    local firm_capacity_hydro = hydro[case]:load("outhpa"):round(0);
-    local firm_capacity_therm = thermal[case]:load("outtpa"):round(0);
-    local firm_capacity_batte = battery[case]:load("outbpa"):round(0);
-    local firm_capacity_solar = firm_capacity_renew:select_agents(solar_agents):aggregate_agents(BY_SUM(), dictionary.total_solar[language]):round(0);
-    local firm_capacity_wind  = firm_capacity_renew:select_agents(wind_agents):aggregate_agents(BY_SUM(), dictionary.total_wind[language]):round(0);
-    local firm_capacity_csp   = firm_capacity_renew:select_agents(csp_agents):aggregate_agents(BY_SUM(), dictionary.total_csp[language]):round(0);
-    local firm_capacity_renew = firm_capacity_renew:select_agents(others_agents):aggregate_agents(BY_SUM(), dictionary.total_renewable[language]):round(0);
-
+    local firm_capacity_renew = renewable[case]:load("outrpa"):remove_zeros():round(0);
+    local firm_capacity_hydro = hydro[case]:load("outhpa"):remove_zeros():round(0);
+    local firm_capacity_therm = thermal[case]:load("outtpa"):remove_zeros():round(0);
+    local firm_capacity_batte = battery[case]:load("outbpa"):remove_zeros():round(0);
+    local firm_capacity_renew = firm_capacity_renew:select_agents(renewable[case].tech_type:ne(1 | 2 | 5) )
+                                                   :aggregate_agents(BY_SUM(), dictionary.total_solar[language]):remove_zeros():round(0);
+    local firm_capacity_solar = firm_capacity_renew:select_agents(renewable[case].tech_type:eq(2) )
+                                                   :aggregate_agents(BY_SUM(), dictionary.total_wind[language]):remove_zeros():round(0);
+    local firm_capacity_wind  = firm_capacity_renew:select_agents(renewable[case].tech_type:eq(1) )
+                                                   :aggregate_agents(BY_SUM(), dictionary.total_csp[language]):remove_zeros():round(0);
+    local firm_capacity_csp   = firm_capacity_renew:select_agents(renewable[case].tech_type:eq(5) )
+                                                   :aggregate_agents(BY_SUM(), dictionary.total_renewable[language]):remove_zeros():round(0);
+    
     local chart = create_chart("", case);
     chart:add_area_spline_stacking(firm_capacity_therm:aggregate_agents(BY_SUM(), dictionary.total_thermal[language]), { color = colors.total_generation.thermal });
     chart:add_area_spline_stacking(firm_capacity_hydro:aggregate_agents(BY_SUM(), dictionary.total_hydro[language]), { color = colors.total_generation.hydro });
@@ -734,31 +707,30 @@ local function chart_firm_capacity(case)
     chart:add_area_spline_stacking(firm_capacity_csp:aggregate_agents(BY_SUM(), dictionary.total_csp[language]), { color = colors.total_generation.csp });
     chart:add_area_spline_stacking(firm_capacity_batte:aggregate_agents(BY_SUM(), dictionary.total_battery[language]), { color = colors.total_generation.battery });
 
-    if #chart == 0 then
-        plot.firm_capacity = false;
+    if #chart <= 0 then
+        return 
     end
 
     return chart;
 end
 
 local function chart_firm_capacity_mix(case)
-    local solar_agents   = renewable[case].tech_type:eq(1):remove_zeros():agents();
-    local wind_agents    = renewable[case].state:select_agents(renewable[case].tech_type:eq(2)):agents();
-    local csp_agents     = renewable[case].state:select_agents(renewable[case].tech_type:eq(5)):agents();
-    local others_agents  = renewable[case].state:remove_agents(solar_agents):remove_agents(wind_agents):remove_agents(csp_agents):agents();
-
-    local firm_capacity_renew = renewable[case]:load("outrpa"):round(0);
-    local firm_capacity_hydro = hydro[case]:load("outhpa"):round(0);
-    local firm_capacity_therm = thermal[case]:load("outtpa"):round(0);
-    local firm_capacity_batte = battery[case]:load("outbpa"):round(0);
-    local firm_capacity_solar   = firm_capacity_renew:select_agents(solar_agents):aggregate_agents(BY_SUM(), dictionary.total_solar[language]):round(0);
-    local firm_capacity_wind    = firm_capacity_renew:select_agents(wind_agents):aggregate_agents(BY_SUM(), dictionary.total_wind[language]):round(0);
-    local firm_capacity_csp     = firm_capacity_renew:select_agents(csp_agents):aggregate_agents(BY_SUM(), dictionary.total_csp[language]):round(0);
-    local firm_capacity_renew   = firm_capacity_renew:select_agents(others_agents):aggregate_agents(BY_SUM(), dictionary.total_renewable[language]):round(0);
+    local firm_capacity_renew = renewable[case]:load("outrpa"):remove_zeros():round(0);
+    local firm_capacity_hydro = hydro[case]:load("outhpa"):remove_zeros():round(0);
+    local firm_capacity_therm = thermal[case]:load("outtpa"):remove_zeros():round(0);
+    local firm_capacity_batte = battery[case]:load("outbpa"):remove_zeros():round(0);
+    local firm_capacity_solar = firm_capacity_renew:select_agents(renewable[case].tech_type:eq(2) )
+                                                   :aggregate_agents(BY_SUM(), dictionary.total_solar[language]):remove_zeros():round(0);
+    local firm_capacity_wind  = firm_capacity_renew:select_agents(renewable[case].tech_type:eq(1) )
+                                                   :aggregate_agents(BY_SUM(), dictionary.total_wind[language]):remove_zeros():round(0);
+    local firm_capacity_csp   = firm_capacity_renew:select_agents(renewable[case].tech_type:eq(5) )
+                                                   :aggregate_agents(BY_SUM(), dictionary.total_csp[language]):remove_zeros():round(0);
+    local firm_capacity_renew = firm_capacity_renew:select_agents(renewable[case].tech_type:ne(1 | 2 | 5) )
+                                                   :aggregate_agents(BY_SUM(), dictionary.total_renewable[language]):remove_zeros():round(0);
 
     local vector_of_charts = {};
     local initial_year = study[case]:initial_year();
-    local final_year   = firm_capacity_therm:final_year(); -- mudar
+    local final_year   = firm_capacity_therm:final_year();
 
     -- for year = initial_year,final_year do
     for _, year in ipairs({ initial_year, final_year }) do
@@ -779,8 +751,8 @@ local function chart_firm_capacity_mix(case)
         chart:add_pie(csp_cap_annual:aggregate_agents(BY_SUM(), dictionary.total_csp[language]), { color = colors.total_generation.csp });
         chart:add_pie(bat_cap_annual:aggregate_agents(BY_SUM(), dictionary.total_battery[language]), { color = colors.total_generation.battery });
 
-        if #chart == 0 then
-            plot.firm_capacity_mix = false;
+        if #chart <= 0 then
+            return 
         end
 
         table.insert(vector_of_charts, chart);
@@ -790,19 +762,18 @@ local function chart_firm_capacity_mix(case)
 end
 
 local function chart_firm_energy(case)
-    local solar_agents   = renewable[case].tech_type:eq(1):remove_zeros():agents();
-    local wind_agents    = renewable[case].state:select_agents(renewable[case].tech_type:eq(2)):agents();
-    local csp_agents     = renewable[case].state:select_agents(renewable[case].tech_type:eq(5)):agents();
-    local others_agents  = renewable[case].state:remove_agents(solar_agents):remove_agents(wind_agents):remove_agents(csp_agents):agents();
-
-    local firm_energy_renew = renewable[case]:load("outrea"):round(0);
-    local firm_energy_hydro = hydro[case]:load("outhea"):round(0);
-    local firm_energy_therm = thermal[case]:load("outtea"):round(0);
-    local firm_energy_batte = battery[case]:load("outbea"):round(0);
-    local firm_energy_solar   = firm_energy_renew:select_agents(solar_agents):aggregate_agents(BY_SUM(), dictionary.total_solar[language]):round(0);
-    local firm_energy_wind    = firm_energy_renew:select_agents(wind_agents):aggregate_agents(BY_SUM(), dictionary.total_wind[language]):round(0);
-    local firm_energy_csp     = firm_energy_renew:select_agents(csp_agents):aggregate_agents(BY_SUM(), dictionary.total_csp[language]):round(0);
-    local firm_energy_renew   = firm_energy_renew:select_agents(others_agents):aggregate_agents(BY_SUM(), dictionary.total_renewable[language]):round(0);
+    local firm_energy_renew = renewable[case]:load("outrea"):remove_zeros():round(0);
+    local firm_energy_hydro = hydro[case]:load("outhea"):remove_zeros():round(0);
+    local firm_energy_therm = thermal[case]:load("outtea"):remove_zeros():round(0);
+    local firm_energy_batte = battery[case]:load("outbea"):remove_zeros():round(0);
+    local firm_energy_solar   = firm_energy_renew:select_agents(renewable[case].tech_type:eq(2) )
+                                                 :aggregate_agents(BY_SUM(), dictionary.total_solar[language]):remove_zeros():round(0);
+    local firm_energy_wind    = firm_energy_renew:select_agents(renewable[case].tech_type:eq(1) )
+                                                 :aggregate_agents(BY_SUM(), dictionary.total_wind[language]):remove_zeros():round(0);
+    local firm_energy_csp     = firm_energy_renew:select_agents(renewable[case].tech_type:eq(5) )
+                                                 :aggregate_agents(BY_SUM(), dictionary.total_csp[language]):remove_zeros():round(0);
+    local firm_energy_renew   = firm_energy_renew:select_agents(renewable[case].tech_type:ne(1 | 2 | 5) )
+                                                 :aggregate_agents(BY_SUM(), dictionary.total_renewable[language]):remove_zeros():round(0);
 
     local chart = create_chart("", case);
     chart:add_area_spline_stacking(firm_energy_therm:aggregate_agents(BY_SUM(), dictionary.total_thermal[language]), { color = colors.total_generation.thermal });
@@ -813,27 +784,26 @@ local function chart_firm_energy(case)
     chart:add_area_spline_stacking(firm_energy_csp:aggregate_agents(BY_SUM(), dictionary.total_csp[language]), { color = colors.total_generation.csp });
     chart:add_area_spline_stacking(firm_energy_batte:aggregate_agents(BY_SUM(), dictionary.total_battery[language]), { color = colors.total_generation.battery });
 
-    if #chart == 0 then
-        plot.firm_energy = false;
+    if #chart <= 0 then
+        return 
     end
 
     return chart;
 end
 
 local function chart_firm_energy_mix(case)
-    local solar_agents   = renewable[case].tech_type:eq(1):remove_zeros():agents();
-    local wind_agents    = renewable[case].state:select_agents(renewable[case].tech_type:eq(2)):agents();
-    local csp_agents     = renewable[case].state:select_agents(renewable[case].tech_type:eq(5)):agents();
-    local others_agents  = renewable[case].state:remove_agents(solar_agents):remove_agents(wind_agents):remove_agents(csp_agents):agents();
-
-    local firm_energy_renew = renewable[case]:load("outrea"):round(0);
-    local firm_energy_hydro = hydro[case]:load("outhea"):round(0);
-    local firm_energy_therm = thermal[case]:load("outtea"):round(0);
-    local firm_energy_batte = battery[case]:load("outbea"):round(0);
-    local firm_energy_solar = firm_energy_renew:select_agents(solar_agents):aggregate_agents(BY_SUM(), dictionary.total_solar[language]):round(0);
-    local firm_energy_wind  = firm_energy_renew:select_agents(wind_agents):aggregate_agents(BY_SUM(), dictionary.total_wind[language]):round(0);
-    local firm_energy_csp   = firm_energy_renew:select_agents(csp_agents):aggregate_agents(BY_SUM(), dictionary.total_csp[language]):round(0);
-    local firm_energy_renew = firm_energy_renew:select_agents(others_agents):aggregate_agents(BY_SUM(), dictionary.total_renewable[language]):round(0);
+    local firm_energy_renew = renewable[case]:load("outrea"):remove_zeros():round(0);
+    local firm_energy_hydro = hydro[case]:load("outhea"):remove_zeros():round(0);
+    local firm_energy_therm = thermal[case]:load("outtea"):remove_zeros():round(0);
+    local firm_energy_batte = battery[case]:load("outbea"):remove_zeros():round(0);
+    local firm_energy_solar = firm_energy_renew:select_agents(renewable[case].tech_type:eq(2) )
+                                               :aggregate_agents(BY_SUM(), dictionary.total_solar[language]):remove_zeros():round(0);
+    local firm_energy_wind  = firm_energy_renew:select_agents(renewable[case].tech_type:eq(1) )
+                                               :aggregate_agents(BY_SUM(), dictionary.total_wind[language]):remove_zeros():round(0);
+    local firm_energy_csp   = firm_energy_renew:select_agents(renewable[case].tech_type:eq(5) )
+                                               :aggregate_agents(BY_SUM(), dictionary.total_csp[language]):remove_zeros():round(0);
+    local firm_energy_renew = firm_energy_renew:select_agents(renewable[case].tech_type:ne(1 | 2 | 5) )
+                                               :aggregate_agents(BY_SUM(), dictionary.total_renewable[language]):remove_zeros():round(0);
 
     local vector_of_charts = {};
     local initial_year = study[case]:initial_year();
@@ -859,8 +829,8 @@ local function chart_firm_energy_mix(case)
         chart:add_pie(csp_cap_annual:aggregate_agents(BY_SUM(), dictionary.total_csp[language]), { color = colors.total_generation.csp });
         chart:add_pie(bat_cap_annual:aggregate_agents(BY_SUM(), dictionary.total_battery[language]), { color = colors.total_generation.battery });
 
-        if #chart == 0 then
-            plot.firm_capacitymix = false;
+        if #chart <= 0 then
+            return 
         end
 
         table.insert(vector_of_charts, chart);
@@ -880,13 +850,13 @@ local function chart_annual_marginal_cost(case)
     cmgdem = cmgdem:aggregate_agents(BY_AVERAGE(),Collection.SYSTEM)
                    :aggregate_blocks(BY_AVERAGE())
                    :aggregate_stages(BY_AVERAGE(),Profile.PER_YEAR)
-                   :aggregate_scenarios(BY_AVERAGE()):round(0);
+                   :aggregate_scenarios(BY_AVERAGE()):remove_zeros():round(0);
 
     local chart = create_chart("", case);
-    chart:add_line(cmgdem, { color = colors.generic });
+    chart:add_column(cmgdem, { color = colors.generic });
 
-    if #chart == 0 then
-        plot.annual_marginal_cost = false;
+    if #chart <= 0 then
+        return 
     end
 
     return chart;
@@ -902,13 +872,13 @@ local function chart_monthly_marginal_cost(case)
 
     cmgdem = cmgdem:aggregate_agents(BY_AVERAGE(),Collection.SYSTEM)
                    :aggregate_blocks(BY_AVERAGE())
-                   :aggregate_scenarios(BY_AVERAGE()):round(0);
+                   :aggregate_scenarios(BY_AVERAGE()):remove_zeros():round(0);
 
     local chart = create_chart("", case);
     chart:add_line(cmgdem, { color = colors.generic });
 
-    if #chart == 0 then
-        plot.monthly_marginal_cost = false;
+    if #chart <= 0 then
+        return 
     end
 
     return chart;
@@ -924,7 +894,7 @@ local function chart_hourly_marginal_cost_per_typical_day(case)
 
     local cmgdem2 = cmgdem:aggregate_agents(BY_AVERAGE(),Collection.SYSTEM)
                           :aggregate_scenarios(BY_AVERAGE())
-                          :aggregate_agents(BY_AVERAGE(),dictionary.omc[language]):round(0);
+                          :aggregate_agents(BY_AVERAGE(),dictionary.omc[language]):remove_zeros():round(0);
 
     local vector_of_charts = {};
     local _, day_data = by_day(cmgdem2);
@@ -937,8 +907,8 @@ local function chart_hourly_marginal_cost_per_typical_day(case)
         chart:add_line(day_data:select_stage(month), { color = colors.generic });
         table.insert(vector_of_charts, chart);
 
-        if #chart == 0 then
-            plot.hourly_generation_typical = false;
+        if #chart <= 0 then
+            return 
         end
     end
 
@@ -952,12 +922,17 @@ local function chart_defict_risk(case)
     else
         defict = system[case]:load("opt2_deficitmw");
     end
-
     defict = defict:aggregate_blocks(BY_AVERAGE())
-                         :aggregate_stages(BY_SUM(), Profile.PER_YEAR)
-                         :remove_zeros();
+                         :aggregate_stages(BY_SUM(), Profile.PER_YEAR);
 
-    local dathisc = load_dathisc(case);
+    local stage_type;
+    if defict:loaded() then
+        stage_type = defict:stage_type();
+    else
+        stage_type = 1;
+    end
+    local dathisc = generic[case]:load("opt2_optgscen"):select_stage(1):set_stage_type(stage_type);
+
     if dathisc then
         defict = ifelse(defict:gt(0), dathisc, 0):aggregate_scenarios(BY_SUM()):convert("%"):round(0);
     else
@@ -967,39 +942,40 @@ local function chart_defict_risk(case)
     local chart = create_chart("", case);
     chart:add_line(defict, { color = colors.risk.deficit });
 
-    if #chart == 0 then
-        plot.deficit_risk = false;
+    if #chart <= 0 then
+        return 
     end
 
     return chart;
 end
 
-local function chart_generation_in_season(case)
-    local solar_agents   = renewable[case].tech_type:eq(1):remove_zeros():agents();
-    local wind_agents    = renewable[case].state:select_agents(renewable[case].tech_type:eq(2)):agents();
-    local csp_agents     = renewable[case].state:select_agents(renewable[case].tech_type:eq(5)):agents();
-    local others_agents  = renewable[case].state:remove_agents(solar_agents):remove_agents(wind_agents):remove_agents(csp_agents):agents();
-
+local function chart_generation_in_season(case) 
     local renewable_gen_ind = renewable[case]:load("opt2_gergndmw"):aggregate_blocks(BY_AVERAGE())
 
     local thermal_gen   = generic[case]:load("opt2_gertermw"):aggregate_blocks(BY_AVERAGE()) -- problemas
-                                :aggregate_blocks(BY_SUM()):round(0);
+                                :aggregate_blocks(BY_SUM()):remove_zeros():round(0);
     local hidro_gen     = hydro[case]:load("opt2_gerhidmw"):aggregate_blocks(BY_AVERAGE())
-                                :aggregate_blocks(BY_SUM()):round(0);
-    local renewable_gen = renewable_gen_ind:select_agents(others_agents)
-                                :aggregate_blocks(BY_SUM()):round(0);
-    local solar_gen     = renewable_gen_ind:select_agents(solar_agents)
-                                :aggregate_blocks(BY_SUM()):round(0);
-    local wind_gen      = renewable_gen_ind:select_agents(wind_agents)
-                                :aggregate_blocks(BY_SUM()):round(0);
-    local csp_gen       = renewable_gen_ind:select_agents(csp_agents)
-                                :aggregate_blocks(BY_SUM()):round(0);
+                                :aggregate_blocks(BY_SUM()):remove_zeros():round(0);
+    local renewable_gen = renewable_gen_ind:select_agents(renewable[case].tech_type:ne(1 | 2 | 5) )
+                                :aggregate_blocks(BY_SUM()):remove_zeros():round(0);
+    local solar_gen     = renewable_gen_ind:select_agents(renewable[case].tech_type:eq(2))
+                                :aggregate_blocks(BY_SUM()):remove_zeros():round(0);
+    local wind_gen      = renewable_gen_ind:select_agents(renewable[case].tech_type:eq(1))
+                                :aggregate_blocks(BY_SUM()):remove_zeros():round(0);
+    local csp_gen       = renewable_gen_ind:select_agents(renewable[case].tech_type:eq(5))
+                                :aggregate_blocks(BY_SUM()):remove_zeros():round(0);
     local battery       = battery[case]:load("opt2_gerbatmw"):aggregate_blocks(BY_AVERAGE())
-                                :aggregate_blocks(BY_SUM()):round(0);
+                                :aggregate_blocks(BY_SUM()):remove_zeros():round(0);
     local defict        = generic[case]:load("opt2_deficitmw"):aggregate_blocks(BY_AVERAGE())
-                                :aggregate_blocks(BY_SUM()):round(0);
+                                :aggregate_blocks(BY_SUM()):remove_zeros():round(0);
 
-    local dathisc = load_dathisc(case);
+    local stage_type;
+    if defict:loaded() then
+        stage_type = defict:stage_type();
+    else
+        stage_type = 1;
+    end
+    local dathisc = generic[case]:load("opt2_optgscen"):select_stage(1):set_stage_type(stage_type);
     if dathisc then
         thermal_gen   = (thermal_gen   * dathisc):aggregate_scenarios(BY_SUM());
         hidro_gen     = (hidro_gen     * dathisc):aggregate_scenarios(BY_SUM());
@@ -1030,39 +1006,40 @@ local function chart_generation_in_season(case)
     chart:add_area_spline_stacking(battery:aggregate_agents(BY_SUM(), dictionary.total_battery[language]), { color = colors.total_generation.battery });
     chart:add_area_spline_stacking(defict:aggregate_agents(BY_SUM(), dictionary.deficit[language]), { color = colors.total_generation.defict });
 
-    if #chart == 0 then
-        plot.generation_in_each_season = false;
+    if #chart <= 0 then
+        return 
     end
 
     return chart;
 end
 
 local function chart_hourly_generation_typical_day(case)
-    local solar_agents   = renewable[case].tech_type:eq(1):remove_zeros():agents();
-    local wind_agents    = renewable[case].state:select_agents(renewable[case].tech_type:eq(2)):agents();
-    local csp_agents     = renewable[case].state:select_agents(renewable[case].tech_type:eq(5)):agents();
-    local others_agents  = renewable[case].state:remove_agents(solar_agents):remove_agents(wind_agents):remove_agents(csp_agents):agents();
-
     local renewable_gen_ind = renewable[case]:load("opt2_gergndmw")
 
-    local thermal_gen   = generic[case]:load("opt2_gertermw") -- com problema
+    local thermal_gen   = thermal[case]:load("opt2_gertermw")
                                  :aggregate_agents(BY_SUM(),dictionary.total_thermal[language]);
     local hidro_gen     = hydro[case]:load("opt2_gerhidmw")
                                  :aggregate_agents(BY_SUM(),dictionary.total_hydro[language]);
-    local renewable_gen = renewable_gen_ind:select_agents(others_agents)
+    local renewable_gen = renewable_gen_ind:select_agents(renewable[case].tech_type:ne(1 | 2 | 5) )
                                  :aggregate_agents(BY_SUM(),dictionary.total_renewable[language]);
-    local solar_gen     = renewable_gen_ind:select_agents(solar_agents)
+    local solar_gen     = renewable_gen_ind:select_agents(renewable[case].tech_type:eq(2) )
                                  :aggregate_agents(BY_SUM(),dictionary.total_solar[language]);
-    local wind_gen      = renewable_gen_ind:select_agents(wind_agents)
+    local wind_gen      = renewable_gen_ind:select_agents(renewable[case].tech_type:eq(1) )
                                  :aggregate_agents(BY_SUM(),dictionary.total_wind[language]);
-    local csp_gen       = renewable_gen_ind:select_agents(csp_agents)
+    local csp_gen       = renewable_gen_ind:select_agents(renewable[case].tech_type:eq(5) )
                                  :aggregate_agents(BY_SUM(),dictionary.total_csp[language]);
     local battery       = battery[case]:load("opt2_gerbat")
                                  :aggregate_agents(BY_SUM(),dictionary.total_battery[language]);
     local defict        = generic[case]:load("opt2_deficitmw") -- com problema
                                  :aggregate_agents(BY_SUM(),dictionary.deficit[language]);
 
-    local dathisc = load_dathisc(case);
+    local stage_type;
+    if defict:loaded() then
+        stage_type = defict:stage_type();
+    else
+        stage_type = 1;
+    end
+    local dathisc = generic[case]:load("opt2_optgscen"):select_stage(1):set_stage_type(stage_type);
     if dathisc then
         thermal_gen   = (thermal_gen   * dathisc):aggregate_scenarios(BY_SUM());
         hidro_gen     = (hidro_gen     * dathisc):aggregate_scenarios(BY_SUM());
@@ -1084,22 +1061,21 @@ local function chart_hourly_generation_typical_day(case)
     end
 
     local vector_of_chart = {};
-    local N_typical_day,day_thermal_gen   = by_day(thermal_gen  );
+    local _,day_thermal_gen   = by_day(thermal_gen  );
     local _            ,day_hidro_gen     = by_day(hidro_gen    );
     local _            ,day_renewable_gen = by_day(renewable_gen);
     local _            ,day_solar_gen     = by_day(solar_gen    );
     local _            ,day_wind_gen      = by_day(wind_gen     );
     local _            ,day_csp_gen       = by_day(csp_gen      );
     local _            ,day_battery       = by_day(battery      );
-    local _            ,day_defict        = by_day(defict       );
-
+    local N_typical_day,day_defict        = by_day(defict       );
 
     if not N_typical_day then -- mudar
         error("N_typical_day nil");
     end
 
     local initial_year = study[case]:initial_year();
-    local final_year   = thermal_gen:final_year();
+    local final_year   = defict:final_year();
     for year = initial_year,initial_year do -- mudar
         local first_stg = 1;
         local final_stga = study[case]:stages_per_year();
@@ -1110,19 +1086,19 @@ local function chart_hourly_generation_typical_day(case)
         end
 
         if year == final_year then
-            final_stga = (study[case]:stages() - study[case]:intial_stage())%study[case]:stages_per_year();
+            final_stga = (study[case]:stages() - study[case]:initial_stage())%study[case]:stages_per_year();
         end
 
         for stg = first_stg, first_stg do
             for t_day = 1, 1 do -- mudar
-                local year_day_thermal_gen   = day_thermal_gen  [t_day]:select_stages_by_year(year):select_stage(stg):round(0);
-                local year_day_hidro_gen     = day_hidro_gen    [t_day]:select_stages_by_year(year):select_stage(stg):round(0);
-                local year_day_renewable_gen = day_renewable_gen[t_day]:select_stages_by_year(year):select_stage(stg):round(0);
-                local year_day_solar_gen     = day_solar_gen    [t_day]:select_stages_by_year(year):select_stage(stg):round(0);
-                local year_day_wind_gen      = day_wind_gen     [t_day]:select_stages_by_year(year):select_stage(stg):round(0);
-                local year_day_csp_gen       = day_csp_gen      [t_day]:select_stages_by_year(year):select_stage(stg):round(0);
-                local year_day_battery       = day_battery      [t_day]:select_stages_by_year(year):select_stage(stg):round(0);
-                local year_day_defict        = day_defict       [t_day]:select_stages_by_year(year):select_stage(stg):round(0);
+                local year_day_thermal_gen   = day_thermal_gen  [t_day]:select_stages_by_year(year):select_stage(stg):remove_zeros():round(0);
+                local year_day_hidro_gen     = day_hidro_gen    [t_day]:select_stages_by_year(year):select_stage(stg):remove_zeros():round(0);
+                local year_day_renewable_gen = day_renewable_gen[t_day]:select_stages_by_year(year):select_stage(stg):remove_zeros():round(0);
+                local year_day_solar_gen     = day_solar_gen    [t_day]:select_stages_by_year(year):select_stage(stg):remove_zeros():round(0);
+                local year_day_wind_gen      = day_wind_gen     [t_day]:select_stages_by_year(year):select_stage(stg):remove_zeros():round(0);
+                local year_day_csp_gen       = day_csp_gen      [t_day]:select_stages_by_year(year):select_stage(stg):remove_zeros():round(0);
+                local year_day_battery       = day_battery      [t_day]:select_stages_by_year(year):select_stage(stg):remove_zeros():round(0);
+                local year_day_defict        = day_defict       [t_day]:select_stages_by_year(year):select_stage(stg):remove_zeros():round(0);
 
                 local chart = create_chart(dictionary.season[language] .. " - " .. stg .." | "..
                                            dictionary.year[language] .. " - " .. year .. " | " ..
@@ -1136,8 +1112,8 @@ local function chart_hourly_generation_typical_day(case)
                 chart:add_area_spline_stacking(year_day_battery      , { color = colors.total_generation.battery });
                 chart:add_area_spline_stacking(year_day_defict       , { color = colors.total_generation.defict });
 
-                if #chart == 0 then
-                    plot.hourly_generation_typical = false;
+                if #chart <= 0 then
+                    return 
                 end
 
                 table.insert(vector_of_chart, chart);
@@ -1149,13 +1125,15 @@ local function chart_hourly_generation_typical_day(case)
 end
 
 local function chart_objective_value(case)
-    local opt2_optgcoped = read_opt2_optgcoped(case);
+    local interest = (1 + study[case].discount_rate) ^ ((study[case].stage_in_year - 1) / study[case]:stages_per_year());
+    local dathisc = generic[case]:load("opt2_optgscen"):select_stage(1);
+    local opt2_optgcoped = (generic[case]:load("opt2_optgcope") * interest * dathisc):aggregate_stages(BY_SUM());
 
     local chart = create_chart("", case);
     chart:add_pie(opt2_optgcoped, { color = colors.generic });
 
-    if #chart == 0 then
-        plot.objective_function = false;
+    if #chart <= 0 then
+        return 
     end
 
     return chart;
@@ -1179,8 +1157,23 @@ local function chart_risk_curve(case)
         opt2_format_to_chart_scatterplot(year, { LHS, FObj }, { "LHS", "FObj" }, chart, "K$", case);
     end
 
-    if #chart == 0 then
-        plot.risk_curve = false;
+    if #chart <= 0 then
+        risk_results = false;
+        return 
+    end
+
+    return chart;
+end
+
+local function chart_convergence(case)
+    local chart = create_chart("", case);
+
+    local gap = generic[case]:load("opt2_optgconv"):select_agent("Gap"):rename_agents({dictionary.GAP[language]});
+
+    chart:add_line(gap);
+
+    if #chart <= 0 then
+        return 
     end
 
     return chart;
@@ -1189,78 +1182,114 @@ end
 --=================================================--
 -- Create Tabs Functions
 --=================================================--
-local function tab_investiment_report()
+local function tab_investment_report()
     local tab<const> = create_tab(dictionary.investment_report[language], "arrow-right");     
 
     if plot.accumulated_capacity then
-        tab:push("### " .. dictionary.accumulated_capacity[language]);
         for case = 1, cases do
             local chart = chart_accumulated_capacity(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.accumulated_capacity[language]);
+                end
+                tab:push(chart);
+            end
         end
     end
 
     if plot.circuit_accumulated_capacity then
-        tab:push("### " .. dictionary.circuit_accumulated_capacity[language]);
         for case = 1, cases do
             local chart = chart_circuit_accumulated_capacity(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.circuit_accumulated_capacity[language]);
+                end
+               tab:push(chart);
+            end
         end
     end
 
     if plot.total_cost then
-        tab:push("### " .. dictionary.total_costs[language]);
         for case = 1, cases do
             local chart = chart_total_cost(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.total_costs[language]);
+                end
+               tab:push(chart);
+            end
         end
     end
 
     if plot.total_installed_capacity then
-        tab:push("### " .. dictionary.total_installed_capacity[language]);
         for case = 1, cases do
             local chart = chart_total_installed_capacity(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.total_installed_capacity[language]);
+                end
+               tab:push(chart);
+            end
         end
     end
 
     if plot.total_installed_capacity_mix then
-        tab:push("### " .. dictionary.total_installed_capacity_mix[language]);
         for case = 1, cases do
             local chart = chart_total_installed_capacity_mix(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.total_installed_capacity_mix[language]);
+                end
+               tab:push(chart);
+            end
         end
     end
 
     if plot.firm_capacity then
-        tab:push("### " .. dictionary.firm_capacity[language]);
         for case = 1, cases do
             local chart = chart_firm_capacity(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.firm_capacity[language]);
+                end
+               tab:push(chart);
+            end
         end
     end
 
     if plot.firm_capacity_mix then
-        tab:push("### " .. dictionary.firm_capacity_mix[language]);
         for case = 1, cases do
             local chart = chart_firm_capacity_mix(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.firm_capacity_mix[language]);
+                end
+               tab:push(chart);
+            end
         end
     end
 
     if plot.firm_energy then
-        tab:push("### " .. dictionary.firm_energy[language]);
         for case = 1, cases do
             local chart = chart_firm_energy(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.firm_energy[language]);
+                end
+               tab:push(chart);
+            end
         end
     end
 
     if plot.firm_energy_mix then
-        tab:push("### " .. dictionary.firm_capacity_mix[language]);
         for case = 1, cases do
             local chart = chart_firm_energy_mix(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.firm_capacity_mix[language]);
+                end
+               tab:push(chart);
+            end
         end
     end
 
@@ -1271,58 +1300,100 @@ local function tab_optgen2_reports()
     local tab<const> = create_tab(dictionary.optgen_2_reports[language], "arrow-right");
 
     if plot.annual_marginal_cost then
-        tab:push("### " .. dictionary.annual_marginal_cost[language]);
         for case = 1, cases do
             local chart = chart_annual_marginal_cost(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.annual_marginal_cost[language]);
+                end
+               tab:push(chart);
+            end
         end
     end
 
     if plot.monthly_marginal_cost then
-        tab:push("### " .. dictionary.monthly_marginal_cost[language]);
         for case = 1, cases do
             local chart = chart_monthly_marginal_cost(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.monthly_marginal_cost[language]);
+                end
+               tab:push(chart);
+            end
         end
     end
 
     if plot.hourly_generation_typical then
-        tab:push("### " .. dictionary.hourly_marginal_cost_typical[language]);
         for case = 1, cases do
             local chart = chart_hourly_marginal_cost_per_typical_day(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.hourly_marginal_cost_typical[language]);
+                end
+               tab:push(chart);
+            end
         end
     end
 
     if plot.deficit_risk then
-        tab:push("### " .. dictionary.deficit_risk[language]);
         for case = 1, cases do
             local chart = chart_defict_risk(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.deficit_risk[language]);
+                end
+               tab:push(chart);
+            end
         end
     end
 
     if plot.generation_in_each_season then
-        tab:push("### " .. dictionary.generation_in_season[language]);
         for case = 1, cases do
             local chart = chart_generation_in_season(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.generation_in_season[language]);
+                end
+               tab:push(chart);
+            end
         end
     end
 
     if plot.hourly_generation_typical then
-        tab:push("### " .. dictionary.generation_per_typical_day[language]);
         for case = 1, cases do
             local chart = chart_hourly_generation_typical_day(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.generation_per_typical_day[language]);
+                end
+               tab:push(chart);
+            end
+
         end
     end
 
     if plot.objective_function then
-        tab:push("### " .. dictionary.objective_functions[language]);
         for case = 1, cases do
             local chart = chart_objective_value(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.objective_functions[language]);
+                end
+               tab:push(chart);
+            end
+
+        end
+    end
+
+    if plot.convergence then
+        for case = 1, cases do
+            local chart = chart_convergence(case);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.convergence[language]);
+                end
+               tab:push(chart);
+            end
         end
     end
 
@@ -1333,10 +1404,15 @@ local function tab_risk_result()
     local tab<const> = create_tab(dictionary.optgen_risk[language], "arrow-right");
 
     if plot.risk_curve then
-        tab:push("### " .. dictionary.optgen_risk[language]);
         for case = 1, cases do
             local chart = chart_risk_curve(case);
-            tab:push(chart);
+            if chart then
+                if case == 1 then
+                    tab:push("### " .. dictionary.optgen_risk[language]);
+                end
+               tab:push(chart);
+            end
+
         end
     end
 
@@ -1347,24 +1423,31 @@ local function tab_expansion_result()
     local tab<const> = create_tab(dictionary.expansion_results[language], "bar-chart-3");
     tab:set_disabled();
 
-    tab:push(tab_investiment_report());
+    tab:push(tab_investment_report());
 
     if is_opt2 then
         tab:push(tab_optgen2_reports());
     end
 
-    tab:push(tab_risk_result());
+    local risk_tab = tab_risk_result();
+    if risk_results then
+        tab:push(risk_tab);
+    end
 
     return tab;
 end
 
 local function tab_sddp()
     local tab<const> = create_tab(dictionary.sddp[language], "bar-chart-3");
+    tab:set_disabled();
 
     local generic_collections = {};
     local info_struct = {};
 
     for i = 1, cases do
+        if not Study(i):file_exists("sddp.info") then
+            return
+        end
         generic_collections[i] = Generic(i);
     end
 
@@ -1374,8 +1457,15 @@ local function tab_sddp()
     return tab
 end
 
--- Create SDDP Tab
+--=================================================--
+-- Create Dashboard
+--=================================================--
 local dashboard<const> = Dashboard();
 dashboard:push(tab_expansion_result());
-dashboard:push(tab_sddp());
-dashboard:save("dashboard");
+
+local sddp_tab = tab_sddp();
+if sddp_tab then
+    dashboard:push(sddp_tab);
+end
+
+dashboard:save("OptGen");
