@@ -268,6 +268,11 @@ dictionary = {
         pt = "Déficit associado à demanda de gás não elétrico"
     },
     defbus = {
+        en = "Deficit per bus",
+        es = "Déficit por barra",
+        pt = "Déficit por barra"
+    },
+    defbusp = {
         en = "Deficit per bus (% of load)",
         es = "Déficit por barra (% de carga)",
         pt = "Déficit por barra (% da carga)"

@@ -1787,6 +1787,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
         { name = "defcit"  , title = dictionary.defcit[LANGUAGE]},
         { name = "nedefc"  , title = dictionary.nedefc[LANGUAGE]},
         { name = "defbus"  , title = dictionary.defbus[LANGUAGE]},
+        { name = "defbusp"  , title = dictionary.defbusp[LANGUAGE]},
         { name = "gncivio" , title = dictionary.gncivio[LANGUAGE]},
         { name = "gncvio"  , title = dictionary.gncvio[LANGUAGE]},
         { name = "vrestg"  , title = dictionary.vrestg[LANGUAGE]},
