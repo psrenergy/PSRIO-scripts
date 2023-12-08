@@ -1270,8 +1270,25 @@ function create_marg_costs(col_struct)
     else
         local chart = Chart(dictionary.stg_cmo[LANGUAGE]);
         cmg_aggsum = cmg[1]:aggregate_blocks_by_duracipu():aggregate_scenarios(BY_AVERAGE());
-        chart:add_column(cmg_aggsum,{xUnit=dictionary.cell_stages[LANGUAGE]});
+        chart:add_column(cmg_aggsum,{xUnit=dictionary.cell_stages[LANGUAGE]}, {colors = main_global_color});
         tab:push(chart);
+    end
+
+    if studies == 1 then
+        local systems = col_struct.system[1]:labels();
+        for i,system in ipairs(systems) do
+            local chart = Chart(system .. dictionary.stg_cmo_ind[LANGUAGE]);
+            local cmg_agg = cmg[1]:aggregate_blocks_by_duracipu():select_agents({system});
+            chart:add_box_plot(
+                cmg_agg:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_MIN()),
+                cmg_agg:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_PERCENTILE(25)),
+                cmg_agg:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_PERCENTILE(50)),
+                cmg_agg:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_PERCENTILE(75)),
+                cmg_agg:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_MAX())
+                ,{showInLegend = false, color = main_global_color[i]}
+            );
+            tab:push(chart);
+        end
     end
 
     return tab;

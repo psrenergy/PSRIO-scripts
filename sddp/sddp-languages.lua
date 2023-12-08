@@ -187,6 +187,11 @@ dictionary = {
         es = "Costos marginales promedio por etapa por sistema",
         pt = "Custos marginais médios por estágio por sistema"
     },
+    stg_cmo_ind = {
+        en = " carginal cost",
+        es = " costo marginales",
+        pt = " custo marginais"
+    },
     total_hydro = {
         en = "Total Hydro",
         es = "Hidroeléctrica total",
