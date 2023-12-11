@@ -42,3 +42,16 @@ end
 renewable = Renewable();
 oemgnd = renewable.om_cost;
 oemgnd:save("oemgnd",{csv=is_csv});
+
+-- PBATSTG - Percentual of battery storage
+battery = Battery();
+batstg = battery:load("batstg"):convert("MW");
+if batstg:loaded() then
+  batcapacity = battery.capacity;
+  pbatstg = safe_divide(batstg,batcapacity):convert("%");
+  if pbatstg:is_hourly() then
+    pbatstg:save("pbatstg", {variable_by_block=2, csv=is_csv});
+  else
+    pbatstg:save("pbatstg", {csv=is_csv});
+  end
+end
