@@ -151,6 +151,19 @@ local defrisk = require("sddp-reports/sddprisk")();
 defrisk:save("sddprisk",{csv=true});
 
 -----------------------------------------------------------------------------------------------
+-- CIRCUIT LOSSES ERROR
+-----------------------------------------------------------------------------------------------
+local qdrlss = Generic():load("qdrlss");
+local losses = Generic():load("losses");
+local error_losses = losses - qdrlss;
+local positive_error_losses = ifelse(error_losses:gt(0), error_losses, 0);
+local negative_error_losses = ifelse(error_losses:lt(0), -error_losses, 0);
+
+positive_error_losses:save("sddp_dashboard_positive_error_losses",{csv=true});
+negative_error_losses:save("sddp_dashboard_negative_error_losses",{csv=true});
+
+error("here")
+-----------------------------------------------------------------------------------------------
 -- VIOLATIONS
 -----------------------------------------------------------------------------------------------
 
