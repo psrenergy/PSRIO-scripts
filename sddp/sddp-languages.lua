@@ -52,6 +52,11 @@ dictionary = {
         es = "Energía afluente",
         pt = "Energia afluente"
     },
+    tab_losses = {
+        en = "Losses",
+        es = "Perdidas",
+        pt = "Perdas"
+    },
     tab_cmo = {
         en = "Marginal costs",
         es = "Costos marginales",
@@ -687,11 +692,6 @@ dictionary = {
         es = "Simulación final",
         pt = "Simulação final"
     },
-    circuit_losses_error = {
-        en = "Circuit losses error",
-        es = "Error de pérdidas del circuitos",
-        pt = "Erro de perdas em circuito"
-    },
     final_simulation_mensage = {
         en = "Sum of the final simulation immediate costs up to the last stage plus the future cost function for additional years",
         es = "Suma de los costos inmediatos de la simulación final hasta la última etapa más la función de costos futuros para años adicionales",
@@ -701,5 +701,40 @@ dictionary = {
         en = "Sum of policy immediate costs up to the last stage plus the future cost function for additional years",
         es = "Suma de los costos inmediatos de la política hasta la última etapa más la función de costos futuros para años adicionales",
         pt = "Soma dos custos imediatos da política até a última etapa mais a função de custo futura para anos adicionais"
-    }
+    },    
+    ac_circuit_losses_error_pos = {
+        en = "AC circuit losses positive error",
+        es = "Error positivo de pérdidas del AC circuitos",
+        pt = "Erro positivo de perdas em circuitos AC"
+    },
+    ac_circuit_losses_error_neg = {
+        en = "AC circuit losses negative error",
+        es = "Error negativo de pérdidas del AC circuitos",
+        pt = "Erro negativo de perdas em circuitos AC"
+    },
+    dc_circuit_losses_error_pos = {
+        en = "DC circuit losses positive error",
+        es = "Error positivo de pérdidas del DC circuitos",
+        pt = "Erro positivo de perdas em circuitos DC"
+    },
+    dc_circuit_losses_error_neg = {
+        en = "DC circuit losses negative error",
+        es = "Error negativo de pérdidas del DC circuitos",
+        pt = "Erro negativo de perdas em circuitos DC"
+    },
+    losses_msg_ac = {
+        en = "Sum of positive/negative linear and quadratic losses deviations in AC circuits of the case",
+        es = "Suma de desviaciones de pérdidas lineales y cuadráticas positivas/negativas en circuitos de corriente alterna del caso",
+        pt = "Soma de desvios de perdas lineares e quadráticas positivas/negativas em circuitos de corrente alternada do caso"
+    },
+    losses_msg_dc = {
+        en = "Sum of positive/negative linear and quadratic losses deviations in DC circuits of the case",
+        es = "Suma de desviaciones de pérdidas lineales y cuadráticas positivas/negativas en circuitos de corriente continua del caso",
+        pt = "Soma de desvios de perdas lineares e quadráticas positivas/negativas em circuitos de corrente contínua do caso"
+    },
+    sum_of_circ = {
+        en = "Sum of circuits",
+        es = "Suma the circuitos",
+        pt = "Soma de circuitos"
+    },
 };

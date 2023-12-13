@@ -151,18 +151,6 @@ local defrisk = require("sddp-reports/sddprisk")();
 defrisk:save("sddprisk",{csv=true});
 
 -----------------------------------------------------------------------------------------------
--- CIRCUIT LOSSES ERROR
------------------------------------------------------------------------------------------------
-local qdrlss = Generic():load("qdrlss");
-local losses = Generic():load("losses");
-local error_losses = losses - qdrlss;
-local positive_error_losses = ifelse(error_losses:gt(0), error_losses, 0);
-local negative_error_losses = ifelse(error_losses:lt(0), -error_losses, 0);
-
-positive_error_losses:save("sddp_dashboard_positive_error_losses",{csv=true});
-negative_error_losses:save("sddp_dashboard_negative_error_losses",{csv=true});
-
------------------------------------------------------------------------------------------------
 -- VIOLATIONS
 -----------------------------------------------------------------------------------------------
 
@@ -252,6 +240,17 @@ lgcgen:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM(), Profile.PER_
 -- sddp_dashboard_lgc_rev
 lgcrev:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM(), Profile.PER_YEAR):remove_zeros():save("sddp_dashboard_lgc_rev", {csv=true});
 
--- sddp_dashboard_circuit_linear_losses
-local lsser = Circuit():load("lsser");
-lsser:save("sddp_dashboard_circuit_linear_losses", {csv=true});
+-----------------------------------------------------------------------------------------------
+-- CIRCUIT LOSSES ERROR
+-----------------------------------------------------------------------------------------------
+-- sddp_dashboard_AC_circuit_linear_losses
+local lsserac = Circuit():load("lsserac");
+if lsserac:loaded() then
+    lsserac:save("sddp_dashboard_AC_losses_error", {csv=true});
+end
+
+-- sddp_dashboard_DC_circuit_linear_losses
+local lsserdc = Circuit():load("lsserdc");
+if lsserdc:loaded() then
+    lsserdc:save("sddp_dashboard_DC_losses_error", {csv=true});
+end
