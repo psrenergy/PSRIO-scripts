@@ -668,6 +668,44 @@ function create_inflow_energy(col_struct)
 end
 
 -----------------------------------------------------------------------------------------------
+-- Losses functions
+-----------------------------------------------------------------------------------------------
+
+function create_losses(col_struct)
+    local tab = Tab(dictionary.tab_losses[LANGUAGE]);
+
+    if studies == 1 then
+        if col_struct.study[1]:get_parameter("Perdas",-1) == 1 then
+            local lsserac = col_struct.circuit[1]:load("sddp_dashboard_AC_losses_error");
+            local lsserdc = col_struct.circuit[1]:load("sddp_dashboard_DC_losses_error");
+
+            local chart_ac_pos = Chart(dictionary.ac_circuit_losses_error_pos[LANGUAGE])
+            local chart_ac_neg = Chart(dictionary.ac_circuit_losses_error_neg[LANGUAGE])
+            local chart_dc_pos = Chart(dictionary.dc_circuit_losses_error_pos[LANGUAGE])
+            local chart_dc_neg = Chart(dictionary.dc_circuit_losses_error_neg[LANGUAGE])
+
+            local lsserac_pos = ifelse(lsserac:ge(0),lsserac,0):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),dictionary.sum_of_circ[LANGUAGE]);
+            local lsserac_neg = ifelse(lsserac:le(0),-lsserac,0):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),dictionary.sum_of_circ[LANGUAGE]);
+            local lsserdc_pos = ifelse(lsserdc:ge(0),lsserdc,0):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),dictionary.sum_of_circ[LANGUAGE]);
+            local lsserdc_neg = ifelse(lsserdc:le(0),-lsserdc,0):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),dictionary.sum_of_circ[LANGUAGE]);
+
+            chart_ac_pos:add_column(lsserac_pos,{showInLegend = false});
+            chart_ac_neg:add_column(lsserac_neg,{showInLegend = false});
+            chart_dc_pos:add_column(lsserdc_pos,{showInLegend = false});
+            chart_dc_neg:add_column(lsserdc_neg,{showInLegend = false});
+
+            tab:push({chart_ac_pos,chart_ac_neg});
+            tab:push(dictionary.losses_msg_ac[LANGUAGE]);
+            tab:push({chart_dc_pos,chart_dc_neg});
+            tab:push(dictionary.losses_msg_dc[LANGUAGE]);
+
+        end
+    end
+        
+    return tab
+end
+
+-----------------------------------------------------------------------------------------------
 -- Policy report functions
 -----------------------------------------------------------------------------------------------
 
@@ -1369,7 +1407,6 @@ function create_gen_report(col_struct)
 
     -- Loading generations files
     for i = 1, studies do
-        local stages_without_buffer_years = col_struct.study[i]:stages_without_buffer_years();
 
         gerter[i] = col_struct.thermal[i]:load("gerter"):select_stages_of_outputs();
         gerhid[i] = col_struct.hydro[i]:load("gerhid"):select_stages_of_outputs();
@@ -1596,7 +1633,6 @@ function create_gen_report(col_struct)
             total_csp_gen   = gercsp[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_csp_agent_name);
 
             -- Renewable generation is broken into 3 types
-            local stages_without_buffer_years = col_struct.study[i]:stages_without_buffer_years();
 
             total_other_renw_gen = ifelse(col_struct.renewable[i].tech_type:ne(1):select_stages_of_outputs() &
                                           col_struct.renewable[i].tech_type:ne(2):select_stages_of_outputs() &
@@ -1986,6 +2022,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
             create_viol_report(tab_viol_max, col_struct, viol_report_structs, "max");
         end
 
+
         push_tab_to_tab(tab_viol_avg,tab_violations);
         push_tab_to_tab(tab_viol_max,tab_violations);
 
@@ -2006,6 +2043,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     push_tab_to_tab(create_gen_report(col_struct)    ,tab_results);
     push_tab_to_tab(create_risk_report(col_struct)   ,tab_results);
     push_tab_to_tab(create_inflow_energy(col_struct) ,tab_results);
+    push_tab_to_tab(create_losses(col_struct) ,tab_results);
 
     push_tab_to_tab(tab_results,dashboard);
 
