@@ -55,3 +55,15 @@ if batstg:loaded() then
     pbatstg:save("pbatstg", {csv=is_csv});
   end
 end
+
+-- LSSER - Percentual of battery storage
+qdrlss = Circuit():load("qdrlss");
+losses = Circuit():load("losses");
+if qdrlss:loaded() & losses:loaded() then
+  error_losses = losses - qdrlss;
+  if pbatstg:is_hourly() then
+    error_losses:save("lsser", {variable_by_block=2, csv=is_csv});
+  else
+    error_losses:save("lsser", {csv=is_csv});
+  end
+end

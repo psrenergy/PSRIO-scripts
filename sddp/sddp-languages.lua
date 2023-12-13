@@ -687,6 +687,11 @@ dictionary = {
         es = "Simulación final",
         pt = "Simulação final"
     },
+    circuit_losses_error = {
+        en = "Circuit losses error",
+        es = "Error de pérdidas del circuitos",
+        pt = "Erro de perdas em circuito"
+    },
     final_simulation_mensage = {
         en = "Sum of the final simulation immediate costs up to the last stage plus the future cost function for additional years",
         es = "Suma de los costos inmediatos de la simulación final hasta la última etapa más la función de costos futuros para años adicionales",

@@ -1713,6 +1713,32 @@ function create_risk_report(col_struct)
 end
 
 -----------------------------------------------------------------------------------------------
+-- Circuit Losses Error
+-----------------------------------------------------------------------------------------------
+
+function build_circuit_error_plot(tab, col_struct, suffix)
+    local chart_positive = Chart(dictionary.circuit_losses_error[LANGUAGE])
+    local chart_negative = Chart(dictionary.circuit_losses_error[LANGUAGE])
+    local lsser = col_struct.generic[1]:load("sddp_dashboard_circuit_linear_losses");
+    local positive_error_losses = ifelse(lsser:gt(0), lsser, 0);
+    local negative_error_losses = ifelse(lsser:lt(0), -lsser, 0);
+    local options = {
+        yLabel = "Iteration",
+        xLabel = dictionary.cell_stages[LANGUAGE],
+        showInLegend = false,
+        stopsMin = 0,
+        dataClasses = {
+            { color = "#8ACE7E"},
+            { color = "#4E79A7"},
+        }
+    };
+    chart_positive:add_heatmap(positive_error_losses);
+    chart_negative:add_heatmap(negative_error_losses);
+    tab:push(chart_positive);
+    tab:push(chart_negative);
+end
+
+-----------------------------------------------------------------------------------------------
 -- Violation reports data and methods
 -----------------------------------------------------------------------------------------------
 
@@ -1984,6 +2010,11 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
         else
             create_viol_report(tab_viol_avg, col_struct, viol_report_structs, "avg");
             create_viol_report(tab_viol_max, col_struct, viol_report_structs, "max");
+        end
+
+        if col_struct.study[1]:get_parameter("Perdas",-1) ~= -1 then
+            build_circuit_error_plot(tab_viol_avg,col_struct,"avg")
+            build_circuit_error_plot(tab_viol_max,col_struct,"max")
         end
 
         push_tab_to_tab(tab_viol_avg,tab_violations);

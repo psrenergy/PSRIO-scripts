@@ -162,7 +162,6 @@ local negative_error_losses = ifelse(error_losses:lt(0), -error_losses, 0);
 positive_error_losses:save("sddp_dashboard_positive_error_losses",{csv=true});
 negative_error_losses:save("sddp_dashboard_negative_error_losses",{csv=true});
 
-error("here")
 -----------------------------------------------------------------------------------------------
 -- VIOLATIONS
 -----------------------------------------------------------------------------------------------
@@ -252,3 +251,7 @@ lgcgen:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM(), Profile.PER_
 
 -- sddp_dashboard_lgc_rev
 lgcrev:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM(), Profile.PER_YEAR):remove_zeros():save("sddp_dashboard_lgc_rev", {csv=true});
+
+-- sddp_dashboard_circuit_linear_losses
+local lsser = Circuit():load("lsser");
+lsser:save("sddp_dashboard_circuit_linear_losses", {csv=true});
