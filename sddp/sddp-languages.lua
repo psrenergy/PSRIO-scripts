@@ -52,6 +52,11 @@ dictionary = {
         es = "Energía afluente",
         pt = "Energia afluente"
     },
+    tab_losses = {
+        en = "Losses",
+        es = "Perdidas",
+        pt = "Perdas"
+    },
     tab_cmo = {
         en = "Marginal costs",
         es = "Costos marginales",
@@ -153,9 +158,9 @@ dictionary = {
         pt = "Tempos de execução Forward e Backward"
     },
     breakdown_cost_time = {
-        en = "Breakdown of total operating costs",
-        es = "Porciones de los costos operativos totales",
-        pt = "Parcelas dos custos operacionais totais"
+        en = "Breakdown of total operating cost",
+        es = "Porciones de el costo operativo total",
+        pt = "Parcelas do custo operacional total"
     },
     breakdown_revenue_time = {
         en = "Breakdown of total operating revenues",
@@ -186,6 +191,11 @@ dictionary = {
         en = "Average marginal costs per stage per system",
         es = "Costos marginales promedio por etapa por sistema",
         pt = "Custos marginais médios por estágio por sistema"
+    },
+    stg_cmo_ind = {
+        en = " carginal cost",
+        es = " costo marginales",
+        pt = " custo marginais"
     },
     total_hydro = {
         en = "Total Hydro",
@@ -268,14 +278,19 @@ dictionary = {
         pt = "Déficit associado à demanda de gás não elétrico"
     },
     defbus = {
+        en = "Deficit per bus",
+        es = "Déficit por barra",
+        pt = "Déficit por barra"
+    },
+    defbusp = {
         en = "Deficit per bus (% of load)",
-        es = "Déficit por bus (% de carga)",
-        pt = "Déficit por barramento (% da carga)"
+        es = "Déficit por barra (% de carga)",
+        pt = "Déficit por barra (% da carga)"
     },
     gncivio = {
-        en = "General interpolation constraint violation",
-        es = "Violación de restricción de interpolación general",
-        pt = "Violação da restrição de interpolação geral"
+        en = "Generic interpolation constraint violation",
+        es = "Violación de restricción genérica de interpolación",
+        pt = "Violação de restrição genérica de interpolação"
     },
     gncvio = {
         en = "General constraint: linear",
@@ -304,53 +319,53 @@ dictionary = {
     },
     vioguide = {
         en = "Guide curve violation per hydro reservoir",
-        es = "Violación de la curva de guía por embalse hidroeléctrico",
-        pt = "Violação da curva de guia por reservatório hidrelétrico"
+        es = "Violación de curva guía por embalse hidro",
+        pt = "Violação de curva guia por reservatório hidro"
     },
     vriego = {
-        en = "Hydro: irrigation",
-        es = "Hidro: riego",
-        pt = "Hidro: irrigação"
+        en = "Irrigation violation",
+        es = "Violación de riego",
+        pt = "Violação da irrigação"
     },
     vmxost = {
         en = "Hydro: maximum operative storage",
-        es = "Hidro: almacenamiento operativo máximo",
-        pt = "Hidro: armazenamento operativo máximo"
+        es = "Hidro: volumen maximo operativo",
+        pt = "Hidro: volume máximo operativo"
     },
     vimxsp = {
         en = "Hydro: maximum spillage",
-        es = "Hidro: vertido máximo",
+        es = "Hidro: vertimiento máximo",
         pt = "Hidro: vertimento máximo"
     },
     vdefmx = {
         en = "Hydro: maximum total outflow",
-        es = "Hidro: caudal total máximo",
-        pt = "Hidro: vazão total máxima"
+        es = "Hidro: defluencia máxima",
+        pt = "Hidro: defluência máxima"
     },
     vvolmn = {
         en = "Hydro: minimum storage",
-        es = "Hidro: almacenamiento mínimo",
-        pt = "Hidro: armazenamento mínimo"
+        es = "Hidro: volumen mínimo",
+        pt = "Hidro: volume mínimo"
     },
     vdefmn = {
         en = "Hydro: minimum total outflow",
-        es = "Hidro: caudal total mínimo",
-        pt = "Hidro: vazão total mínima"
+        es = "Hidro: defluencia mínima",
+        pt = "Hidro: defluência mínima"
     },
     vturmn = {
         en = "Hydro: minimum turbining outflow",
-        es = "Hidro: caudal mínimo de turbinado",
-        pt = "Hidro: vazão mínima de turbinamento"
+        es = "Hidro: turbinamiento mínimo",
+        pt = "Hidro: turbinamento mínimo"
     },
     vimnsp = {
-        en = "Hydro: minimum spillage",
-        es = "Hidro: vertido mínimo",
+        en = "Hydro: mininum spillage",
+        es = "Hidro: vertimiento mínino",
         pt = "Hidro: vertimento mínimo"
     },
     rampvio = {
         en = "Hydro: outflow ramp",
-        es = "Hidro: rampa de caudal",
-        pt = "Hidro: rampa de vazão"
+        es = "Hidro: rampa de defluencia",
+        pt = "Hidro: rampa de defluência"
     },
     vreseg = {
         en = "Reserve: joint requirement",
@@ -359,18 +374,18 @@ dictionary = {
     },
     vsarhd = {
         en = "RAS target storage violation %",
-        es = "Violación del almacenamiento objetivo de SAR %",
-        pt = "Violação do armazenamento alvo da SAR %"
+        es = "Violación de volumen meta de SAR %",
+        pt = "Violação de volume meta da SAR %"
     },
     vsarhden = {
         en = "RAS target storage violation GWh",
-        es = "Violación del almacenamiento objetivo de SAR GWh",
-        pt = "Violação do armazenamento alvo da SAR GWh"
+        es = "Violación de volumen meta de SAR GWh",
+        pt = "Violação de volume meta da SAR GWh"
     },
     viocar = {
-        en = "Risk Aversion Curve",
-        es = "Curva de aversión al riesgo",
-        pt = "Curva de aversão ao risco"
+        en = "Risk Aversion Curve violation",
+        es = "Violación de la curva de aversión a riesgo",
+        pt = "Violação da curva de aversão a risco"
     },
     vgmint = {
         en = "Thermal: minimum generation",
@@ -398,24 +413,24 @@ dictionary = {
         pt = "Conjunto de reservatórios: restrição de energia de alerta"
     },
     vespset = {
-        en = "Reservoir set: flood control energy constraint",
-        es = "Conjunto de embalses: restricción de energía de control de inundaciones",
-        pt = "Conjunto de reservatórios: restrição de energia de controle de inundações"
+        en = "Violation of flood control energy constraint by reservoir set",
+        es = "Violación de restricción de energía de espera por conjunto de embalses",
+        pt = "Violação de restrição de energia de espera por conjunto de reservatórios"
     },
     fcoffvio = {
         en = "Fuel contract minimum offtake rate violation",
-        es = "Violación de la tasa mínima de retiro del contrato de combustible",
-        pt = "Violação da taxa mínima de retirada do contrato de combustível"
+        es = "Violación de mínima tasa de retiro de contrato de combustible",
+        pt = "Violação de mínima taxa de retirada contrato de combustível"
     },
     vflmnww = {
         en = "Minimum hydro bypass flow violation",
-        es = "Violación del flujo mínimo de derivación hidroeléctrica",
-        pt = "Violação do fluxo mínimo de bypass hidrelétrico"
+        es = "Violación de flujo mínimo de de desvío hidro",
+        pt = "Violação de fluxo mínimo de desvio hidro"
     },
     vflmxww = {
-        en = "Maximum hydro bypass flow violation",
-        es = "Violación del flujo máximo de derivación hidroeléctrica",
-        pt = "Violação do fluxo máximo de bypass hidrelétrico"
+        en = "Maximum hydro bypass flow violation cost",
+        es = "Violación de flujo máximo de de desvío hidro",
+        pt = "Violação de fluxo máximo de desvio hidro"
     },
     finjvio = {
         en = "Power injection: fixed injection",
@@ -691,5 +706,40 @@ dictionary = {
         en = "Errors and warnings",
         es = "Errores y advertencias",
         pt = "Erros e avisos"
-    }
+    },    
+    ac_circuit_losses_error_pos = {
+        en = "AC circuit losses positive error",
+        es = "Error positivo de pérdidas del AC circuitos",
+        pt = "Erro positivo de perdas em circuitos AC"
+    },
+    ac_circuit_losses_error_neg = {
+        en = "AC circuit losses negative error",
+        es = "Error negativo de pérdidas del AC circuitos",
+        pt = "Erro negativo de perdas em circuitos AC"
+    },
+    dc_circuit_losses_error_pos = {
+        en = "DC circuit losses positive error",
+        es = "Error positivo de pérdidas del DC circuitos",
+        pt = "Erro positivo de perdas em circuitos DC"
+    },
+    dc_circuit_losses_error_neg = {
+        en = "DC circuit losses negative error",
+        es = "Error negativo de pérdidas del DC circuitos",
+        pt = "Erro negativo de perdas em circuitos DC"
+    },
+    losses_msg_ac = {
+        en = "Sum of positive/negative linear and quadratic losses deviations in AC circuits of the case",
+        es = "Suma de desviaciones de pérdidas lineales y cuadráticas positivas/negativas en circuitos de corriente alterna del caso",
+        pt = "Soma de desvios de perdas lineares e quadráticas positivas/negativas em circuitos de corrente alternada do caso"
+    },
+    losses_msg_dc = {
+        en = "Sum of positive/negative linear and quadratic losses deviations in DC circuits of the case",
+        es = "Suma de desviaciones de pérdidas lineales y cuadráticas positivas/negativas en circuitos de corriente continua del caso",
+        pt = "Soma de desvios de perdas lineares e quadráticas positivas/negativas em circuitos de corrente contínua do caso"
+    },
+    sum_of_circ = {
+        en = "Sum of circuits",
+        es = "Suma the circuitos",
+        pt = "Soma de circuitos"
+    },
 };

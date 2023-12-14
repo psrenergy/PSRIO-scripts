@@ -250,6 +250,18 @@ local function load_language()
     end
 end
 
+function Expression.select_stages_of_outputs(self)
+    if self:loaded() then
+        local index = self:study_index();
+        local last_stage = Study(index):stages_without_buffer_years();
+        if Study(index):get_parameter("NumeroAnosAdicionaisParm2",-1) == 1 then
+            last_stage = Study(index):stages();
+        end
+
+        return self:select_stages(1,last_stage)
+    end
+    return self
+end
 -----------------------------------------------------------------------------------------------
 -- Get language
 -----------------------------------------------------------------------------------------------
@@ -659,6 +671,44 @@ function create_inflow_energy(col_struct)
 end
 
 -----------------------------------------------------------------------------------------------
+-- Losses functions
+-----------------------------------------------------------------------------------------------
+
+function create_losses(col_struct)
+    local tab = Tab(dictionary.tab_losses[LANGUAGE]);
+
+    if studies == 1 then
+        if col_struct.study[1]:get_parameter("Perdas",-1) == 1 then
+            local lsserac = col_struct.circuit[1]:load("sddp_dashboard_AC_losses_error");
+            local lsserdc = col_struct.circuit[1]:load("sddp_dashboard_DC_losses_error");
+
+            local chart_ac_pos = Chart(dictionary.ac_circuit_losses_error_pos[LANGUAGE])
+            local chart_ac_neg = Chart(dictionary.ac_circuit_losses_error_neg[LANGUAGE])
+            local chart_dc_pos = Chart(dictionary.dc_circuit_losses_error_pos[LANGUAGE])
+            local chart_dc_neg = Chart(dictionary.dc_circuit_losses_error_neg[LANGUAGE])
+
+            local lsserac_pos = ifelse(lsserac:ge(0),lsserac,0):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),dictionary.sum_of_circ[LANGUAGE]);
+            local lsserac_neg = ifelse(lsserac:le(0),-lsserac,0):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),dictionary.sum_of_circ[LANGUAGE]);
+            local lsserdc_pos = ifelse(lsserdc:ge(0),lsserdc,0):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),dictionary.sum_of_circ[LANGUAGE]);
+            local lsserdc_neg = ifelse(lsserdc:le(0),-lsserdc,0):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),dictionary.sum_of_circ[LANGUAGE]);
+
+            chart_ac_pos:add_column(lsserac_pos,{showInLegend = false});
+            chart_ac_neg:add_column(lsserac_neg,{showInLegend = false});
+            chart_dc_pos:add_column(lsserdc_pos,{showInLegend = false});
+            chart_dc_neg:add_column(lsserdc_neg,{showInLegend = false});
+
+            tab:push({chart_ac_pos,chart_ac_neg});
+            tab:push(dictionary.losses_msg_ac[LANGUAGE]);
+            tab:push({chart_dc_pos,chart_dc_neg});
+            tab:push(dictionary.losses_msg_dc[LANGUAGE]);
+
+        end
+    end
+        
+    return tab
+end
+
+-----------------------------------------------------------------------------------------------
 -- Policy report functions
 -----------------------------------------------------------------------------------------------
 
@@ -826,8 +876,8 @@ function create_exe_timer_per_scen(tab, col_struct, i)
         info(output_name .. " output could not be loaded. 'Dispersion of execution times per scenario' report will not be displayed");
         return
     end
-
-    local extime_disp = concatenate(extime:aggregate_agents(BY_SUM(), "P10"):aggregate_scenarios(BY_PERCENTILE(10)), extime:aggregate_agents(BY_SUM(), "Average"):aggregate_scenarios(BY_AVERAGE()), extime:aggregate_agents(BY_SUM(), "P90"):aggregate_scenarios(BY_PERCENTILE(90)));
+    
+    local extime_disp = concatenate(extime:aggregate_agents(BY_SUM(), "MIN"):aggregate_scenarios(BY_MIN()), extime:aggregate_agents(BY_SUM(), "Average"):aggregate_scenarios(BY_AVERAGE()), extime:aggregate_agents(BY_SUM(), "MAX"):aggregate_scenarios(BY_MAX()));
     if is_greater_than_zero(extime_disp) then
         local unit = "hour";
         local extime_disp_data = extime_disp:aggregate_scenarios(BY_MAX()):aggregate_stages(BY_MAX()):to_list();
@@ -839,10 +889,10 @@ function create_exe_timer_per_scen(tab, col_struct, i)
         end
 
         extime_chart = Chart(dictionary.dispersion_of_time[LANGUAGE]);
-        extime_chart:add_area_range(extime_disp:select_agent(1):convert(unit),
-                                    extime_disp:select_agent(3):convert(unit),
+        extime_chart:add_area_range(extime_disp:select_agent("MIN"):convert(unit),
+                                    extime_disp:select_agent("MAX"):convert(unit),
                                     { xUnit = dictionary.cell_stages[LANGUAGE], colors = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
-        extime_chart:add_line(extime_disp:select_agent(2):convert(unit),
+        extime_chart:add_line(extime_disp:select_agent("Average"):convert(unit),
                               { xUnit = dictionary.cell_stages[LANGUAGE], colors = { "#F02720" } });                  -- Average
 
         if #extime_chart > 0 then
@@ -1129,8 +1179,7 @@ function create_sim_report(col_struct)
 
     if studies > 1 then
         for i = 1, studies do
-            local stages_without_buffer_years = col_struct.study[i]:stages_without_buffer_years();
-            costs = objcop(i) / discount_rate(i):select_stages(1,stages_without_buffer_years);
+            costs = objcop(i) / discount_rate(i):select_stages_of_outputs();
             -- sddp_dashboard_cost_tot
             costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
             cost_chart:add_categories(costs_agg, col_struct.case_dir_list[i]);
@@ -1140,8 +1189,7 @@ function create_sim_report(col_struct)
             exet_chart:add_categories(exe_times, col_struct.case_dir_list[i]);
         end
     else
-        local stages_without_buffer_years = col_struct.study[1]:stages_without_buffer_years();
-        costs = objcop() / discount_rate():select_stages(1,stages_without_buffer_years);
+        costs = objcop() / discount_rate():select_stages_of_outputs();
         costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
 
         if is_greater_than_zero(costs_agg) then
@@ -1195,14 +1243,11 @@ function create_costs_and_revs(col_struct)
     local chart_avg = Chart(dictionary.avg_operation_cost[LANGUAGE]);
 
     for i = 1, studies do
-        local stages_without_buffer_years = col_struct.study[i]:stages_without_buffer_years();
-
         local objcop = require("sddp/costs");
         local discount_rate = require("sddp/discount_rate");
-        local costs = ifelse(objcop(i):ge(0), objcop(i), 0) / discount_rate(i):select_stages(1,stages_without_buffer_years);
+        local costs = ifelse(objcop(i):ge(0), objcop(i), 0) / discount_rate(i):select_stages_of_outputs();
 
         -- sddp_dashboard_cost_tot
-        costs = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM());
         if studies == 1 then
             costs:remove_zeros():save("sddp_dashboard_cost_tot", { csv = true });
         end
@@ -1263,15 +1308,13 @@ function create_marg_costs(col_struct)
     local chart = Chart(dictionary.annual_cmo[LANGUAGE]);
     if studies > 1 then
         for i = 1, studies do
-            local stages_without_buffer_years = col_struct.study[i]:stages_without_buffer_years();
-            cmg_aggyear = cmg[i]:aggregate_blocks_by_duracipu(i):aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[i].hours:select_stages(1,stages_without_buffer_years), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM);
+            cmg_aggyear = cmg[i]:aggregate_blocks_by_duracipu(i):aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[i].hours:select_stages_of_outputs(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM);
 
             -- Add marginal costs outputs
             chart:add_categories(cmg_aggyear, col_struct.case_dir_list[i], { xUnit=dictionary.cell_year[LANGUAGE] }); -- Annual Marg. cost
         end
     else
-        local stages_without_buffer_years = col_struct.study[1]:stages_without_buffer_years();
-        cmg_aggyear = cmg[1]:aggregate_blocks_by_duracipu():aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[1].hours:select_stages(1,stages_without_buffer_years), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE());
+        cmg_aggyear = cmg[1]:aggregate_blocks_by_duracipu():aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[1].hours:select_stages_of_outputs(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE());
         chart:add_column(cmg_aggyear, { xUnit=dictionary.cell_year[LANGUAGE] });
     end
     tab:push(chart);
@@ -1290,8 +1333,25 @@ function create_marg_costs(col_struct)
     else
         local chart = Chart(dictionary.stg_cmo[LANGUAGE]);
         cmg_aggsum = cmg[1]:aggregate_blocks_by_duracipu():aggregate_scenarios(BY_AVERAGE());
-        chart:add_column(cmg_aggsum,{xUnit=dictionary.cell_stages[LANGUAGE]});
+        chart:add_column(cmg_aggsum,{xUnit=dictionary.cell_stages[LANGUAGE]}, {colors = main_global_color});
         tab:push(chart);
+    end
+
+    if studies == 1 then
+        local systems = col_struct.system[1]:labels();
+        for i,system in ipairs(systems) do
+            local chart = Chart(system .. dictionary.stg_cmo_ind[LANGUAGE]);
+            local cmg_agg = cmg[1]:aggregate_blocks_by_duracipu():select_agents({system});
+            chart:add_box_plot(
+                cmg_agg:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_MIN()),
+                cmg_agg:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_PERCENTILE(25)),
+                cmg_agg:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_PERCENTILE(50)),
+                cmg_agg:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_PERCENTILE(75)),
+                cmg_agg:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_MAX())
+                ,{showInLegend = false, color = main_global_color[i]}
+            );
+            tab:push(chart);
+        end
     end
 
     return tab;
@@ -1307,7 +1367,7 @@ function create_gen_report(col_struct)
     -- Color preferences
     local color_hydro = '#4E79A7';
     local color_thermal = '#F28E2B';
-    local color_renw_other = '#BAB0AC';
+    local color_renw_other = '#7a5950';
     local color_wind = '#8CD17D';
     local color_solar = '#F1CE63';
     local color_small_hydro = '#A0CBE8';
@@ -1372,15 +1432,14 @@ function create_gen_report(col_struct)
 
     -- Loading generations files
     for i = 1, studies do
-        local stages_without_buffer_years = col_struct.study[i]:stages_without_buffer_years();
 
-        gerter[i] = col_struct.thermal[i]:load("gerter"):select_stages(1,stages_without_buffer_years);
-        gerhid[i] = col_struct.hydro[i]:load("gerhid"):select_stages(1,stages_without_buffer_years);
-        gergnd[i] = col_struct.renewable[i]:load("gergnd"):select_stages(1,stages_without_buffer_years);
-        gercsp[i] = col_struct.csp[i]:load("cspgen"):convert("GWh"):select_stages(1,stages_without_buffer_years);
-        gerbat[i] = col_struct.battery[i]:load("gerbat"):convert("GWh"):select_stages(1,stages_without_buffer_years); -- Explicitly converting to GWh
-        potinj[i] = col_struct.power_injection[i]:load("powinj"):select_stages(1,stages_without_buffer_years);
-        defcit[i] = col_struct.system[i]:load("defcit"):select_stages(1,stages_without_buffer_years);
+        gerter[i] = col_struct.thermal[i]:load("gerter"):select_stages_of_outputs();
+        gerhid[i] = col_struct.hydro[i]:load("gerhid"):select_stages_of_outputs();
+        gergnd[i] = col_struct.renewable[i]:load("gergnd"):select_stages_of_outputs();
+        gercsp[i] = col_struct.csp[i]:load("cspgen"):convert("GWh"):select_stages_of_outputs();
+        gerbat[i] = col_struct.battery[i]:load("gerbat"):convert("GWh"):select_stages_of_outputs(); -- Explicitly converting to GWh
+        potinj[i] = col_struct.power_injection[i]:load("powinj"):select_stages_of_outputs();
+        defcit[i] = col_struct.system[i]:load("defcit"):select_stages_of_outputs();
     end
 
     if studies > 1 then
@@ -1549,8 +1608,9 @@ function create_gen_report(col_struct)
     renw_csp_report_name = dictionary.total_renewable_csp[LANGUAGE];
 
     -- Generation per system report
-    local agents = col_struct.generic[1]:load("cmgdem"):agents();
-    for i, agent in ipairs(agents) do
+    local agents = col_struct.system[1]:labels();
+    local code   = col_struct.system[1]:codes();
+    for s, agent in ipairs(agents) do
         chart_tot_gerhid     =  Chart(dictionary.total_hydro[LANGUAGE]);
         chart_tot_gerter     =  Chart(dictionary.total_thermal[LANGUAGE]);
         chart_tot_renw_other =  Chart(dictionary.total_renewable_other[LANGUAGE]);
@@ -1598,20 +1658,19 @@ function create_gen_report(col_struct)
             total_csp_gen   = gercsp[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_csp_agent_name);
 
             -- Renewable generation is broken into 3 types
-            local stages_without_buffer_years = col_struct.study[i]:stages_without_buffer_years();
 
-            total_other_renw_gen = ifelse(col_struct.renewable[i].tech_type:ne(1):select_stages(1,stages_without_buffer_years) &
-                                          col_struct.renewable[i].tech_type:ne(2):select_stages(1,stages_without_buffer_years) &
-                                          col_struct.renewable[i].tech_type:ne(4):select_stages(1,stages_without_buffer_years),
+            total_other_renw_gen = ifelse(col_struct.renewable[i].tech_type:ne(1):select_stages_of_outputs() &
+                                          col_struct.renewable[i].tech_type:ne(2):select_stages_of_outputs() &
+                                          col_struct.renewable[i].tech_type:ne(4):select_stages_of_outputs(),
                                           gergnd[i],
                                           0);
-            total_wind_gen = ifelse(col_struct.renewable[i].tech_type:eq(1):select_stages(1,stages_without_buffer_years),
+            total_wind_gen = ifelse(col_struct.renewable[i].tech_type:eq(1):select_stages_of_outputs(),
                                           gergnd[i],
                                           0);
-            total_solar_gen = ifelse(col_struct.renewable[i].tech_type:eq(2):select_stages(1,stages_without_buffer_years),
+            total_solar_gen = ifelse(col_struct.renewable[i].tech_type:eq(2):select_stages_of_outputs(),
                                           gergnd[i],
                                           0);
-            total_small_hydro_gen = ifelse(col_struct.renewable[i].tech_type:eq(4):select_stages(1,stages_without_buffer_years),
+            total_small_hydro_gen = ifelse(col_struct.renewable[i].tech_type:eq(4):select_stages_of_outputs(),
                                           gergnd[i],
                                           0);
 
@@ -1621,31 +1680,33 @@ function create_gen_report(col_struct)
             total_small_hydro_gen = total_small_hydro_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_shydro_agent_name);
             total_thermal_gen     = gerter[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(thermal_agent_name);
 
-            if total_hydro_gen:loaded() then
+            if total_hydro_gen:loaded() and col_struct.hydro[i].system:eq(code[s]):remove_zeros():loaded() then
                 chart_tot_gerhid:add_column(total_hydro_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
             end
-            if total_thermal_gen:loaded() then
+            if total_thermal_gen:loaded() and col_struct.thermal[i].system:eq(code[s]):remove_zeros():loaded() then
                 chart_tot_gerter:add_column(total_thermal_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
             end
-            if total_other_renw_gen:loaded() then
-                chart_tot_renw_other:add_column(total_other_renw_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
+            if col_struct.renewable[i].system:eq(code[s]):remove_zeros():loaded() then
+                if total_other_renw_gen:loaded() and (col_struct.renewable[i].tech_type:ne(1) + col_struct.renewable[i].tech_type:ne(2) + col_struct.renewable[i].tech_type:ne(4)):remove_zeros():loaded() then
+                    chart_tot_renw_other:add_column(total_other_renw_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
+                end
+                if total_wind_gen:loaded() and col_struct.renewable[i].tech_type:eq(1):remove_zeros():loaded() then
+                    chart_tot_renw_wind:add_column(total_wind_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
+                end
+                if total_solar_gen:loaded() and col_struct.renewable[i].tech_type:eq(2):remove_zeros():loaded() then
+                    chart_tot_renw_solar:add_column(total_solar_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
+                end
+                if total_small_hydro_gen:loaded() and col_struct.renewable[i].tech_type:eq(4):remove_zeros():loaded() then
+                    chart_tot_renw_shyd:add_column(total_small_hydro_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
+                end
             end
-            if total_wind_gen:loaded() then
-                chart_tot_renw_wind:add_column(total_wind_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
-            end
-            if total_solar_gen:loaded() then
-                chart_tot_renw_solar:add_column(total_solar_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
-            end
-            if total_small_hydro_gen:loaded() then
-                chart_tot_renw_shyd:add_column(total_small_hydro_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
-            end
-            if total_csp_gen:loaded() then
+            if total_csp_gen:loaded() and col_struct.csp[i].system:eq(code[s]):remove_zeros():loaded() then
                 chart_tot_renw_csp:add_column(total_csp_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
             end
-            if total_batt_gen:loaded() then
+            if total_batt_gen:loaded() and col_struct.battery[i].system:eq(code[s]):remove_zeros():loaded() then
                 chart_tot_gerbat:add_column(total_batt_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
             end
-            if total_pot_inj:loaded() then
+            if total_pot_inj:loaded() and col_struct.power_injection[i].system:eq(code[s]):remove_zeros():loaded() then
                 chart_tot_potinj:add_column(total_pot_inj, { xUnit=dictionary.cell_stages[LANGUAGE]});
             end
             if total_deficit:loaded() then
@@ -1695,7 +1756,7 @@ function create_risk_report(col_struct)
 
     if studies > 1 then
         for i = 1, studies do
-            risk_file = col_struct.system[i]:load("sddprisk"):aggregate_agents(BY_AVERAGE(), Collection.SYSTEM);
+            risk_file = col_struct.system[i]:load("sddprisk"):aggregate_agents(BY_AVERAGE(), Collection.SYSTEM):aggregate_stages(BY_AVERAGE());
 
             -- Add marginal costs outputs
             chart:add_categories(risk_file, col_struct.case_dir_list[i]); -- Annual Marg. cost
@@ -1756,9 +1817,9 @@ function create_viol_report_from_list(tab, col_struct, viol_list, viol_struct, s
     local viol_name;
     local tokens = {};
 
-    for i, file in ipairs(viol_list) do
+    for _, file in ipairs(viol_list) do
         -- Look for file title in violation structure
-        for j, struct in ipairs(viol_struct) do
+        for _, struct in ipairs(viol_struct) do
             viol_name = "sddp_dashboard_viol_" .. suffix .. "_" .. struct.name;
             if file == viol_name then
                 viol_file = col_struct.generic[1]:load(file);
@@ -1815,6 +1876,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
         { name = "defcit"  , title = dictionary.defcit[LANGUAGE]},
         { name = "nedefc"  , title = dictionary.nedefc[LANGUAGE]},
         { name = "defbus"  , title = dictionary.defbus[LANGUAGE]},
+        { name = "defbusp"  , title = dictionary.defbusp[LANGUAGE]},
         { name = "gncivio" , title = dictionary.gncivio[LANGUAGE]},
         { name = "gncvio"  , title = dictionary.gncvio[LANGUAGE]},
         { name = "vrestg"  , title = dictionary.vrestg[LANGUAGE]},
@@ -1996,6 +2058,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
             create_viol_report(tab_viol_max, col_struct, viol_report_structs, "max");
         end
 
+
         push_tab_to_tab(tab_viol_avg,tab_violations);
         push_tab_to_tab(tab_viol_max,tab_violations);
 
@@ -2016,6 +2079,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     push_tab_to_tab(create_gen_report(col_struct)    ,tab_results);
     push_tab_to_tab(create_risk_report(col_struct)   ,tab_results);
     push_tab_to_tab(create_inflow_energy(col_struct) ,tab_results);
+    push_tab_to_tab(create_losses(col_struct) ,tab_results);
 
     push_tab_to_tab(tab_results,dashboard);
 
