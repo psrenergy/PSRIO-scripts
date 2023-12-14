@@ -701,6 +701,11 @@ dictionary = {
         en = "Sum of policy immediate costs up to the last stage plus the future cost function for additional years",
         es = "Suma de los costos inmediatos de la política hasta la última etapa más la función de costos futuros para años adicionales",
         pt = "Soma dos custos imediatos da política até a última etapa mais a função de custo futura para anos adicionais"
+    },
+    error_and_warnings_tab = {
+        en = "Errors and warnings",
+        es = "Errores y advertencias",
+        pt = "Erros e avisos"
     },    
     ac_circuit_losses_error_pos = {
         en = "AC circuit losses positive error",

@@ -12,6 +12,9 @@ light_global_color = { "#B7C9DD", "#FAD2AA", "#D1EDCB", "#E9DAA4", "#F3BCBD", "#
 
 PSR.set_global_colors(main_global_color);
 
+-- Initialization of Advisor class
+local advisor = Advisor();
+
 -- Study dimension
 studies = PSR.studies();
 
@@ -262,7 +265,7 @@ end
 -----------------------------------------------------------------------------------------------
 -- Get language
 -----------------------------------------------------------------------------------------------
-local LANGUAGE = load_language();
+LANGUAGE = load_language();
 
 -----------------------------------------------------------------------------------------------
 -- Infeasibility report function
@@ -857,6 +860,10 @@ function create_hourly_sol_status_graph(tab, col_struct, i)
     local chart = Chart(report_title);
     chart:add_heatmap(status,options);
     tab:push(chart);
+
+    if status:remove_zeros():loaded() then
+        advisor:push_warning("mip_convergence");
+    end
 end
 
 -- Execution times per scenario (dispersion)
@@ -1054,6 +1061,21 @@ function create_pol_report(col_struct)
             chart:add_line(conv_age:select_agents({ 3 }):rename_agent("Zsup"), { colors = { "#32A251" }, xAllowDecimals = false });
             -- Confidence interval
             chart:add_area_range(conv_age:select_agents({ 2 }):rename_agent(""), conv_age:select_agents({ 4 }):rename_agent("Zsup +- Tol"), { colors = { "#ACD98D", "#ACD98D" }, xUnit = "Iteration", xAllowDecimals = false, visible = zsup_is_visible });
+            
+            local tolerance_for_convergence = tonumber(col_struct.study[1]:get_parameter("CriterioConvergencia", -1));
+
+            local total_iter = conv_age:stages();
+            local zinf_final = tonumber(conv_age:select_agents({ 1 }):select_stage(total_iter):to_list()[1]);
+            local zsup_final = tonumber(conv_age:select_agents({ 3 }):select_stage(total_iter):to_list()[1]);
+            local gap = ( zsup_final - zinf_final );
+            if gap > 0 then
+                if (gap + 0.0000001) > tolerance_for_convergence then
+                    advisor:push_warning("convergence_gap",1);
+                end
+            else
+                -- to_do: negative gap msg
+            end
+
             if (show_sim_cost and has_results_for_add_years) then
                 -- Final simulation cost
                 chart:add_line(final_sim_cost:rename_agent("Final simulation"), { colors = { "#D37295" }, xAllowDecimals = false });
@@ -1063,9 +1085,12 @@ function create_pol_report(col_struct)
                 last_zsup = zsup:to_list()[zsup:last_stage()];
                 rel_diff = (immediate_cost - last_zsup)/immediate_cost;
                 if rel_diff > REP_DIFF_TOL or -rel_diff < -REP_DIFF_TOL then
-                    tab:push("**WARNING**");
-                    tab:push("The objective function value of the final simulation deviates by " .. string.format("%.1f",100*rel_diff) .. "% from objective function of the last iteration of the policy phase.");
-                    tab:push("This indicates that the policy representation lacks critical system characteristics, potentially resulting in a suboptimal solution in final simulation.");
+                    -- to_do: passar essa msg para dentro do sddp-warnings ?
+                    -- tab:push("**WARNING**");
+                    -- tab:push("The objective function value of the final simulation deviates by " .. string.format("%.1f",100*rel_diff) .. "% from objective function of the last iteration of the policy phase.");
+                    -- tab:push("This indicates that the policy representation lacks critical system characteristics, potentially resulting in a suboptimal solution in final simulation.");
+                    
+                    advisor:push_warning("simulation_cost");
                 end
             end
             tab:push(chart);
@@ -1808,6 +1833,17 @@ function create_viol_report_from_list(tab, col_struct, viol_list, viol_struct, s
     end
 end
 
+-----------------------------------------------------------------------------------------------
+-- Warning and errors
+-----------------------------------------------------------------------------------------------
+
+function create_warning_and_errors_tab()
+    local tab = Tab(dictionary.error_and_warnings_tab[LANGUAGE]);
+    tab:set_icon("shield-alert");
+    tab:push_advices(advisor);
+    return tab
+end
+
 function create_operation_report(dashboard, studies, info_struct, info_existence_log, create_dashboard)
 
     -- Function parameters
@@ -1904,7 +1940,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     ----------------
     local tab_inf = Tab(dictionary.tab_infeasibility[LANGUAGE]);
     tab_inf:set_icon("alert-triangle");
-
+    
     -- Infeasibility report
     if create_info_report then
         local has_inf = {};
@@ -2046,6 +2082,14 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     push_tab_to_tab(create_losses(col_struct) ,tab_results);
 
     push_tab_to_tab(tab_results,dashboard);
+
+    ---------------------------
+    -- Warning and error
+    ---------------------------
+    local warning_error_tab = create_warning_and_errors_tab();
+    if #warning_error_tab > 0 then
+        push_tab_to_tab(warning_error_tab,dashboard);
+    end
 
     ---------------------------
     -- Case information summary
