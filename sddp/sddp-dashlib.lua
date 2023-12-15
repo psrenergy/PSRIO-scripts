@@ -397,19 +397,20 @@ function create_tab_summary(col_struct, info_struct)
 
     tab:push("## " .. dictionary.hor_resol_exec[LANGUAGE]);
 
-    local header_string       = "| " .. dictionary.cell_case_parameters[LANGUAGE];
-    local lower_header_string = "|---------------";
-    local exe_type_string     = "| " .. dictionary.cell_execution_type[LANGUAGE];
-    local case_type_string    = "| " .. dictionary.cell_case_type[LANGUAGE];
-    local nstg_string         = "| " .. dictionary.cell_stages[LANGUAGE];
-    local ini_year_string     = "| " .. dictionary.cell_ini_year[LANGUAGE];
-    local nblk_string         = "| " .. dictionary.cell_blocks[LANGUAGE];
-    local nforw_string        = "| " .. dictionary.cell_fwd_series[LANGUAGE];
-    local nback_string        = "| " .. dictionary.cell_bwd_series[LANGUAGE];
-    local hrep_string         = "| " .. dictionary.cell_hourly_representation[LANGUAGE];
-    local netrep_string       = "| " .. dictionary.cell_network_representation[LANGUAGE];
-    local typday_string       = "| " .. dictionary.cell_typicalday_representation[LANGUAGE];
-    local loss_representation = "| " .. dictionary.cell_loss_representation[LANGUAGE];
+    local header_string              = "| " .. dictionary.cell_case_parameters[LANGUAGE];
+    local lower_header_string        = "|---------------";
+    local exe_type_string            = "| " .. dictionary.cell_execution_type[LANGUAGE];
+    local case_type_string           = "| " .. dictionary.cell_case_type[LANGUAGE];
+    local nstg_string                = "| " .. dictionary.cell_stages[LANGUAGE];
+    local ini_year_string            = "| " .. dictionary.cell_ini_year[LANGUAGE];
+    local plc_resolution             = "| " .. dictionary.cell_plc_resolution[LANGUAGE];
+    local sim_resolution             = "| " .. dictionary.cell_sim_resolution[LANGUAGE];
+    local nforw_string               = "| " .. dictionary.cell_fwd_series[LANGUAGE];
+    local nback_string               = "| " .. dictionary.cell_bwd_series[LANGUAGE];
+    local hrep_string                = "| " .. dictionary.cell_hourly_representation[LANGUAGE];
+    local netrep_string              = "| " .. dictionary.cell_network_representation[LANGUAGE];
+    local typday_string              = "| " .. dictionary.cell_typicalday_representation[LANGUAGE];
+    local loss_representation_string = "| " .. dictionary.cell_loss_representation[LANGUAGE];
 
     local hrep_val   = {};
     local netrep_val = {};
@@ -421,24 +422,46 @@ function create_tab_summary(col_struct, info_struct)
     local show_net_data = false;
 
     for i = 1, studies do
-        header_string = header_string             .. " | " .. col_struct.case_dir_list[i];
-        lower_header_string = lower_header_string .. "|-----------";
+        -- Number of stages
+        local number_of_stages = col_struct.study[i]:stages_without_buffer_years();
+        if col_struct.study[i]:get_parameter("NumeroAnosAdicionaisParm2",-1) == 1 then
+            number_of_stages = col_struct.study[i]:stages();
+        end
 
+        -- type of execution
         exe_type[i] = dictionary.cell_policy[LANGUAGE];
-        if col_struct.study[i]:get_parameter("Objetivo", -1) == 2 then
+        local number_of_blocks = col_struct.study[i]:get_parameter("NumberBlocks", -1);
+        local policy_number_of_blocks = number_of_blocks .. " " .. dictionary.cell_blocks[LANGUAGE]
+        local resolution_of_simulation = policy_number_of_blocks;
+        if col_struct.study[i]:get_parameter("Objetivo", -100) == 2 then
+            policy_number_of_blocks = " - ";
             exe_type[i] = dictionary.cell_simulation[LANGUAGE];
+        end
+        if col_struct.study[i]:get_parameter("Objetivo", -100) == -2 then
+            policy_number_of_blocks = " - ";
+            exe_type[i] = dictionary.cell_commercial_simulation[LANGUAGE];
         end
         exe_type_string = exe_type_string .. " | " .. exe_type[i];
 
+        if col_struct.study[i]:is_hourly() then
+            resolution_of_simulation = dictionary.cell_hourly[LANGUAGE];
+        end
+
+        -- type of resolution
         case_type[i] = dictionary.cell_monthly[LANGUAGE];
         if col_struct.study[i]:stage_type() == 1 then
             case_type[i] = dictionary.cell_weekly[LANGUAGE];
         end
         case_type_string = case_type_string .. " | " .. case_type[i];
 
-        nstg_string      = nstg_string      .. " | " .. tostring(col_struct.study[i]:stages());
+
+        header_string = header_string             .. " | " .. col_struct.case_dir_list[i];
+        lower_header_string = lower_header_string .. "|-----------";
+
+        nstg_string      = nstg_string      .. " | " .. tostring(number_of_stages);
         ini_year_string  = ini_year_string  .. " | " .. tostring(col_struct.study[i]:initial_year());
-        nblk_string      = nblk_string      .. " | " .. tostring(col_struct.study[i]:get_parameter("NumberBlocks", -1));
+        plc_resolution   = plc_resolution   .. " | " .. policy_number_of_blocks;
+        sim_resolution   = sim_resolution   .. " | " .. resolution_of_simulation;
         nforw_string     = nforw_string     .. " | " .. tostring(col_struct.study[i]:scenarios());
         nback_string     = nback_string     .. " | " .. tostring(col_struct.study[i]:openings());
 
@@ -467,7 +490,7 @@ function create_tab_summary(col_struct, info_struct)
         if col_struct.study[i]:get_parameter("Perdas", -1) == 1 then
             loss_repr[i] = "✔️";
         end
-        loss_representation_string = loss_representation .. " | " .. loss_repr[i];
+        loss_representation_string = loss_representation_string .. " | " .. loss_repr[i];
     end
     header_string                    = header_string              .. "|";
     lower_header_string              = lower_header_string        .. "|";
@@ -475,7 +498,8 @@ function create_tab_summary(col_struct, info_struct)
     case_type_string                 = case_type_string           .. "|";
     nstg_string                      = nstg_string                .. "|";
     ini_year_string                  = ini_year_string            .. "|";
-    nblk_string                      = nblk_string                .. "|";
+    plc_resolution                   = plc_resolution             .. "|";
+    sim_resolution                   = sim_resolution             .. "|";
     nforw_string                     = nforw_string               .. "|";
     nback_string                     = nback_string               .. "|";
     hrep_string                      = hrep_string                .. "|";
@@ -489,7 +513,8 @@ function create_tab_summary(col_struct, info_struct)
     tab:push(case_type_string);
     tab:push(nstg_string);
     tab:push(ini_year_string);
-    tab:push(nblk_string);
+    tab:push(plc_resolution);
+    tab:push(sim_resolution);
     tab:push(nforw_string);
     tab:push(nback_string);
     tab:push(hrep_string);

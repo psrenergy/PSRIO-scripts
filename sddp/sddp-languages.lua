@@ -542,10 +542,25 @@ dictionary = {
         es = "Año inicial",
         pt = "Ano inicial"
     },
+    cell_plc_resolution = {
+        en = "Policy resolution",
+        es = "Resolución de la politica",
+        pt = "Resolução da política"
+    },
+    cell_sim_resolution = {
+        en = "Simulation resolution",
+        es = "Resolución de la simulación",
+        pt = "Resolução da simulação"
+    },
     cell_blocks = {
         en = "Blocks",
         es = "Bloques",
         pt = "Blocos"
+    },
+    cell_hourly = {
+        en = "Hourly",
+        es = "Horaria",
+        pt = "Horária"
     },
     cell_fwd_series = {
         en = "Foward series",
@@ -661,6 +676,11 @@ dictionary = {
         en = "Simulation",
         es = "Simulación",
         pt = "Simulação"
+    },
+    cell_commercial_simulation = {
+        en = "Commercial simulation",
+        es = "Simulación comercial",
+        pt = "Simulação comercial"
     },
     cell_monthly = {
         en = "Monthly",
