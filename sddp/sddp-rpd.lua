@@ -9,7 +9,7 @@ local dashboard = Dashboard();
 
 for year = 1,n_years do
     for quartely = 1,4 do
-        local tab = Tab("RPD ( " .. quartely .. " quartely / " .. (initial_year - 1) + year .." )");
+        local tab = Tab("RPD ( " .. quartely .. " quarter / " .. (initial_year - 1) + year .." )");
         for month = (quartely - 1) * 3 + 1, 3 * quartely do
             local chart = Chart("Dynamic Probabilistic Reserve by stage (MW) - RPD " .. " - " .. month .. " month");
             chart:add_line(dprdash_psrio:select_stage(month + (year - 1) * 12));
