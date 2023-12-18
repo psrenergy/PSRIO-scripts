@@ -542,10 +542,25 @@ dictionary = {
         es = "Año inicial",
         pt = "Ano inicial"
     },
+    cell_plc_resolution = {
+        en = "Policy resolution",
+        es = "Resolución de la politica",
+        pt = "Resolução da política"
+    },
+    cell_sim_resolution = {
+        en = "Simulation resolution",
+        es = "Resolución de la simulación",
+        pt = "Resolução da simulação"
+    },
     cell_blocks = {
         en = "Blocks",
         es = "Bloques",
         pt = "Blocos"
+    },
+    cell_hourly = {
+        en = "Hourly",
+        es = "Horaria",
+        pt = "Horária"
     },
     cell_fwd_series = {
         en = "Foward series",
@@ -662,6 +677,11 @@ dictionary = {
         es = "Simulación",
         pt = "Simulação"
     },
+    cell_commercial_simulation = {
+        en = "Commercial simulation",
+        es = "Simulación comercial",
+        pt = "Simulação comercial"
+    },
     cell_monthly = {
         en = "Monthly",
         es = "Mensual",
@@ -701,6 +721,11 @@ dictionary = {
         en = "Sum of policy immediate costs up to the last stage plus the future cost function for additional years",
         es = "Suma de los costos inmediatos de la política hasta la última etapa más la función de costos futuros para años adicionales",
         pt = "Soma dos custos imediatos da política até a última etapa mais a função de custo futura para anos adicionais"
+    },
+    error_and_warnings_tab = {
+        en = "Errors and warnings",
+        es = "Errores y advertencias",
+        pt = "Erros e avisos"
     },    
     ac_circuit_losses_error_pos = {
         en = "AC circuit losses positive error",
