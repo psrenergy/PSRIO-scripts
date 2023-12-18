@@ -737,4 +737,9 @@ dictionary = {
         es = "Suma the circuitos",
         pt = "Soma de circuitos"
     },
+    others = {
+        en = "Others",
+        es = "Otros",
+        pt = "Outros"
+    },
 };

@@ -671,38 +671,49 @@ end
 -- Losses functions
 -----------------------------------------------------------------------------------------------
 
-function create_losses(col_struct)
-    local tab = Tab(dictionary.tab_losses[LANGUAGE]);
+function create_losses_charts(col_struct, tab, operation)
 
     if studies == 1 then
         if col_struct.study[1]:get_parameter("Perdas",-1) == 1 then
             local lsserac = col_struct.circuit[1]:load("sddp_dashboard_AC_losses_error");
             local lsserdc = col_struct.circuit[1]:load("sddp_dashboard_DC_losses_error");
 
-            local chart_ac_pos = Chart(dictionary.ac_circuit_losses_error_pos[LANGUAGE])
-            local chart_ac_neg = Chart(dictionary.ac_circuit_losses_error_neg[LANGUAGE])
-            local chart_dc_pos = Chart(dictionary.dc_circuit_losses_error_pos[LANGUAGE])
-            local chart_dc_neg = Chart(dictionary.dc_circuit_losses_error_neg[LANGUAGE])
+            local chart_ac_pos = Chart(dictionary.ac_circuit_losses_error_pos[LANGUAGE]);
+            local chart_ac_neg = Chart(dictionary.ac_circuit_losses_error_neg[LANGUAGE]);
+            local chart_dc_pos = Chart(dictionary.dc_circuit_losses_error_pos[LANGUAGE]);
+            local chart_dc_neg = Chart(dictionary.dc_circuit_losses_error_neg[LANGUAGE]);
 
-            local lsserac_pos = ifelse(lsserac:ge(0),lsserac,0):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),dictionary.sum_of_circ[LANGUAGE]);
-            local lsserac_neg = ifelse(lsserac:le(0),-lsserac,0):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),dictionary.sum_of_circ[LANGUAGE]);
-            local lsserdc_pos = ifelse(lsserdc:ge(0),lsserdc,0):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),dictionary.sum_of_circ[LANGUAGE]);
-            local lsserdc_neg = ifelse(lsserdc:le(0),-lsserdc,0):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(),dictionary.sum_of_circ[LANGUAGE]);
+            local lsserac_pos = ifelse(lsserac:ge(0),lsserac,0):aggregate_scenarios(BY_AVERAGE()):aggregate_blocks(BY_AVERAGE());
+            local lsserac_neg = ifelse(lsserac:le(0),-lsserac,0):aggregate_scenarios(BY_AVERAGE()):aggregate_blocks(BY_AVERAGE());
+            local lsserdc_pos = ifelse(lsserdc:ge(0),lsserdc,0):aggregate_scenarios(BY_AVERAGE()):aggregate_blocks(BY_AVERAGE());
+            local lsserdc_neg = ifelse(lsserdc:le(0),-lsserdc,0):aggregate_scenarios(BY_AVERAGE()):aggregate_blocks(BY_AVERAGE());
 
-            chart_ac_pos:add_column(lsserac_pos,{showInLegend = false});
-            chart_ac_neg:add_column(lsserac_neg,{showInLegend = false});
-            chart_dc_pos:add_column(lsserdc_pos,{showInLegend = false});
-            chart_dc_neg:add_column(lsserdc_neg,{showInLegend = false});
+            local select_largest_agents_lsserac_pos = lsserac_pos:select_largest_agents(5):agents();
+            local select_largest_agents_lsserac_neg = lsserac_neg:select_largest_agents(5):agents();
+            local select_largest_agents_lsserdc_pos = lsserdc_pos:select_largest_agents(5):agents();
+            local select_largest_agents_lsserdc_neg = lsserdc_neg:select_largest_agents(5):agents();
 
-            tab:push({chart_ac_pos,chart_ac_neg});
-            tab:push(dictionary.losses_msg_ac[LANGUAGE]);
-            tab:push({chart_dc_pos,chart_dc_neg});
-            tab:push(dictionary.losses_msg_dc[LANGUAGE]);
+            chart_ac_pos:add_column(lsserac_pos:select_agents(select_largest_agents_lsserac_pos));
+            chart_ac_neg:add_column(lsserac_neg:select_agents(select_largest_agents_lsserac_neg));
+            chart_dc_pos:add_column(lsserdc_pos:select_agents(select_largest_agents_lsserdc_pos));
+            chart_dc_neg:add_column(lsserdc_neg:select_agents(select_largest_agents_lsserdc_neg));
+            
+            chart_ac_pos:add_column(lsserac_pos:remove_agents(select_largest_agents_lsserac_pos):aggregate_agents(operation, dictionary.others[LANGUAGE]));
+            chart_ac_neg:add_column(lsserac_neg:remove_agents(select_largest_agents_lsserac_neg):aggregate_agents(operation, dictionary.others[LANGUAGE]));
+            chart_dc_pos:add_column(lsserdc_pos:remove_agents(select_largest_agents_lsserdc_pos):aggregate_agents(operation, dictionary.others[LANGUAGE]));
+            chart_dc_neg:add_column(lsserdc_neg:remove_agents(select_largest_agents_lsserdc_neg):aggregate_agents(operation, dictionary.others[LANGUAGE]));
+            
+            if lsserac:loaded() then
+                tab:push({chart_ac_pos,chart_ac_neg});
+                tab:push(dictionary.losses_msg_ac[LANGUAGE]);
+            end
+            if lsserdc:loaded() then
+                tab:push({chart_dc_pos,chart_dc_neg});
+                tab:push(dictionary.losses_msg_dc[LANGUAGE]);
+            end
 
         end
     end
-        
-    return tab
 end
 
 -----------------------------------------------------------------------------------------------
@@ -2022,6 +2033,8 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
             create_viol_report(tab_viol_max, col_struct, viol_report_structs, "max");
         end
 
+        create_losses_charts(col_struct, tab_viol_avg, BY_AVERAGE());
+        create_losses_charts(col_struct, tab_viol_max, BY_MAX());
 
         push_tab_to_tab(tab_viol_avg,tab_violations);
         push_tab_to_tab(tab_viol_max,tab_violations);
@@ -2043,7 +2056,6 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     push_tab_to_tab(create_gen_report(col_struct)    ,tab_results);
     push_tab_to_tab(create_risk_report(col_struct)   ,tab_results);
     push_tab_to_tab(create_inflow_energy(col_struct) ,tab_results);
-    push_tab_to_tab(create_losses(col_struct) ,tab_results);
 
     push_tab_to_tab(tab_results,dashboard);
 
