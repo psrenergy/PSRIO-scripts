@@ -167,10 +167,20 @@ dictionary = {
         es = "Porciones de los ingresos operativos totales",
         pt = "Parcelas das receitas operacionais totais"
     },
-    excution_times = {
+    execution_times = {
         en = "Execution times",
         es = "Tiempos de ejecución",
         pt = "Tempos de execução"
+    },
+    exe_sim_times = {
+        en = "Simulation execution time",
+        es = "Tiempo de ejecución simulación",
+        pt = "Tempo de execução simulação"
+    },
+    exe_pol_times = {
+        en = "Policy execution time",
+        es = "Tiempo de ejecución politica",
+        pt = "Tempo de execução política"
     },
     disp_of_operation_cost = {
         en = "Dispersion of operating costs per stage",

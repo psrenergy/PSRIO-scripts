@@ -983,8 +983,6 @@ function create_pol_report(col_struct)
             local chart_conv      = Chart(dictionary.convergence[LANGUAGE]);
             local chart_cut_opt   = Chart(dictionary.new_cut_per_iteration_optimality[LANGUAGE]);
             local chart_cut_feas  = Chart(dictionary.new_cut_per_iteration_feasibility[LANGUAGE]);
-            local chart_time_forw = Chart(dictionary.forward_time[LANGUAGE]);
-            local chart_time_back = Chart(dictionary.backward_time[LANGUAGE]);
 
             for j = 1, studies do
 
@@ -992,7 +990,6 @@ function create_pol_report(col_struct)
                 if conv_file:loaded() then
                     conv_age = conv_file:select_agents({ 1, 2, 3, 4 }); -- Zinf        ,Zsup - Tol  ,Zsup        ,Zsup + Tol
                     cuts_age = conv_file:select_agents({ 5, 6 }); -- Optimality  ,Feasibility
-                    time_age = conv_file:select_agents({ 7, 8 }); -- Forw. time, Back. time
 
                     -- Confidence interval
                     chart_conv:add_area_range(conv_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup - Tol"), conv_age:select_agents({ 4 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup + Tol"), { colors = { light_global_color[j], light_global_color[j] }, xUnit = "Iteration", xAllowDecimals = false, showInLegend = true });
@@ -1010,11 +1007,6 @@ function create_pol_report(col_struct)
                     if is_greater_than_zero(cuts_age:select_agents({ 2 })) then
                         chart_cut_feas:add_column(cuts_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
                     end
-                    -- Execution time - forward
-                    chart_time_forw:add_column(time_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
-
-                    -- Execution time - backward
-                    chart_time_back:add_column(time_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
                 else
                     info("Comparing cases have different policy horizons! Policy will only contain the main case data.");
                 end
@@ -1029,12 +1021,6 @@ function create_pol_report(col_struct)
             if #chart_cut_feas > 0 then
                 tab:push(chart_cut_feas);
             end
-            if #chart_time_forw > 0 then
-                tab:push(chart_time_forw);
-            end
-            if #chart_time_back > 0 then
-                tab:push(chart_time_back);
-            end
         else
             -- Get operation mode parameter
             oper_mode = col_struct.study[1]:get_parameter("Opcion", -1); -- 1=AIS; 2=COO; 3=INT;
@@ -1046,7 +1032,6 @@ function create_pol_report(col_struct)
             conv_file = col_struct.generic[1]:load(file);
             conv_age = conv_file:select_agents({ 1, 2, 3, 4 }); -- Zinf        ,Zsup - Tol  ,Zsup        ,Zsup + Tol
             cuts_age = conv_file:select_agents({ 5, 6 }); -- Optimality  ,Feasibility
-            time_age = conv_file:select_agents({ 7, 8 }); -- Forw. time, Back. time
             
             -- If there is only one FCF file in the case and no rolling horizons, print final simulation cost as columns
             show_sim_cost = false;
@@ -1121,11 +1106,6 @@ function create_pol_report(col_struct)
                 last_zsup = zsup:to_list()[zsup:last_stage()];
                 rel_diff = (immediate_cost - last_zsup)/immediate_cost;
                 if rel_diff > REP_DIFF_TOL or -rel_diff < -REP_DIFF_TOL then
-                    -- to_do: passar essa msg para dentro do sddp-warnings ?
-                    -- tab:push("**WARNING**");
-                    -- tab:push("The objective function value of the final simulation deviates by " .. string.format("%.1f",100*rel_diff) .. "% from objective function of the last iteration of the policy phase.");
-                    -- tab:push("This indicates that the policy representation lacks critical system characteristics, potentially resulting in a suboptimal solution in final simulation.");
-                    
                     advisor:push_warning("simulation_cost");
                 end
             end
@@ -1179,13 +1159,6 @@ function create_pol_report(col_struct)
             tab:push(chart);
 
             -----------------------------------------------------------------------------------------------------------
-            -- Forward and backward execution times
-            -----------------------------------------------------------------------------------------------------------
-            chart = Chart(dictionary.fwd_bwd_time[LANGUAGE]);
-            chart:add_line(time_age:rename_agents({"Forward","Backward"}), { xUnit = "Iteration", xAllowDecimals = false }); -- Forw. and Back. times
-            tab:push(chart);
-
-            -----------------------------------------------------------------------------------------------------------
             -- Convergence map
             -----------------------------------------------------------------------------------------------------------
             create_conv_map_graph(tab, convm_file_list[i], col_struct, 1);
@@ -1208,7 +1181,6 @@ function create_sim_report(col_struct)
 
     local cost_chart    = Chart(dictionary.breakdown_cost_time[LANGUAGE]);
     local revenue_chart = Chart(dictionary.breakdown_revenue_time[LANGUAGE]);
-    local exet_chart    = Chart(dictionary.excution_times[LANGUAGE]);
 
     local objcop = require("sddp/costs");
     local discount_rate = require("sddp/discount_rate");
@@ -1219,10 +1191,6 @@ function create_sim_report(col_struct)
             -- sddp_dashboard_cost_tot
             costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
             cost_chart:add_categories(costs_agg, col_struct.case_dir_list[i]);
-
-            -- Execution times (sim, post-processing and total time)
-            exe_times = col_struct.generic[i]:load("sddptimes");
-            exet_chart:add_categories(exe_times, col_struct.case_dir_list[i]);
         end
     else
         costs = objcop() / discount_rate():select_stages_of_outputs();
@@ -1236,30 +1204,20 @@ function create_sim_report(col_struct)
                 cost_chart = {cost_chart,revenue_chart};
             end
         end
-
-        -- Execution times (sim, post-processing and total time)
-        exe_times = col_struct.generic[1]:load("sddptimes");
-        exet_chart:add_column(exe_times);
     end
 
     if #cost_chart > 0 then
         tab:push(cost_chart);
     end
 
-    if #exet_chart > 0 then
-        tab:push(exet_chart);
-    end
-
+    -- Add stage-wise cost reports
+    create_costs_and_revs(col_struct,tab);
+    
     -- Heatmap after the pizza graph in dashboard
     if studies == 1 then
         -- Creating simulation heatmap graphics
         if col_struct.study[1]:get_parameter("SIMH", -1) == 2 then
             create_hourly_sol_status_graph(tab, col_struct, 1);
-        end
-
-        -- Execution times per scenario
-        if col_struct.study[1]:get_parameter("SCEN", 0) == 0 then -- SDDP scenarios does not have execution times per scenario
-            create_exe_timer_per_scen(tab, col_struct, 1);
         end
 
         create_penalty_proportion_graph(tab, col_struct, 1);
@@ -1269,11 +1227,119 @@ function create_sim_report(col_struct)
 end
 
 -----------------------------------------------------------------------------------------------
+-- Execution times report function
+-----------------------------------------------------------------------------------------------
+
+function create_times_report(col_struct)
+    local tab = Tab(dictionary.execution_times[LANGUAGE]);
+
+    ---------
+    -- Policy
+    ---------
+    tab:push("## " .. dictionary.tab_policy[LANGUAGE]);
+    
+    local file_list = {};
+    local systems = {};
+    local horizon = {};
+    
+    local conv_data         = {};
+    local cuts_data         = {};
+    local time_data         = {};
+    local conv_status       = {};
+    
+    -- Loading convergence data
+    get_conv_file_info(col_struct, "sddppol.csv", file_list, systems, horizon, 1);
+    get_convergence_file_agents(col_struct, file_list, conv_data, cuts_data, time_data, 1);
+    
+    for i, file in ipairs(file_list) do
+        tab:push("# " .. dictionary.system[LANGUAGE] .. ": " .. systems[i] .. " | " .. dictionary.horizon[LANGUAGE] .. ": " .. horizon[i]);
+    
+        if studies > 1 then
+            local chart_time_forw = Chart(dictionary.forward_time[LANGUAGE]);
+            local chart_time_back = Chart(dictionary.backward_time[LANGUAGE]);
+
+            for jstudy = 1, studies do
+                conv_file = col_struct.generic[jstudy]:load(file);
+                time_age = conv_file:select_agents({ 7, 8 }); -- Forw. time, Back. time
+                
+                if conv_file:loaded() then
+                    -- Execution time - forward
+                    chart_time_forw:add_column(time_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[jstudy]), { xUnit = "Iteration", xAllowDecimals = false });
+    
+                    -- Execution time - backward
+                    chart_time_back:add_column(time_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[jstudy]), { xUnit = "Iteration", xAllowDecimals = false });
+                else
+                    info("Comparing cases have different policy horizons! Policy will only contain the main case data.");
+                end
+            end
+            
+            if #chart_time_forw > 0 then
+                tab:push(chart_time_forw);
+            end
+            if #chart_time_back > 0 then
+                tab:push(chart_time_back);
+            end
+        else
+            conv_file = col_struct.generic[1]:load(file);
+            time_age = conv_file:select_agents({ 7, 8 }); -- Forw. time, Back. time
+            
+            chart = Chart(dictionary.fwd_bwd_time[LANGUAGE]);
+            chart:add_line(time_age:rename_agents({"Forward","Backward"}), { xUnit = "Iteration", xAllowDecimals = false }); -- Forw. and Back. times
+            
+            if #chart > 0 then
+                tab:push(chart);
+            end
+            
+        end
+    end
+    
+    -------------
+    -- Simulation
+    -------------
+    tab:push("## " .. dictionary.tab_simulation[LANGUAGE]);
+    
+    if studies > 1 then
+        local chart_exe_sim = Chart(dictionary.exe_sim_times[LANGUAGE]);
+        local chart_exe_pol = Chart(dictionary.exe_pol_times[LANGUAGE]);
+        
+        for istudy = 1, studies do
+            -- Execution times
+            exe_times = col_struct.generic[istudy]:load("sddptimes");
+            chart_exe_sim:add_column(exe_times:select_agent(1):rename_agent(col_struct.case_dir_list[istudy]));
+            chart_exe_pol:add_column(exe_times:select_agent(2):rename_agent(col_struct.case_dir_list[istudy]));
+        end
+        
+        if #chart_exe_sim > 0 then
+           tab:push(chart_exe_sim);
+        end
+        if #chart_exe_pol > 0 then
+           tab:push(chart_exe_pol);
+        end
+    else
+        -- Simulation execution times
+        local exet_chart = Chart(dictionary.execution_times[LANGUAGE]);
+        
+        exe_times = col_struct.generic[1]:load("sddptimes");
+        exet_chart:add_column(exe_times);
+        
+        if #exet_chart > 0 then
+           tab:push(exet_chart);
+        end
+        
+        -- Execution times per scenario
+        if col_struct.study[1]:get_parameter("SCEN", 0) == 0 then -- SDDP scenarios does not have execution times per scenario
+            create_exe_timer_per_scen(tab, col_struct, 1);
+        end
+    end
+    
+    return tab;
+end 
+
+-----------------------------------------------------------------------------------------------
 -- Simulation costs report function
 -----------------------------------------------------------------------------------------------
 
-function create_costs_and_revs(col_struct)
-    local tab = Tab(dictionary.tab_cost_revenues[LANGUAGE]);
+function create_costs_and_revs(col_struct, tab)
 
     local chart = Chart(dictionary.disp_of_operation_cost[LANGUAGE]);
     local chart_avg = Chart(dictionary.avg_operation_cost[LANGUAGE]);
@@ -1293,7 +1359,7 @@ function create_costs_and_revs(col_struct)
         if studies > 1 then
             if is_greater_than_zero(disp) then
                 chart:add_area_range(disp:select_agent(1):add_prefix(col_struct.case_dir_list[i] .. " - "), disp:select_agent(3), { xUnit=dictionary.cell_stages[LANGUAGE], colors = light_global_color[i] }); -- Confidence interval
-                chart:add_line(disp:select_agent(2):add_prefix(col_struct.case_dir_list[i] .. " - "),{xUnit=dictionary.cell_stages[LANGUAGE]}); -- Average
+                chart:add_line(disp:select_agent(2):add_prefix(col_struct.case_dir_list[i] .. " - "),{xUnit=dictionary.cell_stages[LANGUAGE], colors = {main_global_color[i]} }); -- Average
             end
         else
             if is_greater_than_zero(disp) then
@@ -1316,8 +1382,8 @@ function create_costs_and_revs(col_struct)
     if #chart > 0 then
         tab:push(chart);
     end
-
-    return tab;
+    
+    return;
 end
 
 -----------------------------------------------------------------------------------------------
@@ -2054,7 +2120,11 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
 
     -- Simulation report
     push_tab_to_tab(create_sim_report(col_struct),tab_solution_quality);
-
+    
+    -- Execution times
+    push_tab_to_tab(create_times_report(col_struct),tab_solution_quality);
+    
+    -- Finish solution quality
     push_tab_to_tab(tab_solution_quality, dashboard);
 
     ------------
@@ -2111,8 +2181,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     tab_results:set_collapsed(true);
     tab_results:set_disabled();
     tab_results:set_icon("line-chart");
-
-    push_tab_to_tab(create_costs_and_revs(col_struct),tab_results);
+    
     push_tab_to_tab(create_marg_costs(col_struct)    ,tab_results);
     push_tab_to_tab(create_gen_report(col_struct)    ,tab_results);
     push_tab_to_tab(create_risk_report(col_struct)   ,tab_results);
