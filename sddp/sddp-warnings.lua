@@ -170,17 +170,28 @@ function Advisor.new()
     local self = setmetatable({}, Advisor);
     self.errors = {};
     self.warnings = {};
+    self.ids_list = {};
     return self;
 end
 
 function Advisor:push_error(id, level)
-    table.insert(self.errors, {message = statements[id][LANGUAGE], 
-                               level   = ( level or (1 / 0) ) });
+    if self.ids_list[id] then
+        info( id .. " was already add")
+    else
+        self.ids_list[id] = 1;
+        table.insert(self.errors, {message = statements[id][LANGUAGE], 
+                                level   = ( level or (1 / 0) ) });
+    end
 end
 
 function Advisor:push_warning(id, level)
-    table.insert(self.warnings, {message = statements[id][LANGUAGE],
-                                 level   = ( level or (1 / 0) ) });
+    if self.ids_list[id] then
+        info( id .. " was already add")
+    else
+        self.ids_list[id] = 1;
+        table.insert(self.warnings, {message = statements[id][LANGUAGE],
+                                    level   = ( level or (1 / 0) ) });
+    end
 end
 
 function Advisor.sort_messages(val_a, val_b)
