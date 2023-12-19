@@ -1087,8 +1087,8 @@ function create_pol_report(col_struct)
 
             local total_iter = conv_age:stages();
             local zinf_final = tonumber(conv_age:select_agents({ 1 }):select_stage(total_iter):to_list()[1]);
-            local zsup_final = tonumber(conv_age:select_agents({ 3 }):select_stage(total_iter):to_list()[1]);
-            local gap = ( zsup_final - zinf_final );
+            local zsup_tol_final = tonumber(conv_age:select_agents({ 4 }):select_stage(total_iter):to_list()[1]);
+            local gap = ( zsup_tol_final - zinf_final );
             if gap > 0 then
                 if (gap + 0.0000001) > tolerance_for_convergence then
                     advisor:push_warning("convergence_gap",1);
