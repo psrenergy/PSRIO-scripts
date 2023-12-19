@@ -737,22 +737,22 @@ dictionary = {
         es = "Errores y advertencias",
         pt = "Erros e avisos"
     },    
-    ac_circuit_losses_error_pos = {
+    lsserac_pos = {
         en = "AC circuit losses positive error",
         es = "Error positivo de pérdidas del AC circuitos",
         pt = "Erro positivo de perdas em circuitos AC"
     },
-    ac_circuit_losses_error_neg = {
+    lsserac_neg = {
         en = "AC circuit losses negative error",
         es = "Error negativo de pérdidas del AC circuitos",
         pt = "Erro negativo de perdas em circuitos AC"
     },
-    dc_circuit_losses_error_pos = {
+    lsserdc_pos = {
         en = "DC circuit losses positive error",
         es = "Error positivo de pérdidas del DC circuitos",
         pt = "Erro positivo de perdas em circuitos DC"
     },
-    dc_circuit_losses_error_neg = {
+    lsserdc_neg = {
         en = "DC circuit losses negative error",
         es = "Error negativo de pérdidas del DC circuitos",
         pt = "Erro negativo de perdas em circuitos DC"
