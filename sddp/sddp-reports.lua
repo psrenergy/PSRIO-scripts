@@ -4,12 +4,22 @@
 
 local function violation_aggregation(log_viol,viol_struct,aggregation,suffix,tol)
     n_agents = 5;
+    local file_name = viol_struct.name;
 
     generic = Generic();
-    violation = generic:load(viol_struct.name);
+    violation = generic:load(file_name);
+
+    if viol_struct.signal then
+        if viol_struct.signal == "positive" then
+            violation = ifelse(violation:gt(0),violation,0);
+        elseif viol_struct.signal == "negative" then
+            violation = ifelse(violation:lt(0),-violation,0);
+        end
+        file_name = file_name .. "_" .. viol_struct.signal;
+    end
 
     if violation:loaded() then
-    	x = violation:aggregate_scenarios(aggregation):aggregate_blocks(viol_struct.aggregation):aggregate_agents(BY_SUM(),"Total"):aggregate_stages(BY_SUM()):to_list()[1];
+    	x = violation:aggregate_scenarios(aggregation):aggregate_blocks(viol_struct.aggregation):aggregate_agents(BY_SUM(),"Total"):aggregate_stages(BY_SUM()):abs():to_list()[1];
     	if x > tol then
         	violation = violation:aggregate_scenarios(aggregation):aggregate_blocks(viol_struct.aggregation);
 
@@ -23,9 +33,9 @@ local function violation_aggregation(log_viol,viol_struct,aggregation,suffix,tol
                 	violation:remove_agents(largest_agents):aggregate_agents(BY_SUM(), "Others")
             	);
         	end
-            viol_file_name = "sddp_dashboard_viol_" .. suffix .. "_" .. viol_struct.name
+            viol_file_name = "sddp_dashboard_viol_" .. suffix .. "_" .. file_name
         	violation:remove_zeros():save(viol_file_name, {csv=true});
-			info("Violation dashboard for " .. viol_struct.name .. " created successfully.")
+			info("Violation dashboard for " .. file_name .. " created successfully.")
             if log_viol.file:is_open() then
                 log_viol.file:write(viol_file_name .. "\n");
                 log_viol.nrec = log_viol.nrec + 1;
@@ -33,7 +43,7 @@ local function violation_aggregation(log_viol,viol_struct,aggregation,suffix,tol
                 info("Error writing violation log file");
             end
 		else
-			info("Violation values for " .. viol_struct.name .. " aren't significatives. Skipping save... ")
+			info("Violation values for " .. file_name .. " aren't significatives. Skipping save... ")
 		end
     end
 end
@@ -60,7 +70,6 @@ local function violation_output(log_viol, out_list, viol_structs, tol)
     end
 
     if log_viol.nrec == 0 then
-        info("Entrou aqui");
         if log_viol.file:is_open() then
             log_viol.file:write("empty");
         end
@@ -193,7 +202,11 @@ viol_structs = {
 	{name = "cflwvio", aggregation = BY_AVERAGE()},
 	{name = "fcofdvio", aggregation = BY_SUM()},
 	{name = "edemdef", aggregation = BY_SUM()},
-	{name = "tuvio", aggregation = BY_SUM()}
+	{name = "tuvio", aggregation = BY_SUM()},
+	{name = "lsserac", aggregation = BY_AVERAGE(), signal = "positive"},
+	{name = "lsserac", aggregation = BY_AVERAGE(), signal = "negative"},
+	{name = "lsserdc", aggregation = BY_AVERAGE(), signal = "positive"},
+	{name = "lsserdc", aggregation = BY_AVERAGE(), signal = "negative"}
 }
 
 viol_structs_debug = {
