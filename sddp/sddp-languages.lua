@@ -757,6 +757,16 @@ dictionary = {
         es = "Error negativo de pérdidas del DC circuitos",
         pt = "Erro negativo de perdas em circuitos DC"
     },
+    lsserldc_pos = {
+        en = "DC link losses positive error",
+        es = "Error positivo de pérdidas del DC links",
+        pt = "Erro positivo de perdas em DC links"
+    },
+    lsserldc_neg = {
+        en = "DC link losses negative error",
+        es = "Error negativo de pérdidas del DC links",
+        pt = "Erro negativo de perdas em DC links"
+    },
     losses_msg_ac = {
         en = "Sum of positive/negative linear and quadratic losses deviations in AC circuits of the case",
         es = "Suma de desviaciones de pérdidas lineales y cuadráticas positivas/negativas en circuitos de corriente alterna del caso",

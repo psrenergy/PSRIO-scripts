@@ -206,7 +206,9 @@ viol_structs = {
 	{name = "lsserac", aggregation = BY_AVERAGE(), signal = "positive"},
 	{name = "lsserac", aggregation = BY_AVERAGE(), signal = "negative"},
 	{name = "lsserdc", aggregation = BY_AVERAGE(), signal = "positive"},
-	{name = "lsserdc", aggregation = BY_AVERAGE(), signal = "negative"}
+	{name = "lsserdc", aggregation = BY_AVERAGE(), signal = "negative"},
+    {name = "lsserldc", aggregation = BY_AVERAGE(), signal = "positive"},
+	{name = "lsserldc", aggregation = BY_AVERAGE(), signal = "negative"}
 }
 
 viol_structs_debug = {
