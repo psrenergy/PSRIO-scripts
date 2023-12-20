@@ -203,7 +203,7 @@ dictionary = {
         pt = "Custos marginais médios por estágio por sistema"
     },
     stg_cmo_ind = {
-        en = " carginal cost",
+        en = " marginal cost",
         es = " costo marginales",
         pt = " custo marginais"
     },
