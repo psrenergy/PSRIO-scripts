@@ -3,6 +3,7 @@ EXECUTION_MODE_OPERATION     = 0
 EXECUTION_MODE_EXPANSION_IT  = 1
 EXECUTION_MODE_EXPANSION_SIM = 2
 LANGUAGE = "en"
+PERCENT_OF_OBJ_COST = 0.2
 
 REP_DIFF_TOL = 0.05 -- 10%
 
@@ -1201,7 +1202,7 @@ function create_sim_report(col_struct)
 
             local total_obj_cost = tonumber(obj_cost:aggregate_agents(BY_SUM(),"Total cost"):to_list()[1]);
             local others_obj_cost = tonumber(obj_cost:remove_agent(1):aggregate_agents(BY_SUM(),"Others Costs"):to_list()[1]);
-            if total_obj_cost*0.2 <= others_obj_cost then
+            if total_obj_cost * PERCENT_OF_OBJ_COST <= others_obj_cost then
                 advisor:push_warning("obj_costs");
             end
 

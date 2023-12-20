@@ -21,7 +21,7 @@ The convergence gap was not met according to Convergence chart in Policy tab; pl
 1. Go to Exection options -> Economic dispatch -> Study options.
 2. Increase the 'Maximum number of iterations' in corresponding text box.
 ```
-🠊 Increase the number of forward simulations in execution.
+🠊 Increase the number of forward series in the study.
 ```
 1. Go to Exection options -> Economic dispatch -> Study options.
 2. Increase the 'Number of forward series' in corresponding text box.
@@ -35,7 +35,7 @@ El gap de convergencia no se cumplió; considere las siguientes opciones:
 1. Vaya a Opciones de ejecución -> Despacho económico -> Opciones de estudio.
 2. Aumente el 'No. máximo de iteraciones' en el cuadro de texto correspondiente.
 ```
-🠊 Aumenta el número de simulaciones forward en tu ejecución.
+🠊 Aumenta el número de series forward en tu estudio.
 ```
 1. Vaya a Opciones de ejecución -> Despacho económico -> Opciones de estudio.
 2. Aumente el 'Número de series forward' en el cuadro de texto correspondiente.
@@ -49,7 +49,7 @@ O gap de convergência não foi atendido; por favor, considere as seguintes opç
 1. Vá para Opções de execução -> Despacho econômico -> Opções de estudo.
 2. Aumente o 'No. máximo de iterações' na caixa de texto correspondente.
 ```
-🠊 Aumente o número de séries forward em sua execução.
+🠊 Aumente o número de séries forward em seu estudo.
 ```
 1. Vá para Opções de execução -> Despacho econômico -> Opções de estudo.
 2. Aumente o 'Número de séries forward' na caixa de texto correspondente.
@@ -155,21 +155,21 @@ A margem de otimização (MIP gap) não foi atendida para algumas soluções, co
     },
     obj_costs = {
         en = [[
-The costs associated with violations exceed 20% of the objective cost functions in simulations, as indicated by the Breakdown of Total Operating Cost chart within the Simulation tab. Please consider the following options:
+The costs associated with violations exceed 20% of the objective function cost in simulation, as indicated by the Breakdown of Total Operating Cost chart within the Simulation tab. Please consider the following options:
 
 🠊 Review the Violations tab to gain a clearer understanding of the most significant violations and identify the stages where penalties are more pronounced.
 🠊 Evaluate if the constraints can be met.
 🠊 Evaluate if the values of penalties for each violation are high.
 ]],
         es = [[
-Los costos asociados con las violaciones superan el 20% de las funciones de costo objetivo en las simulaciones, como se indica en el gráfico Porciones de el costo operativo total dentro de la pestaña de Simulación. Por favor, considere las siguientes opciones:
+Los costos asociados con las violaciones superan el 20% de el costo de la funcion objetivo en la simulacion, como se indica en el gráfico Porciones de el costo operativo total dentro de la pestaña de Simulación. Por favor, considere las siguientes opciones:
 
 🠊 Revise la tab Violaciones para comprender mejor las violaciones más significativas e identificar las etapas donde las penalidades son más pronunciadas.
 🠊 Evalúe si se pueden cumplir las restricciones.
 🠊 Evalúe si los valores de las penalizaciones por cada violación son altos.
 ]],
         pt = [[
-Os custos associados às violações excedem 20% das funções de custo objetivo nas simulações, conforme indicado pelo gráfico Parcelas do custo operacional total na guia de Simulação. Por favor, considere as seguintes opções:
+Os custos associados às violações excedem 20% do custo da função objetivo na simulação, conforme indicado pelo gráfico Parcelas do custo operacional total na guia de Simulação. Por favor, considere as seguintes opções:
 
 🠊 Analise a tab Violações para entender melhor as violações mais significativas e identificar as etapas onde as penalidades são mais expressivas.
 🠊 Avalie se as restrições podem ser atendidas.
