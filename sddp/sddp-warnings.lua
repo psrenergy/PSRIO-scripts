@@ -74,7 +74,7 @@ policy calculation' and 'Production coefficient in final simulation' (in respect
 ```
 ]],
         es = [[
-El costo estimado en la política operativa no coincide con el costo de la simulación; considere las siguientes opciones:
+El costo estimado en la política operativa no coincide con el costo de la simulación según el gráfico Política x Funciones objetivo de la simulación final en la pestaña de Política. Por favor, considere las siguientes opciones:
 
 🠊 Considere las no linealidades durante el cálculo de la política realizada por el modelo.
 ```
@@ -90,7 +90,7 @@ El costo estimado en la política operativa no coincide con el costo de la simul
 ```
 ]],
         pt = [[
-O custo estimado na política operativa não condiz com o custo da simulação; por favor, considere as seguintes opções:
+O custo estimado na política operativa não condiz com o custo da simulação de acordo com o grafico Política x Funções objetivo da simulação final na guia de Política; por favor, considere as seguintes opções:
 
 🠊 Considere as não linearidades durante o cálculo da política feita pelo modelo.
 ```
