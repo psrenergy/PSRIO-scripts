@@ -1973,8 +1973,8 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
         {name = "lsserac_negative", title = dictionary.lsserac_neg[LANGUAGE]},
         {name = "lsserdc_positive", title = dictionary.lsserdc_pos[LANGUAGE]},
         {name = "lsserdc_negative", title = dictionary.lsserdc_neg[LANGUAGE]},
-        {name = "lsserldc_positive", title = dictionary.lsserldc_pos[LANGUAGE]},
-        {name = "lsserldc_negative", title = dictionary.lsserldc_neg[LANGUAGE]},
+        {name = "lsserdcl_positive", title = dictionary.lsserdcl_pos[LANGUAGE]},
+        {name = "lsserdcl_negative", title = dictionary.lsserdcl_neg[LANGUAGE]},
     }
 
     -- Loading study collections

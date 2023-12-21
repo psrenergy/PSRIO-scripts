@@ -739,33 +739,33 @@ dictionary = {
     },    
     lsserac_pos = {
         en = "AC circuit losses positive error",
-        es = "Error positivo de pérdidas del AC circuitos",
+        es = "Error positivo de pérdidas en circuitos AC",
         pt = "Erro positivo de perdas em circuitos AC"
     },
     lsserac_neg = {
         en = "AC circuit losses negative error",
-        es = "Error negativo de pérdidas del AC circuitos",
+        es = "Error negativo de pérdidas en circuitos AC",
         pt = "Erro negativo de perdas em circuitos AC"
     },
     lsserdc_pos = {
         en = "DC circuit losses positive error",
-        es = "Error positivo de pérdidas del DC circuitos",
-        pt = "Erro positivo de perdas em circuitos DC"
+        es = "Error positivo de pérdidas en circuitos CC",
+        pt = "Erro positivo de perdas em circuitos CC"
     },
     lsserdc_neg = {
         en = "DC circuit losses negative error",
-        es = "Error negativo de pérdidas del DC circuitos",
-        pt = "Erro negativo de perdas em circuitos DC"
+        es = "Error negativo de pérdidas en circuitos CC",
+        pt = "Erro negativo de perdas em circuitos CC"
     },
     lsserldc_pos = {
         en = "DC link losses positive error",
-        es = "Error positivo de pérdidas del DC links",
-        pt = "Erro positivo de perdas em DC links"
+        es = "Error positivo de pérdidas en enlaces CC",
+        pt = "Erro positivo de perdas em elos CC"
     },
     lsserldc_neg = {
         en = "DC link losses negative error",
-        es = "Error negativo de pérdidas del DC links",
-        pt = "Erro negativo de perdas em DC links"
+        es = "Error negativo de pérdidas en enlaces CC",
+        pt = "Erro negativo de perdas em elos CC"
     },
     losses_msg_ac = {
         en = "Sum of positive/negative linear and quadratic losses deviations in AC circuits of the case",
