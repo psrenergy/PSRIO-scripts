@@ -3,6 +3,7 @@ EXECUTION_MODE_OPERATION     = 0
 EXECUTION_MODE_EXPANSION_IT  = 1
 EXECUTION_MODE_EXPANSION_SIM = 2
 LANGUAGE = "en"
+PERCENT_OF_OBJ_COST = 0.2
 
 REP_DIFF_TOL = 0.05 -- 10%
 
@@ -929,9 +930,9 @@ function create_pol_report(col_struct)
     -- Creating policy report
     for i, file in ipairs(file_list) do
         tab:push("## " .. dictionary.system[LANGUAGE] .. ": " .. systems[i] .. " | " .. dictionary.horizon[LANGUAGE] .. ": " .. horizon[i]);
+        local chart_conv      = Chart(dictionary.convergence[LANGUAGE]);
 
         if studies > 1 then
-            local chart_conv      = Chart(dictionary.convergence[LANGUAGE]);
             local chart_cut_opt   = Chart(dictionary.new_cut_per_iteration_optimality[LANGUAGE]);
             local chart_cut_feas  = Chart(dictionary.new_cut_per_iteration_feasibility[LANGUAGE]);
 
@@ -1026,13 +1027,12 @@ function create_pol_report(col_struct)
             -----------------------------------------------------------------------------------------------------------
             -- Convergence chart
             -----------------------------------------------------------------------------------------------------------
-            local chart = Chart(dictionary.convergence[LANGUAGE]);
             -- Zinf
-            chart:add_line(conv_age:select_agents({ 1 }), { xUnit = "Iteration", colors = { "#3CB7CC" }, xAllowDecimals = false });
+            chart_conv:add_line(conv_age:select_agents({ 1 }), { xUnit = "Iteration", colors = { "#3CB7CC" }, xAllowDecimals = false });
             -- Zsup
-            chart:add_line(conv_age:select_agents({ 3 }):rename_agent("Zsup"), { colors = { "#32A251" }, xAllowDecimals = false });
+            chart_conv:add_line(conv_age:select_agents({ 3 }):rename_agent("Zsup"), { colors = { "#32A251" }, xAllowDecimals = false });
             -- Confidence interval
-            chart:add_area_range(conv_age:select_agents({ 2 }):rename_agent(""), conv_age:select_agents({ 4 }):rename_agent("Zsup +- Tol"), { colors = { "#ACD98D", "#ACD98D" }, xUnit = "Iteration", xAllowDecimals = false, visible = zsup_is_visible });
+            chart_conv:add_area_range(conv_age:select_agents({ 2 }):rename_agent(""), conv_age:select_agents({ 4 }):rename_agent("Zsup +- Tol"), { colors = { "#ACD98D", "#ACD98D" }, xUnit = "Iteration", xAllowDecimals = false, visible = zsup_is_visible });
             
             local tolerance_for_convergence = tonumber(col_struct.study[1]:get_parameter("CriterioConvergencia", -1));
 
@@ -1050,7 +1050,7 @@ function create_pol_report(col_struct)
 
             if (show_sim_cost and has_results_for_add_years) then
                 -- Final simulation cost
-                chart:add_line(final_sim_cost:rename_agent("Final simulation"), { colors = { "#D37295" }, xAllowDecimals = false });
+                chart_conv:add_line(final_sim_cost:rename_agent("Final simulation"), { colors = { "#D37295" }, xAllowDecimals = false });
 
                 -- Deviation error
                 zsup = conv_file:select_agent(3);
@@ -1060,7 +1060,7 @@ function create_pol_report(col_struct)
                     advisor:push_warning("simulation_cost");
                 end
             end
-            tab:push(chart);
+            tab:push(chart_conv);
 
             -----------------------------------------------------------------------------------------------------------
             -- Final simulation chart
@@ -1148,8 +1148,17 @@ function create_sim_report(col_struct)
         costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
 
         if is_greater_than_zero(costs_agg) then
-            cost_chart:add_pie(ifelse(costs_agg:gt(0), costs_agg, 0):remove_zeros(), {colors = main_global_color});
-            revenue_chart:add_pie(ifelse(costs_agg:lt(0), costs_agg, 0):remove_zeros():abs(), {colors = subrange(main_global_color, #cost_chart + 1, #main_global_color)});
+            local obj_cost = ifelse(costs_agg:gt(0), costs_agg, 0):remove_zeros();
+            local obj_revenue = ifelse(costs_agg:lt(0), costs_agg, 0):remove_zeros();
+
+            local total_obj_cost = tonumber(obj_cost:aggregate_agents(BY_SUM(),"Total cost"):to_list()[1]);
+            local others_obj_cost = tonumber(obj_cost:remove_agent(1):aggregate_agents(BY_SUM(),"Others Costs"):to_list()[1]);
+            if total_obj_cost * PERCENT_OF_OBJ_COST <= others_obj_cost then
+                advisor:push_warning("obj_costs");
+            end
+
+            cost_chart:add_pie(obj_cost, {colors = main_global_color});
+            revenue_chart:add_pie(obj_revenue:abs(), {colors = main_global_color});
             
             if #revenue_chart > 0 then
                 cost_chart = {cost_chart,revenue_chart};
