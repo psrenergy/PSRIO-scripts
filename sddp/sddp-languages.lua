@@ -203,7 +203,7 @@ dictionary = {
         pt = "Custos marginais médios por estágio por sistema"
     },
     stg_cmo_ind = {
-        en = " carginal cost",
+        en = " marginal cost",
         es = " costo marginales",
         pt = " custo marginais"
     },
@@ -737,25 +737,35 @@ dictionary = {
         es = "Errores y advertencias",
         pt = "Erros e avisos"
     },    
-    ac_circuit_losses_error_pos = {
+    lsserac_pos = {
         en = "AC circuit losses positive error",
         es = "Error positivo de pérdidas del AC circuitos",
         pt = "Erro positivo de perdas em circuitos AC"
     },
-    ac_circuit_losses_error_neg = {
+    lsserac_neg = {
         en = "AC circuit losses negative error",
         es = "Error negativo de pérdidas del AC circuitos",
         pt = "Erro negativo de perdas em circuitos AC"
     },
-    dc_circuit_losses_error_pos = {
+    lsserdc_pos = {
         en = "DC circuit losses positive error",
         es = "Error positivo de pérdidas del DC circuitos",
         pt = "Erro positivo de perdas em circuitos DC"
     },
-    dc_circuit_losses_error_neg = {
+    lsserdc_neg = {
         en = "DC circuit losses negative error",
         es = "Error negativo de pérdidas del DC circuitos",
         pt = "Erro negativo de perdas em circuitos DC"
+    },
+    lsserldc_pos = {
+        en = "DC link losses positive error",
+        es = "Error positivo de pérdidas del DC links",
+        pt = "Erro positivo de perdas em DC links"
+    },
+    lsserldc_neg = {
+        en = "DC link losses negative error",
+        es = "Error negativo de pérdidas del DC links",
+        pt = "Erro negativo de perdas em DC links"
     },
     losses_msg_ac = {
         en = "Sum of positive/negative linear and quadratic losses deviations in AC circuits of the case",
