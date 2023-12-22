@@ -30,6 +30,14 @@ end
 function subrange(t, first, last)
     return table.move(t, first, last, 1, {})
 end
+
+function my_to_number(arg,default)
+    if arg then
+        return tonumber(arg);
+    else
+        return default;
+    end
+end
 -----------------------------------------------------------------------------------------------
 -- Overloads
 -----------------------------------------------------------------------------------------------
@@ -1151,8 +1159,9 @@ function create_sim_report(col_struct)
             local obj_cost = ifelse(costs_agg:gt(0), costs_agg, 0):remove_zeros();
             local obj_revenue = ifelse(costs_agg:lt(0), costs_agg, 0):remove_zeros();
 
-            local total_obj_cost = tonumber(obj_cost:aggregate_agents(BY_SUM(),"Total cost"):to_list()[1]);
-            local others_obj_cost = tonumber(obj_cost:remove_agent(1):aggregate_agents(BY_SUM(),"Others Costs"):to_list()[1]);
+            local total_obj_cost  = my_to_number(obj_cost:aggregate_agents(BY_SUM(),"Total cost"):to_list()[1],0.0);
+            local others_obj_cost = my_to_number(obj_cost:remove_agent(1):aggregate_agents(BY_SUM(),"Other costs"):to_list()[1],0.0);
+            
             if total_obj_cost * PERCENT_OF_OBJ_COST <= others_obj_cost then
                 advisor:push_warning("obj_costs");
             end
