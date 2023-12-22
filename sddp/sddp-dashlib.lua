@@ -1196,8 +1196,6 @@ function create_times_report(col_struct)
     ---------
     -- Policy
     ---------
-    tab:push("## " .. dictionary.tab_policy[LANGUAGE]);
-    
     local file_list = {};
     local systems = {};
     local horizon = {};
@@ -1210,6 +1208,11 @@ function create_times_report(col_struct)
     -- Loading convergence data
     get_conv_file_info(col_struct, "sddppol.csv", file_list, systems, horizon, 1);
     get_convergence_file_agents(col_struct, file_list, conv_data, cuts_data, time_data, 1);
+    
+    -- Print header if policy files exist
+    if #file_list > 0 then
+        tab:push("## " .. dictionary.tab_policy[LANGUAGE]);
+    end
     
     for i, file in ipairs(file_list) do
         tab:push("# " .. dictionary.system[LANGUAGE] .. ": " .. systems[i] .. " | " .. dictionary.horizon[LANGUAGE] .. ": " .. horizon[i]);

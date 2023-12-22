@@ -757,12 +757,12 @@ dictionary = {
         es = "Error negativo de pérdidas en circuitos CC",
         pt = "Erro negativo de perdas em circuitos CC"
     },
-    lsserldc_pos = {
+    lsserdcl_pos = {
         en = "DC link losses positive error",
         es = "Error positivo de pérdidas en enlaces CC",
         pt = "Erro positivo de perdas em elos CC"
     },
-    lsserldc_neg = {
+    lsserdcl_neg = {
         en = "DC link losses negative error",
         es = "Error negativo de pérdidas en enlaces CC",
         pt = "Erro negativo de perdas em elos CC"
