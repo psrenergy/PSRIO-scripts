@@ -134,13 +134,13 @@ dictionary = {
     },
     forward_time = {
         en = "Execution time - Forward",
-        es = "Tiempo de ejecución - Adelante",
-        pt = "Tempo de execução - Direção à frente"
+        es = "Tiempo de ejecución - Forward",
+        pt = "Tempo de execução - Forward"
     },
     backward_time = {
         en = "Execution time - Backward",
-        es = "Tiempo de ejecución - Reverso",
-        pt = "Tempo de execução - Reverso"
+        es = "Tiempo de ejecución - Backward",
+        pt = "Tempo de execução - Backward"
     },
     new_cuts_per_iteration = {
         en = "New cuts per iteration",
