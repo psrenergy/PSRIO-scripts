@@ -1043,15 +1043,14 @@ function create_pol_report(col_struct)
             chart_conv:add_area_range(conv_age:select_agents({ 2 }):rename_agent(""), conv_age:select_agents({ 4 }):rename_agent("Zsup +- Tol"), { colors = { "#ACD98D", "#ACD98D" }, xUnit = "Iteration", xAllowDecimals = false, visible = zsup_is_visible });
             
             local tolerance_for_convergence = tonumber(col_struct.study[1]:get_parameter("CriterioConvergencia", -1));
-
+            
             local total_iter = conv_age:stages();
-            local zinf_final = tonumber(conv_age:select_agents({ 1 }):select_stage(total_iter):to_list()[1]);
-            local zsup_tol_final = tonumber(conv_age:select_agents({ 4 }):select_stage(total_iter):to_list()[1]);
-            local gap = ( zsup_tol_final - zinf_final );
-            if gap > 0 then
-                if (gap + 0.0000001) > tolerance_for_convergence then
-                    advisor:push_warning("convergence_gap",1);
-                end
+            
+            local zinf_final         = tonumber(conv_age:select_agents({ 1 }):select_stage(total_iter):to_list()[1]);
+            local zsup_tol_bot_final = tonumber(conv_age:select_agents({ 2 }):select_stage(total_iter):to_list()[1]);
+            
+            if zinf_final < zsup_tol_bot_final then
+                advisor:push_warning("convergence_gap",1);
             else
                 -- to_do: negative gap msg
             end
