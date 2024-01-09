@@ -234,16 +234,6 @@ log_viol = {file = Generic():create_writer("sddp_viol.out"), nrec = 0};
 violation_output(log_viol, out_list, viol_structs, 0.01)
 log_viol.file:close();
 -----------------------------------------------------------------------------------------------
--- RENEWABLES
------------------------------------------------------------------------------------------------
-local rnw = Renewable();
-
--- Get renewable generation spillage
-rnw_spill = rnw:load("vergnd");
-
-rnw_spill:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_scenarios(BY_AVERAGE()):remove_zeros():save("sddp_dashboard_result_avg_vergnd",{csv=true});
-
------------------------------------------------------------------------------------------------
 -- LGC
 -----------------------------------------------------------------------------------------------
 local lgcgen = Hydro():load("lgcgen");
