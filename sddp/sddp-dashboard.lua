@@ -183,8 +183,7 @@ local rnw = Renewable();
 -- Get renewable generation spillage
 local rnw_spill = rnw:load("vergnd");
 
--- rnw_spill:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_scenarios(BY_AVERAGE()):remove_zeros():save("sddp_dashboard_result_avg_vergnd",{ csv = true });
-rnw_spill:remove_zeros():save("sddp_dashboard_result_avg_vergnd",{ csv = true });
+rnw_spill:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_scenarios(BY_AVERAGE()):remove_zeros():save("sddp_dashboard_result_avg_vergnd",{ csv = true });
 
 -----------------------------------------------------------------------------------------------
 -- LGC
