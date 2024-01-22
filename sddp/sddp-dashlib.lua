@@ -38,6 +38,61 @@ function my_to_number(arg,default)
         return default;
     end
 end
+
+function tableContains(tbl, item) -- will be deprecated soon (next PSRIO version)
+    local trim_item = trim(item);
+    for _, value in ipairs(tbl) do
+        -- info(trim(value))
+        -- info(trim_item)
+        -- info(trim(value) == trim_item)
+        if trim(value) == trim_item then
+            return true
+        end
+    end
+    return false
+end
+
+function compare_agents(vec_agents_1,vec_agents_2) -- will be deprecated soon (next PSRIO version)
+    local uniqueElements = {};
+    for _, element in ipairs(vec_agents_1) do
+        -- info(element)
+        -- info(vec_agents_2)
+        -- info(tableContains(vec_agents_2, element))
+        -- info(uniqueElements)
+        -- info(tableContains(uniqueElements, element))
+        if not tableContains(vec_agents_2, element) and not tableContains(uniqueElements, element) then
+            table.insert(uniqueElements, element)
+        end
+    end
+    return uniqueElements
+end
+
+function create_zero_agents(data_2,uniqueElements) -- will be deprecated soon (next PSRIO version)
+    local zero_data = data_2:aggregate_agents(BY_SUM(),"zero"):fill(0);
+    local result_data = data_2;
+    for _,element in ipairs(uniqueElements) do
+        result_data = concatenate(result_data,zero_data:rename_agent(element));
+    end
+    return result_data
+end
+
+function adjust_data_for_add_categories(table_aux) -- will be deprecated soon (next PSRIO version)
+    local adjusted_table = table_aux;
+    for i,data_1 in ipairs(table_aux) do
+        for j,data_2 in ipairs(table_aux) do
+            if i ~= j then
+                local agents_1 = data_1:agents();
+                local agents_2 = data_2:agents();
+                local unique_elements = compare_agents(agents_1,agents_2)
+                if #unique_elements > 0 then
+                    local adjusted_data = create_zero_agents(data_2,unique_elements)
+                    adjusted_table[j] = adjusted_data;
+                end
+            end
+        end
+    end
+    return adjusted_table
+end
 -----------------------------------------------------------------------------------------------
 -- Overloads
 -----------------------------------------------------------------------------------------------
@@ -552,7 +607,7 @@ function create_tab_summary(col_struct, info_struct)
         sys_string = sys_string             .. " | " .. tostring(#col_struct.system[i]:labels());
         battery_string = battery_string     .. " | " .. tostring(#col_struct.battery[i]:labels());
 
-        if show_net_data then
+        if show_net_data and studies <= 1 then
             bus_string        = bus_string        .. " | " .. tostring(#col_struct.bus[i]:labels());
             ac_circuit_string = ac_circuit_string .. " | " .. tostring(#col_struct.circuit[i]:labels());
             dc_circuit_string = dc_circuit_string .. " | " .. tostring(#col_struct.dclink[i]:labels());
@@ -592,7 +647,7 @@ function create_tab_summary(col_struct, info_struct)
     tab:push(renw_csp_string);
     tab:push(battery_string);
     tab:push(pinj_string);
-    if show_net_data then
+    if show_net_data and studies <= 1 then
         tab:push(bus_string);
         tab:push(ac_circuit_string);
         tab:push(dc_circuit_string);
@@ -1144,11 +1199,17 @@ function create_sim_report(col_struct)
     local discount_rate = require("sddp/discount_rate");
 
     if studies > 1 then
+        local aux_table = {};
         for i = 1, studies do
             costs = objcop(i) / discount_rate(i):select_stages_of_outputs();
             -- sddp_dashboard_cost_tot
             costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
-            cost_chart:add_categories(costs_agg, col_struct.case_dir_list[i]);
+            table.insert(aux_table,costs_agg);
+        end
+        local adjusted_table = adjust_data_for_add_categories(aux_table);  -- will be deprecated soon (next PSRIO version)
+        local agents_order = adjusted_table[1]:agents();
+        for i = 1, studies do
+            cost_chart:add_categories(adjusted_table[i]:reorder_agents(agents_order), col_struct.case_dir_list[i]);
         end
     else
         costs = objcop() / discount_rate():select_stages_of_outputs();
@@ -1228,25 +1289,36 @@ function create_times_report(col_struct)
         if studies > 1 then
             local chart_time_forw = Chart(dictionary.forward_time[LANGUAGE]);
             local chart_time_back = Chart(dictionary.backward_time[LANGUAGE]);
-
+            local chart_exe_pol = Chart(dictionary.exe_pol_times[LANGUAGE]);
+            
             for jstudy = 1, studies do
                 conv_file = col_struct.generic[jstudy]:load(file);
                 time_age = conv_file:select_agents({ 7, 8 }); -- Forw. time, Back. time
                 
                 if conv_file:loaded() then
                     -- Execution time - forward
-                    chart_time_forw:add_column(time_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[jstudy]), { xUnit = "Iteration", xAllowDecimals = false });
+                    chart_time_forw:add_column(time_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[jstudy]), { xUnit = "Iteration", yUnit = "s", xAllowDecimals = false });
     
                     -- Execution time - backward
-                    chart_time_back:add_column(time_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[jstudy]), { xUnit = "Iteration", xAllowDecimals = false });
+                    chart_time_back:add_column(time_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[jstudy]), { xUnit = "Iteration", yUnit = "s", xAllowDecimals = false });
                 else
                     info("Comparing cases have different policy horizons! Policy will only contain the main case data.");
                 end
+
+                local exe_times = col_struct.generic[jstudy]:load("sddptimes");
+                if conv_file:loaded() then
+                    chart_exe_pol:add_column(exe_times:select_agent(2):rename_agent(col_struct.case_dir_list[jstudy]), {showInLegend = false});
+                end
             end
             
+            if #chart_exe_pol > 0 then
+                tab:push(chart_exe_pol);
+             end
+
             if #chart_time_forw > 0 then
                 tab:push(chart_time_forw);
             end
+
             if #chart_time_back > 0 then
                 tab:push(chart_time_back);
             end
@@ -1255,10 +1327,18 @@ function create_times_report(col_struct)
             time_age = conv_file:select_agents({ 7, 8 }); -- Forw. time, Back. time
             
             chart = Chart(dictionary.fwd_bwd_time[LANGUAGE]);
-            chart:add_line(time_age:rename_agents({"Forward","Backward"}), { xUnit = "Iteration", xAllowDecimals = false }); -- Forw. and Back. times
+            chart:add_line(time_age:rename_agents({"Forward","Backward"}), { xUnit = "Iteration", yUnit = "s", xAllowDecimals = false }); -- Forw. and Back. times
             
+            local exe_times = col_struct.generic[1]:load("sddptimes");
+            local chart_exe_pol = Chart(dictionary.exe_pol_times[LANGUAGE]);
+            chart_exe_pol:add_column(exe_times:select_agent(2), {showInLegend = false});
+
             if #chart > 0 then
                 tab:push(chart);
+            end
+
+            if #chart_exe_pol > 0 then
+                tab:push(chart_exe_pol);
             end
             
         end
@@ -1271,30 +1351,26 @@ function create_times_report(col_struct)
     
     if studies > 1 then
         local chart_exe_sim = Chart(dictionary.exe_sim_times[LANGUAGE]);
-        local chart_exe_pol = Chart(dictionary.exe_pol_times[LANGUAGE]);
         
         for istudy = 1, studies do
             -- Execution times
-            exe_times = col_struct.generic[istudy]:load("sddptimes");
+            local exe_times = col_struct.generic[istudy]:load("sddptimes");
             chart_exe_sim:add_column(exe_times:select_agent(1):rename_agent(col_struct.case_dir_list[istudy]));
-            chart_exe_pol:add_column(exe_times:select_agent(2):rename_agent(col_struct.case_dir_list[istudy]));
         end
         
         if #chart_exe_sim > 0 then
            tab:push(chart_exe_sim);
         end
-        if #chart_exe_pol > 0 then
-           tab:push(chart_exe_pol);
-        end
+
     else
+        local chart_exe_sim = Chart(dictionary.exe_sim_times[LANGUAGE]);
+        
         -- Simulation execution times
-        local exet_chart = Chart(dictionary.execution_times[LANGUAGE]);
+        local exe_times = col_struct.generic[1]:load("sddptimes");
+        chart_exe_sim:add_column(exe_times:select_agent(1), {showInLegend = false});
         
-        exe_times = col_struct.generic[1]:load("sddptimes");
-        exet_chart:add_column(exe_times);
-        
-        if #exet_chart > 0 then
-           tab:push(exet_chart);
+        if #chart_exe_sim > 0 then
+           tab:push(chart_exe_sim);
         end
         
         -- Execution times per scenario
