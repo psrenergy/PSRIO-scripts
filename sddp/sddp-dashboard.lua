@@ -1,15 +1,14 @@
 -----------------------------------------------------------------------------------------------
 -- LOCAL FUNCTIONS
 -----------------------------------------------------------------------------------------------
-local function violation_aggregation(data,data_name,aggregation,suffix)
+local function violation_aggregation(data,data_name,aggregation,suffix, maximun)
     local n_agents = 5;
 
 	local violation_agg = data:aggregate_scenarios(aggregation);
 	local n = violation_agg:agents_size();
 	if n > n_agents then
-		local largest_agents = violation_agg:aggregate_stages(BY_SUM())
-											:select_largest_agents(n_agents)
-											:agents();
+		local largest_agents = maximun:select_largest_agents(n_agents)
+									  :agents();
 
 		violation_agg = concatenate(
 			violation_agg:select_agents(largest_agents),
@@ -28,17 +27,19 @@ local function violation_output(viol_structs,tol)
 			violation = violation:remove_zeros();
 			if violation:loaded() then
 				local violation_agg = violation:aggregate_blocks(viol_struct.aggregation):save_cache();
-				local x = violation:abs()
+				local maximum = violation:abs()
 								:aggregate_blocks(viol_struct.aggregation)
 								:aggregate_stages(BY_SUM())
 								:aggregate_scenarios(BY_SUM())
-								:aggregate_agents(BY_SUM(),"Total")
-								:to_list()[1];
+								:save_cache();
+
+				local x = maximum:aggregate_agents(BY_SUM(),"Total"):to_list()[1];
+
 				if x > tol then
 			--      Aggregation by Max
-					violation_aggregation(violation_agg,viol_struct.name,BY_MAX(),"max")
+					violation_aggregation(violation_agg,viol_struct.name,BY_MAX(),"max",maximum)
 			--      Aggregation by Average
-					violation_aggregation(violation_agg,viol_struct.name,BY_AVERAGE(),"avg")
+					violation_aggregation(violation_agg,viol_struct.name,BY_AVERAGE(),"avg",maximum)
 
 					info("Violation dashboard for " .. viol_struct.name .. " created successfully.")
 				else
