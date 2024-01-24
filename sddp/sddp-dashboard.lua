@@ -1,43 +1,50 @@
 -----------------------------------------------------------------------------------------------
 -- LOCAL FUNCTIONS
 -----------------------------------------------------------------------------------------------
-local function violation_aggregation(data,data_name,aggregation,suffix,tol)
+local function violation_aggregation(data,data_name,aggregation,suffix)
     local n_agents = 5;
 
 	local violation_agg = data:aggregate_scenarios(aggregation);
-	local violation_agg_stg = violation_agg:aggregate_stages(BY_SUM());
-	local x = violation_agg_stg:aggregate_agents(BY_SUM(),"Total"):to_list()[1];
-	if x > tol then
+	local n = violation_agg:agents_size();
+	if n > n_agents then
+		local largest_agents = violation_agg:aggregate_stages(BY_SUM())
+											:select_largest_agents(n_agents)
+											:agents();
 
-		local n = violation_agg:agents_size();
-		if n > n_agents then
-			local largest_agents = violation_agg_stg:select_largest_agents(n_agents):agents();
-
-			violation_agg = concatenate(
-				violation_agg:select_agents(largest_agents),
-				violation_agg:remove_agents(largest_agents):aggregate_agents(BY_SUM(), "Others")
-			);
-		end
-		violation_agg:remove_zeros():save("sddp_dashboard_viol_" .. suffix .. "_" .. data_name, { csv = true });
-		info("Violation dashboard for " .. data_name .. " created successfully.")
-	else
-		info("Violation values for " .. data_name .. " aren't significatives. Skipping save... ")
+		violation_agg = concatenate(
+			violation_agg:select_agents(largest_agents),
+			violation_agg:remove_agents(largest_agents):aggregate_agents(BY_SUM(), "Others")
+		);
 	end
-
+	violation_agg:save("sddp_dashboard_viol_" .. suffix .. "_" .. data_name, { csv = true });
 end
 
 local function violation_output(viol_structs,tol)
-    for i, viol_struct in ipairs(viol_structs) do
-		local generic = Generic();
-		local violation = generic:load(viol_struct.name);
-		
-		if violation:loaded() then
-			local violation_agg = violation:aggregate_blocks(viol_struct.aggregation):save_cache();
+	local generic = Generic();
 
-	--      Aggregation by Max
-			violation_aggregation(violation_agg,viol_struct.name,BY_MAX(),"max",tol)
-	--      Aggregation by Average
-			violation_aggregation(violation_agg,viol_struct.name,BY_AVERAGE(),"avg",tol)
+    for _, viol_struct in ipairs(viol_structs) do
+		local violation = generic:load(viol_struct.name);
+		if violation:loaded() then
+			violation = violation:remove_zeros();
+			if violation:loaded() then
+				local violation_agg = violation:aggregate_blocks(viol_struct.aggregation):save_cache();
+				local x = violation:abs()
+								:aggregate_blocks(viol_struct.aggregation)
+								:aggregate_stages(BY_SUM())
+								:aggregate_scenarios(BY_SUM())
+								:aggregate_agents(BY_SUM(),"Total")
+								:to_list()[1];
+				if x > tol then
+			--      Aggregation by Max
+					violation_aggregation(violation_agg,viol_struct.name,BY_MAX(),"max")
+			--      Aggregation by Average
+					violation_aggregation(violation_agg,viol_struct.name,BY_AVERAGE(),"avg")
+
+					info("Violation dashboard for " .. viol_struct.name .. " created successfully.")
+				else
+					info("Violation values for " .. viol_struct.name .. " aren't significatives. Skipping save... ")
+				end
+			end
 		end
     end
 end
@@ -50,7 +57,7 @@ local function dispersion(output,file_name)
             agg_output:rename_agents({"Average"}):aggregate_scenarios(BY_AVERAGE()),
             agg_output:rename_agents({"P90"}):aggregate_scenarios(BY_PERCENTILE(90))
         );
-        local x = agg_output:aggregate_stages(BY_SUM()):aggregate_scenarios(BY_SUM()):to_list()[1];
+        local x = agg_output:abs():aggregate_stages(BY_SUM()):aggregate_scenarios(BY_SUM()):to_list()[1];
         if x > 0.0 then
             disp:save(file_name, {csv=true});
         end
@@ -113,13 +120,13 @@ if( revenues:loaded() ) then
     
     -- sddp_dashboard_rev_disp
 	local disp_agg = costs:aggregate_agents(BY_SUM(), "P10"):save_cache();
-    local disp = concatenate(
-        disp_agg:aggregate_scenarios(BY_PERCENTILE(10)),
-        disp_agg:rename_agents({"Average"}):aggregate_scenarios(BY_AVERAGE()),
-        disp_agg:rename_agents({"P90"}):aggregate_scenarios(BY_PERCENTILE(90))
-    );
-    local x = disp:aggregate_stages(BY_SUM()):aggregate_scenarios(BY_SUM()):to_list()[1];
+    local x = disp_agg:aggregate_stages(BY_SUM()):aggregate_scenarios(BY_SUM()):aggregate_blocks(BY_SUM()):to_list()[1];
     if x > 0.0 then
+		local disp = concatenate(
+			disp_agg:aggregate_scenarios(BY_PERCENTILE(10)),
+			disp_agg:rename_agents({"Average"}):aggregate_scenarios(BY_AVERAGE()),
+			disp_agg:rename_agents({"P90"}):aggregate_scenarios(BY_PERCENTILE(90))
+		);
         disp:save("sddp_dashboard_rev_disp", {csv=true});
     end
 end
