@@ -1,13 +1,13 @@
 -----------------------------------------------------------------------------------------------
 -- LOCAL FUNCTIONS
 -----------------------------------------------------------------------------------------------
-local function violation_aggregation(data,data_name,aggregation,suffix, maximun)
+local function violation_aggregation(data,data_name,aggregation,suffix, maximum)
     local n_agents = 5;
 
 	local violation_agg = data:aggregate_scenarios(aggregation);
 	local n = violation_agg:agents_size();
 	if n > n_agents then
-		local largest_agents = maximun:select_largest_agents(n_agents)
+		local largest_agents = maximum:select_largest_agents(n_agents)
 									  :agents();
 
 		violation_agg = concatenate(
