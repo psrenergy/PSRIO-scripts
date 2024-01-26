@@ -250,9 +250,9 @@ all_lambda["0"] = lambda;
 -- min (1 - λ) * E[x] + λ * CVaR_alpha[x] (alpha highest - right)
 -- internal alpha == 0.0 means worst case = highest
 local toml = generic:load_toml("agents.dat");
-local size = toml:get_array_size("AGENT");
+local size = toml:get_table_array_size("AGENT");
 for a = 1, size do
-    local agent = toml:get_array("AGENT", a);
+    local agent = toml:get_table_array("AGENT", a);
     -- this is alpha used in sddp for cost min, where 0 is worst (high cost)
     local alpha = agent:get_integer("alpha", 0);
     all_alpha[tostring(a)] = alpha;
