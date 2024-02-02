@@ -227,8 +227,7 @@ if #sddp_outputs > 0 then
 		out_list[file] = true;
     end
 end
-info(out_list)
-error("blabla")
+
 -- Log file with violation files used execution
 local log_viol = {file = Generic():create_writer("sddp_viol.out"), nrec = 0};
 violation_output(log_viol, out_list, viol_structs, 0.01)
