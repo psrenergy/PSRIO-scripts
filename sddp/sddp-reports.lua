@@ -1,18 +1,21 @@
 -----------------------------------------------------------------------------------------------
 -- LOCAL FUNCTIONS
 -----------------------------------------------------------------------------------------------
-local function violation_aggregation(log_viol, data, data_name, aggregation, suffix, maximum)
+local function violation_aggregation(log_viol, data, data_name, scen_aggregation, suffix, maximum, agent_aggregation)
     local n_agents = 5;
 
-	local violation_agg = data:aggregate_scenarios(aggregation);
+	local violation_agg = data:aggregate_scenarios(scen_aggregation);
 	local n = violation_agg:agents_size();
 	if n > n_agents then
 		local largest_agents = maximum:select_largest_agents(n_agents)
 									  :agents();
 
+		if not agent_aggregation then
+			agent_aggregation = BY_SUM();
+		end
 		violation_agg = concatenate(
 			violation_agg:select_agents(largest_agents),
-			violation_agg:remove_agents(largest_agents):aggregate_agents(BY_SUM(), "Others")
+			violation_agg:remove_agents(largest_agents):aggregate_agents(agent_aggregation, "Others")
 		);
 	end
 	local violation_file_name = "sddp_dashboard_viol_" .. suffix .. "_" .. data_name
@@ -46,9 +49,9 @@ local function violation_output(log_viol, out_list, viol_structs, tol)
 						file_name = file_name .. "_" .. viol_struct.signal;
 					end
 
-					local violation_agg = violation:aggregate_blocks(viol_struct.aggregation):save_cache();
+					local violation_agg = violation:aggregate_blocks(viol_struct.block_aggregation):save_cache();
 					local maximum = violation:abs()
-									:aggregate_blocks(viol_struct.aggregation)
+									:aggregate_blocks(viol_struct.block_aggregation)
 									:aggregate_stages(BY_SUM())
 									:aggregate_scenarios(BY_SUM())
 									:save_cache();
@@ -57,9 +60,9 @@ local function violation_output(log_viol, out_list, viol_structs, tol)
 
 					if x > tol then
 				--      Aggregation by Max
-						violation_aggregation(log_viol,violation_agg,file_name,BY_MAX(),"max",maximum)
+						violation_aggregation(log_viol,violation_agg,file_name,BY_MAX(),"max",maximum,viol_struct.agent_aggregation)
 				--      Aggregation by Average
-						violation_aggregation(log_viol,violation_agg,file_name,BY_AVERAGE(),"avg",maximum)
+						violation_aggregation(log_viol,violation_agg,file_name,BY_AVERAGE(),"avg",maximum,viol_struct.agent_aggregation)
 
 						info("Violation dashboard for " .. file_name .. " created successfully.")
 					else
@@ -170,55 +173,55 @@ defrisk:save("sddprisk",{csv=true});
 -- VIOLATIONS
 -----------------------------------------------------------------------------------------------
 local viol_structs = {
-	{name = "defcit", aggregation = BY_SUM()},
-	{name = "nedefc", aggregation = BY_AVERAGE()},
-	{name = "defbus", aggregation = BY_SUM()},
-	{name = "defbusp", aggregation = BY_AVERAGE()},
-	{name = "gncivio", aggregation = BY_SUM()},
-	{name = "gncvio", aggregation = BY_SUM()},
-	{name = "vrestg", aggregation = BY_AVERAGE()},
-	{name = "excbus", aggregation = BY_SUM()},
-	{name = "excsis", aggregation = BY_SUM()},
-	{name = "vvaler", aggregation = BY_AVERAGE()},
-	{name = "vioguide", aggregation = BY_SUM()},
-	{name = "vriego", aggregation = BY_AVERAGE()},
-	{name = "vmxost", aggregation = BY_AVERAGE()},
-	{name = "vimxsp", aggregation = BY_AVERAGE()},
-	{name = "vdefmx", aggregation = BY_AVERAGE()},
-	{name = "vvolmn", aggregation = BY_AVERAGE()},
-	{name = "vdefmn", aggregation = BY_AVERAGE()},
-	{name = "vturmn", aggregation = BY_AVERAGE()},
-	{name = "vimnsp", aggregation = BY_AVERAGE()},
-	{name = "rampvio", aggregation = BY_SUM()},
-	{name = "vreseg", aggregation = BY_AVERAGE()},
-	{name = "vsarhd", aggregation = BY_AVERAGE()},
-	{name = "vsarhden", aggregation = BY_AVERAGE()},
-	{name = "viocar", aggregation = BY_AVERAGE()},
-	{name = "vgmint", aggregation = BY_AVERAGE()},
-	{name = "vgmntt", aggregation = BY_AVERAGE()},
-	{name = "vioemiq", aggregation = BY_AVERAGE()},
-	{name = "vsecset", aggregation = BY_SUM()},
-	{name = "valeset", aggregation = BY_SUM()},
-	{name = "vespset", aggregation = BY_SUM()},
-    {name = "fcoffvio", aggregation = BY_SUM()},
-	{name = "vflmnww", aggregation = BY_AVERAGE()},
-	{name = "vflmxww", aggregation = BY_AVERAGE()},
-	{name = "finjvio", aggregation = BY_SUM()},
-	{name = "cflwvio", aggregation = BY_AVERAGE()},
-	{name = "fcofdvio", aggregation = BY_SUM()},
-	{name = "edemdef", aggregation = BY_SUM()},
-	{name = "tuvio", aggregation = BY_SUM()},
-	{name = "lsserac", aggregation = BY_AVERAGE(), signal = "positive"},
-	{name = "lsserac", aggregation = BY_AVERAGE(), signal = "negative"},
-	{name = "lsserdc", aggregation = BY_AVERAGE(), signal = "positive"},
-	{name = "lsserdc", aggregation = BY_AVERAGE(), signal = "negative"},
-    {name = "lsserdcl", aggregation = BY_AVERAGE(), signal = "positive"},
-	{name = "lsserdcl", aggregation = BY_AVERAGE(), signal = "negative"}
+	{name = "defcit", block_aggregation = BY_SUM()},
+	{name = "nedefc", block_aggregation = BY_AVERAGE()},
+	{name = "defbus", block_aggregation = BY_SUM()},
+	{name = "defbusp", block_aggregation = BY_AVERAGE(), agent_aggregation = BY_AVERAGE()},
+	{name = "gncivio", block_aggregation = BY_SUM()},
+	{name = "gncvio", block_aggregation = BY_SUM()},
+	{name = "vrestg", block_aggregation = BY_AVERAGE()},
+	{name = "excbus", block_aggregation = BY_SUM()},
+	{name = "excsis", block_aggregation = BY_SUM()},
+	{name = "vvaler", block_aggregation = BY_AVERAGE()},
+	{name = "vioguide", block_aggregation = BY_SUM()},
+	{name = "vriego", block_aggregation = BY_AVERAGE()},
+	{name = "vmxost", block_aggregation = BY_AVERAGE()},
+	{name = "vimxsp", block_aggregation = BY_AVERAGE()},
+	{name = "vdefmx", block_aggregation = BY_AVERAGE()},
+	{name = "vvolmn", block_aggregation = BY_AVERAGE()},
+	{name = "vdefmn", block_aggregation = BY_AVERAGE()},
+	{name = "vturmn", block_aggregation = BY_AVERAGE()},
+	{name = "vimnsp", block_aggregation = BY_AVERAGE()},
+	{name = "rampvio", block_aggregation = BY_SUM()},
+	{name = "vreseg", block_aggregation = BY_AVERAGE()},
+	{name = "vsarhd", block_aggregation = BY_AVERAGE()},
+	{name = "vsarhden", block_aggregation = BY_AVERAGE()},
+	{name = "viocar", block_aggregation = BY_AVERAGE()},
+	{name = "vgmint", block_aggregation = BY_AVERAGE()},
+	{name = "vgmntt", block_aggregation = BY_AVERAGE()},
+	{name = "vioemiq", block_aggregation = BY_AVERAGE()},
+	{name = "vsecset", block_aggregation = BY_SUM()},
+	{name = "valeset", block_aggregation = BY_SUM()},
+	{name = "vespset", block_aggregation = BY_SUM()},
+    {name = "fcoffvio", block_aggregation = BY_SUM()},
+	{name = "vflmnww", block_aggregation = BY_AVERAGE()},
+	{name = "vflmxww", block_aggregation = BY_AVERAGE()},
+	{name = "finjvio", block_aggregation = BY_SUM()},
+	{name = "cflwvio", block_aggregation = BY_AVERAGE()},
+	{name = "fcofdvio", block_aggregation = BY_SUM()},
+	{name = "edemdef", block_aggregation = BY_SUM()},
+	{name = "tuvio", block_aggregation = BY_SUM()},
+	{name = "lsserac", block_aggregation = BY_AVERAGE(), signal = "positive"},
+	{name = "lsserac", block_aggregation = BY_AVERAGE(), signal = "negative"},
+	{name = "lsserdc", block_aggregation = BY_AVERAGE(), signal = "positive"},
+	{name = "lsserdc", block_aggregation = BY_AVERAGE(), signal = "negative"},
+    {name = "lsserdcl", block_aggregation = BY_AVERAGE(), signal = "positive"},
+	{name = "lsserdcl", block_aggregation = BY_AVERAGE(), signal = "negative"}
 }
 
 local viol_structs_debug = {
-	{name = "defcitp", aggregation = BY_AVERAGE()},
-	{name = "vfeact", aggregation = BY_AVERAGE()}
+	{name = "defcitp", block_aggregation = BY_AVERAGE()},
+	{name = "vfeact", block_aggregation = BY_AVERAGE()}
 }
 
 -- Load output files from SDDP model
