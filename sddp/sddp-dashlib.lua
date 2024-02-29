@@ -497,12 +497,15 @@ function create_tab_summary(col_struct, info_struct)
         local number_of_blocks = col_struct.study[i]:get_parameter("NumberBlocks", -1);
         local policy_number_of_blocks = number_of_blocks .. " " .. dictionary.cell_blocks[LANGUAGE]
         local resolution_of_simulation = policy_number_of_blocks;
+        local number_of_openings = tostring(col_struct.study[i]:openings());
         if col_struct.study[i]:get_parameter("Objetivo", -100) == 2 then
             policy_number_of_blocks = " - ";
+            number_of_openings = " - ";
             exe_type[i] = dictionary.cell_simulation[LANGUAGE];
         end
         if col_struct.study[i]:get_parameter("Objetivo", -100) == -2 then
             policy_number_of_blocks = " - ";
+            number_of_openings = " - ";
             exe_type[i] = dictionary.cell_commercial_simulation[LANGUAGE];
         end
         exe_type_string = exe_type_string .. " | " .. exe_type[i];
@@ -527,7 +530,7 @@ function create_tab_summary(col_struct, info_struct)
         plc_resolution   = plc_resolution   .. " | " .. policy_number_of_blocks;
         sim_resolution   = sim_resolution   .. " | " .. resolution_of_simulation;
         nforw_string     = nforw_string     .. " | " .. tostring(col_struct.study[i]:scenarios());
-        nback_string     = nback_string     .. " | " .. tostring(col_struct.study[i]:openings());
+        nback_string     = nback_string     .. " | " .. number_of_openings;
 
         hrep_val[i] = "❌";
         if col_struct.study[i]:get_parameter("SIMH", -1) == 2 then
