@@ -582,6 +582,11 @@ dictionary = {
         es = "Series Backward",
         pt = "Séries Backward"
     },
+    cell_sim_series = {
+        en = "Simulated series",
+        es = "Series simuladas",
+        pt = "Séries Simuladas"
+    },
     cell_hourly_representation = {
         en = "Hourly representation",
         es = "Representación horaria",
