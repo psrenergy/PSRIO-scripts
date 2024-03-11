@@ -58,9 +58,19 @@ O gap de convergência não foi atendido, conforme indicado pelo gráfico de Con
     },
     simulation_cost = {
         en = [[
-The estimated cost in the operating policy does not match the simulation cost according to the Policy x Final simulation objective functions chart in the Policy tab. Please, consider the following options:
+The mismatch between the total estimated cost calculated during the operating policy and the total simulation cost (shown in the "Policy x Final simulation objective functions" chart in the Policy tab) is greater than 10%. There some potential causes which are presented below:
 
-🠊 Consider non-linearities during the calculation of the policy made by the model.
+IF 
+
+One suggestion aactive th constante infot
+
+
+
+Please take a look on the comments:
+
+Vai estar dentro do IF
+
+🠊 Please consider non-linearities during the policy phase to enhance its calcuation:
 ```
 1. Go to Exection options -> Economic dispatch -> Solution strategy.
 2. Select the 'Non-convexity representation in policy' checkbox.
@@ -110,6 +120,11 @@ de produção na política' e no 'Coeficiente de produção na simulação final
         en = [[
 The MIP convergence gap was not met for some solutions, as indicated by the Solution Status per Stage and Scenario chart in the Simulation tab. Please consider the following options:
 
+
+Apresentamos abaixo opções para atacar esta questão em ordem de prioridade:
+
+
+
 🠊 Increase the MIP maximum execution time
 ```
 1. Go to Execution Options -> Economic Dispatch -> Solution Strategy.
@@ -121,6 +136,10 @@ The MIP convergence gap was not met for some solutions, as indicated by the Solu
 2. In 'Intra-stage Representation', select the checkbox 'Decompose stages in slice'.
 3. Decrease the 'Slice Duration (hour)' text box value.
 ```
+Aumentar gap do MIP
+
+
+
 ]],
         es = [[
 El gap de convergencia del MIP no se cumplió para algunas soluciones, según lo indicado en el gráfico de Estado de la Solución por Etapa y Escenario en la pestaña de Simulación. Considere las siguientes opciones:
@@ -155,9 +174,10 @@ O gap de convergência do MIP não foi atendido para algumas soluções, conform
     },
     obj_costs = {
         en = [[
-The costs associated with violations exceed 20% of the objective function cost in the simulation, as indicated by the Breakdown of Total Operating Cost chart within the Simulation tab. Please consider the following options:
+The share of deficits and violation penalties exceed 20% of the objective function cost in the simulation, as indicated by the "Breakdown of Total Operating Cost" chart within the "Simulation" tab. Please consider the following options:
 
 🠊 Review the Violations tab to gain a clearer understanding of the most significant violations and identify the stages where penalties are more pronounced.
+🠊 Please revise your generation constraints (if they exist) and check if there are requirements applied to a plant in some stages where it is under maintenance. 
 🠊 Evaluate if the constraints can be met or if they should be relaxed.
 🠊 Evaluate if the values of penalties for each violation were correclty calibrated.
 ]],
