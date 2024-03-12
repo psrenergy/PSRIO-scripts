@@ -5,7 +5,7 @@ EXECUTION_MODE_EXPANSION_SIM = 2
 LANGUAGE = "en"
 PERCENT_OF_OBJ_COST = 0.2
 
-REP_DIFF_TOL = 0.05 -- 10%
+REP_DIFF_TOL = 0.10 -- 10%
 
 -- Setting global colors
 main_global_color = { "#4E79A7", "#F28E2B", "#8CD17D", "#B6992D", "#E15759", "#76B7B2", "#FF9DA7", "#D7B5A6", "#B07AA1", "#59A14F", "#F1CE63", "#A0CBE8", "#E15759" };
@@ -1127,14 +1127,6 @@ function create_pol_report(col_struct)
             if (show_sim_cost and has_results_for_add_years) then
                 -- Final simulation cost
                 chart_conv:add_line(final_sim_cost:rename_agent("Final simulation"), { colors = { "#D37295" }, xAllowDecimals = false });
-
-                -- Deviation error
-                zsup = conv_file:select_agent(3);
-                last_zsup = zsup:to_list()[zsup:last_stage()];
-                rel_diff = (immediate_cost - last_zsup)/immediate_cost;
-                if rel_diff > REP_DIFF_TOL or -rel_diff < -REP_DIFF_TOL then
-                    advisor:push_warning("simulation_cost");
-                end
             end
             tab:push(chart_conv);
 
@@ -1153,16 +1145,35 @@ function create_pol_report(col_struct)
                 chart:add_area_range(conv_age:select_agents({ 1 }):rename_agent(""), conv_age:select_agents({ 3 }):rename_agent("Zsup (IC+FCF) +- Tol"), { colors = { "#FFD8DC", "#FFD8DC" }, xUnit = "Iteration", xAllowDecimals = false, showInLegend = true });
 
                 -- Final simulation cost
-                chart:add_line(final_sim_cost:rename_agent("Final simulation"), { colors = { "#D37295" }, xAllowDecimals = false });
+                chart:add_line(final_sim_cost:rename_agent("Final simulation"), { colors = { "#D37295" }, xAllowDecimals = false, dashStyle = "dash"});
 
                 -- Deviation error
-                zsup = conv_file:select_agent(10);
+                zsup = conv_file:select_agent(3);
                 last_zsup = zsup:to_list()[zsup:last_stage()];
-                rel_diff = (immediate_cost - last_zsup)/immediate_cost;
-                if rel_diff > REP_DIFF_TOL or -rel_diff < -REP_DIFF_TOL then
-                    tab:push("**WARNING**");
-                    tab:push("The objective function value of the final simulation deviates by " .. string.format("%.1f",100*rel_diff) .. "% from objective function of the last iteration of the policy phase.");
-                    tab:push("This indicates that the policy representation lacks critical system characteristics, potentially resulting in a suboptimal solution in final simulation.");
+                rel_diff = math.abs(immediate_cost - last_zsup)/immediate_cost;
+                if rel_diff > REP_DIFF_TOL then
+                    local nconv_file_name = "nonconvrep.csv";
+                    local nonconv_list = {};
+                    local dimension    = {};
+                    get_nonconv_info(col_struct,nconv_file_name,nonconv_list,dimension,1);
+
+                    local add_mensage;
+                    local nonconvergence_vector = {};
+
+                    local set_representation_of_nonconvergences_in_policy = col_struct.study[1]:get_parameter("NCNV",0);
+                    table.insert(nonconvergence_vector,set_representation_of_nonconvergences_in_policy + 1);
+                    for i,nonconv in ipairs(nonconv_list) do
+                        if tonumber(dimension[i]) > 0 then
+                            add_mensage = " - " .. nonconv .. "\n"
+                            table.insert(nonconvergence_vector,i+2)
+                        end
+                    end
+
+                    if add_mensage then
+                        advisor:push_add_mensage("simulation_cost", add_mensage)
+                    end
+
+                    advisor:push_warning("simulation_cost", nil, nonconvergence_vector);
                 end
 
                 tab:push(chart);
