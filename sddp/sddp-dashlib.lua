@@ -3,6 +3,7 @@ EXECUTION_MODE_OPERATION     = 0
 EXECUTION_MODE_EXPANSION_IT  = 1
 EXECUTION_MODE_EXPANSION_SIM = 2
 LANGUAGE = "en"
+PERCENT_OF_OBJ_COST = 0.2
 
 REP_DIFF_TOL = 0.05 -- 10%
 
@@ -11,6 +12,9 @@ main_global_color = { "#4E79A7", "#F28E2B", "#8CD17D", "#B6992D", "#E15759", "#7
 light_global_color = { "#B7C9DD", "#FAD2AA", "#D1EDCB", "#E9DAA4", "#F3BCBD", "#C8E2E0", "#FFD8DC", "#EFE1DB", "#DFCAD9", "#BBDBB7", "#F9EBC1", "#D9EAF6", "#F3BCBD" };
 
 PSR.set_global_colors(main_global_color);
+
+-- Initialization of Advisor class
+local advisor = Advisor();
 
 -- Study dimension
 studies = PSR.studies();
@@ -25,6 +29,69 @@ end
 
 function subrange(t, first, last)
     return table.move(t, first, last, 1, {})
+end
+
+function my_to_number(arg,default)
+    if arg then
+        return tonumber(arg);
+    else
+        return default;
+    end
+end
+
+function tableContains(tbl, item) -- will be deprecated soon (next PSRIO version)
+    local trim_item = trim(item);
+    for _, value in ipairs(tbl) do
+        -- info(trim(value))
+        -- info(trim_item)
+        -- info(trim(value) == trim_item)
+        if trim(value) == trim_item then
+            return true
+        end
+    end
+    return false
+end
+
+function compare_agents(vec_agents_1,vec_agents_2) -- will be deprecated soon (next PSRIO version)
+    local uniqueElements = {};
+    for _, element in ipairs(vec_agents_1) do
+        -- info(element)
+        -- info(vec_agents_2)
+        -- info(tableContains(vec_agents_2, element))
+        -- info(uniqueElements)
+        -- info(tableContains(uniqueElements, element))
+        if not tableContains(vec_agents_2, element) and not tableContains(uniqueElements, element) then
+            table.insert(uniqueElements, element)
+        end
+    end
+    return uniqueElements
+end
+
+function create_zero_agents(data_2,uniqueElements) -- will be deprecated soon (next PSRIO version)
+    local zero_data = data_2:aggregate_agents(BY_SUM(),"zero"):fill(0);
+    local result_data = data_2;
+    for _,element in ipairs(uniqueElements) do
+        result_data = concatenate(result_data,zero_data:rename_agent(element));
+    end
+    return result_data
+end
+
+function adjust_data_for_add_categories(table_aux) -- will be deprecated soon (next PSRIO version)
+    local adjusted_table = table_aux;
+    for i,data_1 in ipairs(table_aux) do
+        for j,data_2 in ipairs(table_aux) do
+            if i ~= j then
+                local agents_1 = data_1:agents();
+                local agents_2 = data_2:agents();
+                local unique_elements = compare_agents(agents_1,agents_2)
+                if #unique_elements > 0 then
+                    local adjusted_data = create_zero_agents(data_2,unique_elements)
+                    adjusted_table[j] = adjusted_data;
+                end
+            end
+        end
+    end
+    return adjusted_table
 end
 -----------------------------------------------------------------------------------------------
 -- Overloads
@@ -262,7 +329,7 @@ end
 -----------------------------------------------------------------------------------------------
 -- Get language
 -----------------------------------------------------------------------------------------------
-local LANGUAGE = load_language();
+LANGUAGE = load_language();
 
 -----------------------------------------------------------------------------------------------
 -- Infeasibility report function
@@ -394,19 +461,21 @@ function create_tab_summary(col_struct, info_struct)
 
     tab:push("## " .. dictionary.hor_resol_exec[LANGUAGE]);
 
-    local header_string       = "| " .. dictionary.cell_case_parameters[LANGUAGE];
-    local lower_header_string = "|---------------";
-    local exe_type_string     = "| " .. dictionary.cell_execution_type[LANGUAGE];
-    local case_type_string    = "| " .. dictionary.cell_case_type[LANGUAGE];
-    local nstg_string         = "| " .. dictionary.cell_stages[LANGUAGE];
-    local ini_year_string     = "| " .. dictionary.cell_ini_year[LANGUAGE];
-    local nblk_string         = "| " .. dictionary.cell_blocks[LANGUAGE];
-    local nforw_string        = "| " .. dictionary.cell_fwd_series[LANGUAGE];
-    local nback_string        = "| " .. dictionary.cell_bwd_series[LANGUAGE];
-    local hrep_string         = "| " .. dictionary.cell_hourly_representation[LANGUAGE];
-    local netrep_string       = "| " .. dictionary.cell_network_representation[LANGUAGE];
-    local typday_string       = "| " .. dictionary.cell_typicalday_representation[LANGUAGE];
-    local loss_representation = "| " .. dictionary.cell_loss_representation[LANGUAGE];
+    local header_string              = "| " .. dictionary.cell_case_parameters[LANGUAGE];
+    local lower_header_string        = "|---------------";
+    local exe_type_string            = "| " .. dictionary.cell_execution_type[LANGUAGE];
+    local case_type_string           = "| " .. dictionary.cell_case_type[LANGUAGE];
+    local nstg_string                = "| " .. dictionary.cell_stages[LANGUAGE];
+    local ini_year_string            = "| " .. dictionary.cell_ini_year[LANGUAGE];
+    local plc_resolution             = "| " .. dictionary.cell_plc_resolution[LANGUAGE];
+    local sim_resolution             = "| " .. dictionary.cell_sim_resolution[LANGUAGE];
+    local nforw_string               = "| " .. dictionary.cell_fwd_series[LANGUAGE];
+    local nback_string               = "| " .. dictionary.cell_bwd_series[LANGUAGE];
+    local sim_series                 = "| " .. dictionary.cell_sim_series[LANGUAGE];
+    local hrep_string                = "| " .. dictionary.cell_hourly_representation[LANGUAGE];
+    local netrep_string              = "| " .. dictionary.cell_network_representation[LANGUAGE];
+    local typday_string              = "| " .. dictionary.cell_typicalday_representation[LANGUAGE];
+    local loss_representation_string = "| " .. dictionary.cell_loss_representation[LANGUAGE];
 
     local hrep_val   = {};
     local netrep_val = {};
@@ -418,26 +487,59 @@ function create_tab_summary(col_struct, info_struct)
     local show_net_data = false;
 
     for i = 1, studies do
-        header_string = header_string             .. " | " .. col_struct.case_dir_list[i];
-        lower_header_string = lower_header_string .. "|-----------";
+        -- Number of stages
+        local number_of_stages = col_struct.study[i]:stages_without_buffer_years();
+        if col_struct.study[i]:get_parameter("NumeroAnosAdicionaisParm2",-1) == 1 then
+            number_of_stages = col_struct.study[i]:stages();
+        end
 
+        -- type of execution
         exe_type[i] = dictionary.cell_policy[LANGUAGE];
-        if col_struct.study[i]:get_parameter("Objetivo", -1) == 2 then
+        local number_of_blocks = col_struct.study[i]:get_parameter("NumberBlocks", -1);
+        local policy_number_of_blocks = number_of_blocks .. " " .. dictionary.cell_blocks[LANGUAGE]
+        local resolution_of_simulation = policy_number_of_blocks;
+        local number_of_openings = tostring(col_struct.study[i]:openings());
+        local number_of_forwards = tostring(col_struct.study[i]:scenarios());
+        local mumber_of_simulated_series = number_of_forwards;
+        if col_struct.study[i]:get_parameter("Objetivo", -100) == 2 then
+            policy_number_of_blocks = " - ";
+            number_of_openings = " - ";
+            number_of_forwards = " - ";
             exe_type[i] = dictionary.cell_simulation[LANGUAGE];
+        end
+        if col_struct.study[i]:get_parameter("Objetivo", -100) == -2 then
+            policy_number_of_blocks = " - ";
+            number_of_openings = " - ";
+            number_of_forwards = " - ";
+            exe_type[i] = dictionary.cell_commercial_simulation[LANGUAGE];
         end
         exe_type_string = exe_type_string .. " | " .. exe_type[i];
 
+        if col_struct.study[i]:is_hourly() then
+            resolution_of_simulation = dictionary.cell_hourly[LANGUAGE];
+        end
+
+        if col_struct.study[i]:get_parameter("Series_Simular", 0) == 1 then
+            mumber_of_simulated_series = #(col_struct.study[i]:selected_scenarios());
+        end
+        -- type of resolution
         case_type[i] = dictionary.cell_monthly[LANGUAGE];
         if col_struct.study[i]:stage_type() == 1 then
             case_type[i] = dictionary.cell_weekly[LANGUAGE];
         end
         case_type_string = case_type_string .. " | " .. case_type[i];
 
-        nstg_string      = nstg_string      .. " | " .. tostring(col_struct.study[i]:stages());
+
+        header_string = header_string             .. " | " .. col_struct.case_dir_list[i];
+        lower_header_string = lower_header_string .. "|-----------";
+
+        nstg_string      = nstg_string      .. " | " .. tostring(number_of_stages);
         ini_year_string  = ini_year_string  .. " | " .. tostring(col_struct.study[i]:initial_year());
-        nblk_string      = nblk_string      .. " | " .. tostring(col_struct.study[i]:get_parameter("NumberBlocks", -1));
-        nforw_string     = nforw_string     .. " | " .. tostring(col_struct.study[i]:scenarios());
-        nback_string     = nback_string     .. " | " .. tostring(col_struct.study[i]:openings());
+        plc_resolution   = plc_resolution   .. " | " .. policy_number_of_blocks;
+        sim_resolution   = sim_resolution   .. " | " .. resolution_of_simulation;
+        nforw_string     = nforw_string     .. " | " .. number_of_forwards;
+        nback_string     = nback_string     .. " | " .. number_of_openings;
+        sim_series       = sim_series       .. " | " .. mumber_of_simulated_series;
 
         hrep_val[i] = "❌";
         if col_struct.study[i]:get_parameter("SIMH", -1) == 2 then
@@ -464,7 +566,7 @@ function create_tab_summary(col_struct, info_struct)
         if col_struct.study[i]:get_parameter("Perdas", -1) == 1 then
             loss_repr[i] = "✔️";
         end
-        loss_representation_string = loss_representation .. " | " .. loss_repr[i];
+        loss_representation_string = loss_representation_string .. " | " .. loss_repr[i];
     end
     header_string                    = header_string              .. "|";
     lower_header_string              = lower_header_string        .. "|";
@@ -472,9 +574,11 @@ function create_tab_summary(col_struct, info_struct)
     case_type_string                 = case_type_string           .. "|";
     nstg_string                      = nstg_string                .. "|";
     ini_year_string                  = ini_year_string            .. "|";
-    nblk_string                      = nblk_string                .. "|";
+    plc_resolution                   = plc_resolution             .. "|";
+    sim_resolution                   = sim_resolution             .. "|";
     nforw_string                     = nforw_string               .. "|";
     nback_string                     = nback_string               .. "|";
+    sim_series                       = sim_series                 .. "|";
     hrep_string                      = hrep_string                .. "|";
     netrep_string                    = netrep_string              .. "|";
     typday_string                    = typday_string              .. "|";
@@ -486,9 +590,11 @@ function create_tab_summary(col_struct, info_struct)
     tab:push(case_type_string);
     tab:push(nstg_string);
     tab:push(ini_year_string);
-    tab:push(nblk_string);
+    tab:push(plc_resolution);
+    tab:push(sim_resolution);
     tab:push(nforw_string);
     tab:push(nback_string);
+    tab:push(sim_series);
     tab:push(hrep_string);
     tab:push(netrep_string);
     tab:push(typday_string);
@@ -515,7 +621,7 @@ function create_tab_summary(col_struct, info_struct)
         sys_string = sys_string             .. " | " .. tostring(#col_struct.system[i]:labels());
         battery_string = battery_string     .. " | " .. tostring(#col_struct.battery[i]:labels());
 
-        if show_net_data then
+        if show_net_data and studies <= 1 then
             bus_string        = bus_string        .. " | " .. tostring(#col_struct.bus[i]:labels());
             ac_circuit_string = ac_circuit_string .. " | " .. tostring(#col_struct.circuit[i]:labels());
             dc_circuit_string = dc_circuit_string .. " | " .. tostring(#col_struct.dclink[i]:labels());
@@ -555,7 +661,7 @@ function create_tab_summary(col_struct, info_struct)
     tab:push(renw_csp_string);
     tab:push(battery_string);
     tab:push(pinj_string);
-    if show_net_data then
+    if show_net_data and studies <= 1 then
         tab:push(bus_string);
         tab:push(ac_circuit_string);
         tab:push(dc_circuit_string);
@@ -686,7 +792,7 @@ end
 
 function get_convergence_file_agents(col_struct, file_list, conv_age, cuts_age, time_age, case_index)
     for i, file in ipairs(file_list) do
-        local conv_file = col_struct.generic[case_index]:load(file);
+        local conv_file = col_struct.generic[case_index]:force_load(file);
         conv_age[i] = conv_file:select_agents({ 1, 2, 3, 4 }); -- Zinf, Zsup - Tol, Zsup, Zsup + Tol
         cuts_age[i] = conv_file:select_agents({ 5, 6 }); -- Optimality, Feasibility
         time_age[i] = conv_file:select_agents({ 7, 8 }); -- Forw. time, Back. time
@@ -751,7 +857,7 @@ end
 function create_penalty_proportion_graph(tab, col_struct, i)
     local output_name  = "sddppenp";
     local report_title = dictionary.violation_penalties[LANGUAGE];
-    local penp = col_struct.generic[i]:load(output_name);
+    local penp = col_struct.generic[i]:force_load(output_name);
 
     if not penp:loaded() then
         info(output_name .. " could not be loaded. ".. "'" .. report_title .. "'" .. "report will not be displayed");
@@ -766,7 +872,7 @@ function create_penalty_proportion_graph(tab, col_struct, i)
 end
 
 function create_conv_map_graph(tab, file_name, col_struct, i)
-    local conv_map = col_struct.generic[i]:load(file_name);
+    local conv_map = col_struct.generic[i]:force_load(file_name);
     local report_title = dictionary.convergence_map[LANGUAGE];
 
     if not conv_map:loaded() then
@@ -819,6 +925,10 @@ function create_hourly_sol_status_graph(tab, col_struct, i)
     local chart = Chart(report_title);
     chart:add_heatmap(status,options);
     tab:push(chart);
+
+    if status:remove_zeros():loaded() then
+        advisor:push_warning("mip_convergence");
+    end
 end
 
 -- Execution times per scenario (dispersion)
@@ -897,21 +1007,18 @@ function create_pol_report(col_struct)
     -- Creating policy report
     for i, file in ipairs(file_list) do
         tab:push("## " .. dictionary.system[LANGUAGE] .. ": " .. systems[i] .. " | " .. dictionary.horizon[LANGUAGE] .. ": " .. horizon[i]);
+        local chart_conv      = Chart(dictionary.convergence[LANGUAGE]);
 
         if studies > 1 then
-            local chart_conv      = Chart(dictionary.convergence[LANGUAGE]);
             local chart_cut_opt   = Chart(dictionary.new_cut_per_iteration_optimality[LANGUAGE]);
             local chart_cut_feas  = Chart(dictionary.new_cut_per_iteration_feasibility[LANGUAGE]);
-            local chart_time_forw = Chart(dictionary.forward_time[LANGUAGE]);
-            local chart_time_back = Chart(dictionary.backward_time[LANGUAGE]);
 
             for j = 1, studies do
 
-                conv_file = col_struct.generic[j]:load(file);
+                conv_file = col_struct.generic[j]:force_load(file);
                 if conv_file:loaded() then
                     conv_age = conv_file:select_agents({ 1, 2, 3, 4 }); -- Zinf        ,Zsup - Tol  ,Zsup        ,Zsup + Tol
                     cuts_age = conv_file:select_agents({ 5, 6 }); -- Optimality  ,Feasibility
-                    time_age = conv_file:select_agents({ 7, 8 }); -- Forw. time, Back. time
 
                     -- Confidence interval
                     chart_conv:add_area_range(conv_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup - Tol"), conv_age:select_agents({ 4 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup + Tol"), { colors = { light_global_color[j], light_global_color[j] }, xUnit = "Iteration", xAllowDecimals = false, showInLegend = true });
@@ -929,11 +1036,6 @@ function create_pol_report(col_struct)
                     if is_greater_than_zero(cuts_age:select_agents({ 2 })) then
                         chart_cut_feas:add_column(cuts_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
                     end
-                    -- Execution time - forward
-                    chart_time_forw:add_column(time_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
-
-                    -- Execution time - backward
-                    chart_time_back:add_column(time_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
                 else
                     info("Comparing cases have different policy horizons! Policy will only contain the main case data.");
                 end
@@ -948,12 +1050,6 @@ function create_pol_report(col_struct)
             if #chart_cut_feas > 0 then
                 tab:push(chart_cut_feas);
             end
-            if #chart_time_forw > 0 then
-                tab:push(chart_time_forw);
-            end
-            if #chart_time_back > 0 then
-                tab:push(chart_time_back);
-            end
         else
             -- Get operation mode parameter
             oper_mode = col_struct.study[1]:get_parameter("Opcion", -1); -- 1=AIS; 2=COO; 3=INT;
@@ -962,10 +1058,9 @@ function create_pol_report(col_struct)
 
             nsys = calculate_number_of_systems(systems);
             
-            conv_file = col_struct.generic[1]:load(file);
+            conv_file = col_struct.generic[1]:force_load(file);
             conv_age = conv_file:select_agents({ 1, 2, 3, 4 }); -- Zinf        ,Zsup - Tol  ,Zsup        ,Zsup + Tol
             cuts_age = conv_file:select_agents({ 5, 6 }); -- Optimality  ,Feasibility
-            time_age = conv_file:select_agents({ 7, 8 }); -- Forw. time, Back. time
             
             -- If there is only one FCF file in the case and no rolling horizons, print final simulation cost as columns
             show_sim_cost = false;
@@ -1009,28 +1104,39 @@ function create_pol_report(col_struct)
             -----------------------------------------------------------------------------------------------------------
             -- Convergence chart
             -----------------------------------------------------------------------------------------------------------
-            local chart = Chart(dictionary.convergence[LANGUAGE]);
             -- Zinf
-            chart:add_line(conv_age:select_agents({ 1 }), { xUnit = "Iteration", colors = { "#3CB7CC" }, xAllowDecimals = false });
+            chart_conv:add_line(conv_age:select_agents({ 1 }), { xUnit = "Iteration", colors = { "#3CB7CC" }, xAllowDecimals = false });
             -- Zsup
-            chart:add_line(conv_age:select_agents({ 3 }):rename_agent("Zsup"), { colors = { "#32A251" }, xAllowDecimals = false });
+            chart_conv:add_line(conv_age:select_agents({ 3 }):rename_agent("Zsup"), { colors = { "#32A251" }, xAllowDecimals = false });
             -- Confidence interval
-            chart:add_area_range(conv_age:select_agents({ 2 }):rename_agent(""), conv_age:select_agents({ 4 }):rename_agent("Zsup +- Tol"), { colors = { "#ACD98D", "#ACD98D" }, xUnit = "Iteration", xAllowDecimals = false, visible = zsup_is_visible });
+            chart_conv:add_area_range(conv_age:select_agents({ 2 }):rename_agent(""), conv_age:select_agents({ 4 }):rename_agent("Zsup +- Tol"), { colors = { "#ACD98D", "#ACD98D" }, xUnit = "Iteration", xAllowDecimals = false, visible = zsup_is_visible });
+            
+            local tolerance_for_convergence = tonumber(col_struct.study[1]:get_parameter("CriterioConvergencia", -1));
+            
+            local total_iter = conv_age:stages();
+            
+            local zinf_final         = tonumber(conv_age:select_agents({ 1 }):select_stage(total_iter):to_list()[1]);
+            local zsup_tol_bot_final = tonumber(conv_age:select_agents({ 2 }):select_stage(total_iter):to_list()[1]);
+            
+            if zinf_final < zsup_tol_bot_final then
+                advisor:push_warning("convergence_gap",1);
+            else
+                -- to_do: negative gap msg
+            end
+
             if (show_sim_cost and has_results_for_add_years) then
                 -- Final simulation cost
-                chart:add_line(final_sim_cost:rename_agent("Final simulation"), { colors = { "#D37295" }, xAllowDecimals = false });
+                chart_conv:add_line(final_sim_cost:rename_agent("Final simulation"), { colors = { "#D37295" }, xAllowDecimals = false });
 
                 -- Deviation error
                 zsup = conv_file:select_agent(3);
                 last_zsup = zsup:to_list()[zsup:last_stage()];
                 rel_diff = (immediate_cost - last_zsup)/immediate_cost;
                 if rel_diff > REP_DIFF_TOL or -rel_diff < -REP_DIFF_TOL then
-                    tab:push("**WARNING**");
-                    tab:push("The objective function value of the final simulation deviates by " .. string.format("%.1f",100*rel_diff) .. "% from objective function of the last iteration of the policy phase.");
-                    tab:push("This indicates that the policy representation lacks critical system characteristics, potentially resulting in a suboptimal solution in final simulation.");
+                    advisor:push_warning("simulation_cost");
                 end
             end
-            tab:push(chart);
+            tab:push(chart_conv);
 
             -----------------------------------------------------------------------------------------------------------
             -- Final simulation chart
@@ -1080,13 +1186,6 @@ function create_pol_report(col_struct)
             tab:push(chart);
 
             -----------------------------------------------------------------------------------------------------------
-            -- Forward and backward execution times
-            -----------------------------------------------------------------------------------------------------------
-            chart = Chart(dictionary.fwd_bwd_time[LANGUAGE]);
-            chart:add_line(time_age:rename_agents({"Forward","Backward"}), { xUnit = "Iteration", xAllowDecimals = false }); -- Forw. and Back. times
-            tab:push(chart);
-
-            -----------------------------------------------------------------------------------------------------------
             -- Convergence map
             -----------------------------------------------------------------------------------------------------------
             create_conv_map_graph(tab, convm_file_list[i], col_struct, 1);
@@ -1109,58 +1208,59 @@ function create_sim_report(col_struct)
 
     local cost_chart    = Chart(dictionary.breakdown_cost_time[LANGUAGE]);
     local revenue_chart = Chart(dictionary.breakdown_revenue_time[LANGUAGE]);
-    local exet_chart    = Chart(dictionary.excution_times[LANGUAGE]);
 
     local objcop = require("sddp/costs");
     local discount_rate = require("sddp/discount_rate");
 
     if studies > 1 then
+        local aux_table = {};
         for i = 1, studies do
             costs = objcop(i) / discount_rate(i):select_stages_of_outputs();
             -- sddp_dashboard_cost_tot
             costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
-            cost_chart:add_categories(costs_agg, col_struct.case_dir_list[i]);
-
-            -- Execution times (sim, post-processing and total time)
-            exe_times = col_struct.generic[i]:load("sddptimes");
-            exet_chart:add_categories(exe_times, col_struct.case_dir_list[i]);
+            table.insert(aux_table,costs_agg);
+        end
+        local adjusted_table = adjust_data_for_add_categories(aux_table);  -- will be deprecated soon (next PSRIO version)
+        local agents_order = adjusted_table[1]:agents();
+        for i = 1, studies do
+            cost_chart:add_categories(adjusted_table[i]:reorder_agents(agents_order), col_struct.case_dir_list[i]);
         end
     else
         costs = objcop() / discount_rate():select_stages_of_outputs();
         costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
 
         if is_greater_than_zero(costs_agg) then
-            cost_chart:add_pie(ifelse(costs_agg:gt(0), costs_agg, 0):remove_zeros(), {colors = main_global_color});
-            revenue_chart:add_pie(ifelse(costs_agg:lt(0), costs_agg, 0):remove_zeros():abs(), {colors = subrange(main_global_color, #cost_chart + 1, #main_global_color)});
+            local obj_cost = ifelse(costs_agg:gt(0), costs_agg, 0):remove_zeros();
+            local obj_revenue = ifelse(costs_agg:lt(0), costs_agg, 0):remove_zeros();
+
+            local total_obj_cost  = my_to_number(obj_cost:aggregate_agents(BY_SUM(),"Total cost"):to_list()[1],0.0);
+            local others_obj_cost = my_to_number(obj_cost:remove_agent(1):aggregate_agents(BY_SUM(),"Other costs"):to_list()[1],0.0);
+            
+            if total_obj_cost * PERCENT_OF_OBJ_COST <= others_obj_cost then
+                advisor:push_warning("obj_costs");
+            end
+
+            cost_chart:add_pie(obj_cost, {colors = main_global_color});
+            revenue_chart:add_pie(obj_revenue:abs(), {colors = main_global_color});
             
             if #revenue_chart > 0 then
                 cost_chart = {cost_chart,revenue_chart};
             end
         end
-
-        -- Execution times (sim, post-processing and total time)
-        exe_times = col_struct.generic[1]:load("sddptimes");
-        exet_chart:add_column(exe_times);
     end
 
     if #cost_chart > 0 then
         tab:push(cost_chart);
     end
 
-    if #exet_chart > 0 then
-        tab:push(exet_chart);
-    end
-
+    -- Add stage-wise cost reports
+    create_costs_and_revs(col_struct,tab);
+    
     -- Heatmap after the pizza graph in dashboard
     if studies == 1 then
         -- Creating simulation heatmap graphics
         if col_struct.study[1]:get_parameter("SIMH", -1) == 2 then
             create_hourly_sol_status_graph(tab, col_struct, 1);
-        end
-
-        -- Execution times per scenario
-        if col_struct.study[1]:get_parameter("SCEN", 0) == 0 then -- SDDP scenarios does not have execution times per scenario
-            create_exe_timer_per_scen(tab, col_struct, 1);
         end
 
         create_penalty_proportion_graph(tab, col_struct, 1);
@@ -1170,11 +1270,137 @@ function create_sim_report(col_struct)
 end
 
 -----------------------------------------------------------------------------------------------
+-- Execution times report function
+-----------------------------------------------------------------------------------------------
+
+function create_times_report(col_struct)
+    local tab = Tab(dictionary.execution_times[LANGUAGE]);
+
+    ---------
+    -- Policy
+    ---------
+    local file_list = {};
+    local systems = {};
+    local horizon = {};
+    
+    local conv_data         = {};
+    local cuts_data         = {};
+    local time_data         = {};
+    local conv_status       = {};
+    
+    -- Loading convergence data
+    get_conv_file_info(col_struct, "sddppol.csv", file_list, systems, horizon, 1);
+    get_convergence_file_agents(col_struct, file_list, conv_data, cuts_data, time_data, 1);
+    
+    -- Print header if policy files exist
+    if #file_list > 0 then
+        tab:push("## " .. dictionary.tab_policy[LANGUAGE]);
+    end
+    
+    for i, file in ipairs(file_list) do
+        tab:push("# " .. dictionary.system[LANGUAGE] .. ": " .. systems[i] .. " | " .. dictionary.horizon[LANGUAGE] .. ": " .. horizon[i]);
+    
+        if studies > 1 then
+            local chart_time_forw = Chart(dictionary.forward_time[LANGUAGE]);
+            local chart_time_back = Chart(dictionary.backward_time[LANGUAGE]);
+            local chart_exe_pol = Chart(dictionary.exe_pol_times[LANGUAGE]);
+            
+            for jstudy = 1, studies do
+                conv_file = col_struct.generic[jstudy]:force_load(file);
+                time_age = conv_file:select_agents({ 7, 8 }); -- Forw. time, Back. time
+                
+                if conv_file:loaded() then
+                    -- Execution time - forward
+                    chart_time_forw:add_column(time_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[jstudy]), { xUnit = "Iteration", yUnit = "s", xAllowDecimals = false });
+    
+                    -- Execution time - backward
+                    chart_time_back:add_column(time_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[jstudy]), { xUnit = "Iteration", yUnit = "s", xAllowDecimals = false });
+                else
+                    info("Comparing cases have different policy horizons! Policy will only contain the main case data.");
+                end
+
+                local exe_times = col_struct.generic[jstudy]:force_load("sddptimes");
+                if conv_file:loaded() then
+                    chart_exe_pol:add_column(exe_times:select_agent(2):rename_agent(col_struct.case_dir_list[jstudy]), {showInLegend = false});
+                end
+            end
+            
+            if #chart_exe_pol > 0 then
+                tab:push(chart_exe_pol);
+             end
+
+            if #chart_time_forw > 0 then
+                tab:push(chart_time_forw);
+            end
+
+            if #chart_time_back > 0 then
+                tab:push(chart_time_back);
+            end
+        else
+            conv_file = col_struct.generic[1]:force_load(file);
+            time_age = conv_file:select_agents({ 7, 8 }); -- Forw. time, Back. time
+            
+            chart = Chart(dictionary.fwd_bwd_time[LANGUAGE]);
+            chart:add_line(time_age:rename_agents({"Forward","Backward"}), { xUnit = "Iteration", yUnit = "s", xAllowDecimals = false }); -- Forw. and Back. times
+            
+            local exe_times = col_struct.generic[1]:force_load("sddptimes");
+            local chart_exe_pol = Chart(dictionary.exe_pol_times[LANGUAGE]);
+            chart_exe_pol:add_column(exe_times:select_agent(2), {showInLegend = false});
+
+            if #chart > 0 then
+                tab:push(chart);
+            end
+
+            if #chart_exe_pol > 0 then
+                tab:push(chart_exe_pol);
+            end
+            
+        end
+    end
+    
+    -------------
+    -- Simulation
+    -------------
+    tab:push("## " .. dictionary.tab_simulation[LANGUAGE]);
+    
+    if studies > 1 then
+        local chart_exe_sim = Chart(dictionary.exe_sim_times[LANGUAGE]);
+        
+        for istudy = 1, studies do
+            -- Execution times
+            local exe_times = col_struct.generic[istudy]:load("sddptimes");
+            chart_exe_sim:add_column(exe_times:select_agent(1):rename_agent(col_struct.case_dir_list[istudy]));
+        end
+        
+        if #chart_exe_sim > 0 then
+           tab:push(chart_exe_sim);
+        end
+
+    else
+        local chart_exe_sim = Chart(dictionary.exe_sim_times[LANGUAGE]);
+        
+        -- Simulation execution times
+        local exe_times = col_struct.generic[1]:load("sddptimes");
+        chart_exe_sim:add_column(exe_times:select_agent(1), {showInLegend = false});
+        
+        if #chart_exe_sim > 0 then
+           tab:push(chart_exe_sim);
+        end
+        
+        -- Execution times per scenario
+        if col_struct.study[1]:get_parameter("SCEN", 0) == 0 then -- SDDP scenarios does not have execution times per scenario
+            create_exe_timer_per_scen(tab, col_struct, 1);
+        end
+    end
+    
+    return tab;
+end 
+
+-----------------------------------------------------------------------------------------------
 -- Simulation costs report function
 -----------------------------------------------------------------------------------------------
 
-function create_costs_and_revs(col_struct)
-    local tab = Tab(dictionary.tab_cost_revenues[LANGUAGE]);
+function create_costs_and_revs(col_struct, tab)
 
     local chart = Chart(dictionary.disp_of_operation_cost[LANGUAGE]);
     local chart_avg = Chart(dictionary.avg_operation_cost[LANGUAGE]);
@@ -1194,7 +1420,7 @@ function create_costs_and_revs(col_struct)
         if studies > 1 then
             if is_greater_than_zero(disp) then
                 chart:add_area_range(disp:select_agent(1):add_prefix(col_struct.case_dir_list[i] .. " - "), disp:select_agent(3), { xUnit=dictionary.cell_stages[LANGUAGE], colors = light_global_color[i] }); -- Confidence interval
-                chart:add_line(disp:select_agent(2):add_prefix(col_struct.case_dir_list[i] .. " - "),{xUnit=dictionary.cell_stages[LANGUAGE]}); -- Average
+                chart:add_line(disp:select_agent(2):add_prefix(col_struct.case_dir_list[i] .. " - "),{xUnit=dictionary.cell_stages[LANGUAGE], colors = {main_global_color[i]} }); -- Average
             end
         else
             if is_greater_than_zero(disp) then
@@ -1217,8 +1443,8 @@ function create_costs_and_revs(col_struct)
     if #chart > 0 then
         tab:push(chart);
     end
-
-    return tab;
+    
+    return;
 end
 
 -----------------------------------------------------------------------------------------------
@@ -1369,7 +1595,6 @@ function create_gen_report(col_struct)
 
     -- Loading generations files
     for i = 1, studies do
-        local stages_without_buffer_years = col_struct.study[i]:stages_without_buffer_years();
 
         gerter[i] = col_struct.thermal[i]:load("gerter"):select_stages_of_outputs();
         gerhid[i] = col_struct.hydro[i]:load("gerhid"):select_stages_of_outputs();
@@ -1596,7 +1821,6 @@ function create_gen_report(col_struct)
             total_csp_gen   = gercsp[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_csp_agent_name);
 
             -- Renewable generation is broken into 3 types
-            local stages_without_buffer_years = col_struct.study[i]:stages_without_buffer_years();
 
             total_other_renw_gen = ifelse(col_struct.renewable[i].tech_type:ne(1):select_stages_of_outputs() &
                                           col_struct.renewable[i].tech_type:ne(2):select_stages_of_outputs() &
@@ -1724,14 +1948,14 @@ function create_viol_report(tab, col_struct, viol_struct, suffix)
         for i, struct in ipairs(viol_struct) do
 
             file_name = "sddp_dashboard_viol_" .. suffix .. "_" .. struct.name;
-            viol_file = col_struct.generic[1]:load(file_name);
+            viol_file = col_struct.generic[1]:force_load(file_name);
 
             -- Assuming agents in reference case(1st case) are the same as the ones in the others
             local agents = viol_file:agents();
             for j, agent in ipairs(agents) do
                 local chart = Chart(struct.title .. " - " .. agent);
                 for k = 1, studies do
-                    viol_file = col_struct.generic[k]:load(file_name):select_agent(agent):rename_agent(case_dir_list[k]);
+                    viol_file = col_struct.generic[k]:force_load(file_name):select_agent(agent):rename_agent(case_dir_list[k]);
                     if viol_file:loaded() then
                         chart:add_column_stacking(viol_file, {xUnit=dictionary.cell_stages[LANGUAGE]});
                     end
@@ -1742,7 +1966,7 @@ function create_viol_report(tab, col_struct, viol_struct, suffix)
     else
         for i, struct in ipairs(viol_struct) do
             file_name = "sddp_dashboard_viol_" .. suffix .. "_" .. struct.name;
-            viol_file = col_struct.generic[1]:load(file_name);
+            viol_file = col_struct.generic[1]:force_load(file_name);
             if viol_file:loaded() then
                 local chart = Chart(struct.title);
                 chart:add_column_stacking(viol_file, {xUnit=dictionary.cell_stages[LANGUAGE]});
@@ -1770,6 +1994,17 @@ function create_viol_report_from_list(tab, col_struct, viol_list, viol_struct, s
             end
         end
     end
+end
+
+-----------------------------------------------------------------------------------------------
+-- Warning and errors
+-----------------------------------------------------------------------------------------------
+
+function create_warning_and_errors_tab()
+    local tab = Tab(dictionary.error_and_warnings_tab[LANGUAGE]);
+    tab:set_icon("shield-alert");
+    tab:push_advices(advisor);
+    return tab
 end
 
 function create_operation_report(dashboard, studies, info_struct, info_existence_log, create_dashboard)
@@ -1834,7 +2069,13 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
         { name = "fcoffvio", title = dictionary.fcoffvio[LANGUAGE]},
         { name = "vflmnww" , title = dictionary.vflmnww[LANGUAGE]},
         { name = "vflmxww" , title = dictionary.vflmxww[LANGUAGE]},
-        { name = "finjvio" , title = dictionary.finjvio[LANGUAGE]}
+        { name = "finjvio" , title = dictionary.finjvio[LANGUAGE]},
+        {name = "lsserac_positive", title = dictionary.lsserac_pos[LANGUAGE]},
+        {name = "lsserac_negative", title = dictionary.lsserac_neg[LANGUAGE]},
+        {name = "lsserdc_positive", title = dictionary.lsserdc_pos[LANGUAGE]},
+        {name = "lsserdc_negative", title = dictionary.lsserdc_neg[LANGUAGE]},
+        {name = "lsserdcl_positive", title = dictionary.lsserdcl_pos[LANGUAGE]},
+        {name = "lsserdcl_negative", title = dictionary.lsserdcl_neg[LANGUAGE]},
     }
 
     -- Loading study collections
@@ -1868,7 +2109,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     ----------------
     local tab_inf = Tab(dictionary.tab_infeasibility[LANGUAGE]);
     tab_inf:set_icon("alert-triangle");
-
+    
     -- Infeasibility report
     if create_info_report then
         local has_inf = {};
@@ -1946,7 +2187,11 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
 
     -- Simulation report
     push_tab_to_tab(create_sim_report(col_struct),tab_solution_quality);
-
+    
+    -- Execution times
+    push_tab_to_tab(create_times_report(col_struct),tab_solution_quality);
+    
+    -- Finish solution quality
     push_tab_to_tab(tab_solution_quality, dashboard);
 
     ------------
@@ -2000,14 +2245,21 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     tab_results:set_collapsed(true);
     tab_results:set_disabled();
     tab_results:set_icon("line-chart");
-
-    push_tab_to_tab(create_costs_and_revs(col_struct),tab_results);
+    
     push_tab_to_tab(create_marg_costs(col_struct)    ,tab_results);
     push_tab_to_tab(create_gen_report(col_struct)    ,tab_results);
     push_tab_to_tab(create_risk_report(col_struct)   ,tab_results);
     push_tab_to_tab(create_inflow_energy(col_struct) ,tab_results);
 
     push_tab_to_tab(tab_results,dashboard);
+
+    ---------------------------
+    -- Warning and error
+    ---------------------------
+    local warning_error_tab = create_warning_and_errors_tab();
+    if #warning_error_tab > 0 then
+        push_tab_to_tab(warning_error_tab,dashboard);
+    end
 
     ---------------------------
     -- Case information summary

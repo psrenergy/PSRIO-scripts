@@ -52,6 +52,11 @@ dictionary = {
         es = "Energía afluente",
         pt = "Energia afluente"
     },
+    tab_losses = {
+        en = "Losses",
+        es = "Perdidas",
+        pt = "Perdas"
+    },
     tab_cmo = {
         en = "Marginal costs",
         es = "Costos marginales",
@@ -129,13 +134,13 @@ dictionary = {
     },
     forward_time = {
         en = "Execution time - Forward",
-        es = "Tiempo de ejecución - Adelante",
-        pt = "Tempo de execução - Direção à frente"
+        es = "Tiempo de ejecución - Forward",
+        pt = "Tempo de execução - Forward"
     },
     backward_time = {
         en = "Execution time - Backward",
-        es = "Tiempo de ejecución - Reverso",
-        pt = "Tempo de execução - Reverso"
+        es = "Tiempo de ejecución - Backward",
+        pt = "Tempo de execução - Backward"
     },
     new_cuts_per_iteration = {
         en = "New cuts per iteration",
@@ -162,10 +167,20 @@ dictionary = {
         es = "Porciones de los ingresos operativos totales",
         pt = "Parcelas das receitas operacionais totais"
     },
-    excution_times = {
+    execution_times = {
         en = "Execution times",
         es = "Tiempos de ejecución",
         pt = "Tempos de execução"
+    },
+    exe_sim_times = {
+        en = "Simulation execution time",
+        es = "Tiempo de ejecución simulación",
+        pt = "Tempo de execução simulação"
+    },
+    exe_pol_times = {
+        en = "Policy execution time",
+        es = "Tiempo de ejecución politica",
+        pt = "Tempo de execução política"
     },
     disp_of_operation_cost = {
         en = "Dispersion of operating costs per stage",
@@ -188,7 +203,7 @@ dictionary = {
         pt = "Custos marginais médios por estágio por sistema"
     },
     stg_cmo_ind = {
-        en = " carginal cost",
+        en = " marginal cost",
         es = " costo marginales",
         pt = " custo marginais"
     },
@@ -537,10 +552,25 @@ dictionary = {
         es = "Año inicial",
         pt = "Ano inicial"
     },
+    cell_plc_resolution = {
+        en = "Policy resolution",
+        es = "Resolución de la politica",
+        pt = "Resolução da política"
+    },
+    cell_sim_resolution = {
+        en = "Simulation resolution",
+        es = "Resolución de la simulación",
+        pt = "Resolução da simulação"
+    },
     cell_blocks = {
         en = "Blocks",
         es = "Bloques",
         pt = "Blocos"
+    },
+    cell_hourly = {
+        en = "Hourly",
+        es = "Horaria",
+        pt = "Horária"
     },
     cell_fwd_series = {
         en = "Foward series",
@@ -551,6 +581,11 @@ dictionary = {
         en = "Backward series",
         es = "Series Backward",
         pt = "Séries Backward"
+    },
+    cell_sim_series = {
+        en = "Simulated series",
+        es = "Series simuladas",
+        pt = "Séries Simuladas"
     },
     cell_hourly_representation = {
         en = "Hourly representation",
@@ -657,6 +692,11 @@ dictionary = {
         es = "Simulación",
         pt = "Simulação"
     },
+    cell_commercial_simulation = {
+        en = "Commercial simulation",
+        es = "Simulación comercial",
+        pt = "Simulação comercial"
+    },
     cell_monthly = {
         en = "Monthly",
         es = "Mensual",
@@ -696,5 +736,60 @@ dictionary = {
         en = "Sum of policy immediate costs up to the last stage plus the future cost function for additional years",
         es = "Suma de los costos inmediatos de la política hasta la última etapa más la función de costos futuros para años adicionales",
         pt = "Soma dos custos imediatos da política até a última etapa mais a função de custo futura para anos adicionais"
-    }
+    },
+    error_and_warnings_tab = {
+        en = "Errors and warnings",
+        es = "Errores y advertencias",
+        pt = "Erros e avisos"
+    },    
+    lsserac_pos = {
+        en = "AC circuit losses positive error",
+        es = "Error positivo de pérdidas en circuitos AC",
+        pt = "Erro positivo de perdas em circuitos AC"
+    },
+    lsserac_neg = {
+        en = "AC circuit losses negative error",
+        es = "Error negativo de pérdidas en circuitos AC",
+        pt = "Erro negativo de perdas em circuitos AC"
+    },
+    lsserdc_pos = {
+        en = "DC circuit losses positive error",
+        es = "Error positivo de pérdidas en circuitos CC",
+        pt = "Erro positivo de perdas em circuitos CC"
+    },
+    lsserdc_neg = {
+        en = "DC circuit losses negative error",
+        es = "Error negativo de pérdidas en circuitos CC",
+        pt = "Erro negativo de perdas em circuitos CC"
+    },
+    lsserdcl_pos = {
+        en = "DC link losses positive error",
+        es = "Error positivo de pérdidas en enlaces CC",
+        pt = "Erro positivo de perdas em elos CC"
+    },
+    lsserdcl_neg = {
+        en = "DC link losses negative error",
+        es = "Error negativo de pérdidas en enlaces CC",
+        pt = "Erro negativo de perdas em elos CC"
+    },
+    losses_msg_ac = {
+        en = "Sum of positive/negative linear and quadratic losses deviations in AC circuits of the case",
+        es = "Suma de desviaciones de pérdidas lineales y cuadráticas positivas/negativas en circuitos de corriente alterna del caso",
+        pt = "Soma de desvios de perdas lineares e quadráticas positivas/negativas em circuitos de corrente alternada do caso"
+    },
+    losses_msg_dc = {
+        en = "Sum of positive/negative linear and quadratic losses deviations in DC circuits of the case",
+        es = "Suma de desviaciones de pérdidas lineales y cuadráticas positivas/negativas en circuitos de corriente continua del caso",
+        pt = "Soma de desvios de perdas lineares e quadráticas positivas/negativas em circuitos de corrente contínua do caso"
+    },
+    sum_of_circ = {
+        en = "Sum of circuits",
+        es = "Suma the circuitos",
+        pt = "Soma de circuitos"
+    },
+    others = {
+        en = "Others",
+        es = "Otros",
+        pt = "Outros"
+    },
 };
