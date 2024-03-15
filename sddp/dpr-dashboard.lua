@@ -14,4 +14,4 @@ tab:push(chart);
 
 local dashboard = Dashboard()
 dashboard:push(tab)
-dashboard:save("dashboard_DLR")
+dashboard:save("dashboard_DPR")
