@@ -142,7 +142,9 @@ local function save_outputs()
        { label = "min_spill", unit_conversion = "hm3" },       -- "min_spillage",
        { label = "min_total_otflw", unit_conversion = "hm3" }, -- "min_total_outflow",
        { label = "minimum_turbine", unit_conversion = "hm3" },
-       { label = "target_storage", unit_conversion = "hm3" }
+       { label = "target_storage", unit_conversion = "hm3" },
+       { label = "max_outflow_ramp_up", unit_conversion = "hm3" },
+       { label = "max_outflow_ramp_down", unit_conversion = "hm3" }
     };
 
     for _, violation in ipairs(violations) do
