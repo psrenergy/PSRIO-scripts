@@ -14,7 +14,7 @@ local dictionary<const> = {
 local statements<const> = {
     convergence_gap = {
         en = [[
-The convergence gap was not met according to the Convergence chart in the Policy tab. Please, consider the following options:
+The convergence gap was not met according to the "Convergence" chart in the "Policy" tab. Please, consider the following options:
 
 🠊 Increase the number of iterations to be considered by the model.
 ```
@@ -28,7 +28,7 @@ The convergence gap was not met according to the Convergence chart in the Policy
 ```
 ]],
         es = [[
-El gap de convergencia no se cumplió, según lo indicado en el gráfico de Convergencia en la pestaña de Política. Por favor, considere las siguientes opciones:            
+El gap de convergencia no se cumplió, según lo indicado en el gráfico de "Convergencia" en la pestaña de "Política". Por favor, considere las siguientes opciones:            
 
 🠊 Aumenta el número de iteraciones a considerar por el modelo.
 ```
@@ -42,7 +42,7 @@ El gap de convergencia no se cumplió, según lo indicado en el gráfico de Conv
 ```
 ]],
         pt = [[
-O gap de convergência não foi atendido, conforme indicado pelo gráfico de Convergência na guia de Política. Por favor, considere as seguintes opções:
+O gap de convergência não foi atendido, conforme indicado pelo gráfico de "Convergência" na guia de "Política". Por favor, considere as seguintes opções:
 
 🠊 Aumente o número de iterações a serem consideradas pelo modelo.
 ```
@@ -58,7 +58,7 @@ O gap de convergência não foi atendido, conforme indicado pelo gráfico de Con
     },
     simulation_cost = {
         en = [[
-The estimated cost in the operating policy does not match the simulation cost according to the Policy x Final simulation objective functions chart in the Policy tab. Please, consider the following options:
+The estimated cost in the operating policy does not match the simulation cost according to the "Objective function: Policy x Final simulation" chart in the "Policy" tab. Please, consider the following options:
 
 🠊 Consider non-linearities during the calculation of the policy made by the model.
 ```
@@ -74,7 +74,7 @@ policy calculation' and 'Production coefficient in final simulation' (in respect
 ```
 ]],
         es = [[
-El costo estimado en la política operativa no coincide con el costo de la simulación según el gráfico Política x Funciones objetivo de la simulación final en la pestaña de Política. Por favor, considere las siguientes opciones:
+El costo estimado en la política operativa no coincide con el costo de la simulación según el gráfico "Función objetivo: Política x Simulación Final" en la pestaña de "Política". Por favor, considere las siguientes opciones:
 
 🠊 Considere las no linealidades durante el cálculo de la política realizada por el modelo.
 ```
@@ -90,7 +90,7 @@ El costo estimado en la política operativa no coincide con el costo de la simul
 ```
 ]],
         pt = [[
-O custo estimado na política operativa não condiz com o custo da simulação de acordo com o grafico Política x Funções objetivo da simulação final na guia de Política; por favor, considere as seguintes opções:
+O custo estimado na política operativa não condiz com o custo da simulação de acordo com o grafico "Função objetivo: Política x Simulação final" na guia de "Política"; por favor, considere as seguintes opções:
 
 🠊 Considere as não linearidades durante o cálculo da política feita pelo modelo.
 ```
@@ -108,7 +108,7 @@ de produção na política' e no 'Coeficiente de produção na simulação final
     },
     mip_convergence = {
         en = [[
-The MIP convergence gap was not met for some solutions, as indicated by the Solution Status per Stage and Scenario chart in the Simulation tab. Please consider the following options:
+The MIP convergence gap was not met for some solutions, as indicated by the "Solution Status per Stage and Scenario" chart in the "Simulation" tab. Please consider the following options:
 
 🠊 Increase the MIP maximum execution time
 ```
@@ -123,7 +123,7 @@ The MIP convergence gap was not met for some solutions, as indicated by the Solu
 ```
 ]],
         es = [[
-El gap de convergencia del MIP no se cumplió para algunas soluciones, según lo indicado en el gráfico de Estado de la Solución por Etapa y Escenario en la pestaña de Simulación. Considere las siguientes opciones:
+El gap de convergencia del MIP no se cumplió para algunas soluciones, según lo indicado en el gráfico de "Estado de la Solución por Etapa y Escenario" en la pestaña de "Simulación". Considere las siguientes opciones:
 
 🠊 Aumentar el tiempo máximo de ejecución de MIP
 ```
@@ -138,7 +138,7 @@ El gap de convergencia del MIP no se cumplió para algunas soluciones, según lo
 ```
 ]],
         pt = [[
-O gap de convergência do MIP não foi atendido para algumas soluções, conforme indicado pelo gráfico de Status da Solução por Estágio e Cenário na guia de Simulação. Considere as seguintes opções:
+O gap de convergência do MIP não foi atendido para algumas soluções, conforme indicado pelo gráfico de "Status da Solução por Estágio e Cenário" na guia de "Simulação". Considere as seguintes opções:
 
 🠊 Aumentar o tempo máximo de execução do MIP
 ```
@@ -155,21 +155,21 @@ O gap de convergência do MIP não foi atendido para algumas soluções, conform
     },
     obj_costs = {
         en = [[
-The costs associated with violations exceed 20% of the objective function cost in the simulation, as indicated by the Breakdown of Total Operating Cost chart within the Simulation tab. Please consider the following options:
+The costs associated with violations exceed 20% of the objective function cost in the simulation, as indicated by the "Breakdown of Total Operating Cost" chart within the "Simulation" tab. Please consider the following options:
 
 🠊 Review the Violations tab to gain a clearer understanding of the most significant violations and identify the stages where penalties are more pronounced.
 🠊 Evaluate if the constraints can be met or if they should be relaxed.
 🠊 Evaluate if the values of penalties for each violation were correclty calibrated.
 ]],
         es = [[
-Los costos asociados con las violaciones superan el 20% de el costo de la funcion objetivo en la simulacion, como se indica en el gráfico Porciones de el costo operativo total dentro de la pestaña de Simulación. Por favor, considere las siguientes opciones:
+Los costos asociados con las violaciones superan el 20% de el costo de la funcion objetivo en la simulacion, como se indica en el gráfico "Porciones de el costo operativo total" dentro de la pestaña de "Simulación". Por favor, considere las siguientes opciones:
 
 🠊 Revise la pestaña de Violaciones para comprender mejor las violaciones más significativas e identificar las etapas donde las penalidades son más pronunciadas.
 🠊 Evalúe si se pueden cumplir las restricciones o si deben ser relajadas.
 🠊 Evalúe si los valores de las penalizaciones por cada violación fueron calibradas correctamente.
 ]],
         pt = [[
-Os custos associados às violações excedem 20% do custo da função objetivo na simulação, conforme indicado pelo gráfico Parcelas do custo operacional total na guia de Simulação. Por favor, considere as seguintes opções:
+Os custos associados às violações excedem 20% do custo da função objetivo na simulação, conforme indicado pelo gráfico "Parcelas do custo operacional total" na guia de "Simulação". Por favor, considere as seguintes opções:
 
 🠊 Analise a guia de Violações para entender melhor as violações mais significativas e identificar as etapas onde as penalidades são mais expressivas.
 🠊 Avalie se as restrições podem ser atendidas ou se devem ser relaxadas.

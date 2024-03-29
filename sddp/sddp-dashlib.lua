@@ -1096,7 +1096,7 @@ function create_pol_report(col_struct)
                 end
 
                 -- Take expression and use it as mask for "final_sim_cost"
-                conv_age_aux = conv_age:select_agent(1):rename_agent("Final simulation");
+                conv_age_aux = conv_age:select_agent(1):rename_agent(dictionary.final_simulation[LANGUAGE]);
                 final_sim_cost = conv_age_aux:fill(immediate_cost);
 
             end
@@ -1126,15 +1126,8 @@ function create_pol_report(col_struct)
 
             if (show_sim_cost and has_results_for_add_years) then
                 -- Final simulation cost
-                chart_conv:add_line(final_sim_cost:rename_agent("Final simulation"), { colors = { "#D37295" }, xAllowDecimals = false });
+                chart_conv:add_line(final_sim_cost:rename_agent(dictionary.final_simulation[LANGUAGE]), { colors = { "#D37295" }, xAllowDecimals = false });
 
-                -- Deviation error
-                zsup = conv_file:select_agent(3);
-                last_zsup = zsup:to_list()[zsup:last_stage()];
-                rel_diff = (immediate_cost - last_zsup)/immediate_cost;
-                if rel_diff > REP_DIFF_TOL or -rel_diff < -REP_DIFF_TOL then
-                    advisor:push_warning("simulation_cost");
-                end
             end
             tab:push(chart_conv);
 
@@ -1153,16 +1146,18 @@ function create_pol_report(col_struct)
                 chart:add_area_range(conv_age:select_agents({ 1 }):rename_agent(""), conv_age:select_agents({ 3 }):rename_agent("Zsup (IC+FCF) +- Tol"), { colors = { "#FFD8DC", "#FFD8DC" }, xUnit = "Iteration", xAllowDecimals = false, showInLegend = true });
 
                 -- Final simulation cost
-                chart:add_line(final_sim_cost:rename_agent("Final simulation"), { colors = { "#D37295" }, xAllowDecimals = false });
+                chart:add_line(final_sim_cost:rename_agent(dictionary.final_simulation[LANGUAGE]), { colors = { "#D37295" }, xAllowDecimals = false });
 
                 -- Deviation error
                 zsup = conv_file:select_agent(10);
                 last_zsup = zsup:to_list()[zsup:last_stage()];
                 rel_diff = (immediate_cost - last_zsup)/immediate_cost;
                 if rel_diff > REP_DIFF_TOL or -rel_diff < -REP_DIFF_TOL then
-                    tab:push("**WARNING**");
-                    tab:push("The objective function value of the final simulation deviates by " .. string.format("%.1f",100*rel_diff) .. "% from objective function of the last iteration of the policy phase.");
-                    tab:push("This indicates that the policy representation lacks critical system characteristics, potentially resulting in a suboptimal solution in final simulation.");
+                    tab:push("**"..dictionary.warning[LANGUAGE].."**");
+                    tab:push(dictionary.deviation_error[1][LANGUAGE] .. string.format("%.1f",100*rel_diff) .. dictionary.deviation_error[2][LANGUAGE]);
+                    tab:push(dictionary.deviation_error[3][LANGUAGE]);
+                
+                    advisor:push_warning("simulation_cost");
                 end
 
                 tab:push(chart);
@@ -1188,7 +1183,7 @@ function create_pol_report(col_struct)
             -----------------------------------------------------------------------------------------------------------
             -- Convergence map
             -----------------------------------------------------------------------------------------------------------
-            create_conv_map_graph(tab, convm_file_list[i], col_struct, 1);
+            -- create_conv_map_graph(tab, convm_file_list[i], col_struct, 1);
         end
     end
 

@@ -148,9 +148,9 @@ dictionary = {
         pt = "Novos cortes por iteração"
     },
     policy_simulation = {
-        en = "Policy x Final simulation objective functions",
-        es = "Política x Funciones objetivo de la simulación final",
-        pt = "Política x Funções objetivo da simulação final"
+        en = "Objective function: Policy x Final simulation",
+        es = "Función objetivo: Política x Simulación Final",
+        pt = "Função objetivo: Política x Simulação final"
     },
     fwd_bwd_time = {
         en = "Forward and backward execution times",
@@ -726,6 +726,28 @@ dictionary = {
         en = "Final simulation",
         es = "Simulación final",
         pt = "Simulação final"
+    },
+    warning = {
+        en = "WARNING",
+        es = "ADVERTENCIA",
+        pt = "AVISO"
+    },
+    deviation_error = {
+        [1] = {
+            en = "The objective function value of the final simulation deviates by ",
+            es = "El valor de la función objetivo de la simulación final se desvía en ",
+            pt = "O valor da função objetivo da simulação final desvia-se em "
+        },
+        [2] = {
+            en = "% from objective function of the last iteration of the policy phase.",
+            es = "% de la función objetivo de la última iteración de la fase de política.",
+            pt = "% da função objetivo da última iteração da fase de política."
+        },
+        [3] = {
+            en = "This indicates that the policy representation lacks critical system characteristics, potentially resulting in a suboptimal solution in final simulation.",
+            es = "Esto indica que la representación de la política carece de características críticas del sistema, lo que podría resultar en una solución subóptima en la simulación final.",
+            pt = "Isso indica que a representação da política carece de características críticas do sistema, potencialmente resultando em uma solução subótima na simulação final."
+        }
     },
     final_simulation_mensage = {
         en = "Sum of the final simulation immediate costs up to the last stage plus the future cost function for additional years",
