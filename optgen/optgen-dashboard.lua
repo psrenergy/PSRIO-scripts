@@ -374,11 +374,13 @@ end
 
 local function identify_if_opt2()
     for case = 1, cases do
-        if study[case]:get_parameter("Keywords", "OPTG", -1) ~= 2 then
-            return false;
+        if study[case]:get_parameter("OPTG", -1) == 2 and not
+          (study[case]:get_parameter("ReadExpansionPlan", -1) == 2 and 
+           study[case]:get_parameter("DecisionType", -1) == 1) then
+            return true;
         end
     end
-    return true;
+    return false;
 end
 
 local function identify_if_has_network()
