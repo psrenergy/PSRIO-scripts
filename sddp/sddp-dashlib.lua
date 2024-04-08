@@ -1463,19 +1463,34 @@ function create_marg_costs(col_struct)
     end
 
     -- Marginal cost aggregated by average
-    local chart = Chart(dictionary.annual_cmo[LANGUAGE]);
+    tab:push("## " .. dictionary.annual_cmo[LANGUAGE]);
     if studies > 1 then
+        local system_data = {};
         for i = 1, studies do
             cmg_aggyear = cmg[i]:aggregate_blocks_by_duracipu(i):aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[i].hours:select_stages_of_outputs(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM);
 
+            for _,system in ipairs(cmg_aggyear:agents()) do
+                if system_data[system] then
+                    table.insert(system_data[system], cmg_aggyear:select_agent(system):rename_agent(col_struct.case_dir_list[i]));
+                else
+                    system_data[system] = {cmg_aggyear:select_agent(system):rename_agent(col_struct.case_dir_list[i])};
+                end
+            end
+        end
+        
+        for system, data in pairs(system_data) do
+            local chart = Chart(system);
+
             -- Add marginal costs outputs
-            chart:add_categories(cmg_aggyear, col_struct.case_dir_list[i], { xUnit=dictionary.cell_year[LANGUAGE] }); -- Annual Marg. cost
+            chart:add_column(concatenate(data)); -- Annual Marg. cost
+            tab:push(chart);
         end
     else
+        local chart = Chart(dictionary.annual_cmo[LANGUAGE]);
         cmg_aggyear = cmg[1]:aggregate_blocks_by_duracipu():aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[1].hours:select_stages_of_outputs(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE());
         chart:add_column(cmg_aggyear, { xUnit=dictionary.cell_year[LANGUAGE] });
+        tab:push(chart);
     end
-    tab:push(chart);
 
     if studies > 1 then
         tab:push("## " .. dictionary.stg_cmo[LANGUAGE]);
