@@ -888,7 +888,7 @@ function create_penalty_proportion_graph(tab, col_struct, i)
     penp:convert("%");
 
     local chart = Chart(report_title .. " (%)");
-    chart:add_heatmap_series(penp, { yLabel = dictionary.cell_scenarios[LANGUAGE], xLabel = dictionary.cell_stages[LANGUAGE], showInLegend = false, stops = { { 0.0, "#4E79A7" }, { 0.5, "#FBEEB3" }, { 1.0, "#C64B3E" } }, stopsMin = 0.0, stopsMax = 100.0 });
+    chart:add_heatmap_series(penp, { yLabel = dictionary.cell_scenarios[LANGUAGE], xLabel = dictionary.cell_stage[LANGUAGE], showInLegend = false, stops = { { 0.0, "#4E79A7" }, { 0.5, "#FBEEB3" }, { 1.0, "#C64B3E" } }, stopsMin = 0.0, stopsMax = 100.0 });
     tab:push(chart);
 end
 
@@ -977,7 +977,7 @@ function create_exe_timer_per_scen(tab, col_struct, i)
         extime_chart = Chart(dictionary.dispersion_of_time[LANGUAGE]);
         extime_chart:add_area_range(extime_disp:select_agent("MIN"):convert(unit),
                                     extime_disp:select_agent("MAX"):convert(unit),
-                                    { xUnit = dictionary.cell_stages[LANGUAGE], colors = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
+                                    { xUnit = dictionary.cell_stage[LANGUAGE], colors = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
         extime_chart:add_line(extime_disp:select_agent(dictionary.cell_average[LANGUAGE]):convert(unit),
                               { xUnit = dictionary.cell_stages[LANGUAGE], colors = { "#F02720" } });                  -- Average
 
