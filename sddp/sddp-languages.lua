@@ -414,7 +414,7 @@ dictionary = {
     },
     vgmntt = {
         en = "Thermal: minimum technical generation",
-        es = "Térmica: generacion minima tecnica",
+        es = "Térmica: generación minima tecnica",
         pt = "Térmica: geracao minima tecnica"
     },
     vioemiq = {

@@ -1710,34 +1710,34 @@ function create_gen_report(col_struct)
 
         if studies > 1 then
             if total_hydro_gen:loaded() then
-                chart_tot_gerhid:add_column(total_hydro_gen, { xUnit=dictionary.cell_stage[LANGUAGE]});
+                chart_tot_gerhid:add_column(total_hydro_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_hydro }});
             end
             if total_thermal_gen:loaded() then
-                chart_tot_gerter:add_column(total_thermal_gen, { xUnit=dictionary.cell_stage[LANGUAGE]});
+                chart_tot_gerter:add_column(total_thermal_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_thermal }});
             end
             if total_other_renw_gen:loaded() then
-                chart_tot_other_renw:add_column(total_other_renw_gen, { xUnit=dictionary.cell_stage[LANGUAGE]});
+                chart_tot_other_renw:add_column(total_other_renw_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_renw_other }});
             end
             if total_wind_gen:loaded() then
-                chart_tot_renw_wind:add_column(total_wind_gen, { xUnit=dictionary.cell_stage[LANGUAGE]});
+                chart_tot_renw_wind:add_column(total_wind_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_wind }});
             end
             if total_solar_gen:loaded() then
-                chart_tot_renw_solar:add_column(total_solar_gen, { xUnit=dictionary.cell_stage[LANGUAGE]});
+                chart_tot_renw_solar:add_column(total_solar_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_solar }});
             end
             if total_small_hydro_gen:loaded() then
-                chart_tot_renw_shyd:add_column(total_small_hydro_gen, { xUnit=dictionary.cell_stage[LANGUAGE]});
+                chart_tot_renw_shyd:add_column(total_small_hydro_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_small_hydro }});
             end
             if total_csp_gen:loaded() then
-                chart_tot_renw_csp:add_column(total_csp_gen, { xUnit=dictionary.cell_stage[LANGUAGE]});
+                chart_tot_renw_csp:add_column(total_csp_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_csp }});
             end
             if total_batt_gen:loaded() then
-                chart_tot_gerbat:add_column(total_batt_gen, { xUnit=dictionary.cell_stage[LANGUAGE]});
+                chart_tot_gerbat:add_column(total_batt_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_battery }});
             end
             if total_pot_inj:loaded() then
-                chart_tot_potinj:add_column(total_pot_inj, { xUnit=dictionary.cell_stage[LANGUAGE]});
+                chart_tot_potinj:add_column(total_pot_inj, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_pinj }});
             end
             if total_deficit:loaded() then
-                chart_tot_defcit:add_column(total_deficit, { xUnit=dictionary.cell_stage[LANGUAGE]});
+                chart_tot_defcit:add_column(total_deficit, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_deficit }});
             end
         else
             chart:add_area_stacking(total_thermal_gen    , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_thermal     } });
@@ -1875,36 +1875,36 @@ function create_gen_report(col_struct)
             total_thermal_gen     = gerter[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(thermal_agent_name);
 
             if total_hydro_gen:loaded() and col_struct.hydro[i].system:eq(code[s]):remove_zeros():loaded() then
-                chart_tot_gerhid:add_column(total_hydro_gen, { xUnit=dictionary.cell_stage[LANGUAGE]});
+                chart_tot_gerhid:add_column(total_hydro_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_hydro }});
             end
             if total_thermal_gen:loaded() and col_struct.thermal[i].system:eq(code[s]):remove_zeros():loaded() then
-                chart_tot_gerter:add_column(total_thermal_gen, { xUnit=dictionary.cell_stage[LANGUAGE]});
+                chart_tot_gerter:add_column(total_thermal_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_thermal }});
             end
             if col_struct.renewable[i].system:eq(code[s]):remove_zeros():loaded() then
                 if total_other_renw_gen:loaded() and (col_struct.renewable[i].tech_type:ne(1) + col_struct.renewable[i].tech_type:ne(2) + col_struct.renewable[i].tech_type:ne(4)):remove_zeros():loaded() then
-                    chart_tot_renw_other:add_column(total_other_renw_gen, { xUnit=dictionary.cell_stage[LANGUAGE]});
+                    chart_tot_renw_other:add_column(total_other_renw_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_renw_other }});
                 end
                 if total_wind_gen:loaded() and col_struct.renewable[i].tech_type:eq(1):remove_zeros():loaded() then
-                    chart_tot_renw_wind:add_column(total_wind_gen, { xUnit=dictionary.cell_stage[LANGUAGE]});
+                    chart_tot_renw_wind:add_column(total_wind_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_wind }});
                 end
                 if total_solar_gen:loaded() and col_struct.renewable[i].tech_type:eq(2):remove_zeros():loaded() then
-                    chart_tot_renw_solar:add_column(total_solar_gen, { xUnit=dictionary.cell_stage[LANGUAGE]});
+                    chart_tot_renw_solar:add_column(total_solar_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_solar }});
                 end
                 if total_small_hydro_gen:loaded() and col_struct.renewable[i].tech_type:eq(4):remove_zeros():loaded() then
-                    chart_tot_renw_shyd:add_column(total_small_hydro_gen, { xUnit=dictionary.cell_stage[LANGUAGE]});
+                    chart_tot_renw_shyd:add_column(total_small_hydro_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_small_hydro }});
                 end
             end
             if total_csp_gen:loaded() and col_struct.csp[i].system:eq(code[s]):remove_zeros():loaded() then
-                chart_tot_renw_csp:add_column(total_csp_gen, { xUnit=dictionary.cell_stage[LANGUAGE]});
+                chart_tot_renw_csp:add_column(total_csp_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_csp }});
             end
             if total_batt_gen:loaded() and col_struct.battery[i].system:eq(code[s]):remove_zeros():loaded() then
-                chart_tot_gerbat:add_column(total_batt_gen, { xUnit=dictionary.cell_stage[LANGUAGE]});
+                chart_tot_gerbat:add_column(total_batt_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_battery }});
             end
             if total_pot_inj:loaded() and col_struct.power_injection[i].system:eq(code[s]):remove_zeros():loaded() then
-                chart_tot_potinj:add_column(total_pot_inj, { xUnit=dictionary.cell_stage[LANGUAGE]});
+                chart_tot_potinj:add_column(total_pot_inj, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_pinj }});
             end
             if total_deficit:loaded() then
-                chart_tot_defcit:add_column(total_deficit, { xUnit=dictionary.cell_stage[LANGUAGE]});
+                chart_tot_defcit:add_column(total_deficit, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_deficit }});
             end
         end
 
