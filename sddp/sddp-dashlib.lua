@@ -93,6 +93,22 @@ function adjust_data_for_add_categories(table_aux) -- will be deprecated soon (n
     end
     return adjusted_table
 end
+
+function Expression.change_currency_configuration(self,index)
+    if self:loaded() then
+        local study = Study(index or 1);
+        local replacement = study:get_parameter("CurrencyReference","none");
+        if replacement ~= "none" then
+            local original_string = self:unit();
+            if string.find(original_string, "k%$") then
+                return self:force_unit("k"..replacement);
+            elseif string.find(original_string, "$/MWh") then
+                return self:force_unit(replacement .. "/MWh");
+            end
+        end
+    end
+    return self;
+end
 -----------------------------------------------------------------------------------------------
 -- Overloads
 -----------------------------------------------------------------------------------------------
@@ -364,7 +380,7 @@ function get_nonconv_info(col_struct, file_name, nonconv_list, dimension, case_i
     local nonconv = col_struct.generic[case_index]:load_table(file_name);
 
     for i = 1, #nonconv do
-        nonconv_list[i] = trim(nonconv[i]["Type"]);
+        nonconv_list[i] = non_convexities_labels[nonconv[i]["Type"]];
         dimension[i]    = trim(nonconv[i]["Dimension"]);
     end
 end
@@ -757,12 +773,12 @@ function create_inflow_energy(col_struct)
         for i = 1, studies do
 
             -- Confidence interval
-            chart:add_area_range(inferg[i]:select_agent(1):add_prefix(col_struct.case_dir_list[i] .. " - "), inferg[i]:select_agent(3), { xUnit=dictionary.cell_stages[LANGUAGE], colors = { light_global_color[i], light_global_color[i] } });
+            chart:add_area_range(inferg[i]:select_agent(1):add_prefix(col_struct.case_dir_list[i] .. " - "), inferg[i]:select_agent(3), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { light_global_color[i], light_global_color[i] } });
             chart:add_line(inferg[i]:select_agent(2):add_prefix(col_struct.case_dir_list[i] .. " - ")); -- average
         end
     else
         -- Confidence interval
-        chart:add_area_range(inferg[1]:select_agent(1), inferg[1]:select_agent(3), { xUnit=dictionary.cell_stages[LANGUAGE], colors = { light_global_color[1], light_global_color[1] } });
+        chart:add_area_range(inferg[1]:select_agent(1), inferg[1]:select_agent(3), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { light_global_color[1], light_global_color[1] } });
         chart:add_line(inferg[1]:select_agent(2)); -- average
     end
 
@@ -783,9 +799,14 @@ function get_conv_file_info(col_struct, file_name, file_list, systems, horizons,
 
     local file_name = "";
     for i = 1, #sddppol do
-        file_name = sddppol[i]["FileNames"]
-        file_list[i] = string.sub(file_name, 1, #file_name - 4)
-        systems[i] = sddppol[i]["System"]
+        file_name = sddppol[i]["FileNames"];
+        file_list[i] = string.sub(file_name, 1, #file_name - 4);
+
+        systems[i] = sddppol[i]["System"];
+        if systems[i] == "INTEGRATED" then
+            systems[i] = dictionary.integrated[LANGUAGE];
+        end
+        
         horizons[i] = sddppol[i]["InitialHorizon"] .. "-" .. sddppol[i]["FinalHorizon"];
     end
 end
@@ -867,7 +888,7 @@ function create_penalty_proportion_graph(tab, col_struct, i)
     penp:convert("%");
 
     local chart = Chart(report_title .. " (%)");
-    chart:add_heatmap_series(penp, { yLabel = "Scenario", xLabel = dictionary.cell_stages[LANGUAGE], showInLegend = false, stops = { { 0.0, "#4E79A7" }, { 0.5, "#FBEEB3" }, { 1.0, "#C64B3E" } }, stopsMin = 0.0, stopsMax = 100.0 });
+    chart:add_heatmap_series(penp, { yLabel = dictionary.cell_scenarios[LANGUAGE], xLabel = dictionary.cell_stage[LANGUAGE], showInLegend = false, stops = { { 0.0, "#4E79A7" }, { 0.5, "#FBEEB3" }, { 1.0, "#C64B3E" } }, stopsMin = 0.0, stopsMax = 100.0 });
     tab:push(chart);
 end
 
@@ -881,7 +902,7 @@ function create_conv_map_graph(tab, file_name, col_struct, i)
     end
 
     local options = {
-        yLabel = "Iteration",
+        yLabel = dictionary.iteration[LANGUAGE],
         xLabel = dictionary.cell_stages[LANGUAGE],
         showInLegend = false,
         stopsMin = 0,
@@ -942,7 +963,7 @@ function create_exe_timer_per_scen(tab, col_struct, i)
         return
     end
     
-    local extime_disp = concatenate(extime:aggregate_agents(BY_SUM(), "MIN"):aggregate_scenarios(BY_MIN()), extime:aggregate_agents(BY_SUM(), "Average"):aggregate_scenarios(BY_AVERAGE()), extime:aggregate_agents(BY_SUM(), "MAX"):aggregate_scenarios(BY_MAX()));
+    local extime_disp = concatenate(extime:aggregate_agents(BY_SUM(), "MIN"):aggregate_scenarios(BY_MIN()), extime:aggregate_agents(BY_SUM(), dictionary.cell_average[LANGUAGE]):aggregate_scenarios(BY_AVERAGE()), extime:aggregate_agents(BY_SUM(), "MAX"):aggregate_scenarios(BY_MAX()));
     if is_greater_than_zero(extime_disp) then
         local unit = "hour";
         local extime_disp_data = extime_disp:aggregate_scenarios(BY_MAX()):aggregate_stages(BY_MAX()):to_list();
@@ -956,8 +977,8 @@ function create_exe_timer_per_scen(tab, col_struct, i)
         extime_chart = Chart(dictionary.dispersion_of_time[LANGUAGE]);
         extime_chart:add_area_range(extime_disp:select_agent("MIN"):convert(unit),
                                     extime_disp:select_agent("MAX"):convert(unit),
-                                    { xUnit = dictionary.cell_stages[LANGUAGE], colors = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
-        extime_chart:add_line(extime_disp:select_agent("Average"):convert(unit),
+                                    { xUnit = dictionary.cell_stage[LANGUAGE], colors = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
+        extime_chart:add_line(extime_disp:select_agent(dictionary.cell_average[LANGUAGE]):convert(unit),
                               { xUnit = dictionary.cell_stages[LANGUAGE], colors = { "#F02720" } });                  -- Average
 
         if #extime_chart > 0 then
@@ -1021,7 +1042,7 @@ function create_pol_report(col_struct)
                     cuts_age = conv_file:select_agents({ 5, 6 }); -- Optimality  ,Feasibility
 
                     -- Confidence interval
-                    chart_conv:add_area_range(conv_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup - Tol"), conv_age:select_agents({ 4 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup + Tol"), { colors = { light_global_color[j], light_global_color[j] }, xUnit = "Iteration", xAllowDecimals = false, showInLegend = true });
+                    chart_conv:add_area_range(conv_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup - Tol"), conv_age:select_agents({ 4 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup + Tol"), { colors = { light_global_color[j], light_global_color[j] }, xUnit = dictionary.iteration[LANGUAGE], xAllowDecimals = false, showInLegend = true });
 
                     -- Zsup
                     chart_conv:add_line(conv_age:select_agents({ 3 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup"), { colors = { main_global_color[j] }, xAllowDecimals = false, visible = zsup_is_visible });
@@ -1030,11 +1051,11 @@ function create_pol_report(col_struct)
                     chart_conv:add_line(conv_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j] .. " - Zinf"), { colors = { main_global_color[j] }, xAllowDecimals = false, dashStyle = "dash" }); -- Zinf
 
                     -- Cuts - optimality
-                    chart_cut_opt:add_column(cuts_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
+                    chart_cut_opt:add_column(cuts_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = dictionary.iteration[LANGUAGE], xAllowDecimals = false });
 
                     -- Cuts - feasibility
                     if is_greater_than_zero(cuts_age:select_agents({ 2 })) then
-                        chart_cut_feas:add_column(cuts_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = "Iteration", xAllowDecimals = false });
+                        chart_cut_feas:add_column(cuts_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = dictionary.iteration[LANGUAGE], xAllowDecimals = false });
                     end
                 else
                     info("Comparing cases have different policy horizons! Policy will only contain the main case data.");
@@ -1105,11 +1126,11 @@ function create_pol_report(col_struct)
             -- Convergence chart
             -----------------------------------------------------------------------------------------------------------
             -- Zinf
-            chart_conv:add_line(conv_age:select_agents({ 1 }), { xUnit = "Iteration", colors = { "#3CB7CC" }, xAllowDecimals = false });
+            chart_conv:add_line(conv_age:select_agents({ 1 }), { xUnit = dictionary.iteration[LANGUAGE], colors = { "#3CB7CC" }, xAllowDecimals = false });
             -- Zsup
             chart_conv:add_line(conv_age:select_agents({ 3 }):rename_agent("Zsup"), { colors = { "#32A251" }, xAllowDecimals = false });
             -- Confidence interval
-            chart_conv:add_area_range(conv_age:select_agents({ 2 }):rename_agent(""), conv_age:select_agents({ 4 }):rename_agent("Zsup +- Tol"), { colors = { "#ACD98D", "#ACD98D" }, xUnit = "Iteration", xAllowDecimals = false, visible = zsup_is_visible });
+            chart_conv:add_area_range(conv_age:select_agents({ 2 }):rename_agent(""), conv_age:select_agents({ 4 }):rename_agent("Zsup +- Tol"), { colors = { "#ACD98D", "#ACD98D" }, xUnit = dictionary.iteration[LANGUAGE], xAllowDecimals = false, visible = zsup_is_visible });
             
             local tolerance_for_convergence = tonumber(col_struct.study[1]:get_parameter("CriterioConvergencia", -1));
             
@@ -1137,20 +1158,20 @@ function create_pol_report(col_struct)
             if (show_sim_cost and not has_results_for_add_years) then
                 local chart = Chart(dictionary.policy_simulation[LANGUAGE]);
 
-                conv_age = conv_file:select_agents({ 9, 10, 11}); -- Zsup - Tol  ,Zsup        ,Zsup + Tol   (With FCF added in the last stage before additional years)
+                local conv_age = conv_file:select_agents({ 9, 10, 11}); -- Zsup - Tol  ,Zsup        ,Zsup + Tol   (With FCF added in the last stage before additional years)
 
                 -- Zsup
-                chart:add_line(conv_age:select_agents({ 2 }):rename_agent("Zsup (IC+FCF)"), { colors = { "#FF9DA7" }, xAllowDecimals = false });
+                chart:add_line(conv_age:select_agents({ 2 }):rename_agent("Zsup (IC+FCF)"), { colors = { "#FF9DA7" }, xAllowDecimals = false, xLabel = dictionary.iteration[LANGUAGE]});
 
                 -- Confidence interval
-                chart:add_area_range(conv_age:select_agents({ 1 }):rename_agent(""), conv_age:select_agents({ 3 }):rename_agent("Zsup (IC+FCF) +- Tol"), { colors = { "#FFD8DC", "#FFD8DC" }, xUnit = "Iteration", xAllowDecimals = false, showInLegend = true });
+                chart:add_area_range(conv_age:select_agents({ 1 }):rename_agent(""), conv_age:select_agents({ 3 }):rename_agent("Zsup (IC+FCF) +- Tol"), { colors = { "#FFD8DC", "#FFD8DC" }, xAllowDecimals = false, showInLegend = true });
 
                 -- Final simulation cost
                 chart:add_line(final_sim_cost:rename_agent(dictionary.final_simulation[LANGUAGE]), { colors = { "#D37295" }, xAllowDecimals = false });
 
                 -- Deviation error
-                zsup = conv_file:select_agent(10);
-                last_zsup = zsup:to_list()[zsup:last_stage()];
+                local zsup = conv_file:select_agent(10);
+                local last_zsup = zsup:to_list()[zsup:last_stage()];
                 rel_diff = (immediate_cost - last_zsup)/immediate_cost;
                 if rel_diff > REP_DIFF_TOL or -rel_diff < -REP_DIFF_TOL then
                     tab:push("**"..dictionary.warning[LANGUAGE].."**");
@@ -1172,11 +1193,11 @@ function create_pol_report(col_struct)
             -----------------------------------------------------------------------------------------------------------
             chart = Chart(dictionary.new_cuts_per_iteration[LANGUAGE]);
 
-            chart:add_column(cuts_age:select_agents({ 1 }), { xUnit = "Iteration", xAllowDecimals = false }); -- Optimality
+            chart:add_column(cuts_age:select_agents({ 1 }):rename_agent(dictionary.optimality[LANGUAGE]), { xUnit = dictionary.iteration[LANGUAGE], xAllowDecimals = false }); -- Optimality
 
             -- For feas. cuts, plot only if at least one cut
             if is_greater_than_zero(cuts_age:select_agents({ 2 })) then
-                chart:add_column(cuts_age:select_agents({ 2 }), { xUnit = "Iteration", xAllowDecimals = false }); -- Feasibility
+                chart:add_column(cuts_age:select_agents({ 2 }):rename_agent(dictionary.feasibility[LANGUAGE]), { xAllowDecimals = false }); -- Feasibility
             end
             tab:push(chart);
 
@@ -1218,7 +1239,7 @@ function create_sim_report(col_struct)
         local adjusted_table = adjust_data_for_add_categories(aux_table);  -- will be deprecated soon (next PSRIO version)
         local agents_order = adjusted_table[1]:agents();
         for i = 1, studies do
-            cost_chart:add_categories(adjusted_table[i]:reorder_agents(agents_order), col_struct.case_dir_list[i]);
+            cost_chart:add_categories(adjusted_table[i]:reorder_agents(agents_order):change_currency_configuration(i), col_struct.case_dir_list[i]);
         end
     else
         costs = objcop() / discount_rate():select_stages_of_outputs();
@@ -1235,8 +1256,8 @@ function create_sim_report(col_struct)
                 advisor:push_warning("obj_costs");
             end
 
-            cost_chart:add_pie(obj_cost, {colors = main_global_color});
-            revenue_chart:add_pie(obj_revenue:abs(), {colors = main_global_color});
+            cost_chart:add_pie(obj_cost:change_currency_configuration(), {colors = main_global_color});
+            revenue_chart:add_pie(obj_revenue:abs():change_currency_configuration(), {colors = main_global_color});
             
             if #revenue_chart > 0 then
                 cost_chart = {cost_chart,revenue_chart};
@@ -1306,10 +1327,10 @@ function create_times_report(col_struct)
                 
                 if conv_file:loaded() then
                     -- Execution time - forward
-                    chart_time_forw:add_column(time_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[jstudy]), { xUnit = "Iteration", yUnit = "s", xAllowDecimals = false });
+                    chart_time_forw:add_column(time_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[jstudy]), { xUnit = dictionary.iteration[LANGUAGE], yUnit = "s", xAllowDecimals = false });
     
                     -- Execution time - backward
-                    chart_time_back:add_column(time_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[jstudy]), { xUnit = "Iteration", yUnit = "s", xAllowDecimals = false });
+                    chart_time_back:add_column(time_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[jstudy]), { xUnit = dictionary.iteration[LANGUAGE], yUnit = "s", xAllowDecimals = false });
                 else
                     info("Comparing cases have different policy horizons! Policy will only contain the main case data.");
                 end
@@ -1336,7 +1357,7 @@ function create_times_report(col_struct)
             time_age = conv_file:select_agents({ 7, 8 }); -- Forw. time, Back. time
             
             chart = Chart(dictionary.fwd_bwd_time[LANGUAGE]);
-            chart:add_line(time_age:rename_agents({"Forward","Backward"}), { xUnit = "Iteration", yUnit = "s", xAllowDecimals = false }); -- Forw. and Back. times
+            chart:add_line(time_age:rename_agents({"Forward","Backward"}), { xUnit = dictionary.iteration[LANGUAGE], yUnit = "s", xAllowDecimals = false }); -- Forw. and Back. times
             
             local exe_times = col_struct.generic[1]:force_load("sddptimes");
             local chart_exe_pol = Chart(dictionary.exe_pol_times[LANGUAGE]);
@@ -1410,24 +1431,24 @@ function create_costs_and_revs(col_struct, tab)
             costs:remove_zeros():save("sddp_dashboard_cost_tot", { csv = true });
         end
 
-        local disp = concatenate(costs:aggregate_agents(BY_SUM(), "P10"):aggregate_scenarios(BY_PERCENTILE(10)), costs:aggregate_agents(BY_SUM(), "Average"):aggregate_scenarios(BY_AVERAGE()), costs:aggregate_agents(BY_SUM(), "P90"):aggregate_scenarios(BY_PERCENTILE(90)));
+        local disp = concatenate(costs:aggregate_agents(BY_SUM(), "P10"):aggregate_scenarios(BY_PERCENTILE(10)), costs:aggregate_agents(BY_SUM(), dictionary.cell_average[LANGUAGE]):aggregate_scenarios(BY_AVERAGE()), costs:aggregate_agents(BY_SUM(), "P90"):aggregate_scenarios(BY_PERCENTILE(90)));
 
         if studies > 1 then
             if is_greater_than_zero(disp) then
-                chart:add_area_range(disp:select_agent(1):add_prefix(col_struct.case_dir_list[i] .. " - "), disp:select_agent(3), { xUnit=dictionary.cell_stages[LANGUAGE], colors = light_global_color[i] }); -- Confidence interval
-                chart:add_line(disp:select_agent(2):add_prefix(col_struct.case_dir_list[i] .. " - "),{xUnit=dictionary.cell_stages[LANGUAGE], colors = {main_global_color[i]} }); -- Average
+                chart:add_area_range(disp:select_agent(1):add_prefix(col_struct.case_dir_list[i] .. " - "):change_currency_configuration(i), disp:select_agent(3):change_currency_configuration(i), { xUnit=dictionary.cell_stage[LANGUAGE], colors = light_global_color[i] }); -- Confidence interval
+                chart:add_line(disp:select_agent(2):add_prefix(col_struct.case_dir_list[i] .. " - "):change_currency_configuration(i),{xUnit=dictionary.cell_stage[LANGUAGE], colors = {main_global_color[i]} }); -- Average
             end
         else
             if is_greater_than_zero(disp) then
-                chart:add_area_range(disp:select_agent(1), disp:select_agent(3), { xUnit=dictionary.cell_stages[LANGUAGE], colors = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
-                chart:add_line(disp:select_agent(2), { xUnit=dictionary.cell_stages[LANGUAGE], colors = { "#F02720" } }); -- Average
+                chart:add_area_range(disp:select_agent(1):change_currency_configuration(i), disp:select_agent(3):change_currency_configuration(), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
+                chart:add_line(disp:select_agent(2):change_currency_configuration(), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { "#F02720" } }); -- Average
             end
         end
 
         -- sddp_dashboard_cost_avg
         local costs_avg = costs:aggregate_scenarios(BY_AVERAGE()):remove_zeros();
         if studies == 1 and is_greater_than_zero(costs_avg) then
-            chart_avg:add_column_stacking(costs_avg,{xUnit=dictionary.cell_stages[LANGUAGE]});
+            chart_avg:add_column_stacking(costs_avg:change_currency_configuration(),{xUnit=dictionary.cell_stage[LANGUAGE]});
         end
     end
 
@@ -1471,9 +1492,9 @@ function create_marg_costs(col_struct)
 
             for _,system in ipairs(cmg_aggyear:agents()) do
                 if system_data[system] then
-                    table.insert(system_data[system], cmg_aggyear:select_agent(system):rename_agent(col_struct.case_dir_list[i]));
+                    table.insert(system_data[system], cmg_aggyear:select_agent(system):rename_agent(col_struct.case_dir_list[i]):change_currency_configuration(i));
                 else
-                    system_data[system] = {cmg_aggyear:select_agent(system):rename_agent(col_struct.case_dir_list[i])};
+                    system_data[system] = {cmg_aggyear:select_agent(system):rename_agent(col_struct.case_dir_list[i]):change_currency_configuration(i)};
                 end
             end
         end
@@ -1488,7 +1509,7 @@ function create_marg_costs(col_struct)
     else
         local chart = Chart(dictionary.annual_cmo[LANGUAGE]);
         cmg_aggyear = cmg[1]:aggregate_blocks_by_duracipu():aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[1].hours:select_stages_of_outputs(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE());
-        chart:add_column(cmg_aggyear, { xUnit=dictionary.cell_year[LANGUAGE] });
+        chart:add_column(cmg_aggyear:change_currency_configuration(), { xUnit=dictionary.cell_year[LANGUAGE] });
         tab:push(chart);
     end
 
@@ -1499,28 +1520,28 @@ function create_marg_costs(col_struct)
             local chart = Chart(agent);
             for j = 1, studies do
                 cmg_aggsum = cmg[j]:select_agent(agent):rename_agent(col_struct.case_dir_list[j]):aggregate_blocks_by_duracipu(j):aggregate_scenarios(BY_AVERAGE())
-                chart:add_line(cmg_aggsum,{xUnit=dictionary.cell_stages[LANGUAGE]}); -- Average marg. cost per stage
+                chart:add_line(cmg_aggsum:change_currency_configuration(j),{xUnit=dictionary.cell_stage[LANGUAGE]}); -- Average marg. cost per stage
             end
             tab:push(chart);
         end
     else
         local chart = Chart(dictionary.stg_cmo[LANGUAGE]);
         cmg_aggsum = cmg[1]:aggregate_blocks_by_duracipu():aggregate_scenarios(BY_AVERAGE());
-        chart:add_column(cmg_aggsum,{xUnit=dictionary.cell_stages[LANGUAGE]}, {colors = main_global_color});
+        chart:add_column(cmg_aggsum:change_currency_configuration(),{xUnit=dictionary.cell_stage[LANGUAGE]}, {colors = main_global_color});
         tab:push(chart);
     end
 
     if studies == 1 then
         local systems = col_struct.system[1]:labels();
         for i,system in ipairs(systems) do
-            local chart = Chart(system .. dictionary.stg_cmo_ind[LANGUAGE]);
+            local chart = Chart(dictionary.stg_cmo_ind[LANGUAGE] .. ": " ..system);
             local cmg_agg = cmg[1]:aggregate_blocks_by_duracipu():select_agents({system});
             chart:add_box_plot(
-                cmg_agg:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_MIN()),
-                cmg_agg:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_PERCENTILE(25)),
-                cmg_agg:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_PERCENTILE(50)),
-                cmg_agg:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_PERCENTILE(75)),
-                cmg_agg:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_MAX())
+                cmg_agg:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_MIN()):change_currency_configuration(),
+                cmg_agg:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_PERCENTILE(25)):change_currency_configuration(),
+                cmg_agg:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_PERCENTILE(50)):change_currency_configuration(),
+                cmg_agg:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_PERCENTILE(75)):change_currency_configuration(),
+                cmg_agg:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_MAX()):change_currency_configuration()
                 ,{showInLegend = false, color = main_global_color[i]}
             );
             tab:push(chart);
@@ -1689,46 +1710,46 @@ function create_gen_report(col_struct)
 
         if studies > 1 then
             if total_hydro_gen:loaded() then
-                chart_tot_gerhid:add_column(total_hydro_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
+                chart_tot_gerhid:add_column(total_hydro_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_hydro }});
             end
             if total_thermal_gen:loaded() then
-                chart_tot_gerter:add_column(total_thermal_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
+                chart_tot_gerter:add_column(total_thermal_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_thermal }});
             end
             if total_other_renw_gen:loaded() then
-                chart_tot_other_renw:add_column(total_other_renw_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
+                chart_tot_other_renw:add_column(total_other_renw_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_renw_other }});
             end
             if total_wind_gen:loaded() then
-                chart_tot_renw_wind:add_column(total_wind_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
+                chart_tot_renw_wind:add_column(total_wind_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_wind }});
             end
             if total_solar_gen:loaded() then
-                chart_tot_renw_solar:add_column(total_solar_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
+                chart_tot_renw_solar:add_column(total_solar_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_solar }});
             end
             if total_small_hydro_gen:loaded() then
-                chart_tot_renw_shyd:add_column(total_small_hydro_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
+                chart_tot_renw_shyd:add_column(total_small_hydro_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_small_hydro }});
             end
             if total_csp_gen:loaded() then
-                chart_tot_renw_csp:add_column(total_csp_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
+                chart_tot_renw_csp:add_column(total_csp_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_csp }});
             end
             if total_batt_gen:loaded() then
-                chart_tot_gerbat:add_column(total_batt_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
+                chart_tot_gerbat:add_column(total_batt_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_battery }});
             end
             if total_pot_inj:loaded() then
-                chart_tot_potinj:add_column(total_pot_inj, { xUnit=dictionary.cell_stages[LANGUAGE]});
+                chart_tot_potinj:add_column(total_pot_inj, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_pinj }});
             end
             if total_deficit:loaded() then
-                chart_tot_defcit:add_column(total_deficit, { xUnit=dictionary.cell_stages[LANGUAGE]});
+                chart_tot_defcit:add_column(total_deficit, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_deficit }});
             end
         else
-            chart:add_area_stacking(total_thermal_gen    , { xUnit=dictionary.cell_stages[LANGUAGE], colors = { color_thermal     } });
-            chart:add_area_stacking(total_hydro_gen      , { xUnit=dictionary.cell_stages[LANGUAGE], colors = { color_hydro       } });
-            chart:add_area_stacking(total_wind_gen       , { xUnit=dictionary.cell_stages[LANGUAGE], colors = { color_wind        } });
-            chart:add_area_stacking(total_solar_gen      , { xUnit=dictionary.cell_stages[LANGUAGE], colors = { color_solar       } });
-            chart:add_area_stacking(total_small_hydro_gen, { xUnit=dictionary.cell_stages[LANGUAGE], colors = { color_small_hydro } });
-            chart:add_area_stacking(total_csp_gen        , { xUnit=dictionary.cell_stages[LANGUAGE], colors = { color_csp } });
-            chart:add_area_stacking(total_other_renw_gen , { xUnit=dictionary.cell_stages[LANGUAGE], colors = { color_renw_other  } });
-            chart:add_area_stacking(total_batt_gen       , { xUnit=dictionary.cell_stages[LANGUAGE], colors = { color_battery     } });
-            chart:add_area_stacking(total_pot_inj        , { xUnit=dictionary.cell_stages[LANGUAGE], colors = { color_pinj        } });
-            chart:add_area_stacking(total_deficit        , { xUnit=dictionary.cell_stages[LANGUAGE], colors = { color_deficit     } });
+            chart:add_area_stacking(total_thermal_gen    , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_thermal     } });
+            chart:add_area_stacking(total_hydro_gen      , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_hydro       } });
+            chart:add_area_stacking(total_wind_gen       , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_wind        } });
+            chart:add_area_stacking(total_solar_gen      , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_solar       } });
+            chart:add_area_stacking(total_small_hydro_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_small_hydro } });
+            chart:add_area_stacking(total_csp_gen        , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_csp } });
+            chart:add_area_stacking(total_other_renw_gen , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_renw_other  } });
+            chart:add_area_stacking(total_batt_gen       , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_battery     } });
+            chart:add_area_stacking(total_pot_inj        , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_pinj        } });
+            chart:add_area_stacking(total_deficit        , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_deficit     } });
         end
     end
 
@@ -1854,36 +1875,36 @@ function create_gen_report(col_struct)
             total_thermal_gen     = gerter[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(thermal_agent_name);
 
             if total_hydro_gen:loaded() and col_struct.hydro[i].system:eq(code[s]):remove_zeros():loaded() then
-                chart_tot_gerhid:add_column(total_hydro_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
+                chart_tot_gerhid:add_column(total_hydro_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_hydro }});
             end
             if total_thermal_gen:loaded() and col_struct.thermal[i].system:eq(code[s]):remove_zeros():loaded() then
-                chart_tot_gerter:add_column(total_thermal_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
+                chart_tot_gerter:add_column(total_thermal_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_thermal }});
             end
             if col_struct.renewable[i].system:eq(code[s]):remove_zeros():loaded() then
                 if total_other_renw_gen:loaded() and (col_struct.renewable[i].tech_type:ne(1) + col_struct.renewable[i].tech_type:ne(2) + col_struct.renewable[i].tech_type:ne(4)):remove_zeros():loaded() then
-                    chart_tot_renw_other:add_column(total_other_renw_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
+                    chart_tot_renw_other:add_column(total_other_renw_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_renw_other }});
                 end
                 if total_wind_gen:loaded() and col_struct.renewable[i].tech_type:eq(1):remove_zeros():loaded() then
-                    chart_tot_renw_wind:add_column(total_wind_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
+                    chart_tot_renw_wind:add_column(total_wind_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_wind }});
                 end
                 if total_solar_gen:loaded() and col_struct.renewable[i].tech_type:eq(2):remove_zeros():loaded() then
-                    chart_tot_renw_solar:add_column(total_solar_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
+                    chart_tot_renw_solar:add_column(total_solar_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_solar }});
                 end
                 if total_small_hydro_gen:loaded() and col_struct.renewable[i].tech_type:eq(4):remove_zeros():loaded() then
-                    chart_tot_renw_shyd:add_column(total_small_hydro_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
+                    chart_tot_renw_shyd:add_column(total_small_hydro_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_small_hydro }});
                 end
             end
             if total_csp_gen:loaded() and col_struct.csp[i].system:eq(code[s]):remove_zeros():loaded() then
-                chart_tot_renw_csp:add_column(total_csp_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
+                chart_tot_renw_csp:add_column(total_csp_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_csp }});
             end
             if total_batt_gen:loaded() and col_struct.battery[i].system:eq(code[s]):remove_zeros():loaded() then
-                chart_tot_gerbat:add_column(total_batt_gen, { xUnit=dictionary.cell_stages[LANGUAGE]});
+                chart_tot_gerbat:add_column(total_batt_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_battery }});
             end
             if total_pot_inj:loaded() and col_struct.power_injection[i].system:eq(code[s]):remove_zeros():loaded() then
-                chart_tot_potinj:add_column(total_pot_inj, { xUnit=dictionary.cell_stages[LANGUAGE]});
+                chart_tot_potinj:add_column(total_pot_inj, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_pinj }});
             end
             if total_deficit:loaded() then
-                chart_tot_defcit:add_column(total_deficit, { xUnit=dictionary.cell_stages[LANGUAGE]});
+                chart_tot_defcit:add_column(total_deficit, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_deficit }});
             end
         end
 
@@ -1967,7 +1988,7 @@ function create_viol_report(tab, col_struct, viol_struct, suffix)
                 for k = 1, studies do
                     viol_file = col_struct.generic[k]:force_load(file_name):select_agent(agent):rename_agent(case_dir_list[k]);
                     if viol_file:loaded() then
-                        chart:add_column_stacking(viol_file, {xUnit=dictionary.cell_stages[LANGUAGE]});
+                        chart:add_column_stacking(viol_file, {xUnit=dictionary.cell_stage[LANGUAGE]});
                     end
                 end
                 tab:push(chart);
@@ -1979,7 +2000,7 @@ function create_viol_report(tab, col_struct, viol_struct, suffix)
             viol_file = col_struct.generic[1]:force_load(file_name);
             if viol_file:loaded() then
                 local chart = Chart(struct.title);
-                chart:add_column_stacking(viol_file, {xUnit=dictionary.cell_stages[LANGUAGE]});
+                chart:add_column_stacking(viol_file, {xUnit=dictionary.cell_stage[LANGUAGE]});
                 tab:push(chart);
             end
         end
@@ -1998,7 +2019,7 @@ function create_viol_report_from_list(tab, col_struct, viol_list, viol_struct, s
                 viol_file = col_struct.generic[1]:load(file);
                 if viol_file:loaded() then
                     local chart = Chart(struct.title);
-                    chart:add_column_stacking(viol_file, {xUnit=dictionary.cell_stages[LANGUAGE]});
+                    chart:add_column_stacking(viol_file, {xUnit=dictionary.cell_stage[LANGUAGE]});
                     tab:push(chart);
                 end
             end

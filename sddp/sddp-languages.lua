@@ -127,10 +127,20 @@ dictionary = {
         es = "Nuevos cortes por iteración - Optimalidad",
         pt = "Novos cortes por iteração - Otimalidade"
     },
+    optimality = {
+        en = "Optimality",
+        es = "Optimalidad",
+        pt = "Otimalidade"
+    },
     new_cut_per_iteration_feasibility = {
         en = "New cuts per iteration - Feasibility",
         es = "Nuevos cortes por iteración - Factibilidad",
         pt = "Novos cortes por iteração - Viabilidade"
+    },
+    feasibility = {
+        en = "Feasibility",
+        es = "Factibilidad",
+        pt = "Viabilidade"
     },
     forward_time = {
         en = "Execution time - Forward",
@@ -153,19 +163,19 @@ dictionary = {
         pt = "Função objetivo: Política x Simulação final"
     },
     fwd_bwd_time = {
-        en = "Forward and backward execution times",
-        es = "Tiempos de ejecución Forward y Backward",
-        pt = "Tempos de execução Forward e Backward"
+        en = "Execution times: Forward and backward",
+        es = "Tiempos de ejecución: Forward y Backward",
+        pt = "Tempos de execução: Forward e Backward"
     },
     breakdown_cost_time = {
         en = "Breakdown of total operating cost",
         es = "Porciones de el costo operativo total",
-        pt = "Parcelas do custo operacional total"
+        pt = "Parcelas do custo operativo total"
     },
     breakdown_revenue_time = {
         en = "Breakdown of total operating revenues",
         es = "Porciones de los ingresos operativos totales",
-        pt = "Parcelas das receitas operacionais totais"
+        pt = "Parcelas das receitas operativos totais"
     },
     execution_times = {
         en = "Execution times",
@@ -173,9 +183,9 @@ dictionary = {
         pt = "Tempos de execução"
     },
     exe_sim_times = {
-        en = "Simulation execution time",
-        es = "Tiempo de ejecución simulación",
-        pt = "Tempo de execução simulação"
+        en = "Final simulation execution time",
+        es = "Tiempo de ejecución de la simulación final",
+        pt = "Tempo de execução da simulação final"
     },
     exe_pol_times = {
         en = "Policy execution time",
@@ -185,12 +195,12 @@ dictionary = {
     disp_of_operation_cost = {
         en = "Dispersion of operating costs per stage",
         es = "Dispersión de los costos operativos por etapa",
-        pt = "Dispersão dos custos operacionais por estágio"
+        pt = "Dispersão dos custos operativos por estágio"
     },
     avg_operation_cost = {
         en = "Average operating costs per stage",
         es = "Costos operativos promedio por etapa",
-        pt = "Custos operacionais médios por estágio"
+        pt = "Custos operativos médios por estágio"
     },
     annual_cmo = {
         en = "Annual marginal cost by system",
@@ -203,9 +213,9 @@ dictionary = {
         pt = "Custos marginais médios por estágio por sistema"
     },
     stg_cmo_ind = {
-        en = " marginal cost",
-        es = " costo marginales",
-        pt = " custo marginais"
+        en = "Marginal cost",
+        es = "Costo marginal",
+        pt = "Custo marginal"
     },
     total_hydro = {
         en = "Total Hydro",
@@ -214,8 +224,8 @@ dictionary = {
     },
     total_small_hydro = {
         en = "Total Small Hydro",
-        es = "Hidroeléctrica pequeña total",
-        pt = "Pequena hidroeléctrica total"
+        es = "Pequeña central hidroeléctrica total",
+        pt = "Pequena central hidroeléctrica total"
     },
     total_thermal = {
         en = "Total Thermal",
@@ -239,8 +249,8 @@ dictionary = {
     },
     total_renewable_small_hydro = {
         en = "Total Renewable - Small hydro",
-        es = "Renovable total - Pequeña hidroeléctrica",
-        pt = "Renovável total - Pequena hidroelétrica"
+        es = "Renovable total - Pequeña central hidroeléctrica",
+        pt = "Renovável total - Pequena central hidroelétrica"
     },
     total_renewable_csp = {
         en = "Total Renewable - CSP",
@@ -404,7 +414,7 @@ dictionary = {
     },
     vgmntt = {
         en = "Thermal: minimum technical generation",
-        es = "Térmica: generacion minima tecnica",
+        es = "Térmica: generación minima tecnica",
         pt = "Térmica: geracao minima tecnica"
     },
     vioemiq = {
@@ -477,6 +487,11 @@ dictionary = {
         es = "No convexidades",
         pt = "Não-convexidades"
     },
+    cell_average = {
+        en = "Average",
+        es = "Promedio",
+        pt = "Média"
+    },
     cell_case = {
         en = "Case",
         es = "Caso",
@@ -541,6 +556,16 @@ dictionary = {
         en = "Stages",
         es = "Etapas",
         pt = "Estágios"
+    },
+    cell_stage = {
+        en = "Stage",
+        es = "Etapa",
+        pt = "Estágio"
+    },
+    cell_scenarios = {
+        en = "Scenarios",
+        es = "Scenarios",
+        pt = "Cenarios"
     },
     cell_year = {
         en = "Year",
@@ -654,8 +679,8 @@ dictionary = {
     },
     cell_renewable_small_hydro = {
         en = "Renewable plants - Small hydro",
-        es = "Plantas renovables - Pequeñas hidroeléctricas",
-        pt = "Usinas renováveis - Pequenas hidrelétricas",
+        es = "Plantas renovables - Pequeñas centrais hidroeléctricas",
+        pt = "Usinas renováveis - Pequenas centrais hidrelétricas",
     },
     cell_renewable_csp = {
         en = "Renewable plants - CSP",
@@ -751,19 +776,19 @@ dictionary = {
     },
     final_simulation_mensage = {
         en = "Sum of the final simulation immediate costs up to the last stage plus the future cost function for additional years",
-        es = "Suma de los costos inmediatos de la simulación final hasta la última etapa más la función de costos futuros para años adicionales",
-        pt = "Soma dos custos imediatos da simulação final até a última etapa mais a função de custo futura para anos adicionais"
+        es = "Suma de los costos inmediatos de la simulación final hasta la última etapa más la función de costo futuro para años adicionales",
+        pt = "Soma dos custos imediatos da simulação final até a última etapa mais a função de custo futuro para anos adicionais"
     },
     zsup_mensage = {
         en = "Sum of policy immediate costs up to the last stage plus the future cost function for additional years",
-        es = "Suma de los costos inmediatos de la política hasta la última etapa más la función de costos futuros para años adicionales",
-        pt = "Soma dos custos imediatos da política até a última etapa mais a função de custo futura para anos adicionais"
+        es = "Suma de los costos inmediatos de la política hasta la última etapa más la función de costo futuro para años adicionales",
+        pt = "Soma dos custos imediatos da política até a última etapa mais a função de custo futuro para anos adicionais"
     },
     error_and_warnings_tab = {
         en = "Errors and warnings",
         es = "Errores y advertencias",
         pt = "Erros e avisos"
-    },    
+    },
     lsserac_pos = {
         en = "AC circuit losses positive error",
         es = "Error positivo de pérdidas en circuitos AC",
@@ -814,4 +839,61 @@ dictionary = {
         es = "Otros",
         pt = "Outros"
     },
+    integrated = {
+        en = "INTEGRATED",
+        es = "INTEGRADO",
+        pt = "INTEGRADO"
+    },
+    iteration = {
+        en = "Iteration",
+        es = "Iteración",
+        pt = "Iteração"
+    }
+};
+
+---------------------
+-- Non convexities labels
+---------------------
+non_convexities_labels = {
+    [' Hydro plants with variable production coefficient.                           '] = 'Usinas hidrelétricas com coeficiente de produção variável',
+    [' Hydro plants with evaporation variable with the area.                        '] = 'Usinas hidrelétricas com evaporação variável com a área',
+    [' Hydro plants with filtration variable with the storage.                      '] = 'Usinas hidrelétricas com filtragem variável com o armazenamento',
+    [' Hydro plants with non-controllable spillage (penalized).                     '] = 'Usinas hidrelétricas com vazamento não controlável (penalizado)',
+    [' Hydro plants with non-controllable spillage (integer var.).                  '] = 'Usinas hidrelétricas com vazamento não controlável (var. inteira)',
+    [' Hydro plants with LGC.                                                       '] = 'Usinas hidrelétricas com CGG',
+    [' Thermal plants with commitment.                                              '] = 'Usinas térmicas com compromisso',
+    [' Thermal combined-cycle plants with optimized operative status.               '] = 'Usinas termelétricas a ciclo combinado com status operacional otimizado',
+    [' Thermal plants with concave specific consumption curve.                      '] = 'Usinas térmicas com curva de consumo específico côncava',
+    [' Fuel contracts with make-up clause.                                          '] = 'Contratos de combustível com cláusula de maquiagem',
+    [' Fuel contracts with carry forward clause.                                    '] = 'Contratos de combustível com cláusula de transferência',
+    [' Generic interpolation constraints.                                           '] = 'Restrições genéricas de interpolação',
+    [' Flow controllers.                                                            '] = 'Controladores de fluxo',
+
+    [' Centrales hidroelectricas con coeficiente de produccion variable.            '] = 'Usinas hidrelétricas com coeficiente de produção variável',
+    [' Centrales hidroelectricas con evaporacion variable con la area.              '] = 'Usinas hidrelétricas com evaporação variável com a área',
+    [' Centrales hidroelectricas con infiltracion variable con el volumen.          '] = 'Usinas hidrelétricas com infiltração variável com o volume',
+    [' Centrales hidroelectricas con vertimiento no-controlable (penalizado).       '] = 'Usinas hidrelétricas com vazamento não controlável (penalizado)',
+    [' Centrales hidroelectricas con vertimiento no-controlable (var. entera).      '] = 'Usinas hidrelétricas com vazamento não controlável (var. inteira)',
+    [' Centrales hidroelectricas con CGG.                                           '] = 'Usinas hidrelétricas com CGG',
+    [' Centrales termicas com commitment.                                           '] = 'Usinas térmicas com compromisso',
+    [' Centrales termicas ciclo-combinado con estado operativo optimizado.          '] = 'Usinas termelétricas a ciclo combinado com estado operacional otimizado',
+    [' Centrales termicas con curva concava de consumo especifico.                  '] = 'Usinas térmicas com curva de consumo específico côncava',
+    [' Contratos de combustible con clausula de make-up.                            '] = 'Contratos de combustível com cláusula de maquiagem',
+    [' Contratos de combustible con clausula de carry forward.                      '] = 'Contratos de combustível com cláusula de transferência',
+    [' Restricciones genericas de interpolacion.                                    '] = 'Restrições genéricas de interpolação',
+    [' Controladores de flujo.                                                      '] = 'Controladores de fluxo',
+
+    [' Usinas hidroeletricas com coeficiente de producao variavel.                  '] = 'Usinas hidrelétricas com coeficiente de produção variável',
+    [' Usinas hidroeletricas com evaporacao variavel com a area.                    '] = 'Usinas hidrelétricas com evaporação variável com a área',
+    [' Usinas hidroeletricas com infiltracao variavel com o volume.                 '] = 'Usinas hidrelétricas com infiltração variável com o volume',
+    [' Usinas hidroeletricas com vertimento nao-controlavel (penalizado).           '] = 'Usinas hidrelétricas com vazamento não controlável (penalizado)',
+    [' Usinas hidroeletricas com vertimento nao-controlavel (var. inteira).         '] = 'Usinas hidrelétricas com vazamento não controlável (var. inteira)',
+    [' Usinas hidroeletricas com CGG.                                               '] = 'Usinas hidrelétricas com CGG',
+    [' Usinas termicas com commitment.                                              '] = 'Usinas térmicas com compromisso',
+    [' Usinas termicas ciclo-combinado com estado operativo otimizado.              '] = 'Usinas termelétricas a ciclo combinado com estado operacional otimizado',
+    [' Usinas termicas com curva concava de consumo especifico.                     '] = 'Usinas térmicas com curva de consumo específico côncava',
+    [' Contratos de combustivel com clausula de make-up.                            '] = 'Contratos de combustível com cláusula de maquiagem',
+    [' Contratos de combustivel com clausula de carry forward.                      '] = 'Contratos de combustível com cláusula de transferência',
+    [' Restricoes genericas de interpolacao.                                        '] = 'Restrições genéricas de interpolação',
+    [' Controladores de fluxo.                                                      '] = 'Controladores de fluxo'
 };
