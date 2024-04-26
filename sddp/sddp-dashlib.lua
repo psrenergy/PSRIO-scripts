@@ -1566,7 +1566,7 @@ function create_gen_report(col_struct)
     local color_solar = '#F1CE63';
     local color_small_hydro = '#A0CBE8';
     local color_csp = '#70AD47';
-    local color_battery = '#B07AA1';
+    local color_battery = '#4bc9b2';
     local color_deficit = '#000000';
     local color_pinj = '#BAB0AC';
 
