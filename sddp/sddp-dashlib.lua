@@ -1487,24 +1487,29 @@ function create_marg_costs(col_struct)
     tab:push("## " .. dictionary.annual_cmo[LANGUAGE]);
     if studies > 1 then
         local system_data = {};
+        local system_unit = {};
         for i = 1, studies do
             cmg_aggyear = cmg[i]:aggregate_blocks_by_duracipu(i):aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[i].hours:select_stages_of_outputs(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM);
 
             for _,system in ipairs(cmg_aggyear:agents()) do
+                local cmgdem_data = cmg_aggyear:select_agent(system):rename_agent(col_struct.case_dir_list[i]):change_currency_configuration(i);
+                table.insert(system_unit, cmgdem_data:unit());
                 if system_data[system] then
-                    table.insert(system_data[system], cmg_aggyear:select_agent(system):rename_agent(col_struct.case_dir_list[i]):change_currency_configuration(i));
+                    table.insert(system_data[system], cmgdem_data);
                 else
-                    system_data[system] = {cmg_aggyear:select_agent(system):rename_agent(col_struct.case_dir_list[i]):change_currency_configuration(i)};
+                    system_data[system] = {cmgdem_data};
                 end
             end
         end
         
+        local count_sys = 1;
         for system, data in pairs(system_data) do
             local chart = Chart(system);
 
             -- Add marginal costs outputs
-            chart:add_column(concatenate(data)); -- Annual Marg. cost
+            chart:add_column(concatenate(data):force_unit(system_unit[count_sys])); -- Annual Marg. cost
             tab:push(chart);
+            count_sys = count_sys + 1;
         end
     else
         local chart = Chart(dictionary.annual_cmo[LANGUAGE]);
