@@ -45,3 +45,15 @@ if batstg:loaded() then
     pbatstg:save("pbatstg", {csv=is_csv});
   end
 end
+
+-- COSSHUT - Shutdown cost of commitment thermal plants
+thermal = Thermal();
+trshdw = thermal:load("trshdw");
+if trshdw:loaded() then
+  cosshut = thermal.shutdown_cost * trshdw;
+  if cosshut:is_hourly() then
+    cosshut:save("cosshut", {variable_by_block=2, csv=is_csv});
+  else
+    cosshut:save("cosshut", {csv=is_csv});
+  end
+end
