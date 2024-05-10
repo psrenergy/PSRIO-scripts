@@ -1134,8 +1134,8 @@ function create_pol_report(col_struct)
             
             local tolerance_for_convergence = tonumber(col_struct.study[1]:get_parameter("CriterioConvergencia", -1));
             
-            local total_iter = conv_age:stages();
-            
+            local total_iter = conv_age:last_stage();
+
             local zinf_final         = tonumber(conv_age:select_agents({ 1 }):select_stage(total_iter):to_list()[1]);
             local zsup_tol_bot_final = tonumber(conv_age:select_agents({ 2 }):select_stage(total_iter):to_list()[1]);
             
@@ -1171,7 +1171,7 @@ function create_pol_report(col_struct)
 
                 -- Deviation error
                 local zsup = conv_file:select_agent(10);
-                local last_zsup = zsup:to_list()[zsup:last_stage()];
+                local last_zsup = zsup:to_list()[zsup:stages()];
                 rel_diff = (immediate_cost - last_zsup)/immediate_cost;
                 if rel_diff > REP_DIFF_TOL or -rel_diff < -REP_DIFF_TOL then
                     tab:push("**"..dictionary.warning[LANGUAGE].."**");
