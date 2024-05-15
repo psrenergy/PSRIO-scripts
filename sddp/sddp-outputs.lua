@@ -57,3 +57,21 @@ if trshdw:loaded() then
     cosshut:save("cosshut", {csv=is_csv});
   end
 end
+
+-- GASEMI - total gas emission
+emission = GasEmission();
+generic = Generic();
+local emiValues = generic:load("teremi");
+if emiValues:loaded() then
+  local emiNames = emission:labels();
+  local emiAux   = {}
+  for _, iName in ipairs(emiNames) do
+    table.insert(emiAux, emiValues:select_agents_by_regex(iName .. "(.*)"):aggregate_agents(BY_SUM(), iName))
+  end
+  gasemi = concatenate(emiAux):select_agents(Collection.GAS_EMISSION);
+  if gasemi:is_hourly() then
+    gasemi:save("gasemi", {variable_by_block=2, csv=is_csv});
+  else
+    gasemi:save("gasemi", {csv=is_csv});
+  end
+end
