@@ -37,8 +37,8 @@ oemgnd:save("oemgnd",{csv=is_csv});
 battery = Battery();
 batstg = battery:load("batstg"):convert("MW");
 if batstg:loaded() then
-  batcapacity = battery.capacity;
-  pbatstg = safe_divide(batstg,batcapacity):convert("%");
+  max_storage = battery.max_storage;
+  pbatstg = safe_divide(batstg,max_storage):convert("%");
   if pbatstg:is_hourly() then
     pbatstg:save("pbatstg", {variable_by_block=2, csv=is_csv});
   else
