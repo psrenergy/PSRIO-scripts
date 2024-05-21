@@ -75,3 +75,8 @@ if emiValues:loaded() then
     gasemi:save("gasemi", {csv=is_csv});
   end
 end
+
+-- OEMBATUN - battery o&m cost
+battery = Battery();
+local oembatun = battery.om_cost;
+oembatun:save("oembatun", {csv=is_csv});
