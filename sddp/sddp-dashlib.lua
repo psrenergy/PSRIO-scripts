@@ -1239,7 +1239,7 @@ function create_sim_report(col_struct)
         local adjusted_table = adjust_data_for_add_categories(aux_table);  -- will be deprecated soon (next PSRIO version)
         local agents_order = adjusted_table[1]:agents();
         for i = 1, studies do
-            cost_chart:add_categories(adjusted_table[i]:reorder_agents(agents_order):change_currency_configuration(i), col_struct.case_dir_list[i]);
+            cost_chart:add_column_categories(adjusted_table[i]:reorder_agents(agents_order):change_currency_configuration(i), col_struct.case_dir_list[i]);
         end
     else
         costs = objcop() / discount_rate():select_stages_of_outputs();
@@ -1958,7 +1958,7 @@ function create_risk_report(col_struct)
             risk_file = col_struct.system[i]:load("sddprisk"):aggregate_agents(BY_AVERAGE(), Collection.SYSTEM):aggregate_stages(BY_AVERAGE());
 
             -- Add marginal costs outputs
-            chart:add_categories(risk_file, col_struct.case_dir_list[i]); -- Annual Marg. cost
+            chart:add_column_categories(risk_file, col_struct.case_dir_list[i]); -- Annual Marg. cost
         end
     else
         risk_file = col_struct.system[1]:load("sddprisk");
