@@ -19,7 +19,7 @@ local function violation_aggregation(log_viol, data, data_name, scen_aggregation
 		);
 	end
 	local violation_file_name = "sddp_dashboard_viol_" .. suffix .. "_" .. data_name
-	violation_agg:save(violation_file_name, { csv = true });
+	violation_agg:save(violation_file_name);
 
 	if log_viol.file:is_open() then
 		log_viol.file:write(violation_file_name .. "\n");
@@ -90,7 +90,7 @@ local function dispersion(output,file_name)
         );
         local x = agg_output:abs():aggregate_stages(BY_SUM()):aggregate_scenarios(BY_SUM()):to_list()[1];
         if x > 0.0 then
-            disp:save(file_name, {csv=true});
+            disp:save(file_name);
         end
     end
 end
@@ -120,10 +120,10 @@ local costs = max(objcop,0):save_cache();
 
 if( costs:loaded() ) then
     -- sddp_dashboard_cost_tot. Considering discount rate in the cost aggregation
-    (costs/discount_rate):aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros():save("sddp_dashboard_cost_tot", { csv = true });
+    (costs/discount_rate):aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros():save("sddp_dashboard_cost_tot");
     
     -- sddp_dashboard_cost_avg
-    costs:aggregate_scenarios(BY_AVERAGE()):remove_zeros():save("sddp_dashboard_cost_avg", { csv = true });
+    costs:aggregate_scenarios(BY_AVERAGE()):remove_zeros():save("sddp_dashboard_cost_avg");
     
     -- sddp_dashboard_cost_disp
 	local cost_agg = costs:aggregate_agents(BY_SUM(), "P10"):save_cache();
@@ -134,7 +134,7 @@ if( costs:loaded() ) then
     );
     local x = costs:aggregate_stages(BY_SUM()):aggregate_scenarios(BY_SUM()):to_list()[1];
     if x > 0.0 then
-        costs:save("sddp_dashboard_cost_disp", {csv=true});
+        costs:save("sddp_dashboard_cost_disp");
     end
 end
 
@@ -145,10 +145,10 @@ local revenues = (-min(objcop,0)):save_cache();
 
 if( revenues:loaded() ) then
     -- sddp_dashboard_rev_tot. Considering discount rate in the revenue aggregation
-    (revenues/discount_rate):aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros():save("sddp_dashboard_rev_tot", { csv = true });
+    (revenues/discount_rate):aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros():save("sddp_dashboard_rev_tot");
     
     -- sddp_dashboard_rev_avg
-    revenues:aggregate_scenarios(BY_AVERAGE()):remove_zeros():save("sddp_dashboard_rev_avg", { csv = true });
+    revenues:aggregate_scenarios(BY_AVERAGE()):remove_zeros():save("sddp_dashboard_rev_avg");
     
     -- sddp_dashboard_rev_disp
 	local disp_agg = costs:aggregate_agents(BY_SUM(), "P10"):save_cache();
@@ -159,7 +159,7 @@ if( revenues:loaded() ) then
 			disp_agg:rename_agents({"Average"}):aggregate_scenarios(BY_AVERAGE()),
 			disp_agg:rename_agents({"P90"}):aggregate_scenarios(BY_PERCENTILE(90))
 		);
-        disp:save("sddp_dashboard_rev_disp", {csv=true});
+        disp:save("sddp_dashboard_rev_disp");
     end
 end
 
@@ -167,7 +167,7 @@ end
 -- DEFICIT RISK
 -----------------------------------------------------------------------------------------------
 local defrisk = require("sddp-reports/sddprisk")();
-defrisk:save("sddprisk",{csv=true});
+defrisk:save("sddprisk");
 
 -----------------------------------------------------------------------------------------------
 -- VIOLATIONS
@@ -228,13 +228,15 @@ local viol_structs_debug = {
 local output_list_name = "outfiles.out";
 local out_list = {};
 
-local sddp_outputs = Generic():load_table_without_header(output_list_name);
-if #sddp_outputs > 0 then
-    -- Create list of violation outputs to be considered
-    for lin = 1, #sddp_outputs do
-        local file = sddp_outputs[lin][1];
-		out_list[file] = true;
-    end
+if file_exists(output_list_name) then
+	local sddp_outputs = Generic():load_table_without_header(output_list_name);
+	if #sddp_outputs > 0 then
+		-- Create list of violation outputs to be considered
+		for lin = 1, #sddp_outputs do
+			local file = sddp_outputs[lin][1];
+			out_list[file] = true;
+		end
+	end
 end
 
 -- Log file with violation files used execution
@@ -250,7 +252,7 @@ log_viol.file:close();
 -- -- Get renewable generation spillage
 -- local rnw_spill = rnw:load("vergnd");
 
--- rnw_spill:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_scenarios(BY_AVERAGE()):remove_zeros():save("sddp_dashboard_result_avg_vergnd",{ csv = true });
+-- rnw_spill:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_scenarios(BY_AVERAGE()):remove_zeros():save("sddp_dashboard_result_avg_vergnd");
 
 -----------------------------------------------------------------------------------------------
 -- LGC
@@ -259,7 +261,10 @@ local lgcgen = Hydro():load("lgcgen");
 local lgcrev = Hydro():load("lgcrev");
 
 -- sddp_dashboard_lgc_gen
-lgcgen:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM(), Profile.PER_YEAR):remove_zeros():save("sddp_dashboard_lgc_gen", { csv = true });
-
+if lgcgen:loaded() then
+	lgcgen:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM(), Profile.PER_YEAR):remove_zeros():save("sddp_dashboard_lgc_gen");
+end
 -- sddp_dashboard_lgc_rev
-lgcrev:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM(), Profile.PER_YEAR):remove_zeros():save("sddp_dashboard_lgc_rev", { csv = true });
+if lgcrev:loaded() then
+	lgcrev:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM(), Profile.PER_YEAR):remove_zeros():save("sddp_dashboard_lgc_rev");
+end
