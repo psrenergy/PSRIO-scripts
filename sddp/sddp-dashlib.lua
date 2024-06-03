@@ -492,11 +492,14 @@ function create_tab_summary(col_struct, info_struct)
     local netrep_string              = "| " .. dictionary.cell_network_representation[LANGUAGE];
     local typday_string              = "| " .. dictionary.cell_typicalday_representation[LANGUAGE];
     local loss_representation_string = "| " .. dictionary.cell_loss_representation[LANGUAGE];
-
+    local type_of_inflows            = "| " .. dictionary.inflows_type[LANGUAGE];
+    local inflows_initial_year       = "| " .. dictionary.inflows_initial_year[LANGUAGE];
     local hrep_val   = {};
     local netrep_val = {};
     local typday_val = {};
     local loss_repr  = {};
+    local inflow_repr  = {};
+    local inf_initial_year  = {};
     local exe_type   = {};
     local case_type  = {};
 
@@ -583,6 +586,27 @@ function create_tab_summary(col_struct, info_struct)
             loss_repr[i] = "✔️";
         end
         loss_representation_string = loss_representation_string .. " | " .. loss_repr[i];
+
+        local sddp_inflow_type = col_struct.study[i]:get_parameter("Vazoes", -1);
+        if sddp_inflow_type > 0 then
+            if sddp_inflow_type == 1 then
+                inflow_repr[i] = dictionary.arp[LANGUAGE];
+            elseif sddp_inflow_type == 2 then
+                inflow_repr[i] = dictionary.historical[LANGUAGE];
+            elseif sddp_inflow_type == 3 then
+                inflow_repr[i] = dictionary.external_f_b[LANGUAGE];
+            elseif sddp_inflow_type == 4 then
+                inflow_repr[i] = dictionary.external_f[LANGUAGE];
+            else
+                inflow_repr[i] = "-";
+            end
+            
+        end
+        type_of_inflows = type_of_inflows .. " | " .. inflow_repr[i];
+
+        inf_initial_year[i] = col_struct.study[i]:get_parameter("Ano_Inicial_Hidro", 0);
+        inflows_initial_year = inflows_initial_year .. " | " .. inf_initial_year[i];
+
     end
     header_string                    = header_string              .. "|";
     lower_header_string              = lower_header_string        .. "|";
@@ -599,6 +623,8 @@ function create_tab_summary(col_struct, info_struct)
     netrep_string                    = netrep_string              .. "|";
     typday_string                    = typday_string              .. "|";
     loss_representation_string       = loss_representation_string .. "|";
+    type_of_inflows                  = type_of_inflows .. "|";
+    inflows_initial_year             = inflows_initial_year .. "|";
 
     tab:push(header_string);
     tab:push(lower_header_string);
@@ -615,6 +641,8 @@ function create_tab_summary(col_struct, info_struct)
     tab:push(netrep_string);
     tab:push(typday_string);
     tab:push(loss_representation_string);
+    tab:push(type_of_inflows);
+    tab:push(inflows_initial_year);
 
     tab:push("## " .. dictionary.dimentions[LANGUAGE]);
 

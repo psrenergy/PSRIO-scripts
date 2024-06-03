@@ -742,6 +742,36 @@ dictionary = {
         es = "Representación de pérdidas",
         pt = "Representação de perdas"
     },
+    inflows_type = {
+        en = "Type of inflows",
+        es = "Tipos de afluencias",
+        pt = "Tipos de afluências"
+    },
+    arp = {
+        en = "ARP",
+        es = "ARP",
+        pt = "ARP"
+    },
+    historical = {
+        en = "Historical data",
+        es = "Histórico",
+        pt = "Histórico"
+    },
+    external_f_b = {
+        en = "External: forward/backward",
+        es = "Externo: forward/backward",
+        pt = "Externo: forward/backward"
+    },
+    external_f = {
+        en = "External: forward",
+        es = "Externo: forward",
+        pt = "Externo: forward"
+    },
+    inflows_initial_year = {
+        en = "Initial year of hydrology",
+        es = "Año inicial de hidrología",
+        pt = "Ano inicial de hidrologia"
+    },
     additional_years_mensage = {
         en = "Additional years were not considered in the final simulation",
         es = "No se consideraron años adicionales en la simulación final",
