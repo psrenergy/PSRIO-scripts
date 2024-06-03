@@ -380,7 +380,7 @@ function get_nonconv_info(col_struct, file_name, nonconv_list, dimension, case_i
     local nonconv = col_struct.generic[case_index]:load_table(file_name);
 
     for i = 1, #nonconv do
-        nonconv_list[i] = non_convexities_labels[nonconv[i]["Type"]];
+        nonconv_list[i] = non_convexities_labels[trim(nonconv[i]["Type"])];
         dimension[i]    = trim(nonconv[i]["Dimension"]);
     end
 end
