@@ -228,7 +228,7 @@ local viol_structs_debug = {
 local output_list_name = "outfiles.out";
 local out_list = {};
 
-if file_exists(output_list_name) then
+if Generic():file_exists(output_list_name) then
 	local sddp_outputs = Generic():load_table_without_header(output_list_name);
 	if #sddp_outputs > 0 then
 		-- Create list of violation outputs to be considered
