@@ -1593,16 +1593,18 @@ function create_gen_report(col_struct)
     local tab = Tab(dictionary.tab_generation[LANGUAGE]);
 
     -- Color preferences
-    local color_hydro = '#4E79A7';
-    local color_thermal = '#F28E2B';
-    local color_renw_other = '#7a5950';
-    local color_wind = '#8CD17D';
-    local color_solar = '#F1CE63';
-    local color_small_hydro = '#A0CBE8';
-    local color_csp = '#70AD47';
-    local color_battery = '#4bc9b2';
-    local color_deficit = '#000000';
-    local color_pinj = '#BAB0AC';
+    if studies == 1 then
+        color_hydro = '#4E79A7';
+        color_thermal = '#F28E2B';
+        color_renw_other = '#7a5950';
+        color_wind = '#8CD17D';
+        color_solar = '#F1CE63';
+        color_small_hydro = '#A0CBE8';
+        color_csp = '#70AD47';
+        color_battery = '#4bc9b2';
+        color_deficit = '#000000';
+        color_pinj = '#BAB0AC';
+    end
 
     local total_hydro_gen;
     local total_batt_gen;
