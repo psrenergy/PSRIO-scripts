@@ -1547,13 +1547,15 @@ function create_marg_costs(col_struct)
     if studies > 1 then
         tab:push("## " .. dictionary.stg_cmo[LANGUAGE]);
         local agents = cmg[1]:agents();
-        for j = 1, studies do
-            cmg_aggsum = cmg[j]:aggregate_blocks_by_duracipu(j):aggregate_scenarios(BY_AVERAGE()):save_cache();
-            for _, agent in ipairs(agents) do
-                local chart = Chart(agent);
+        for _, agent in ipairs(agents) do
+            local chart = Chart(agent);
+            local aux_tab = {};
+            for j = 1, studies do
+                cmg_aggsum = cmg[j]:aggregate_blocks_by_duracipu(j):aggregate_scenarios(BY_AVERAGE());
                 local cmg_aggsum_agents = cmg_aggsum:select_agent(agent):rename_agent(col_struct.case_dir_list[j]);
-                chart:add_line(cmg_aggsum_agents:change_currency_configuration(j),{xUnit=dictionary.cell_stage[LANGUAGE]}); -- Average marg. cost per stage
+                table.insert(aux_tab, cmg_aggsum_agents);
             end
+            chart:add_line(concatenate(aux_tab):change_currency_configuration(j),{xUnit=dictionary.cell_stage[LANGUAGE]}); -- Average marg. cost per stage
             tab:push(chart);
         end
     else
