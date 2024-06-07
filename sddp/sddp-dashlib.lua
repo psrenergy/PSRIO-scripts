@@ -380,7 +380,7 @@ function get_nonconv_info(col_struct, file_name, nonconv_list, dimension, case_i
     local nonconv = col_struct.generic[case_index]:load_table(file_name);
 
     for i = 1, #nonconv do
-        nonconv_list[i] = non_convexities_labels[nonconv[i]["Type"]];
+        nonconv_list[i] = non_convexities_labels[trim(nonconv[i]["Type"])];
         dimension[i]    = trim(nonconv[i]["Dimension"]);
     end
 end
@@ -492,11 +492,14 @@ function create_tab_summary(col_struct, info_struct)
     local netrep_string              = "| " .. dictionary.cell_network_representation[LANGUAGE];
     local typday_string              = "| " .. dictionary.cell_typicalday_representation[LANGUAGE];
     local loss_representation_string = "| " .. dictionary.cell_loss_representation[LANGUAGE];
-
+    local type_of_inflows            = "| " .. dictionary.inflows_type[LANGUAGE];
+    local inflows_initial_year       = "| " .. dictionary.inflows_initial_year[LANGUAGE];
     local hrep_val   = {};
     local netrep_val = {};
     local typday_val = {};
     local loss_repr  = {};
+    local inflow_repr  = {};
+    local inf_initial_year  = {};
     local exe_type   = {};
     local case_type  = {};
 
@@ -583,6 +586,27 @@ function create_tab_summary(col_struct, info_struct)
             loss_repr[i] = "✔️";
         end
         loss_representation_string = loss_representation_string .. " | " .. loss_repr[i];
+
+        local sddp_inflow_type = col_struct.study[i]:get_parameter("Vazoes", -1);
+        if sddp_inflow_type > 0 then
+            if sddp_inflow_type == 1 then
+                inflow_repr[i] = dictionary.arp[LANGUAGE];
+            elseif sddp_inflow_type == 2 then
+                inflow_repr[i] = dictionary.historical[LANGUAGE];
+            elseif sddp_inflow_type == 3 then
+                inflow_repr[i] = dictionary.external_f_b[LANGUAGE];
+            elseif sddp_inflow_type == 4 then
+                inflow_repr[i] = dictionary.external_f[LANGUAGE];
+            else
+                inflow_repr[i] = "-";
+            end
+            
+        end
+        type_of_inflows = type_of_inflows .. " | " .. inflow_repr[i];
+
+        inf_initial_year[i] = col_struct.study[i]:get_parameter("Ano_Inicial_Hidro", 0);
+        inflows_initial_year = inflows_initial_year .. " | " .. inf_initial_year[i];
+
     end
     header_string                    = header_string              .. "|";
     lower_header_string              = lower_header_string        .. "|";
@@ -599,6 +623,8 @@ function create_tab_summary(col_struct, info_struct)
     netrep_string                    = netrep_string              .. "|";
     typday_string                    = typday_string              .. "|";
     loss_representation_string       = loss_representation_string .. "|";
+    type_of_inflows                  = type_of_inflows .. "|";
+    inflows_initial_year             = inflows_initial_year .. "|";
 
     tab:push(header_string);
     tab:push(lower_header_string);
@@ -615,6 +641,8 @@ function create_tab_summary(col_struct, info_struct)
     tab:push(netrep_string);
     tab:push(typday_string);
     tab:push(loss_representation_string);
+    tab:push(type_of_inflows);
+    tab:push(inflows_initial_year);
 
     tab:push("## " .. dictionary.dimentions[LANGUAGE]);
 
@@ -878,14 +906,12 @@ end
 function create_penalty_proportion_graph(tab, col_struct, i)
     local output_name  = "sddppenp";
     local report_title = dictionary.violation_penalties[LANGUAGE];
-    local penp = col_struct.generic[i]:force_load(output_name);
+    local penp = col_struct.generic[i]:force_load(output_name):convert("%");
 
     if not penp:loaded() then
         info(output_name .. " could not be loaded. ".. "'" .. report_title .. "'" .. "report will not be displayed");
         return
     end
-
-    penp:convert("%");
 
     local chart = Chart(report_title .. " (%)");
     chart:add_heatmap_series(penp, { yLabel = dictionary.cell_scenarios[LANGUAGE], xLabel = dictionary.cell_stage[LANGUAGE], showInLegend = false, stops = { { 0.0, "#4E79A7" }, { 0.5, "#FBEEB3" }, { 1.0, "#C64B3E" } }, stopsMin = 0.0, stopsMax = 100.0 });
@@ -956,14 +982,14 @@ end
 function create_exe_timer_per_scen(tab, col_struct, i)
     local extime_chart;
     local output_name  = "extime";
-    local extime = col_struct.generic[i]:load(output_name);
+    local extime = col_struct.generic[i]:load(output_name):aggregate_agents(BY_SUM(), "total"):save_cache();
 
     if not extime:loaded() then
         info(output_name .. " output could not be loaded. 'Dispersion of execution times per scenario' report will not be displayed");
         return
     end
     
-    local extime_disp = concatenate(extime:aggregate_agents(BY_SUM(), "MIN"):aggregate_scenarios(BY_MIN()), extime:aggregate_agents(BY_SUM(), dictionary.cell_average[LANGUAGE]):aggregate_scenarios(BY_AVERAGE()), extime:aggregate_agents(BY_SUM(), "MAX"):aggregate_scenarios(BY_MAX()));
+    local extime_disp = concatenate(extime:aggregate_scenarios(BY_MIN()):rename_agent("MIN"), extime:aggregate_scenarios(BY_AVERAGE()):rename_agent(dictionary.cell_average[LANGUAGE]), extime:aggregate_scenarios(BY_MAX()):rename_agent("MAX")):save_cache();
     if is_greater_than_zero(extime_disp) then
         local unit = "hour";
         local extime_disp_data = extime_disp:aggregate_scenarios(BY_MAX()):aggregate_stages(BY_MAX()):to_list();
@@ -1239,15 +1265,15 @@ function create_sim_report(col_struct)
         local adjusted_table = adjust_data_for_add_categories(aux_table);  -- will be deprecated soon (next PSRIO version)
         local agents_order = adjusted_table[1]:agents();
         for i = 1, studies do
-            cost_chart:add_categories(adjusted_table[i]:reorder_agents(agents_order):change_currency_configuration(i), col_struct.case_dir_list[i]);
+            cost_chart:add_column_categories(adjusted_table[i]:reorder_agents(agents_order):change_currency_configuration(i), col_struct.case_dir_list[i]);
         end
     else
         costs = objcop() / discount_rate():select_stages_of_outputs();
-        costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
+        costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros():save_cache();
 
         if is_greater_than_zero(costs_agg) then
-            local obj_cost = ifelse(costs_agg:gt(0), costs_agg, 0):remove_zeros();
-            local obj_revenue = ifelse(costs_agg:lt(0), costs_agg, 0):remove_zeros();
+            local obj_cost    = max(costs_agg, 0);
+            local obj_revenue = min(costs_agg, 0);
 
             local total_obj_cost  = my_to_number(obj_cost:aggregate_agents(BY_SUM(),"Total cost"):to_list()[1],0.0);
             local others_obj_cost = my_to_number(obj_cost:remove_agent(1):aggregate_agents(BY_SUM(),"Other costs"):to_list()[1],0.0);
@@ -1424,14 +1450,14 @@ function create_costs_and_revs(col_struct, tab)
     for i = 1, studies do
         local objcop = require("sddp/costs");
         local discount_rate = require("sddp/discount_rate");
-        local costs = ifelse(objcop(i):ge(0), objcop(i), 0) / discount_rate(i):select_stages_of_outputs();
+        local costs = (max(objcop(i), 0) / discount_rate(i):select_stages_of_outputs()):aggregate_agents(BY_SUM(),"Total"):save_cache();
 
         -- sddp_dashboard_cost_tot
         if studies == 1 then
-            costs:remove_zeros():save("sddp_dashboard_cost_tot", { csv = true });
+            costs:remove_zeros():save("sddp_dashboard_cost_tot");
         end
 
-        local disp = concatenate(costs:aggregate_agents(BY_SUM(), "P10"):aggregate_scenarios(BY_PERCENTILE(10)), costs:aggregate_agents(BY_SUM(), dictionary.cell_average[LANGUAGE]):aggregate_scenarios(BY_AVERAGE()), costs:aggregate_agents(BY_SUM(), "P90"):aggregate_scenarios(BY_PERCENTILE(90)));
+        local disp = concatenate(costs:aggregate_scenarios(BY_PERCENTILE(10)):rename_agent("P10"), costs:aggregate_scenarios(BY_AVERAGE()):rename_agent(dictionary.cell_average[LANGUAGE]), costs:aggregate_scenarios(BY_PERCENTILE(90)):rename_agent("P90")):save_cache();
 
         if studies > 1 then
             if is_greater_than_zero(disp) then
@@ -1489,7 +1515,7 @@ function create_marg_costs(col_struct)
         local system_data = {};
         local system_unit = {};
         for i = 1, studies do
-            cmg_aggyear = cmg[i]:aggregate_blocks_by_duracipu(i):aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[i].hours:select_stages_of_outputs(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM);
+            cmg_aggyear = cmg[i]:aggregate_blocks_by_duracipu(i):aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[i].hours:select_stages_of_outputs(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):save_cache();
 
             for _,system in ipairs(cmg_aggyear:agents()) do
                 local cmgdem_data = cmg_aggyear:select_agent(system):rename_agent(col_struct.case_dir_list[i]):change_currency_configuration(i);
@@ -1521,12 +1547,15 @@ function create_marg_costs(col_struct)
     if studies > 1 then
         tab:push("## " .. dictionary.stg_cmo[LANGUAGE]);
         local agents = cmg[1]:agents();
-        for i, agent in ipairs(agents) do
+        for _, agent in ipairs(agents) do
             local chart = Chart(agent);
+            local aux_tab = {};
             for j = 1, studies do
-                cmg_aggsum = cmg[j]:select_agent(agent):rename_agent(col_struct.case_dir_list[j]):aggregate_blocks_by_duracipu(j):aggregate_scenarios(BY_AVERAGE())
-                chart:add_line(cmg_aggsum:change_currency_configuration(j),{xUnit=dictionary.cell_stage[LANGUAGE]}); -- Average marg. cost per stage
+                cmg_aggsum = cmg[j]:aggregate_blocks_by_duracipu(j):aggregate_scenarios(BY_AVERAGE());
+                local cmg_aggsum_agents = cmg_aggsum:select_agent(agent):rename_agent(col_struct.case_dir_list[j]);
+                table.insert(aux_tab, cmg_aggsum_agents);
             end
+            chart:add_line(concatenate(aux_tab):change_currency_configuration(j),{xUnit=dictionary.cell_stage[LANGUAGE]}); -- Average marg. cost per stage
             tab:push(chart);
         end
     else
@@ -1540,13 +1569,13 @@ function create_marg_costs(col_struct)
         local systems = col_struct.system[1]:labels();
         for i,system in ipairs(systems) do
             local chart = Chart(dictionary.stg_cmo_ind[LANGUAGE] .. ": " ..system);
-            local cmg_agg = cmg[1]:aggregate_blocks_by_duracipu():select_agents({system});
+            local cmg_agg = cmg[1]:aggregate_blocks_by_duracipu():select_agents({system}):aggregate_blocks(BY_SUM()):save_cache();
             chart:add_box_plot(
-                cmg_agg:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_MIN()):change_currency_configuration(),
-                cmg_agg:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_PERCENTILE(25)):change_currency_configuration(),
-                cmg_agg:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_PERCENTILE(50)):change_currency_configuration(),
-                cmg_agg:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_PERCENTILE(75)):change_currency_configuration(),
-                cmg_agg:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_MAX()):change_currency_configuration()
+                cmg_agg:aggregate_scenarios(BY_MIN()):change_currency_configuration(),
+                cmg_agg:aggregate_scenarios(BY_PERCENTILE(25)):change_currency_configuration(),
+                cmg_agg:aggregate_scenarios(BY_PERCENTILE(50)):change_currency_configuration(),
+                cmg_agg:aggregate_scenarios(BY_PERCENTILE(75)):change_currency_configuration(),
+                cmg_agg:aggregate_scenarios(BY_MAX()):change_currency_configuration()
                 ,{showInLegend = false, color = main_global_color[i]}
             );
             tab:push(chart);
@@ -1745,16 +1774,61 @@ function create_gen_report(col_struct)
                 chart_tot_defcit:add_column(total_deficit, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_deficit }});
             end
         else
-            chart:add_area_stacking(total_thermal_gen    , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_thermal     } });
-            chart:add_area_stacking(total_hydro_gen      , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_hydro       } });
-            chart:add_area_stacking(total_wind_gen       , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_wind        } });
-            chart:add_area_stacking(total_solar_gen      , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_solar       } });
-            chart:add_area_stacking(total_small_hydro_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_small_hydro } });
-            chart:add_area_stacking(total_csp_gen        , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_csp } });
-            chart:add_area_stacking(total_other_renw_gen , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_renw_other  } });
-            chart:add_area_stacking(total_batt_gen       , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_battery     } });
-            chart:add_area_stacking(total_pot_inj        , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_pinj        } });
-            chart:add_area_stacking(total_deficit        , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_deficit     } });
+            local colors_vector = {};
+            local total_vector = {};
+            if total_thermal_gen:loaded() then
+                table.insert(colors_vector, color_thermal);
+                table.insert(total_vector, total_thermal_gen);
+            end
+            if total_hydro_gen:loaded() then
+                table.insert(colors_vector, color_hydro);
+                table.insert(total_vector, total_hydro_gen);
+            end
+            if total_wind_gen:loaded() then
+                table.insert(colors_vector, color_wind);
+                table.insert(total_vector, total_wind_gen);
+            end
+            if total_solar_gen:loaded() then
+                table.insert(colors_vector, color_solar);
+                table.insert(total_vector, total_solar_gen);
+            end
+            if total_small_hydro_gen:loaded() then
+                table.insert(colors_vector, color_thermal);
+                table.insert(total_vector, total_small_hydro_gen);
+            end
+            if total_csp_gen:loaded() then
+                table.insert(colors_vector, color_csp);
+                table.insert(total_vector, total_csp_gen);
+            end
+            if total_other_renw_gen:loaded() then
+                table.insert(colors_vector, color_renw_other);
+                table.insert(total_vector, total_other_renw_gen);
+            end
+            if total_batt_gen:loaded() then
+                table.insert(colors_vector, color_battery);
+                table.insert(total_vector, total_batt_gen);
+            end
+            if total_pot_inj:loaded() then
+                table.insert(colors_vector, color_pinj);
+                table.insert(total_vector, total_pot_inj);
+            end
+            if total_deficit:loaded() then
+                table.insert(colors_vector, color_deficit);
+                table.insert(total_vector, total_deficit);
+            end
+            local total_generation = 
+            concatenate(total_vector);
+            chart:add_area_stacking(total_generation, {xUnit=dictionary.cell_stage[LANGUAGE], colors = colors_vector});
+            -- chart:add_area_stacking(total_thermal_gen    , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_thermal     } });
+            -- chart:add_area_stacking(total_hydro_gen      , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_hydro       } });
+            -- chart:add_area_stacking(total_wind_gen       , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_wind        } });
+            -- chart:add_area_stacking(total_solar_gen      , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_solar       } });
+            -- chart:add_area_stacking(total_small_hydro_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_small_hydro } });
+            -- chart:add_area_stacking(total_csp_gen        , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_csp } });
+            -- chart:add_area_stacking(total_other_renw_gen , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_renw_other  } });
+            -- chart:add_area_stacking(total_batt_gen       , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_battery     } });
+            -- chart:add_area_stacking(total_pot_inj        , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_pinj        } });
+            -- chart:add_area_stacking(total_deficit        , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_deficit     } });
         end
     end
 
@@ -1858,20 +1932,12 @@ function create_gen_report(col_struct)
 
             -- Renewable generation is broken into 3 types
 
-            total_other_renw_gen = ifelse(col_struct.renewable[i].tech_type:ne(1):select_stages_of_outputs() &
-                                          col_struct.renewable[i].tech_type:ne(2):select_stages_of_outputs() &
-                                          col_struct.renewable[i].tech_type:ne(4):select_stages_of_outputs(),
-                                          gergnd[i],
-                                          0);
-            total_wind_gen = ifelse(col_struct.renewable[i].tech_type:eq(1):select_stages_of_outputs(),
-                                          gergnd[i],
-                                          0);
-            total_solar_gen = ifelse(col_struct.renewable[i].tech_type:eq(2):select_stages_of_outputs(),
-                                          gergnd[i],
-                                          0);
-            total_small_hydro_gen = ifelse(col_struct.renewable[i].tech_type:eq(4):select_stages_of_outputs(),
-                                          gergnd[i],
-                                          0);
+            total_other_renw_gen = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:ne(1) &
+                                          col_struct.renewable[i].tech_type:ne(2) &
+                                          col_struct.renewable[i].tech_type:ne(4));
+            total_wind_gen = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(1));
+            total_solar_gen = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(2));
+            total_small_hydro_gen = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(4));
 
             total_other_renw_gen  = total_other_renw_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_ot_agent_name);
             total_wind_gen        = total_wind_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_wind_agent_name);
@@ -1955,13 +2021,13 @@ function create_risk_report(col_struct)
 
     if studies > 1 then
         for i = 1, studies do
-            risk_file = col_struct.system[i]:load("sddprisk"):aggregate_agents(BY_AVERAGE(), Collection.SYSTEM):aggregate_stages(BY_AVERAGE());
+            local risk_file = col_struct.system[i]:load("sddprisk"):aggregate_agents(BY_AVERAGE(), Collection.SYSTEM):aggregate_stages(BY_AVERAGE());
 
             -- Add marginal costs outputs
-            chart:add_categories(risk_file, col_struct.case_dir_list[i]); -- Annual Marg. cost
+            chart:add_column_categories(risk_file, col_struct.case_dir_list[i]); -- Annual Marg. cost
         end
     else
-        risk_file = col_struct.system[1]:load("sddprisk");
+        local risk_file = col_struct.system[1]:load("sddprisk");
         chart:add_column(risk_file);
     end
 
@@ -1980,6 +2046,7 @@ function create_viol_report(tab, col_struct, viol_struct, suffix)
     local file_name;
     local viol_file;
 
+    -- TODO: otimizar isso aqui abaixo
     if studies > 1 then
         for i, struct in ipairs(viol_struct) do
 
@@ -2000,7 +2067,7 @@ function create_viol_report(tab, col_struct, viol_struct, suffix)
             end
         end
     else
-        for i, struct in ipairs(viol_struct) do
+        for _, struct in ipairs(viol_struct) do
             file_name = "sddp_dashboard_viol_" .. suffix .. "_" .. struct.name;
             viol_file = col_struct.generic[1]:force_load(file_name);
             if viol_file:loaded() then
@@ -2014,14 +2081,13 @@ end
 
 function create_viol_report_from_list(tab, col_struct, viol_list, viol_struct, suffix)
     local viol_name;
-    local tokens = {};
 
     for _, file in ipairs(viol_list) do
         -- Look for file title in violation structure
         for _, struct in ipairs(viol_struct) do
             viol_name = "sddp_dashboard_viol_" .. suffix .. "_" .. struct.name;
             if file == viol_name then
-                viol_file = col_struct.generic[1]:load(file);
+                local viol_file = col_struct.generic[1]:load(file);
                 if viol_file:loaded() then
                     local chart = Chart(struct.title);
                     chart:add_column_stacking(viol_file, {xUnit=dictionary.cell_stage[LANGUAGE]});
