@@ -1272,8 +1272,8 @@ function create_sim_report(col_struct)
         costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros():save_cache();
 
         if is_greater_than_zero(costs_agg) then
-            local obj_cost    = max(costs_agg, 0);
-            local obj_revenue = min(costs_agg, 0);
+            local obj_cost    = max(costs_agg, 0):remove_zeros();
+            local obj_revenue = min(costs_agg, 0):remove_zeros();
 
             local total_obj_cost  = my_to_number(obj_cost:aggregate_agents(BY_SUM(),"Total cost"):to_list()[1],0.0);
             local others_obj_cost = my_to_number(obj_cost:remove_agent(1):aggregate_agents(BY_SUM(),"Other costs"):to_list()[1],0.0);
@@ -1282,17 +1282,23 @@ function create_sim_report(col_struct)
                 advisor:push_warning("obj_costs");
             end
 
-            cost_chart:add_pie(obj_cost:change_currency_configuration(), {colors = main_global_color});
-            revenue_chart:add_pie(obj_revenue:abs():change_currency_configuration(), {colors = main_global_color});
-            
-            if #revenue_chart > 0 then
-                cost_chart = {cost_chart,revenue_chart};
+            if obj_cost:loaded() then
+                cost_chart:add_pie(obj_cost:change_currency_configuration(), {colors = main_global_color});
             end
+
+            if obj_revenue:loaded() then
+                revenue_chart:add_pie(obj_revenue:abs():change_currency_configuration(), {colors = main_global_color});
+            end
+            
         end
     end
 
     if #cost_chart > 0 then
         tab:push(cost_chart);
+    end
+
+    if #revenue_chart > 0 then
+        tab:push(revenue_chart);
     end
 
     -- Add stage-wise cost reports
