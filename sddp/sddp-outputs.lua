@@ -80,3 +80,14 @@ end
 battery = Battery();
 local oembatun = battery.om_cost;
 oembatun:save("oembatun", {csv=is_csv});
+
+-- gerterMW - thermal MW generation
+thermal = Thermal();
+gerter = thermal:load("gerter");
+if gerter:loaded() then
+  if gerter:is_hourly() then
+    gerter:convert("MW"):save("gerterMW", {variable_by_block=2, csv=is_csv});
+  else
+    gerter:convert("MW"):save("gerterMW", {csv=is_csv});
+  end
+end
