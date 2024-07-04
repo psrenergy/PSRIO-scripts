@@ -906,7 +906,7 @@ end
 function create_penalty_proportion_graph(tab, col_struct, i)
     local output_name  = "sddppenp";
     local report_title = dictionary.violation_penalties[LANGUAGE];
-    local penp = col_struct.generic[i]:force_load(output_name):convert("%");
+    local penp = col_struct.generic[i]:force_load(output_name);
 
     if not penp:loaded() then
         info(output_name .. " could not be loaded. ".. "'" .. report_title .. "'" .. "report will not be displayed");
