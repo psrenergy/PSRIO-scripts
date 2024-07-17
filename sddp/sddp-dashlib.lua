@@ -2095,7 +2095,7 @@ function create_viol_report_from_list(tab, col_struct, viol_list, viol_struct, s
         for _, struct in ipairs(viol_struct) do
             viol_name = "sddp_dashboard_viol_" .. suffix .. "_" .. struct.name;
             if file == viol_name then
-                local viol_file = col_struct.generic[1]:load(file);
+                local viol_file = col_struct.generic[1]:force_load(file);
                 if viol_file:loaded() then
                     local chart = Chart(struct.title);
                     chart:add_column_stacking(viol_file, {xUnit=dictionary.cell_stage[LANGUAGE]});
