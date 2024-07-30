@@ -131,18 +131,19 @@ end
 -- HIDMXRSER - Hydro max reserve
 hydro = Hydro();
 local hydro_reserv = hydro.max_reserve;
-if hydro_reserv:is_loaded() then
-  local reserve_unit = hydro:load_vector("MaxSecondaryReserveUnit","");
+if hydro_reserv:loaded() then
+  local reserve_unit = hydro:load_parameter("MaxSecondaryReserveUnit","");
   local nominal_capacity_hydro_agents = reserve_unit:eq(2);
-  -- local mw_capacity_hydro_agents = reserve_unit:eq(3);
+  local mw_capacity_hydro_agents = reserve_unit:eq(3);
   local avalailable_capacity_hydro_agents = reserve_unit:eq(14);
 
-  local nominal_capacity_hydro_reserv = hydro_reserv * nominal_capacity_hydro_agents * hydro.max_generation;
-  local avalailable_capacity_hydro_reserv = hydro_reserv * avalailable_capacity_hydro_agents * hydro.max_generation;
+  local nominal_capacity_hydro_reserv = hydro_reserv:force_unit("%") * nominal_capacity_hydro_agents * hydro.max_generation;
+  local avalailable_capacity_hydro_reserv = hydro_reserv:force_unit("%") * avalailable_capacity_hydro_agents * hydro.max_generation;
+  local avalailable_capacity_mw_reserv = (hydro_reserv * mw_capacity_hydro_agents):force_unit("MW");
   if hydro_reserv:is_hourly() then
-    (hydro_reserv + nominal_capacity_hydro_reserv + avalailable_capacity_hydro_reserv):save("hidmxreser", {variable_by_block=2, csv=is_csv});
+    (avalailable_capacity_mw_reserv + nominal_capacity_hydro_reserv + avalailable_capacity_hydro_reserv):save("hidmxreser", {variable_by_block=2, csv=true});
   else
-    (hydro_reserv + nominal_capacity_hydro_reserv + avalailable_capacity_hydro_reserv):save("hidmxreser", {csv=is_csv});
+    (avalailable_capacity_mw_reserv + nominal_capacity_hydro_reserv + avalailable_capacity_hydro_reserv):save("hidmxreser", {csv=true});
   end
 end
 
@@ -158,18 +159,19 @@ end
 -- TERMXRSER - Thermal max reserve
 thermal = Thermal();
 local thermal_reserv = thermal.max_reserve;
-if thermal_reserv:is_loaded() then
-  local reserve_unit = thermal:load_vector("MaxSecondaryReserveUnit","");
+if thermal_reserv:loaded() then
+  local reserve_unit = thermal:load_parameter("MaxSecondaryReserveUnit","");
   local nominal_capacity_thermal_agents = reserve_unit:eq(2);
-  -- local mw_capacity_hydro_agents = reserve_unit:eq(3);
+  local mw_capacity_thermal_agents = reserve_unit:eq(3);
   local avalailable_capacity_thermal_agents = reserve_unit:eq(14);
 
-  local nominal_capacity_thermal_reserv = thermal_reserv * nominal_capacity_thermal_agents * thermal.max_generation;
-  local avalailable_capacity_thermal_reserv = thermal_reserv * avalailable_capacity_thermal_agents * thermal.max_generation;
+  local nominal_capacity_thermal_reserv = thermal_reserv:force_unit("%") * nominal_capacity_thermal_agents * thermal.max_generation;
+  local avalailable_capacity_thermal_reserv = thermal_reserv:force_unit("%") * avalailable_capacity_thermal_agents * thermal.max_generation;
+  local avalailable_capacity_mw_reserv = (thermal_reserv * mw_capacity_thermal_agents):force_unit("MW");
   if thermal_reserv:is_hourly() then
-    (thermal_reserv + nominal_capacity_thermal_reserv + avalailable_capacity_thermal_reserv):save("termxreser", {variable_by_block=2, csv=is_csv});
+    (avalailable_capacity_mw_reserv + nominal_capacity_thermal_reserv + avalailable_capacity_thermal_reserv):save("termxreser", {variable_by_block=2, csv=true});
   else
-    (thermal_reserv + nominal_capacity_thermal_reserv + avalailable_capacity_thermal_reserv):save("termxreser", {csv=is_csv});
+    (avalailable_capacity_mw_reserv + nominal_capacity_thermal_reserv + avalailable_capacity_thermal_reserv):save("termxreser", {csv=true});
   end
 end
 
