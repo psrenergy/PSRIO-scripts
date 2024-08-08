@@ -1456,14 +1456,15 @@ function create_costs_and_revs(col_struct, tab)
     for i = 1, studies do
         local objcop = require("sddp/costs");
         local discount_rate = require("sddp/discount_rate");
-        local costs = (max(objcop(i), 0) / discount_rate(i):select_stages_of_outputs()):aggregate_agents(BY_SUM(),"Total"):save_cache();
+        local costs = (max(objcop(i), 0) / discount_rate(i):select_stages_of_outputs()):save_cache();
 
         -- sddp_dashboard_cost_tot
         if studies == 1 then
             costs:remove_zeros():save("sddp_dashboard_cost_tot");
         end
 
-        local disp = concatenate(costs:aggregate_scenarios(BY_PERCENTILE(10)):rename_agent("P10"), costs:aggregate_scenarios(BY_AVERAGE()):rename_agent(dictionary.cell_average[LANGUAGE]), costs:aggregate_scenarios(BY_PERCENTILE(90)):rename_agent("P90")):save_cache();
+        local costs_agg = costs:aggregate_agents(BY_SUM(), "Total cost");
+        local disp = concatenate(costs_agg:aggregate_scenarios(BY_PERCENTILE(10)):rename_agent("P10"), costs_agg:aggregate_scenarios(BY_AVERAGE()):rename_agent(dictionary.cell_average[LANGUAGE]), costs_agg:aggregate_scenarios(BY_PERCENTILE(90)):rename_agent("P90")):save_cache();
 
         if studies > 1 then
             if is_greater_than_zero(disp) then

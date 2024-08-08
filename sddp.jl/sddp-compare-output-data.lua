@@ -45,7 +45,7 @@ local outputs = {
     "cmgbts",
     "cmgbus",
     "cmgcir",
-    "cmgdem"
+    "cmgdem",
     "cmgemb",
     "cmgint",
     "cmglnk",
