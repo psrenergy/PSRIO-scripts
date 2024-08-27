@@ -992,12 +992,15 @@ function create_exe_timer_per_scen(tab, col_struct, i)
     local extime_disp = concatenate(extime:aggregate_scenarios(BY_MIN()):rename_agent("MIN"), extime:aggregate_scenarios(BY_AVERAGE()):rename_agent(dictionary.cell_average[LANGUAGE]), extime:aggregate_scenarios(BY_MAX()):rename_agent("MAX")):save_cache();
     if is_greater_than_zero(extime_disp) then
         local unit = "hour";
-        local extime_disp_data = extime_disp:aggregate_scenarios(BY_MAX()):aggregate_stages(BY_MAX()):to_list();
+        local extime_disp_data = extime_disp:aggregate_scenarios(BY_MAX()):aggregate_stages(BY_MAX());
 
-        if extime_disp_data[1] < 1.0 then
-            unit = "ms";
-        elseif extime_disp_data[1] < 3600.0 then
-            unit = "s";
+        if extime_disp_data:loaded() then
+            local extime_disp_data_list = extime_disp_data:to_list()[1];
+            if extime_disp_data_list < 1.0 then
+                unit = "ms";
+            elseif extime_disp_data_list < 3600.0 then
+                unit = "s";
+            end
         end
 
         extime_chart = Chart(dictionary.dispersion_of_time[LANGUAGE]);
@@ -1165,10 +1168,12 @@ function create_pol_report(col_struct)
             local zinf_final         = tonumber(conv_age:select_agents({ 1 }):select_stage(total_iter):to_list()[1]);
             local zsup_tol_bot_final = tonumber(conv_age:select_agents({ 2 }):select_stage(total_iter):to_list()[1]);
             
-            if zinf_final < zsup_tol_bot_final then
-                advisor:push_warning("convergence_gap",1);
-            else
-                -- to_do: negative gap msg
+            if zinf_final and zsup_tol_bot_final then
+                if zinf_final < zsup_tol_bot_final then
+                    advisor:push_warning("convergence_gap",1);
+                else
+                    -- to_do: negative gap msg
+                end
             end
 
             if (show_sim_cost and has_results_for_add_years) then
@@ -1198,13 +1203,15 @@ function create_pol_report(col_struct)
                 -- Deviation error
                 local zsup = conv_file:select_agent(10);
                 local last_zsup = zsup:to_list()[zsup:stages()];
-                rel_diff = (immediate_cost - last_zsup)/immediate_cost;
-                if rel_diff > REP_DIFF_TOL or -rel_diff < -REP_DIFF_TOL then
-                    tab:push("**"..dictionary.warning[LANGUAGE].."**");
-                    tab:push(dictionary.deviation_error[1][LANGUAGE] .. string.format("%.1f",100*rel_diff) .. dictionary.deviation_error[2][LANGUAGE]);
-                    tab:push(dictionary.deviation_error[3][LANGUAGE]);
-                
-                    advisor:push_warning("simulation_cost");
+                if last_zsup and immediate_cost then
+                    rel_diff = (immediate_cost - last_zsup)/immediate_cost;
+                    if rel_diff > REP_DIFF_TOL or -rel_diff < -REP_DIFF_TOL then
+                        tab:push("**"..dictionary.warning[LANGUAGE].."**");
+                        tab:push(dictionary.deviation_error[1][LANGUAGE] .. string.format("%.1f",100*rel_diff) .. dictionary.deviation_error[2][LANGUAGE]);
+                        tab:push(dictionary.deviation_error[3][LANGUAGE]);
+                    
+                        advisor:push_warning("simulation_cost");
+                    end
                 end
 
                 tab:push(chart);
@@ -1943,10 +1950,14 @@ function create_gen_report(col_struct)
 
             total_other_renw_gen = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:ne(1) &
                                           col_struct.renewable[i].tech_type:ne(2) &
-                                          col_struct.renewable[i].tech_type:ne(4));
-            total_wind_gen = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(1));
-            total_solar_gen = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(2));
-            total_small_hydro_gen = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(4));
+                                          col_struct.renewable[i].tech_type:ne(4))
+                                          :select_agents(Collection.RENEWABLE);
+            total_wind_gen = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(1))
+                                      :select_agents(Collection.RENEWABLE);
+            total_solar_gen = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(2))
+                                       :select_agents(Collection.RENEWABLE);
+            total_small_hydro_gen = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(4))
+                                             :select_agents(Collection.RENEWABLE);
 
             total_other_renw_gen  = total_other_renw_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_ot_agent_name);
             total_wind_gen        = total_wind_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_wind_agent_name);
