@@ -1054,18 +1054,22 @@ function create_pol_report(col_struct)
     local has_results_for_add_years;
     local zsup_is_visible = true;
 
-    -- Convergence map report
-    get_conv_file_info(col_struct, "sddpconvm.csv", convm_file_list, systems, horizon, 1);
-    convertion_status = get_convergence_map_status(col_struct, convm_file_list, conv_status, 1);
-    for i = 1, #convertion_status do
-        if not convertion_status[i] then
-            error("Error converting convergence map file " .. convm_file_list[i]);
-        end
-    end
+    -- -- Convergence map report
+    -- get_conv_file_info(col_struct, "sddpconvm.csv", convm_file_list, systems, horizon, 1);
+    -- convertion_status = get_convergence_map_status(col_struct, convm_file_list, conv_status, 1);
+    -- for i = 1, #convertion_status do
+    --     if not convertion_status[i] then
+    --         error("Error converting convergence map file " .. convm_file_list[i]);
+    --     end
+    -- end
     
     -- Convergence report
     get_conv_file_info(col_struct, "sddppol.csv", file_list, systems, horizon, 1);
     get_convergence_file_agents(col_struct, file_list, conv_data, cuts_data, time_data, 1);
+
+    if #file_list < 1 then
+        tab:push("### " .. dictionary.error_load_sddppol[LANGUAGE]);
+    end
 
     -- Creating policy report
     for i, file in ipairs(file_list) do
@@ -1122,6 +1126,10 @@ function create_pol_report(col_struct)
             nsys = calculate_number_of_systems(systems);
             
             conv_file = col_struct.generic[1]:force_load(file);
+            if not conv_file:loaded() then
+                tab:push("#### ⚠️ " .. dictionary.error_load_sddppol_files[1][LANGUAGE] .. file .. ".csv" .. dictionary.error_load_sddppol_files[2][LANGUAGE]);
+            end
+
             conv_age = conv_file:select_agents({ 1, 2, 3, 4 }); -- Zinf        ,Zsup - Tol  ,Zsup        ,Zsup + Tol
             cuts_age = conv_file:select_agents({ 5, 6 }); -- Optimality  ,Feasibility
             

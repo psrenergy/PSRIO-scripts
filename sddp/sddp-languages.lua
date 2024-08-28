@@ -878,6 +878,23 @@ dictionary = {
         en = "Iteration",
         es = "Iteración",
         pt = "Iteração"
+    },
+    error_load_sddppol = {
+        en = "There was an error loading the sddppol.csv file, the convergence report will not be displayed, please contact the support team.",
+        es = "Hubo un error al cargar el archivo sddppol.csv, el informe de convergencia no se mostrará, por favor contacte al equipo de soporte.",
+        pt = "Houve um erro ao carregar o arquivo sddppol.csv, o relatório de convergência não será exibido, por favor, entre em contato com a equipe de suporte."
+    },
+    error_load_sddppol_files = {
+        [1] = {
+            en = "There was an error loading the ",
+            es = "Hubo un error al cargar el archivo ",
+            pt = "Houve um erro ao carregar o arquivo "
+        },
+        [2] = {
+            en = " file, the convergence report will not be displayed, please contact the support team.",
+            es = ", el informe de convergencia no se mostrará, por favor contacte al equipo de soporte.",
+            pt = ", o relatório de convergência não será exibido, por favor, entre em contato com a equipe de suporte."
+        }
     }
 };
 
