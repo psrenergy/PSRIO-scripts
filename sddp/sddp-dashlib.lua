@@ -354,20 +354,24 @@ function dash_infeasibility(tab,file_name,case_index)
 
     local inv_table = Study(case_index):load_table_without_header(file_name);
 
-    for lin=1,#inv_table do
-        local data=(inv_table[lin][1]);
-        local col = 2
-        local stg_concat = data;
-        if not data then
-            tab:push(" ");
-        else
-            local data_2=(inv_table[lin][col]);
-            while data_2 do
-                stg_concat = stg_concat..","..data_2;
-                col = col + 1;
-                data_2=(inv_table[lin][col]);
+    if not inv_table or (#inv_table == 0) then
+        warning("The file " .. file_name .. " was not found or is empty.");
+    else
+        for lin=1,#inv_table do
+            local data=(inv_table[lin][1]);
+            local col = 2
+            local stg_concat = data;
+            if not data then
+                tab:push(" ");
+            else
+                local data_2=(inv_table[lin][col]);
+                while data_2 do
+                    stg_concat = stg_concat..","..data_2;
+                    col = col + 1;
+                    data_2=(inv_table[lin][col]);
+                end
+                tab:push(stg_concat);
             end
-            tab:push(stg_concat);
         end
     end
 end
@@ -379,9 +383,14 @@ function get_nonconv_info(col_struct, file_name, nonconv_list, dimension, case_i
     -- Loading file
     local nonconv = col_struct.generic[case_index]:load_table(file_name);
 
-    for i = 1, #nonconv do
-        nonconv_list[i] = non_convexities_labels[trim(nonconv[i]["Type"])];
-        dimension[i]    = trim(nonconv[i]["Dimension"]);
+    if not nonconv or (#nonconv == 0) then
+        warning("The file " .. file_name .. " was not found or is empty.");
+    else
+        local nonconv_size = #nonconv;
+        for i = 1, nonconv_size do
+            nonconv_list[i] = non_convexities_labels[trim(nonconv[i]["Type"])];
+            dimension[i]    = trim(nonconv[i]["Dimension"]);
+        end
     end
 end
 
@@ -825,17 +834,21 @@ function get_conv_file_info(col_struct, file_name, file_list, systems, horizons,
     -- Loading file
     local sddppol = col_struct.generic[case_index]:load_table(file_name);
 
-    local file_name = "";
-    for i = 1, #sddppol do
-        file_name = sddppol[i]["FileNames"];
-        file_list[i] = string.sub(file_name, 1, #file_name - 4);
+    if not sddppol or (#sddppol == 0) then
+        warning("The file " .. file_name .. " was not found or is empty.");
+    else
+        local file_name = "";
+        for i = 1, #sddppol do
+            file_name = sddppol[i]["FileNames"];
+            file_list[i] = string.sub(file_name, 1, #file_name - 4);
 
-        systems[i] = sddppol[i]["System"];
-        if systems[i] == "INTEGRATED" then
-            systems[i] = dictionary.integrated[LANGUAGE];
+            systems[i] = sddppol[i]["System"];
+            if systems[i] == "INTEGRATED" then
+                systems[i] = dictionary.integrated[LANGUAGE];
+            end
+            
+            horizons[i] = sddppol[i]["InitialHorizon"] .. "-" .. sddppol[i]["FinalHorizon"];
         end
-        
-        horizons[i] = sddppol[i]["InitialHorizon"] .. "-" .. sddppol[i]["FinalHorizon"];
     end
 end
 
@@ -2338,25 +2351,29 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
         -- Load list of violations
         viol_files = col_struct.generic[1]:load_table_without_header(viol_file_name);
 
-        -- Check if violation list file is present
-        if #viol_files > 0 then
-            -- Create list of violation outputs to be considered
-            for lin = 1, #viol_files do
-                file = viol_files[lin][1];
-                table.insert(viol_list,file);
+        if not viol_files or (#viol_files == 0) then
+            warning("The file " .. viol_file_name .. " was not found or is empty.");
+        else
+            -- Check if violation list file is present
+            if #viol_files > 0 then
+                -- Create list of violation outputs to be considered
+                for lin = 1, #viol_files do
+                    file = viol_files[lin][1];
+                    table.insert(viol_list,file);
+                end
+
+                create_viol_report_from_list(tab_viol_avg, col_struct, viol_list, viol_report_structs, "avg");
+                create_viol_report_from_list(tab_viol_max, col_struct, viol_list, viol_report_structs, "max");
+            else
+                create_viol_report(tab_viol_avg, col_struct, viol_report_structs, "avg");
+                create_viol_report(tab_viol_max, col_struct, viol_report_structs, "max");
             end
 
-            create_viol_report_from_list(tab_viol_avg, col_struct, viol_list, viol_report_structs, "avg");
-            create_viol_report_from_list(tab_viol_max, col_struct, viol_list, viol_report_structs, "max");
-        else
-            create_viol_report(tab_viol_avg, col_struct, viol_report_structs, "avg");
-            create_viol_report(tab_viol_max, col_struct, viol_report_structs, "max");
+            push_tab_to_tab(tab_viol_avg,tab_violations);
+            push_tab_to_tab(tab_viol_max,tab_violations);
+
+            push_tab_to_tab(tab_violations,dashboard);
         end
-
-        push_tab_to_tab(tab_viol_avg,tab_violations);
-        push_tab_to_tab(tab_viol_max,tab_violations);
-
-        push_tab_to_tab(tab_violations,dashboard);
     end
 
     ----------
