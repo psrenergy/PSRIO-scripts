@@ -1568,7 +1568,10 @@ function create_marg_costs(col_struct)
             local chart = Chart(system);
 
             -- Add marginal costs outputs
-            chart:add_column(concatenate(data):force_unit(system_unit[count_sys])); -- Annual Marg. cost
+            for _,individual_data in ipairs(data) do
+                chart:add_column(individual_data:force_unit(system_unit[count_sys]));-- Annual Marg. cost
+            end
+            -- chart:add_column(concatenate(data):force_unit(system_unit[count_sys])); 
             tab:push(chart);
             count_sys = count_sys + 1;
         end
@@ -1588,9 +1591,10 @@ function create_marg_costs(col_struct)
             for j = 1, studies do
                 cmg_aggsum = cmg[j]:aggregate_blocks_by_duracipu(j):aggregate_scenarios(BY_AVERAGE());
                 local cmg_aggsum_agents = cmg_aggsum:select_agent(agent):rename_agent(col_struct.case_dir_list[j]);
-                table.insert(aux_tab, cmg_aggsum_agents);
+                -- table.insert(aux_tab, cmg_aggsum_agents);
+                chart:add_line(cmg_aggsum_agents:change_currency_configuration(j),{xUnit=dictionary.cell_stage[LANGUAGE]});
             end
-            chart:add_line(concatenate(aux_tab):change_currency_configuration(j),{xUnit=dictionary.cell_stage[LANGUAGE]}); -- Average marg. cost per stage
+            -- chart:add_line(concatenate(aux_tab):change_currency_configuration(j),{xUnit=dictionary.cell_stage[LANGUAGE]}); -- Average marg. cost per stage
             tab:push(chart);
         end
     else
