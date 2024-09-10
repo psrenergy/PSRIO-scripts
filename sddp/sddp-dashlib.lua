@@ -1857,19 +1857,8 @@ function create_gen_report(col_struct)
                 table.insert(colors_vector, color_deficit);
                 table.insert(total_vector, total_deficit);
             end
-            local total_generation = 
-            concatenate(total_vector);
+            local total_generation = concatenate(total_vector);
             chart:add_area_stacking(total_generation, {xUnit=dictionary.cell_stage[LANGUAGE], colors = colors_vector});
-            -- chart:add_area_stacking(total_thermal_gen    , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_thermal     } });
-            -- chart:add_area_stacking(total_hydro_gen      , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_hydro       } });
-            -- chart:add_area_stacking(total_wind_gen       , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_wind        } });
-            -- chart:add_area_stacking(total_solar_gen      , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_solar       } });
-            -- chart:add_area_stacking(total_small_hydro_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_small_hydro } });
-            -- chart:add_area_stacking(total_csp_gen        , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_csp } });
-            -- chart:add_area_stacking(total_other_renw_gen , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_renw_other  } });
-            -- chart:add_area_stacking(total_batt_gen       , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_battery     } });
-            -- chart:add_area_stacking(total_pot_inj        , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_pinj        } });
-            -- chart:add_area_stacking(total_deficit        , { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_deficit     } });
         end
     end
 
@@ -1921,108 +1910,137 @@ function create_gen_report(col_struct)
     renw_shydro_report_name = dictionary.total_small_hydro[LANGUAGE];
     renw_csp_report_name = dictionary.total_renewable_csp[LANGUAGE];
 
-    -- Generation per system report
-    local agents = col_struct.system[1]:labels();
-    local code   = col_struct.system[1]:codes();
-    for s, agent in ipairs(agents) do
-        chart_tot_gerhid     =  Chart(dictionary.total_hydro[LANGUAGE]);
-        chart_tot_gerter     =  Chart(dictionary.total_thermal[LANGUAGE]);
-        chart_tot_renw_other =  Chart(dictionary.total_renewable_other[LANGUAGE]);
-        chart_tot_renw_wind  =  Chart(dictionary.total_renewable_wind[LANGUAGE]);
-        chart_tot_renw_solar =  Chart(dictionary.total_renewable_solar[LANGUAGE]);
-        chart_tot_renw_shyd  =  Chart(dictionary.total_renewable_small_hydro[LANGUAGE]);
-        chart_tot_renw_csp   =  Chart(dictionary.total_renewable_csp[LANGUAGE]);
-        chart_tot_gerbat     =  Chart(dictionary.total_battery[LANGUAGE]);
-        chart_tot_potinj     =  Chart(dictionary.total_power_injection[LANGUAGE]);
-        chart_tot_defcit     =  Chart(dictionary.total_deficit[LANGUAGE]);
+    local systems_data = {};
 
-        for i = 1, studies do
+    for i = 1, studies do
 
-            if studies > 1 then
-                hydro_agent_name   = col_struct.case_dir_list[i] .. " - " .. hydro_report_name;
-                thermal_agent_name = col_struct.case_dir_list[i] .. " - " .. thermal_report_name;
-                battery_agent_name = col_struct.case_dir_list[i] .. " - " .. battery_report_name;
-                deficit_agent_name = col_struct.case_dir_list[i] .. " - " .. deficit_report_name;
-                pinj_agent_name    = col_struct.case_dir_list[i] .. " - " .. pinj_report_name;
+        if studies > 1 then
+            hydro_agent_name   = col_struct.case_dir_list[i] .. " - " .. hydro_report_name;
+            thermal_agent_name = col_struct.case_dir_list[i] .. " - " .. thermal_report_name;
+            battery_agent_name = col_struct.case_dir_list[i] .. " - " .. battery_report_name;
+            deficit_agent_name = col_struct.case_dir_list[i] .. " - " .. deficit_report_name;
+            pinj_agent_name    = col_struct.case_dir_list[i] .. " - " .. pinj_report_name;
 
-                renw_ot_agent_name     = col_struct.case_dir_list[i] .. " - " .. renw_ot_report_name;
-                renw_wind_agent_name   = col_struct.case_dir_list[i] .. " - " .. renw_wind_report_name;
-                renw_solar_agent_name  = col_struct.case_dir_list[i] .. " - " .. renw_solar_report_name;
-                renw_shydro_agent_name = col_struct.case_dir_list[i] .. " - " .. renw_shydro_report_name;
-                renw_csp_agent_name    = col_struct.case_dir_list[i] .. " - " .. renw_csp_report_name;
-            else
-                hydro_agent_name   = hydro_report_name;
-                thermal_agent_name = thermal_report_name;
-                battery_agent_name = battery_report_name;
-                deficit_agent_name = deficit_report_name;
-                pinj_agent_name    = pinj_report_name;
+            renw_ot_agent_name     = col_struct.case_dir_list[i] .. " - " .. renw_ot_report_name;
+            renw_wind_agent_name   = col_struct.case_dir_list[i] .. " - " .. renw_wind_report_name;
+            renw_solar_agent_name  = col_struct.case_dir_list[i] .. " - " .. renw_solar_report_name;
+            renw_shydro_agent_name = col_struct.case_dir_list[i] .. " - " .. renw_shydro_report_name;
+            renw_csp_agent_name    = col_struct.case_dir_list[i] .. " - " .. renw_csp_report_name;
+        else
+            hydro_agent_name   = hydro_report_name;
+            thermal_agent_name = thermal_report_name;
+            battery_agent_name = battery_report_name;
+            deficit_agent_name = deficit_report_name;
+            pinj_agent_name    = pinj_report_name;
 
-                renw_ot_agent_name     = renw_ot_report_name;
-                renw_wind_agent_name   = renw_wind_report_name;
-                renw_solar_agent_name  = renw_solar_report_name;
-                renw_shydro_agent_name = renw_shydro_report_name;
-                renw_csp_agent_name    = renw_csp_report_name;
-            end
-
-            -- Data processing
-            total_hydro_gen = gerhid[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(hydro_agent_name);
-            total_batt_gen  = gerbat[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(battery_agent_name);
-            total_deficit   = defcit[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(deficit_agent_name);
-            total_pot_inj   = potinj[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(pinj_agent_name);
-            total_csp_gen   = gercsp[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_csp_agent_name);
-
-            -- Renewable generation is broken into 3 types
-
-            total_other_renw_gen = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:ne(1) &
-                                          col_struct.renewable[i].tech_type:ne(2) &
-                                          col_struct.renewable[i].tech_type:ne(4))
-                                          :select_agents(Collection.RENEWABLE);
-            total_wind_gen = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(1))
-                                      :select_agents(Collection.RENEWABLE);
-            total_solar_gen = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(2))
-                                       :select_agents(Collection.RENEWABLE);
-            total_small_hydro_gen = gergnd[i]:select_agents(col_struct.renewable[i].tech_type:eq(4))
-                                             :select_agents(Collection.RENEWABLE);
-
-            total_other_renw_gen  = total_other_renw_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_ot_agent_name);
-            total_wind_gen        = total_wind_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_wind_agent_name);
-            total_solar_gen       = total_solar_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_solar_agent_name);
-            total_small_hydro_gen = total_small_hydro_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(renw_shydro_agent_name);
-            total_thermal_gen     = gerter[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):select_agent(agent):rename_agent(thermal_agent_name);
-
-            if total_hydro_gen:loaded() and col_struct.hydro[i].system:eq(code[s]):remove_zeros():loaded() then
-                chart_tot_gerhid:add_column(total_hydro_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_hydro }});
-            end
-            if total_thermal_gen:loaded() and col_struct.thermal[i].system:eq(code[s]):remove_zeros():loaded() then
-                chart_tot_gerter:add_column(total_thermal_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_thermal }});
-            end
-            if col_struct.renewable[i].system:eq(code[s]):remove_zeros():loaded() then
-                if total_other_renw_gen:loaded() and (col_struct.renewable[i].tech_type:ne(1) + col_struct.renewable[i].tech_type:ne(2) + col_struct.renewable[i].tech_type:ne(4)):remove_zeros():loaded() then
-                    chart_tot_renw_other:add_column(total_other_renw_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_renw_other }});
-                end
-                if total_wind_gen:loaded() and col_struct.renewable[i].tech_type:eq(1):remove_zeros():loaded() then
-                    chart_tot_renw_wind:add_column(total_wind_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_wind }});
-                end
-                if total_solar_gen:loaded() and col_struct.renewable[i].tech_type:eq(2):remove_zeros():loaded() then
-                    chart_tot_renw_solar:add_column(total_solar_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_solar }});
-                end
-                if total_small_hydro_gen:loaded() and col_struct.renewable[i].tech_type:eq(4):remove_zeros():loaded() then
-                    chart_tot_renw_shyd:add_column(total_small_hydro_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_small_hydro }});
-                end
-            end
-            if total_csp_gen:loaded() and col_struct.csp[i].system:eq(code[s]):remove_zeros():loaded() then
-                chart_tot_renw_csp:add_column(total_csp_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_csp }});
-            end
-            if total_batt_gen:loaded() and col_struct.battery[i].system:eq(code[s]):remove_zeros():loaded() then
-                chart_tot_gerbat:add_column(total_batt_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_battery }});
-            end
-            if total_pot_inj:loaded() and col_struct.power_injection[i].system:eq(code[s]):remove_zeros():loaded() then
-                chart_tot_potinj:add_column(total_pot_inj, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_pinj }});
-            end
-            if total_deficit:loaded() then
-                chart_tot_defcit:add_column(total_deficit, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_deficit }});
-            end
+            renw_ot_agent_name     = renw_ot_report_name;
+            renw_wind_agent_name   = renw_wind_report_name;
+            renw_solar_agent_name  = renw_solar_report_name;
+            renw_shydro_agent_name = renw_shydro_report_name;
+            renw_csp_agent_name    = renw_csp_report_name;
         end
+
+        local agents = col_struct.system[i]:labels();
+
+        -- Data processing
+        total_hydro_gen   = gerhid[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE());
+        total_thermal_gen = gerter[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE());
+        total_batt_gen    = gerbat[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE());
+        total_deficit     = defcit[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE());
+        total_pot_inj     = potinj[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE());
+        total_csp_gen     = gercsp[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE());
+
+        -- Renewable generation is broken into 3 types
+        local renw_gen = gergnd[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):save_cache();
+        total_other_renw_gen = renw_gen:select_agents(col_struct.renewable[i].tech_type:ne(1) &
+                                      col_struct.renewable[i].tech_type:ne(2) &
+                                      col_struct.renewable[i].tech_type:ne(4))
+                                      :select_agents(Collection.RENEWABLE);
+        total_wind_gen = renw_gen:select_agents(col_struct.renewable[i].tech_type:eq(1))
+                                  :select_agents(Collection.RENEWABLE);
+        total_solar_gen = renw_gen:select_agents(col_struct.renewable[i].tech_type:eq(2))
+                                   :select_agents(Collection.RENEWABLE);
+        total_small_hydro_gen = renw_gen:select_agents(col_struct.renewable[i].tech_type:eq(4))
+                                         :select_agents(Collection.RENEWABLE);
+
+        total_other_renw_gen  = total_other_renw_gen:aggregate_agents(BY_SUM(), Collection.SYSTEM);
+        total_wind_gen        = total_wind_gen:aggregate_agents(BY_SUM(), Collection.SYSTEM);
+        total_solar_gen       = total_solar_gen:aggregate_agents(BY_SUM(), Collection.SYSTEM);
+        total_small_hydro_gen = total_small_hydro_gen:aggregate_agents(BY_SUM(), Collection.SYSTEM);
+
+        for _, agent in ipairs(agents) do
+            local system_total_hydro_gen = total_hydro_gen:select_agent(agent):rename_agent(hydro_agent_name);
+            local system_total_thermal_gen = total_thermal_gen:select_agent(agent):rename_agent(thermal_agent_name);
+            local system_total_other_renw_gen = total_other_renw_gen:select_agent(agent):rename_agent(renw_ot_agent_name);
+            local system_total_wind_gen  = total_wind_gen:select_agent(agent):rename_agent(renw_wind_agent_name);
+            local system_total_solar_gen = total_solar_gen:select_agent(agent):rename_agent(renw_solar_agent_name);
+            local system_total_small_hydro_gen = total_small_hydro_gen:select_agent(agent):rename_agent(renw_shydro_agent_name);
+            local system_total_csp_gen   = total_csp_gen:select_agent(agent):rename_agent(renw_csp_agent_name);
+            local system_total_batt_gen  = total_batt_gen:select_agent(agent):rename_agent(battery_agent_name);
+            local system_total_pot_inj   = total_pot_inj:select_agent(agent):rename_agent(pinj_agent_name);
+            local system_total_deficit   = total_deficit:select_agent(agent):rename_agent(deficit_agent_name);
+
+            if not systems_data[agent] then
+                systems_data[agent] = {
+                    hydro = {},
+                    thermal = {},
+                    other_renw = {},
+                    wind = {},
+                    solar = {},
+                    small_hydro = {},
+                    csp = {},
+                    battery = {},
+                    pot_inj = {},
+                    deficit = {},
+                };
+            end
+
+            table.insert(systems_data[agent].hydro, system_total_hydro_gen);
+
+            table.insert(systems_data[agent].thermal, system_total_thermal_gen);
+
+            table.insert(systems_data[agent].other_renw, system_total_other_renw_gen);
+
+            table.insert(systems_data[agent].wind, system_total_wind_gen);
+
+            table.insert(systems_data[agent].solar, system_total_solar_gen);
+
+            table.insert(systems_data[agent].small_hydro, system_total_small_hydro_gen);
+
+            table.insert(systems_data[agent].csp, system_total_csp_gen);
+
+            table.insert(systems_data[agent].battery, system_total_batt_gen);
+
+            table.insert(systems_data[agent].pot_inj, system_total_pot_inj);
+
+            table.insert(systems_data[agent].deficit, system_total_deficit);
+
+        end
+  
+    end
+
+    for agent, data in pairs(systems_data) do
+        local chart_tot_gerhid = Chart(dictionary.total_hydro[LANGUAGE]);
+        local chart_tot_gerter = Chart(dictionary.total_thermal[LANGUAGE]);
+        local chart_tot_renw_other = Chart(dictionary.total_renewable_other[LANGUAGE]);
+        local chart_tot_renw_wind = Chart(dictionary.total_renewable_wind[LANGUAGE]);
+        local chart_tot_renw_solar = Chart(dictionary.total_renewable_solar[LANGUAGE]);
+        local chart_tot_renw_shyd = Chart(dictionary.total_renewable_small_hydro[LANGUAGE]);
+        local chart_tot_renw_csp = Chart(dictionary.total_renewable_csp[LANGUAGE]);
+        local chart_tot_gerbat = Chart(dictionary.total_battery[LANGUAGE]);
+        local chart_tot_potinj = Chart(dictionary.total_power_injection[LANGUAGE]);
+        local chart_tot_defcit = Chart(dictionary.total_deficit[LANGUAGE]);
+
+        chart_tot_gerhid:add_column(concatenate(data.hydro), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_hydro }});
+        chart_tot_gerter:add_column(concatenate(data.thermal), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_thermal }});
+        chart_tot_renw_other:add_column(concatenate(data.other_renw), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_renw_other }});
+        chart_tot_renw_wind:add_column(concatenate(data.wind), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_wind }});
+        chart_tot_renw_solar:add_column(concatenate(data.solar), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_solar }});
+        chart_tot_renw_shyd:add_column(concatenate(data.small_hydro), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_small_hydro }});
+        chart_tot_renw_csp:add_column(concatenate(data.csp), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_csp }});
+        chart_tot_gerbat:add_column(concatenate(data.battery), { xUnit=dictionary.cell_stage, colors = { color_battery }});
+        chart_tot_potinj:add_column(concatenate(data.pot_inj), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_pinj }});
+        chart_tot_defcit:add_column(concatenate(data.deficit), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_deficit }});
 
         tab:push("## ".. dictionary.total_generation_system[LANGUAGE] .. " - " .. agent);
         if #chart_tot_gerhid > 0 then
