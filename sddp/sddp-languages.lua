@@ -572,10 +572,10 @@ dictionary = {
         es = "Año",
         pt = "Ano"
     },
-    cell_ini_year = {
-        en = "Initial year",
-        es = "Año inicial",
-        pt = "Ano inicial"
+    cell_ini_date = {
+        en = "Initial date",
+        es = "Fecha inicial",
+        pt = "Data inicial"
     },
     cell_plc_resolution = {
         en = "Policy resolution",

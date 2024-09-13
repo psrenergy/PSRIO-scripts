@@ -420,15 +420,15 @@ function create_tab_summary(col_struct, info_struct)
         table.insert(description, study:get_parameter("Descricao", ""));
     end
 
-    local case = dictionary.cell_case[LANGUAGE];
-    local directory_name = dictionary.cell_directory_name[LANGUAGE];
-    local path_cell = dictionary.cell_path[LANGUAGE];
+    local case             = dictionary.cell_case[LANGUAGE];
+    local directory_name   = dictionary.cell_directory_name[LANGUAGE];
+    local path_cell        = dictionary.cell_path[LANGUAGE];
     local execution_status = dictionary.cell_execution_status[LANGUAGE];
-    local model = dictionary.cell_model[LANGUAGE];
-    local user = dictionary.cell_user[LANGUAGE];
-    local version = dictionary.cell_version[LANGUAGE];
-    local ID = dictionary.cell_ID[LANGUAGE];
-    local title = dictionary.cell_title[LANGUAGE];
+    local model            = dictionary.cell_model[LANGUAGE];
+    local user             = dictionary.cell_user[LANGUAGE];
+    local version          = dictionary.cell_version[LANGUAGE];
+    local ID               = dictionary.cell_ID[LANGUAGE];
+    local title            = dictionary.cell_title[LANGUAGE];
 
     if studies == 1 then 
         tab:push("| " .. directory_name .. " | " .. path_cell .. " | " .. execution_status .. " |");
@@ -491,7 +491,7 @@ function create_tab_summary(col_struct, info_struct)
     local exe_type_string            = "| " .. dictionary.cell_execution_type[LANGUAGE];
     local case_type_string           = "| " .. dictionary.cell_case_type[LANGUAGE];
     local nstg_string                = "| " .. dictionary.cell_stages[LANGUAGE];
-    local ini_year_string            = "| " .. dictionary.cell_ini_year[LANGUAGE];
+    local ini_date_string            = "| " .. dictionary.cell_ini_date[LANGUAGE];
     local plc_resolution             = "| " .. dictionary.cell_plc_resolution[LANGUAGE];
     local sim_resolution             = "| " .. dictionary.cell_sim_resolution[LANGUAGE];
     local nforw_string               = "| " .. dictionary.cell_fwd_series[LANGUAGE];
@@ -562,7 +562,8 @@ function create_tab_summary(col_struct, info_struct)
         lower_header_string = lower_header_string .. "|-----------";
 
         nstg_string      = nstg_string      .. " | " .. tostring(number_of_stages);
-        ini_year_string  = ini_year_string  .. " | " .. tostring(col_struct.study[i]:initial_year());
+        ini_date_string  = ini_date_string  .. " | " .. tostring(col_struct.study[i]:initial_stage()) .. "/" 
+                                                     .. tostring(col_struct.study[i]:initial_year());
         plc_resolution   = plc_resolution   .. " | " .. policy_number_of_blocks;
         sim_resolution   = sim_resolution   .. " | " .. resolution_of_simulation;
         nforw_string     = nforw_string     .. " | " .. number_of_forwards;
@@ -622,7 +623,7 @@ function create_tab_summary(col_struct, info_struct)
     exe_type_string                  = exe_type_string            .. "|";
     case_type_string                 = case_type_string           .. "|";
     nstg_string                      = nstg_string                .. "|";
-    ini_year_string                  = ini_year_string            .. "|";
+    ini_date_string                  = ini_date_string            .. "|";
     plc_resolution                   = plc_resolution             .. "|";
     sim_resolution                   = sim_resolution             .. "|";
     nforw_string                     = nforw_string               .. "|";
@@ -640,7 +641,7 @@ function create_tab_summary(col_struct, info_struct)
     tab:push(exe_type_string);
     tab:push(case_type_string);
     tab:push(nstg_string);
-    tab:push(ini_year_string);
+    tab:push(ini_date_string);
     tab:push(plc_resolution);
     tab:push(sim_resolution);
     tab:push(nforw_string);
