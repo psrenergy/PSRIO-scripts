@@ -6,9 +6,12 @@ local dprdash_psrio_agents = dprdash_psrio:agents();
 local tab = Tab("DPR")
 
 for _,agent in ipairs(dprdash_psrio_agents) do
-    local ymax = dprdash_psrio:aggregate_stages(BY_MAX()):aggregate_scenarios(BY_MAX()):aggregate_blocks(BY_MAX()):select_agent(agent):to_list()[1];
-    local ymin = dprdash_psrio:aggregate_stages(BY_MIN()):aggregate_scenarios(BY_MIN()):aggregate_blocks(BY_MAX()):select_agent(agent):to_list()[1];
+    local ymax_value = dprdash_psrio:aggregate_stages(BY_MAX()):aggregate_scenarios(BY_MAX()):aggregate_blocks(BY_MAX()):select_agent(agent):to_list()[1];
+    local ymin_value = dprdash_psrio:aggregate_stages(BY_MIN()):aggregate_scenarios(BY_MIN()):aggregate_blocks(BY_MAX()):select_agent(agent):to_list()[1];
 
+    local ymax = tonumber(ymax_value) + tonumber(ymax_value) * 0.1;
+    local ymin = math.min(tonumber(ymin_value) - tonumber(ymin_value) * 0.1,0);
+    
     local chart = Chart(agent);
     chart:enable_controls();
     for stage = 1, dprdash_psrio:last_stage() do
