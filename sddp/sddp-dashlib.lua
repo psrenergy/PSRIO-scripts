@@ -1274,8 +1274,10 @@ function Tab.final_cost_table(self, col_struct)
     self:push("| " .. dictionary.cell_case[LANGUAGE] .. " | " .. dictionary.cell_average_total_cost[LANGUAGE] .. " | " .. dictionary.cell_max_total_cost[LANGUAGE] .. " | " .. dictionary.cell_min_total_cost[LANGUAGE] .. " |");
     self:push("|:-:|:-:|:-:|:-:|");
     for i = 1, studies do
-        local objcop = col_struct.generic[i]:load("objcop"):remove_agent(1);
+        local number_of_stages = col_struct.study[i]:stages_without_buffer_years();
 
+        local objcop = col_struct.generic[i]:load("objcop"):remove_agent(1):select_stages(1,number_of_stages);
+        error("blabla")
         local cost = objcop / discount_rate(i);
 
         local future_cost = cost:select_agent(-1):aggregate_stages(BY_LAST_VALUE()):save_cache();
