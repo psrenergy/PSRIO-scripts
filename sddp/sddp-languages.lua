@@ -895,7 +895,32 @@ dictionary = {
             es = ", el informe de convergencia no se mostrará, por favor contacte al equipo de soporte.",
             pt = ", o relatório de convergência não será exibido, por favor, entre em contato com a equipe de suporte."
         }
-    }
+    },
+    final_cost = {
+        en = "Final cost statistics",
+        es = "Estadísticas del costo final",
+        pt = "Estatisticas do custo final"
+    },
+    cell_average_total_cost = {
+        en = "Average cost",
+        es = "Costo promedio",
+        pt = "Custo médio"
+    },
+    cell_max_total_cost = {
+        en = "Maximum cost",
+        es = "Costo maximo",
+        pt = "Custo maximo"
+    },
+    cell_min_total_cost = {
+        en = "Minimum cost",
+        es = "Costo minimo",
+        pt = "Custo minimo"
+    },
+    cell_std_total_cost = {
+        en = "Standard deviation",
+        es = "Desviación estándar",
+        pt = "Desvio padrão"
+    },
 };
 
 ---------------------

@@ -1266,6 +1266,33 @@ function create_pol_report(col_struct)
     return tab;
 end
 
+function Tab.final_cost_table(self, col_struct)
+    local discount_rate = require("sddp/discount_rate");
+
+    self:push("## " .. dictionary.final_cost[LANGUAGE]);
+
+    self:push("| " .. dictionary.cell_case[LANGUAGE] .. " | " .. dictionary.cell_average_total_cost[LANGUAGE] .. " | " .. dictionary.cell_std_total_cost[LANGUAGE] .." | ".. dictionary.cell_min_total_cost[LANGUAGE] .. " | " .. dictionary.cell_max_total_cost[LANGUAGE] .. " |");
+    self:push("|:-:|:-:|:-:|:-:|:-:|");
+    for i = 1, studies do
+
+        local objcop = col_struct.generic[i]:load("objcop"):remove_agent(1);
+        local cost = objcop / discount_rate(i);
+
+        local obj_cost = cost:remove_agent(-1):aggregate_agents(BY_SUM(), "Total cost"):aggregate_stages(BY_SUM()):save_cache();
+        local future_cost = cost:select_agent(-1):aggregate_stages(BY_LAST_VALUE());
+
+        local total_cost = obj_cost + future_cost;
+
+        local average_cost = total_cost:aggregate_scenarios(BY_AVERAGE()):to_list()[1];
+        local minimum_cost = total_cost:aggregate_scenarios(BY_MIN()):to_list()[1];
+        local maximum_cost = total_cost:aggregate_scenarios(BY_MAX()):to_list()[1];
+        local std_cost = total_cost:aggregate_scenarios(BY_STDDEV()):to_list()[1];
+
+        local replacement = col_struct.study[i]:get_parameter("CurrencyReference","k$");
+
+        self:push("| " .. col_struct.case_dir_list[i] .. " | " .. replacement .. " " .. string.format("%.2f", average_cost) .. " | " .. replacement .. " " .. string.format("%.2f", std_cost) .. " | " .. replacement .. " " .. string.format("%.2f", minimum_cost) .. " | " .. replacement .. " " .. string.format("%.2f", maximum_cost) .. " |");
+    end
+end
 -----------------------------------------------------------------------------------------------
 -- Simulation objetive function cost terms report function
 -----------------------------------------------------------------------------------------------
@@ -1277,6 +1304,8 @@ function create_sim_report(col_struct)
     local costs_agg;
     local exe_times;
 
+    tab:final_cost_table(col_struct);
+    
     local cost_chart    = Chart(dictionary.breakdown_cost_time[LANGUAGE]);
     local revenue_chart = Chart(dictionary.breakdown_revenue_time[LANGUAGE]);
 
