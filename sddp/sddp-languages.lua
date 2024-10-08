@@ -899,7 +899,7 @@ dictionary = {
     final_cost = {
         en = "Final cost statistics",
         es = "Estadísticas del costo final",
-        pt = "Estatisticas do custom final"
+        pt = "Estatisticas do custo final"
     },
     cell_average_total_cost = {
         en = "Average cost",
