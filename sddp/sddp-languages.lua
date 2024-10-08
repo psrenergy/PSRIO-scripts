@@ -897,34 +897,29 @@ dictionary = {
         }
     },
     final_cost = {
-        en = "Final cost",
-        es = "Costo final",
-        pt = "Custom final"
-    },
-    final_cost_min = {
-        en = "Final cost",
-        es = "Costo final",
-        pt = "Custom final"
-    },
-    final_cost_max = {
-        en = "Final cost",
-        es = "Costo final",
-        pt = "Custom final"
+        en = "Final cost statistics",
+        es = "Estadísticas del costo final",
+        pt = "Estatisticas do custom final"
     },
     cell_average_total_cost = {
-        en = "Total average cost",
-        es = "Costo promedio total",
-        pt = "Custo médio total"
+        en = "Average cost",
+        es = "Costo promedio",
+        pt = "Custo médio"
     },
     cell_max_total_cost = {
-        en = "Total maximum cost",
-        es = "Costo maximo total",
-        pt = "Custo maximo total"
+        en = "Maximum cost",
+        es = "Costo maximo",
+        pt = "Custo maximo"
     },
     cell_min_total_cost = {
-        en = "Total minimum cost",
-        es = "Costo minimo total",
-        pt = "Custo minimo total"
+        en = "Minimum cost",
+        es = "Costo minimo",
+        pt = "Custo minimo"
+    },
+    cell_std_total_cost = {
+        en = "Standard deviation",
+        es = "Desviación estándar",
+        pt = "Desvio padrão"
     },
 };
 

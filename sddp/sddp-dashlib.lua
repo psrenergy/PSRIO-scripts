@@ -1271,31 +1271,26 @@ function Tab.final_cost_table(self, col_struct)
 
     self:push("## " .. dictionary.final_cost[LANGUAGE]);
 
-    self:push("| " .. dictionary.cell_case[LANGUAGE] .. " | " .. dictionary.cell_average_total_cost[LANGUAGE] .. " | " .. dictionary.cell_max_total_cost[LANGUAGE] .. " | " .. dictionary.cell_min_total_cost[LANGUAGE] .. " |");
-    self:push("|:-:|:-:|:-:|:-:|");
+    self:push("| " .. dictionary.cell_case[LANGUAGE] .. " | " .. dictionary.cell_average_total_cost[LANGUAGE] .. " | " .. dictionary.cell_std_total_cost[LANGUAGE] .." | ".. dictionary.cell_min_total_cost[LANGUAGE] .. " | " .. dictionary.cell_max_total_cost[LANGUAGE] .. " |");
+    self:push("|:-:|:-:|:-:|:-:|:-:|");
     for i = 1, studies do
-        local number_of_stages = col_struct.study[i]:stages_without_buffer_years();
 
-        local objcop = col_struct.generic[i]:load("objcop"):remove_agent(1):select_stages(1,number_of_stages);
+        local objcop = col_struct.generic[i]:load("objcop"):remove_agent(1);
         local cost = objcop / discount_rate(i);
 
-        local future_cost = cost:select_agent(-1):aggregate_stages(BY_LAST_VALUE()):save_cache();
-        local future_cost_average = tonumber(future_cost:aggregate_scenarios(BY_AVERAGE()):to_list()[1]);
-        local future_cost_maximum = tonumber(future_cost:aggregate_scenarios(BY_MAX()):to_list()[1]);
-        local future_cost_minimum = tonumber(future_cost:aggregate_scenarios(BY_MIN()):to_list()[1]);
+        local obj_cost = cost:remove_agent(-1):aggregate_agents(BY_SUM(), "Total cost"):aggregate_stages(BY_SUM()):save_cache();
+        local future_cost = cost:select_agent(-1):aggregate_stages(BY_LAST_VALUE());
 
-        local obj_cost = cost:remove_agent(-1):aggregate_agents(BY_SUM(), "Total cost"):aggregate_stages(BY_SUM()):aggregate_scenarios(BY_AVERAGE());
-        local obj_cost_average = tonumber(obj_cost:aggregate_scenarios(BY_AVERAGE()):to_list()[1]);
-        local obj_cost_maximum = tonumber(obj_cost:aggregate_scenarios(BY_MAX()):to_list()[1]);
-        local obj_cost_minimum = tonumber(obj_cost:aggregate_scenarios(BY_MIN()):to_list()[1]);
+        local total_cost = obj_cost + future_cost;
 
-        local average_cost = obj_cost_average + future_cost_average;
-        local maximum_cost = obj_cost_maximum + future_cost_maximum;
-        local minimum_cost = obj_cost_minimum + future_cost_minimum;
+        local average_cost = total_cost:aggregate_scenarios(BY_AVERAGE()):to_list()[1];
+        local minimum_cost = total_cost:aggregate_scenarios(BY_MIN()):to_list()[1];
+        local maximum_cost = total_cost:aggregate_scenarios(BY_MAX()):to_list()[1];
+        local std_cost = total_cost:aggregate_scenarios(BY_STDDEV()):to_list()[1];
 
         local replacement = col_struct.study[i]:get_parameter("CurrencyReference","k$");
 
-        self:push("| " .. col_struct.case_dir_list[i] .. " | " .. replacement .. " " .. string.format("%.2f", average_cost) .. " | " .. replacement .. " " .. string.format("%.2f", maximum_cost) .. " | " .. replacement .. " " .. string.format("%.2f", minimum_cost) .. " |");
+        self:push("| " .. col_struct.case_dir_list[i] .. " | " .. replacement .. " " .. string.format("%.2f", average_cost) .. " | " .. replacement .. " " .. string.format("%.2f", std_cost) .. " | " .. replacement .. " " .. string.format("%.2f", minimum_cost) .. " | " .. replacement .. " " .. string.format("%.2f", maximum_cost) .. " |");
     end
 end
 -----------------------------------------------------------------------------------------------
