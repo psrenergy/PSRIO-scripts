@@ -20,7 +20,7 @@ local advisor = Advisor();
 studies = PSR.studies();
 
 -----------------------------------------------------------------------------------------------
---Usefull fuctions
+-- Useful fuctions
 -----------------------------------------------------------------------------------------------
 
 function trim(s)
@@ -109,6 +109,7 @@ function Expression.change_currency_configuration(self,index)
     end
     return self;
 end
+
 -----------------------------------------------------------------------------------------------
 -- Overloads
 -----------------------------------------------------------------------------------------------
@@ -233,7 +234,7 @@ end
 function load_info_file(file_name,case_index)
 
     -- Initialize struct
-    info_struct = {{model = ""}, {user = ""}, {version = ""}, {hash = ""}, {model = ""}, {status = ""}, {infrep = ""}, {dash_name = ""}, {cloud = ""}, {exe_mode=0}};
+    info_struct = {{model = ""}, {user = ""}, {version = ""}, {hash = ""}, {model = ""}, {status = ""}, {infrep = ""}, {dash_name = ""}, {cloud = ""}, {exe_mode=0},{arch=""}};
 
     local toml = Generic(case_index):load_toml(file_name);
     model      = toml:get_string("model", "-");
@@ -255,6 +256,7 @@ function load_info_file(file_name,case_index)
     info_struct.dash_name = dash_name;
     info_struct.cloud     = cloud;
     info_struct.exe_mode  = exe_mode;
+	info_struct.arch      = read_cloud_machine_info(".instances","-",case_index)
 
     return info_struct;
 end
@@ -342,6 +344,24 @@ function Expression.select_stages_of_outputs(self)
     end
     return self
 end
+
+function read_cloud_machine_info(file_name, default_ret, case_index)
+    
+	-- Loading file
+    local reader = Generic(case_index):create_reader(file_name);
+
+	machine_name = default_ret;
+	if(not reader:is_open()) then
+        warning("Error opening file " .. file_name);
+		return machine_name
+    end
+
+	-- First line contains the machine architecture name
+	machine_name = string.match(reader:get_line(), ":(.*)");
+	
+	return machine_name
+end
+
 -----------------------------------------------------------------------------------------------
 -- Get language
 -----------------------------------------------------------------------------------------------
@@ -428,8 +448,10 @@ function create_tab_summary(col_struct, info_struct)
     local user             = dictionary.cell_user[LANGUAGE];
     local version          = dictionary.cell_version[LANGUAGE];
     local ID               = dictionary.cell_ID[LANGUAGE];
+	local cloud_arch       = dictionary.cell_arch[LANGUAGE];
     local title            = dictionary.cell_title[LANGUAGE];
 
+	-- Execution status
     if studies == 1 then 
         tab:push("| " .. directory_name .. " | " .. path_cell .. " | " .. execution_status .. " |");
         tab:push("|:--------------:|:----:|:----------------:|");
@@ -454,21 +476,23 @@ function create_tab_summary(col_struct, info_struct)
         end
     end
 
+	-- About the model (hash, version name...)
     tab:push("## " .. dictionary.about_model[LANGUAGE]);
     if studies == 1 then
-        tab:push("| " .. model .. " | " .. user .. " | " .. version .. " | " .. ID .. " |");
-        tab:push("|:-----:|:----:|:-------:|:----:|");
+        tab:push("| " .. model .. " | " .. user .. " | " .. version .. " | " .. ID ..  "|" .. cloud_arch .. " |");
+        tab:push("|:-------:|:-------:|:-------:|:-------:|:-------:|");
         for i = 1, studies do
-            tab:push("| " .. info_struct[i].model .. " | " .. info_struct[i].user .. " | " .. info_struct[i].version .. " | " .. info_struct[i].hash .. " |");
+            tab:push("| " .. info_struct[i].model .. " | " .. info_struct[i].user .. " | " .. info_struct[i].version .. " | " .. info_struct[i].hash .. " | " .. info_struct[i].arch .. " |");
         end
     else
-        tab:push("| " .. case .. " | " .. model .. " | " .. user .. " | " .. version .." | " .. ID .. " |");
-        tab:push("|:----:|:-----:|:----:|:-------:|:----:|");
+        tab:push("| " .. case .. " | " .. model .. " | " .. user .. " | " .. version .." | " .. ID .. "|" .. cloud_arch .. " |");
+        tab:push("|:-------:|:-------:|:-------:|:-------:|:-------:|");
         for i = 1, studies do
-            tab:push("| " .. i .. " | " .. info_struct[i].model .. " | " .. info_struct[i].user .. " | " .. info_struct[i].version .. " | " .. info_struct[i].hash .. " |");
+            tab:push("| " .. i .. " | " .. info_struct[i].model .. " | " .. info_struct[i].user .. " | " .. info_struct[i].version .. " | " .. info_struct[i].hash .. " | " .. info_struct[i].arch .. " |");
         end
     end
 
+	-- Cases' titles
     tab:push("## " .. dictionary.case_title[LANGUAGE]);
     if studies == 1 then
         tab:push("| " .. title .. " |");
@@ -484,6 +508,7 @@ function create_tab_summary(col_struct, info_struct)
         end
     end
 
+	-- Horizon, resolution, execution options
     tab:push("## " .. dictionary.hor_resol_exec[LANGUAGE]);
 
     local header_string              = "| " .. dictionary.cell_case_parameters[LANGUAGE];
