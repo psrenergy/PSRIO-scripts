@@ -1276,21 +1276,24 @@ function Tab.final_cost_table(self, col_struct)
     for i = 1, studies do
 
         local objcop = col_struct.generic[i]:load("objcop"):remove_agent(1);
-        local cost = objcop / discount_rate(i);
+        if objcop:loaded() then
+            
+            local cost = objcop / discount_rate(i);
 
-        local obj_cost = cost:remove_agent(-1):aggregate_agents(BY_SUM(), "Total cost"):aggregate_stages(BY_SUM()):save_cache();
-        local future_cost = cost:select_agent(-1):aggregate_stages(BY_LAST_VALUE());
+            local obj_cost = cost:remove_agent(-1):aggregate_agents(BY_SUM(), "Total cost"):aggregate_stages(BY_SUM()):save_cache();
+            local future_cost = cost:select_agent(-1):aggregate_stages(BY_LAST_VALUE());
 
-        local total_cost = obj_cost + future_cost;
+            local total_cost = obj_cost + future_cost;
 
-        local average_cost = total_cost:aggregate_scenarios(BY_AVERAGE()):to_list()[1];
-        local minimum_cost = total_cost:aggregate_scenarios(BY_MIN()):to_list()[1];
-        local maximum_cost = total_cost:aggregate_scenarios(BY_MAX()):to_list()[1];
-        local std_cost = total_cost:aggregate_scenarios(BY_STDDEV()):to_list()[1];
+            local average_cost = total_cost:aggregate_scenarios(BY_AVERAGE()):to_list()[1];
+            local minimum_cost = total_cost:aggregate_scenarios(BY_MIN()):to_list()[1];
+            local maximum_cost = total_cost:aggregate_scenarios(BY_MAX()):to_list()[1];
+            local std_cost = total_cost:aggregate_scenarios(BY_STDDEV()):to_list()[1];
 
-        local replacement = col_struct.study[i]:get_parameter("CurrencyReference","k$");
+            local replacement = col_struct.study[i]:get_parameter("CurrencyReference","k$");
 
-        self:push("| " .. col_struct.case_dir_list[i] .. " | " .. replacement .. " " .. string.format("%.2f", average_cost) .. " | " .. replacement .. " " .. string.format("%.2f", std_cost) .. " | " .. replacement .. " " .. string.format("%.2f", minimum_cost) .. " | " .. replacement .. " " .. string.format("%.2f", maximum_cost) .. " |");
+            self:push("| " .. col_struct.case_dir_list[i] .. " | " .. replacement .. " " .. string.format("%.2f", average_cost) .. " | " .. replacement .. " " .. string.format("%.2f", std_cost) .. " | " .. replacement .. " " .. string.format("%.2f", minimum_cost) .. " | " .. replacement .. " " .. string.format("%.2f", maximum_cost) .. " |");
+        end
     end
 end
 -----------------------------------------------------------------------------------------------
