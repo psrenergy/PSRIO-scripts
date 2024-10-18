@@ -7,6 +7,8 @@ PERCENT_OF_OBJ_COST = 0.2
 
 REP_DIFF_TOL = 0.05 -- 10%
 
+CONVERGENCE_GAP_TOL = 0.01; -- absolute value
+
 -- Setting global colors
 main_global_color = { "#4E79A7", "#F28E2B", "#8CD17D", "#B6992D", "#E15759", "#76B7B2", "#FF9DA7", "#D7B5A6", "#B07AA1", "#59A14F", "#F1CE63", "#A0CBE8", "#E15759" };
 light_global_color = { "#B7C9DD", "#FAD2AA", "#D1EDCB", "#E9DAA4", "#F3BCBD", "#C8E2E0", "#FFD8DC", "#EFE1DB", "#DFCAD9", "#BBDBB7", "#F9EBC1", "#D9EAF6", "#F3BCBD" };
@@ -1183,16 +1185,21 @@ function create_pol_report(col_struct)
             -- Confidence interval
             chart_conv:add_area_range(conv_age:select_agents({ 2 }):rename_agent(""), conv_age:select_agents({ 4 }):rename_agent("Zsup +- Tol"), { colors = { "#ACD98D", "#ACD98D" }, xUnit = dictionary.iteration[LANGUAGE], xAllowDecimals = false, visible = zsup_is_visible });
             
-            local tolerance_for_convergence = tonumber(col_struct.study[1]:get_parameter("CriterioConvergencia", -1));
-            
             local total_iter = conv_age:last_stage();
 
-            local zinf_final         = tonumber(conv_age:select_agents({ 1 }):select_stage(total_iter):to_list()[1]);
-            local zsup_tol_bot_final = tonumber(conv_age:select_agents({ 2 }):select_stage(total_iter):to_list()[1]);
+            local zinf_final     = tonumber(conv_age:select_agents({ 1 }):select_stage(total_iter):to_list()[1]);
+            local zsup_tol_final = tonumber(conv_age:select_agents({ 2 }):select_stage(total_iter):to_list()[1]);
             
-            if zinf_final and zsup_tol_bot_final then
-                if zinf_final < zsup_tol_bot_final then
-                    advisor:push_warning("convergence_gap",1);
+            if zinf_final and zsup_tol_final then
+                local diff = zsup_tol_final - zinf_final;
+                if (diff > 0) then
+                    if diff > CONVERGENCE_GAP_TOL then
+                        local sugestions = {};
+                        if (Study():get_series_forward() > 1 and Study():get_series_backward() > 1) then
+                            table.insert(sugestions, 'FORW');
+                        end
+                        advisor:push_warning("convergence_gap",1, sugestions);
+                    end
                 else
                     -- to_do: negative gap msg
                 end
