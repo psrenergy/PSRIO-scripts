@@ -463,9 +463,9 @@ dictionary = {
         pt = "Resumo do caso"
     },
     about_model = {
-        en = "About the model",
-        es = "Acerca del modelo",
-        pt = "Sobre o modelo"
+        en = "About the model and environment",
+        es = "Acerca del modelo y ambiente",
+        pt = "Sobre o modelo e ambiente"
     },
     case_title = {
         en = "Case title",
@@ -531,6 +531,11 @@ dictionary = {
         en = "ID",
         es = "ID",
         pt = "ID"
+    },
+	cell_arch = {
+        en = "Architecture",
+        es = "Arquitectura",
+        pt = "Arquitetura"
     },
     cell_title = {
         en = "Title",
