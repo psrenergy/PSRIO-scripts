@@ -472,7 +472,7 @@ function create_tab_summary(col_struct, info_struct)
         end
     else
         tab:push("| " .. case .. " | " .. model .. " | " .. user .. " | " .. version .." | " .. ID .. "|" .. cloud_arch .. " |");
-        tab:push("|:-------:|:-------:|:-------:|:-------:|:-------:|");
+        tab:push("|:-------:|:-------:|:-------:|:-------:|:-------:|:-------:|");
         for i = 1, studies do
             tab:push("| " .. i .. " | " .. info_struct[i].model .. " | " .. info_struct[i].user .. " | " .. info_struct[i].version .. " | " .. info_struct[i].hash .. " | " .. info_struct[i].arch .. " |");
         end
