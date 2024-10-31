@@ -1353,9 +1353,9 @@ function create_sim_report(col_struct)
             local obj_revenue = min(costs_agg, 0):remove_zeros();
 
             local total_obj_cost  = my_to_number(obj_cost:aggregate_agents(BY_SUM(),"Total cost"):to_list()[1],0.0);
-            local others_obj_cost = my_to_number(obj_cost:remove_agent(1):aggregate_agents(BY_SUM(),"Other costs"):to_list()[1],0.0);
-            
-            if total_obj_cost * PERCENT_OF_OBJ_COST <= others_obj_cost then
+            local pen_obj_cost = my_to_number(obj_cost:select_agents_by_regex("(Pen:)(.*)"):aggregate_agents(BY_SUM(),"Pen costs"):to_list()[1],0.0);
+
+            if total_obj_cost * PERCENT_OF_OBJ_COST <= pen_obj_cost then
                 advisor:push_warning("obj_costs");
             end
 
