@@ -138,7 +138,7 @@ if hydro_reserv:loaded() then
   local avalailable_capacity_hydro_agents = reserve_unit:eq(14);
 
   local nominal_capacity_hydro_reserv = hydro_reserv:force_unit("%") * nominal_capacity_hydro_agents * hydro.max_generation;
-  local avalailable_capacity_hydro_reserv = hydro_reserv:force_unit("%") * avalailable_capacity_hydro_agents * hydro.max_generation;
+  local avalailable_capacity_hydro_reserv = hydro_reserv:force_unit("%") * avalailable_capacity_hydro_agents * hydro.max_generation_available;
   local avalailable_capacity_mw_reserv = (hydro_reserv * mw_capacity_hydro_agents):force_unit("MW");
   if hydro_reserv:is_hourly() then
     (avalailable_capacity_mw_reserv + nominal_capacity_hydro_reserv + avalailable_capacity_hydro_reserv):save("hidmxreser", {variable_by_block=2, csv=true});
@@ -166,7 +166,7 @@ if thermal_reserv:loaded() then
   local avalailable_capacity_thermal_agents = reserve_unit:eq(14);
 
   local nominal_capacity_thermal_reserv = thermal_reserv:force_unit("%") * nominal_capacity_thermal_agents * thermal.max_generation;
-  local avalailable_capacity_thermal_reserv = thermal_reserv:force_unit("%") * avalailable_capacity_thermal_agents * thermal.max_generation;
+  local avalailable_capacity_thermal_reserv = thermal_reserv:force_unit("%") * avalailable_capacity_thermal_agents * thermal.max_generation_available;
   local avalailable_capacity_mw_reserv = (thermal_reserv * mw_capacity_thermal_agents):force_unit("MW");
   if thermal_reserv:is_hourly() then
     (avalailable_capacity_mw_reserv + nominal_capacity_thermal_reserv + avalailable_capacity_thermal_reserv):save("termxreser", {variable_by_block=2, csv=true});
