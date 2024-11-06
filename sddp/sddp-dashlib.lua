@@ -1625,14 +1625,14 @@ function create_marg_costs(col_struct)
             count_sys = count_sys + 1;
         end
     else
-        local chart = Chart(dictionary.annual_cmo[LANGUAGE]);
+        local chart = Chart();
         cmg_aggyear = cmg[1]:aggregate_blocks_by_duracipu():aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[1].hours:select_stages_of_outputs(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE());
         chart:add_column(cmg_aggyear:change_currency_configuration(), { xUnit=dictionary.cell_year[LANGUAGE] });
         tab:push(chart);
     end
 
+    tab:push("## " .. dictionary.stg_cmo[LANGUAGE]);
     if studies > 1 then
-        tab:push("## " .. dictionary.stg_cmo[LANGUAGE]);
         local agents = cmg[1]:agents();
         for _, agent in ipairs(agents) do
             local chart = Chart(agent);
@@ -1640,36 +1640,60 @@ function create_marg_costs(col_struct)
             for j = 1, studies do
                 cmg_aggsum = cmg[j]:aggregate_blocks_by_duracipu(j):aggregate_scenarios(BY_AVERAGE());
                 local cmg_aggsum_agents = cmg_aggsum:select_agent(agent):rename_agent(col_struct.case_dir_list[j]);
-                -- table.insert(aux_tab, cmg_aggsum_agents);
+               
                 chart:add_line(cmg_aggsum_agents:change_currency_configuration(j),{xUnit=dictionary.cell_stage[LANGUAGE]});
             end
-            -- chart:add_line(concatenate(aux_tab):change_currency_configuration(j),{xUnit=dictionary.cell_stage[LANGUAGE]}); -- Average marg. cost per stage
             tab:push(chart);
         end
     else
-        local chart = Chart(dictionary.stg_cmo[LANGUAGE]);
+        local chart = Chart();
         cmg_aggsum = cmg[1]:aggregate_blocks_by_duracipu():aggregate_scenarios(BY_AVERAGE());
         chart:add_column(cmg_aggsum:change_currency_configuration(),{xUnit=dictionary.cell_stage[LANGUAGE]}, {colors = main_global_color});
         tab:push(chart);
     end
 
-    if studies == 1 then
-        local systems = col_struct.system[1]:labels();
+    -- Area range marginal cost chart
+    show_sto_rep = false;
+    for istudy = 1, studies do
+        if col_struct.study[istudy]:scenarios() > 1 then
+            show_sto_rep = true;
+            break;
+        end 
+    end
+
+    if show_sto_rep then 
+        tab:push("## " .. dictionary.stg_cmo_sto[LANGUAGE]);
+        local systems = col_struct.system[1]:labels(); -- First case sets base agents
         for i,system in ipairs(systems) do
-            local chart = Chart(dictionary.stg_cmo_ind[LANGUAGE] .. ": " ..system);
-            local cmg_agg = cmg[1]:aggregate_blocks_by_duracipu():select_agents({system}):aggregate_blocks(BY_SUM()):save_cache();
-            chart:add_box_plot(
-                cmg_agg:aggregate_scenarios(BY_MIN()):change_currency_configuration(),
-                cmg_agg:aggregate_scenarios(BY_PERCENTILE(25)):change_currency_configuration(),
-                cmg_agg:aggregate_scenarios(BY_PERCENTILE(50)):change_currency_configuration(),
-                cmg_agg:aggregate_scenarios(BY_PERCENTILE(75)):change_currency_configuration(),
-                cmg_agg:aggregate_scenarios(BY_MAX()):change_currency_configuration()
-                ,{showInLegend = false, color = main_global_color[i]}
-            );
+            local chart = Chart(system);
+            for istudy = 1, studies do
+            
+                
+                local cmg_agg = cmg[istudy]:aggregate_blocks_by_duracipu():select_agents({system}):save_cache();
+	    
+                local disp = concatenate(cmg_agg:aggregate_scenarios(BY_PERCENTILE(10)):rename_agent("P10"),
+                                         cmg_agg:aggregate_scenarios(BY_AVERAGE()):rename_agent(dictionary.cell_average[LANGUAGE]),
+                                         cmg_agg:aggregate_scenarios(BY_PERCENTILE(90)):rename_agent("P90")):save_cache();
+	    
+                if studies > 1 then
+                    chart:add_area_range(disp:select_agent(1):add_prefix(col_struct.case_dir_list[istudy] .. " - "):change_currency_configuration(), -- Area range
+                                         disp:select_agent(3):change_currency_configuration(),
+                                         {xUnit = dictionary.cell_stage[LANGUAGE],
+                                         colors = { light_global_color[istudy], light_global_color[istudy] } });
+                    chart:add_line(disp:select_agent(2):add_prefix(col_struct.case_dir_list[istudy] .. " - "):change_currency_configuration()); -- Average
+                
+                else
+                    chart:add_area_range(disp:select_agent(1):change_currency_configuration(), -- Area range
+                                         disp:select_agent(3):change_currency_configuration(),
+                                         {xUnit = dictionary.cell_stage[LANGUAGE],
+                                         colors = { light_global_color[istudy], light_global_color[istudy] } });
+                    chart:add_line(disp:select_agent(2):change_currency_configuration()); -- Average
+                end
+            end
             tab:push(chart);
         end
     end
-
+    
     return tab;
 end
 

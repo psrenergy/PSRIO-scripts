@@ -78,12 +78,7 @@ The estimated cost in the operating policy does not match the simulation cost ac
 2. Select the 'Non-convexity representation in policy' checkbox.
 3. Define the iterations where the non-convexities should be considered in 'Initial iteration' text box.
 ```
-🠊 Consider the same production factor in the policy and in the simulation.
-```
-1. Go to Basic data -> Hydro plants configuration.
-2. For each hydro plant, in 'Generator group subtab', set the same 'Production coefficient in operating 
-policy calculation' and 'Production coefficient in final simulation' (in respectives dropdown boxes).
-```
+
 ]],
             es = [[
 El costo estimado en la política operativa no coincide con el costo de la simulación según el gráfico "Función objetivo: Política x Simulación Final" en la pestaña de "Política". Por favor, considere las siguientes opciones:
@@ -94,12 +89,6 @@ El costo estimado en la política operativa no coincide con el costo de la simul
 2. Seleccione la casilla 'Representación de no convexidad en la política'.
 3. Defina las iteraciones en las que se deben considerar las no convexidades en el cuadro de texto de 'Iteración inicial'.
 ```
-🠊 Considere el mismo factor de producción en la política y en la simulación.
-```
-1. Vaya a Datos básicos -> Configuración de hidroeléctricas.
-2. Para cada central hidroeléctrica, en la subpestaña 'Grupo generador', configure el mismo 'Coeficiente
- de producción en la política' y el 'Coeficiente de producción en la simulación final' (en las respectivas casillas desplegables).
-```
 ]],
             pt = [[
 O custo estimado na política operativa não condiz com o custo da simulação de acordo com o grafico "Função objetivo: Política x Simulação final" na guia de "Política"; por favor, considere as seguintes opções:
@@ -109,12 +98,6 @@ O custo estimado na política operativa não condiz com o custo da simulação d
 1. Vá para Opções de execução -> Despacho econômico -> Estratégia de solução.
 2. Selecione a checkbox 'Representação de não convexidade na política'.
 3. Defina as iterações onde as não linearidades devem ser consideradas na caixa de texto de 'Iteração inicial'.
-```
-🠊 Considere o mesmo fator de produção na política e na simulação.
-```
-1. Vá para Dados básicos -> Configuração de usinas hidrelétricas.
-2. Para cada usina hidroelétrica, na subguia 'Grupo de geradores', configure o mesmo 'Coeficiente 
-de produção na política' e no 'Coeficiente de produção na simulação final' (nas respectivas caixas de seleção).
 ```
 ]]
         }
