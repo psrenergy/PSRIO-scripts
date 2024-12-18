@@ -199,6 +199,7 @@ local viol_structs = {
 	{name = "viocar", block_aggregation = BY_AVERAGE()},
 	{name = "vgmint", block_aggregation = BY_AVERAGE()},
 	{name = "vgmntt", block_aggregation = BY_AVERAGE()},
+    {name = "terunmin", block_aggregation = BY_AVERAGE()},
 	{name = "vioemiq", block_aggregation = BY_AVERAGE()},
 	{name = "vsecset", block_aggregation = BY_SUM()},
 	{name = "valeset", block_aggregation = BY_SUM()},
