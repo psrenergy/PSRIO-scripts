@@ -2300,6 +2300,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
         { name = "viocar"  , title = dictionary.viocar[LANGUAGE]},
         { name = "vgmint"  , title = dictionary.vgmint[LANGUAGE]},
         { name = "vgmntt"  , title = dictionary.vgmntt[LANGUAGE]},
+        { name = "terunmin", title = dictionary.terunmin[LANGUAGE]},
         { name = "vioemiq" , title = dictionary.vioemiq[LANGUAGE]},
         { name = "vsecset" , title = dictionary.vsecset[LANGUAGE]},
         { name = "valeset" , title = dictionary.valeset[LANGUAGE]},

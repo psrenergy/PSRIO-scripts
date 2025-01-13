@@ -419,8 +419,13 @@ dictionary = {
     },
     vgmntt = {
         en = "Thermal: minimum technical generation",
-        es = "Térmica: generación minima tecnica",
-        pt = "Térmica: geracao minima tecnica"
+        es = "Térmica: generación mínima técnica",
+        pt = "Térmica: geração minima técnica"
+    },
+    terunmin = {
+        en = "Thermal generating group: minimum technical generation",
+        es = "Grupo generador térmico: generación mínima técnica",
+        pt = "Grupo gerador térmico: geração mínima técnica"
     },
     vioemiq = {
         en = "Emission budget violation",
