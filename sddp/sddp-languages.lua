@@ -392,6 +392,10 @@ dictionary = {
         es = "Hidro: rampa de defluencia",
         pt = "Hidro: rampa de defluência"
     },
+    mnsplpvio = {
+        en = "Hydro: minimum percentual spillage",
+        es = "Hidro: vertimiento porcentual mínimo",
+        pt = "Hidro: vertimento percentual mínimo"
     vreseg = {
         en = "Reserve: joint requirement",
         es = "Reserva: requisito conjunto",

@@ -217,7 +217,8 @@ local viol_structs = {
 	{name = "lsserdc", block_aggregation = BY_AVERAGE(), signal = "positive"},
 	{name = "lsserdc", block_aggregation = BY_AVERAGE(), signal = "negative"},
     {name = "lsserdcl", block_aggregation = BY_AVERAGE(), signal = "positive"},
-	{name = "lsserdcl", block_aggregation = BY_AVERAGE(), signal = "negative"}
+	{name = "lsserdcl", block_aggregation = BY_AVERAGE(), signal = "negative"},
+    {name = "mnsplpvio", block_aggregation = BY_AVERAGE()}
 }
 
 local viol_structs_debug = {
