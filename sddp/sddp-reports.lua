@@ -35,7 +35,7 @@ local function violation_output(log_viol, out_list, viol_structs, tol)
     for _, viol_struct in ipairs(viol_structs) do
 		if out_list[viol_struct.name] then
 			local file_name = viol_struct.name;
-			local violation = generic:load(file_name);
+			local violation = generic:load_sddp(file_name);
 			if violation:loaded() then
 				violation = violation:remove_zeros();
 				if violation:loaded() then
@@ -105,7 +105,7 @@ end
 -- INPUT DATA
 -----------------------------------------------------------------------------------------------
 -- Inflow energy
-local enaflu = Generic():load("enaflu");
+local enaflu = Generic():load_sddp("enaflu");
 
 dispersion(enaflu,"sddp_dashboard_input_enaflu")
 
@@ -252,15 +252,15 @@ log_viol.file:close();
 -- local rnw = Renewable();
 
 -- -- Get renewable generation spillage
--- local rnw_spill = rnw:load("vergnd");
+-- local rnw_spill = rnw:load_sddp("vergnd");
 
 -- rnw_spill:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_scenarios(BY_AVERAGE()):remove_zeros():save("sddp_dashboard_result_avg_vergnd");
 
 -----------------------------------------------------------------------------------------------
 -- LGC
 -----------------------------------------------------------------------------------------------
-local lgcgen = Hydro():load("lgcgen");
-local lgcrev = Hydro():load("lgcrev");
+local lgcgen = Hydro():load_sddp("lgcgen");
+local lgcrev = Hydro():load_sddp("lgcrev");
 
 -- sddp_dashboard_lgc_gen
 if lgcgen:loaded() then

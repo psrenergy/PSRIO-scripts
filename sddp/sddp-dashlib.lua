@@ -119,7 +119,7 @@ end
 -- Temporary solution to SDDP remap executions (including typical days)
 function Expression.aggregate_blocks_by_duracipu(self,i)
     local generic = Generic(i or 1);
-    local duracipu = generic:load("duracipu");
+    local duracipu = generic:load_sddp("duracipu");
     return (self * duracipu):aggregate_blocks(BY_SUM());
 end
 
@@ -973,7 +973,7 @@ end
 function create_hourly_sol_status_graph(tab, col_struct, i)
     local output_name  = "hrstat";
     local report_title = dictionary.solution_status[LANGUAGE];
-    local status = col_struct.generic[i]:load(output_name);
+    local status = col_struct.generic[i]:load_sddp(output_name);
 
     if not status:loaded() then
         info(output_name .. " output could not be loaded. ".. "'" .. report_title .. "'" .. "report will not be displayed");
@@ -1007,7 +1007,7 @@ end
 function create_exe_timer_per_scen(tab, col_struct, i)
     local extime_chart;
     local output_name  = "extime";
-    local extime = col_struct.generic[i]:load(output_name):aggregate_agents(BY_SUM(), "total"):save_cache();
+    local extime = col_struct.generic[i]:load_sddp(output_name):aggregate_agents(BY_SUM(), "total"):save_cache();
 
     if not extime:loaded() then
         info(output_name .. " output could not be loaded. 'Dispersion of execution times per scenario' report will not be displayed");
@@ -1493,7 +1493,7 @@ function create_times_report(col_struct)
         
         for istudy = 1, studies do
             -- Execution times
-            local exe_times = col_struct.generic[istudy]:load("sddptimes");
+            local exe_times = col_struct.generic[istudy]:load_sddp("sddptimes");
             chart_exe_sim:add_column(exe_times:select_agent(1):rename_agent(col_struct.case_dir_list[istudy]));
         end
         
@@ -1505,7 +1505,7 @@ function create_times_report(col_struct)
         local chart_exe_sim = Chart(dictionary.exe_sim_times[LANGUAGE]);
         
         -- Simulation execution times
-        local exe_times = col_struct.generic[1]:load("sddptimes");
+        local exe_times = col_struct.generic[1]:load_sddp("sddptimes");
         chart_exe_sim:add_column(exe_times:select_agent(1), {showInLegend = false});
         
         if #chart_exe_sim > 0 then
@@ -1590,7 +1590,7 @@ function create_marg_costs(col_struct)
     end
 
     for i = 1, studies do
-        cmg[i] = sys[i]:load("cmgdem");
+        cmg[i] = sys[i]:load_sddp("cmgdem");
     end
 
     -- Marginal cost aggregated by average
@@ -1775,13 +1775,13 @@ function create_gen_report(col_struct)
     -- Loading generations files
     for i = 1, studies do
 
-        gerter[i] = col_struct.thermal[i]:load("gerter"):select_stages_of_outputs();
-        gerhid[i] = col_struct.hydro[i]:load("gerhid"):select_stages_of_outputs();
-        gergnd[i] = col_struct.renewable[i]:load("gergnd"):select_stages_of_outputs();
-        gercsp[i] = col_struct.csp[i]:load("cspgen"):convert("GWh"):select_stages_of_outputs();
-        gerbat[i] = col_struct.battery[i]:load("gerbat"):convert("GWh"):select_stages_of_outputs(); -- Explicitly converting to GWh
-        potinj[i] = col_struct.power_injection[i]:load("powinj"):select_stages_of_outputs();
-        defcit[i] = col_struct.system[i]:load("defcit"):select_stages_of_outputs();
+        gerter[i] = col_struct.thermal[i]:load_sddp("gerter"):select_stages_of_outputs();
+        gerhid[i] = col_struct.hydro[i]:load_sddp("gerhid"):select_stages_of_outputs();
+        gergnd[i] = col_struct.renewable[i]:load_sddp("gergnd"):select_stages_of_outputs();
+        gercsp[i] = col_struct.csp[i]:load_sddp("cspgen"):convert("GWh"):select_stages_of_outputs();
+        gerbat[i] = col_struct.battery[i]:load_sddp("gerbat"):convert("GWh"):select_stages_of_outputs(); -- Explicitly converting to GWh
+        potinj[i] = col_struct.power_injection[i]:load_sddp("powinj"):select_stages_of_outputs();
+        defcit[i] = col_struct.system[i]:load_sddp("defcit"):select_stages_of_outputs();
     end
 
     if studies > 1 then
@@ -2157,13 +2157,13 @@ function create_risk_report(col_struct)
 
     if studies > 1 then
         for i = 1, studies do
-            local risk_file = col_struct.system[i]:load("sddprisk"):aggregate_agents(BY_AVERAGE(), Collection.SYSTEM):aggregate_stages(BY_AVERAGE());
+            local risk_file = col_struct.system[i]:load_sddp("sddprisk"):aggregate_agents(BY_AVERAGE(), Collection.SYSTEM):aggregate_stages(BY_AVERAGE());
 
             -- Add marginal costs outputs
             chart:add_column_categories(risk_file, col_struct.case_dir_list[i]); -- Annual Marg. cost
         end
     else
-        local risk_file = col_struct.system[1]:load("sddprisk");
+        local risk_file = col_struct.system[1]:load_sddp("sddprisk");
         chart:add_column(risk_file);
     end
 
