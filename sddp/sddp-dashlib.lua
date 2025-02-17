@@ -1007,7 +1007,7 @@ end
 function create_exe_timer_per_scen(tab, col_struct, i)
     local extime_chart;
     local output_name  = "extime";
-    local extime = col_struct.generic[i]:load_sddp(output_name):aggregate_agents(BY_SUM(), "total"):save_cache();
+    local extime = col_struct.generic[i]:load(output_name):aggregate_agents(BY_SUM(), "total"):save_cache();
 
     if not extime:loaded() then
         info(output_name .. " output could not be loaded. 'Dispersion of execution times per scenario' report will not be displayed");
@@ -1493,7 +1493,7 @@ function create_times_report(col_struct)
         
         for istudy = 1, studies do
             -- Execution times
-            local exe_times = col_struct.generic[istudy]:load_sddp("sddptimes");
+            local exe_times = col_struct.generic[istudy]:force_load("sddptimes");
             chart_exe_sim:add_column(exe_times:select_agent(1):rename_agent(col_struct.case_dir_list[istudy]));
         end
         
@@ -1505,7 +1505,7 @@ function create_times_report(col_struct)
         local chart_exe_sim = Chart(dictionary.exe_sim_times[LANGUAGE]);
         
         -- Simulation execution times
-        local exe_times = col_struct.generic[1]:load_sddp("sddptimes");
+        local exe_times = col_struct.generic[1]:force_load("sddptimes");
         chart_exe_sim:add_column(exe_times:select_agent(1), {showInLegend = false});
         
         if #chart_exe_sim > 0 then
