@@ -1,14 +1,14 @@
 -- Verifying format option
 local is_csv = Study():get_parameter("BINF",0) == 0;
 
--- Verifying the 
+-- Verifying the suffixes
 local suffixes = { { suffix = "" } };
 if Study():get_parameter("GENE", -1) == 1 then
   suffixes = {
-      { suffix = "__week" },
-      { suffix = "__day" },
-      { suffix = "__hour" },
-      { suffix = "__trueup" }
+      { suffix = "_week" },
+      { suffix = "_day" },
+      { suffix = "_hour" },
+      { suffix = "_trueup" }
   };
 end
 

@@ -166,8 +166,21 @@ end
 -----------------------------------------------------------------------------------------------
 -- DEFICIT RISK
 -----------------------------------------------------------------------------------------------
-local defrisk = require("sddp-reports/sddprisk")();
-defrisk:save("sddprisk");
+-- Verifying the suffixes
+local suffixes = { { suffix = "" } };
+if Study():get_parameter("GENE", -1) == 1 then
+  suffixes = {
+      { suffix = "_week" },
+      { suffix = "_day" },
+      { suffix = "_hour" },
+      { suffix = "_trueup" }
+  };
+end
+
+for _, item in pairs(suffixes) do
+	local defrisk = require("sddp-reports/sddprisk")(item.suffix);
+	defrisk:save("sddprisk" .. item.suffix);
+end
 
 -----------------------------------------------------------------------------------------------
 -- VIOLATIONS
