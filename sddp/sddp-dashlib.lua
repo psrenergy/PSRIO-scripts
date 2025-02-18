@@ -2300,6 +2300,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
         { name = "viocar"  , title = dictionary.viocar[LANGUAGE]},
         { name = "vgmint"  , title = dictionary.vgmint[LANGUAGE]},
         { name = "vgmntt"  , title = dictionary.vgmntt[LANGUAGE]},
+        { name = "terunmin", title = dictionary.terunmin[LANGUAGE]},
         { name = "vioemiq" , title = dictionary.vioemiq[LANGUAGE]},
         { name = "vsecset" , title = dictionary.vsecset[LANGUAGE]},
         { name = "valeset" , title = dictionary.valeset[LANGUAGE]},
@@ -2314,6 +2315,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
         {name = "lsserdc_negative", title = dictionary.lsserdc_neg[LANGUAGE]},
         {name = "lsserdcl_positive", title = dictionary.lsserdcl_pos[LANGUAGE]},
         {name = "lsserdcl_negative", title = dictionary.lsserdcl_neg[LANGUAGE]},
+        {name = "mnsplpvio", title = dictionary.mnsplpvio[LANGUAGE]}
     }
 
     -- Loading study collections

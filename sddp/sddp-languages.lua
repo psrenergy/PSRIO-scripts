@@ -392,6 +392,11 @@ dictionary = {
         es = "Hidro: rampa de defluencia",
         pt = "Hidro: rampa de defluência"
     },
+    mnsplpvio = {
+        en = "Hydro: minimum percentual spillage",
+        es = "Hidro: vertimiento porcentual mínimo",
+        pt = "Hidro: vertimento percentual mínimo"
+    },
     vreseg = {
         en = "Reserve: joint requirement",
         es = "Reserva: requisito conjunto",
@@ -419,8 +424,13 @@ dictionary = {
     },
     vgmntt = {
         en = "Thermal: minimum technical generation",
-        es = "Térmica: generación minima tecnica",
-        pt = "Térmica: geracao minima tecnica"
+        es = "Térmica: generación mínima técnica",
+        pt = "Térmica: geração minima técnica"
+    },
+    terunmin = {
+        en = "Thermal generating group: minimum technical generation",
+        es = "Grupo generador térmico: generación mínima técnica",
+        pt = "Grupo gerador térmico: geração mínima técnica"
     },
     vioemiq = {
         en = "Emission budget violation",
@@ -959,7 +969,7 @@ non_convexities_labels = {
     ['Centrales hidroelectricas con vertimiento no-controlable (var. entera).'] = 'Centrales hidroeléctricas con vertimiento no controlable (variante entera).',
     ['Centrales hidroelectricas con CGG.'] = 'Centrales hidroeléctricas con CGG.',
     ['Centrales hidroelectricas con commitment.'] = 'Centrales hidroelectricas con commitment.',
-    ['Centrales termicas com commitment.'] = 'Centrales térmicas con compromiso.',
+    ['Centrales termicas com commitment.'] = 'Centrales térmicas con commitment.',
     ['Centrales termicas ciclo-combinado con estado operativo optimizado.'] = 'Centrales térmicas de ciclo combinado con estado operativo optimizado.',
     ['Centrales termicas con curva concava de consumo especifico.'] = 'Centrales térmicas con curva cóncava de consumo específico.',
     ['Contratos de combustible con clausula de make-up.'] = 'Contratos de combustible con cláusula de make-up.',

@@ -199,6 +199,7 @@ local viol_structs = {
 	{name = "viocar", block_aggregation = BY_AVERAGE()},
 	{name = "vgmint", block_aggregation = BY_AVERAGE()},
 	{name = "vgmntt", block_aggregation = BY_AVERAGE()},
+    {name = "terunmin", block_aggregation = BY_AVERAGE()},
 	{name = "vioemiq", block_aggregation = BY_AVERAGE()},
 	{name = "vsecset", block_aggregation = BY_SUM()},
 	{name = "valeset", block_aggregation = BY_SUM()},
@@ -216,7 +217,8 @@ local viol_structs = {
 	{name = "lsserdc", block_aggregation = BY_AVERAGE(), signal = "positive"},
 	{name = "lsserdc", block_aggregation = BY_AVERAGE(), signal = "negative"},
     {name = "lsserdcl", block_aggregation = BY_AVERAGE(), signal = "positive"},
-	{name = "lsserdcl", block_aggregation = BY_AVERAGE(), signal = "negative"}
+	{name = "lsserdcl", block_aggregation = BY_AVERAGE(), signal = "negative"},
+    {name = "mnsplpvio", block_aggregation = BY_AVERAGE()}
 }
 
 local viol_structs_debug = {
