@@ -989,8 +989,8 @@ function create_hourly_sol_status_graph(tab, col_struct, i)
     dataClasses = {
                   { color = "#8ACE7E", to = 0          , name = "Optimal solution" },
                   { color = "#4E79A7", from = 1, to = 2, name = "Feasible solution"},
-                  { color = "#C64B3E", from = 2, to = 3, name = "No solution"      },
-                  { color = "#FBEEB3", from = 3        , name = "Relaxed solution" }
+                  { color = "#FBEEB3", from = 3        , name = "Relaxed solution" },
+                  { color = "#C64B3E", from = 2, to = 3, name = "No solution"      }
                   }
     };
 
