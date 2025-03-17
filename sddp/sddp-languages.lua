@@ -960,6 +960,8 @@ non_convexities_labels = {
     ['Fuel contracts with carry forward clause'] = 'Fuel contracts with carry forward clause',
     ['Generic interpolation constraints'] = 'Generic interpolation constraints',
     ['Flow controllers'] = 'Flow controllers',
+    ['Multi-fuel thermal plants with exclusive generation'] = 'Multi-fuel thermal plants with exclusive generation ',
+    ['Hydro plants with net head representation (integer var.)'] = 'Hydro plants with net head representation (integer var.)',
 
     ['Centrales hidroelectricas con coeficiente de produccion variable'] = 'Centrales hidroeléctricas con coeficiente de producción variable',
     ['Centrales hidroelectricas con evaporacion variable con la area'] = 'Centrales hidroeléctricas con evaporación variable según la superficie',
@@ -974,6 +976,8 @@ non_convexities_labels = {
     ['Contratos de combustible con clausula de carry forward'] = 'Contratos de combustible con cláusula de carry forward',
     ['Restricciones genericas de interpolacion'] = 'Restricciones genéricas de interpolación',
     ['Controladores de flujo'] = 'Controladores de flujo',
+    ['Centrales termicas multi-combustible con generacion exclusiva'] = 'Centrales térmicas multi-combustible con generación exclusiva',
+    ['Centrales hidroelectricas con representacion de caida neta (v. entera)'] = 'Centrales hidroeléctricas con representación de caída neta (v. entera)',
 
     ['Usinas hidroeletricas com coeficiente de producao variavel'] = 'Usinas hidrelétricas com coeficiente de produção variável',
     ['Usinas hidroeletricas com evaporacao variavel com a area'] = 'Usinas hidrelétricas com evaporação variável com a área',
@@ -987,5 +991,7 @@ non_convexities_labels = {
     ['Contratos de combustivel com clausula de make-up'] = 'Contratos de combustível com cláusula de make-up',
     ['Contratos de combustivel com clausula de carry forward'] = 'Contratos de combustível com cláusula de transferência',
     ['Restricoes genericas de interpolacao'] = 'Restrições genéricas de interpolação',
-    ['Controladores de fluxo'] = 'Controladores de fluxo'
+    ['Controladores de fluxo'] = 'Controladores de fluxo',   
+    ['Usinas termicas multi-combustivel com geracao exclusiva'] = 'Usinas térmicas multi-combustível com geração exclusiva',
+    ['Usinas hidroeletricas com representacao de queda liquida (v. inteira)'] = 'Usinas hidroelétricas com representação de queda líquida (v. inteira)'
 };
