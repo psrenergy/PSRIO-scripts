@@ -962,6 +962,8 @@ non_convexities_labels = {
     ['Flow controllers'] = 'Flow controllers',
     ['Multi-fuel thermal plants with exclusive generation'] = 'Multi-fuel thermal plants with exclusive generation ',
     ['Hydro plants with net head representation (integer var.)'] = 'Hydro plants with net head representation (integer var.)',
+	['Binary generic variables'] = 'Binary generic variables',
+	
 
     ['Centrales hidroelectricas con coeficiente de produccion variable'] = 'Centrales hidroeléctricas con coeficiente de producción variable',
     ['Centrales hidroelectricas con evaporacion variable con la area'] = 'Centrales hidroeléctricas con evaporación variable según la superficie',
@@ -978,6 +980,7 @@ non_convexities_labels = {
     ['Controladores de flujo'] = 'Controladores de flujo',
     ['Centrales termicas multi-combustible con generacion exclusiva'] = 'Centrales térmicas multi-combustible con generación exclusiva',
     ['Centrales hidroelectricas con representacion de caida neta (v. entera)'] = 'Centrales hidroeléctricas con representación de caída neta (v. entera)',
+	['Variables genericas binarias'] = 'Variables genéricas binarias',
 
     ['Usinas hidroeletricas com coeficiente de producao variavel'] = 'Usinas hidrelétricas com coeficiente de produção variável',
     ['Usinas hidroeletricas com evaporacao variavel com a area'] = 'Usinas hidrelétricas com evaporação variável com a área',
@@ -993,5 +996,6 @@ non_convexities_labels = {
     ['Restricoes genericas de interpolacao'] = 'Restrições genéricas de interpolação',
     ['Controladores de fluxo'] = 'Controladores de fluxo',   
     ['Usinas termicas multi-combustivel com geracao exclusiva'] = 'Usinas térmicas multi-combustível com geração exclusiva',
-    ['Usinas hidroeletricas com representacao de queda liquida (v. inteira)'] = 'Usinas hidroelétricas com representação de queda líquida (v. inteira)'
+    ['Usinas hidroeletricas com representacao de queda liquida (v. inteira)'] = 'Usinas hidroelétricas com representação de queda líquida (v. inteira)',
+	['Variaveis genericas binarias'] = 'Variaveis genéricas binárias',
 };
