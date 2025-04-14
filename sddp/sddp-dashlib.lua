@@ -1797,46 +1797,35 @@ function create_gen_report(col_struct)
         chart_tot_potinj     = Chart(dictionary.total_power_injection[LANGUAGE]);
         chart_tot_defcit     = Chart(dictionary.total_deficit[LANGUAGE]);
     else
-        chart = Chart(dictionary.total_generation[LANGUAGE]);
+        chart = Chart("");
     end
 
     -- Total generation report
     for i = 1, studies do
 
         if studies > 1 then
-            total_hydro_gen_age       = col_struct.case_dir_list[i] .. " - ";
-            total_batt_gen_age        = col_struct.case_dir_list[i] .. " - ";
-            total_deficit_age         = col_struct.case_dir_list[i] .. " - ";
-            total_pot_inj_age         = col_struct.case_dir_list[i] .. " - ";
-            total_other_renw_gen_age  = col_struct.case_dir_list[i] .. " - ";
-            total_wind_gen_age        = col_struct.case_dir_list[i] .. " - ";
-            total_solar_gen_age       = col_struct.case_dir_list[i] .. " - ";
-            total_small_hydro_gen_age = col_struct.case_dir_list[i] .. " - ";
-            total_thermal_gen_age     = col_struct.case_dir_list[i] .. " - ";
-            total_csp_gen_age         = col_struct.case_dir_list[i] .. " - ";
+            total_hydro_gen_age       = col_struct.case_dir_list[i];
+            total_batt_gen_age        = col_struct.case_dir_list[i];
+            total_deficit_age         = col_struct.case_dir_list[i];
+            total_pot_inj_age         = col_struct.case_dir_list[i];
+            total_other_renw_gen_age  = col_struct.case_dir_list[i];
+            total_wind_gen_age        = col_struct.case_dir_list[i];
+            total_solar_gen_age       = col_struct.case_dir_list[i];
+            total_small_hydro_gen_age = col_struct.case_dir_list[i];
+            total_thermal_gen_age     = col_struct.case_dir_list[i];
+            total_csp_gen_age         = col_struct.case_dir_list[i];
         else
-            total_hydro_gen_age       = "";
-            total_batt_gen_age        = "";
-            total_deficit_age         = "";
-            total_pot_inj_age         = "";
-            total_other_renw_gen_age  = "";
-            total_wind_gen_age        = "";
-            total_solar_gen_age       = "";
-            total_small_hydro_gen_age = "";
-            total_thermal_gen_age     = "";
-            total_csp_gen_age         = "";
+            total_hydro_gen_age       = "Total Hydro";
+            total_batt_gen_age        = "Total Battery";
+            total_deficit_age         = "Total Deficit";
+            total_pot_inj_age         = "Total P. Inj.";
+            total_other_renw_gen_age  = "Total Renewable - Other tech.";
+            total_wind_gen_age        = "Total Renewable - Wind";
+            total_solar_gen_age       = "Total Renewable - Solar";
+            total_small_hydro_gen_age = "Total Renewable - Small hydro";
+            total_thermal_gen_age     = "Total Thermal";
+            total_csp_gen_age         = "Total Renewable - CSP";
         end
-
-        total_hydro_gen_age       = total_hydro_gen_age       .. "Total Hydro";
-        total_batt_gen_age        = total_batt_gen_age        .. "Total Battery";
-        total_deficit_age         = total_deficit_age         .. "Total Deficit";
-        total_pot_inj_age         = total_pot_inj_age         .. "Total P. Inj.";
-        total_other_renw_gen_age  = total_other_renw_gen_age  .. "Total Renewable - Other tech.";
-        total_wind_gen_age        = total_wind_gen_age        .. "Total Renewable - Wind";
-        total_solar_gen_age       = total_solar_gen_age       .. "Total Renewable - Solar";
-        total_small_hydro_gen_age = total_small_hydro_gen_age .. "Total Renewable - Small hydro";
-        total_thermal_gen_age     = total_thermal_gen_age     .. "Total Thermal";
-        total_csp_gen_age         = total_csp_gen_age         .. "Total Renewable - CSP";
 
         -- Data processing
         total_hydro_gen = gerhid[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_hydro_gen_age);
@@ -1935,6 +1924,7 @@ function create_gen_report(col_struct)
         end
     end
 
+    tab:push("## ".. dictionary.total_generation[LANGUAGE]);
     if studies > 1 then
         if #chart_tot_gerhid > 0 then
             tab:push(chart_tot_gerhid);
