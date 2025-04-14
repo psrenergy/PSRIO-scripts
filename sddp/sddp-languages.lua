@@ -223,59 +223,59 @@ dictionary = {
         pt = "Custo marginal"
     },
     total_hydro = {
-        en = "Total Hydro",
-        es = "Hidroeléctrica total",
-        pt = "Hidro total"
+        en = "Hydro",
+        es = "Hidroeléctrica",
+        pt = "Hidro"
     },
     total_small_hydro = {
-        en = "Total Small Hydro",
-        es = "Pequeña central hidroeléctrica total",
-        pt = "Pequena central hidroeléctrica total"
+        en = "Small Hydro",
+        es = "Pequeña central hidroeléctrica",
+        pt = "Pequena central hidroeléctrica"
     },
     total_thermal = {
-        en = "Total Thermal",
-        es = "Térmica total",
-        pt = "Térmico total"
+        en = "Thermal",
+        es = "Térmica",
+        pt = "Térmico"
     },
     total_renewable_other = {
-        en = "Total Renewable - Other technologies",
-        es = "Renovable total - Otras tecnologías",
-        pt = "Renovável total - Outras tecnologias"
+        en = "Renewable - Other technologies",
+        es = "Renovable - Otras tecnologías",
+        pt = "Renovável - Outras tecnologias"
     },
     total_renewable_wind = {
-        en = "Total Renewable - Wind",
-        es = "Renovable total - Eólica",
-        pt = "Renovável total - Eólica"
+        en = "Renewable - Wind",
+        es = "Renovable - Eólica",
+        pt = "Renovável - Eólica"
     },
     total_renewable_solar = {
-        en = "Total Renewable - Solar",
-        es = "Renovable total - Solar",
-        pt = "Renovável total - Solar"
+        en = "Renewable - Solar",
+        es = "Renovable - Solar",
+        pt = "Renovável - Solar"
     },
     total_renewable_small_hydro = {
-        en = "Total Renewable - Small hydro",
-        es = "Renovable total - Pequeña central hidroeléctrica",
-        pt = "Renovável total - Pequena central hidroelétrica"
+        en = "Renewable - Small hydro",
+        es = "Renovable - Pequeña central hidroeléctrica",
+        pt = "Renovável - Pequena central hidroelétrica"
     },
     total_renewable_csp = {
-        en = "Total Renewable - CSP",
-        es = "Renovable total - CSP",
-        pt = "Renovável total - CSP"
+        en = "Renewable - CSP",
+        es = "Renovable - CSP",
+        pt = "Renovável - CSP"
     },
     total_battery = {
-        en = "Total Battery",
-        es = "Batería total",
-        pt = "Bateria total"
+        en = "Battery",
+        es = "Batería",
+        pt = "Bateria"
     },
     total_power_injection = {
-        en = "Total Power Injection",
-        es = "Inyección total de energía",
-        pt = "Injeção total de energia"
+        en = "Power Injection",
+        es = "Inyección de energía",
+        pt = "Injeção de energia"
     },
     total_deficit = {
-        en = "Total Deficit",
-        es = "Déficit total",
-        pt = "Déficit total"
+        en = "Deficit",
+        es = "Déficit",
+        pt = "Déficit"
     },
     total_generation = {
         en = "Total generation",

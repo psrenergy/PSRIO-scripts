@@ -1818,46 +1818,35 @@ function create_gen_report(col_struct)
         chart_tot_potinj     = Chart(dictionary.total_power_injection[LANGUAGE]);
         chart_tot_defcit     = Chart(dictionary.total_deficit[LANGUAGE]);
     else
-        chart = Chart(dictionary.total_generation[LANGUAGE]);
+        chart = Chart("");
     end
 
     -- Total generation report
     for i = 1, studies do
 
         if studies > 1 then
-            total_hydro_gen_age       = col_struct.case_dir_list[i] .. " - ";
-            total_batt_gen_age        = col_struct.case_dir_list[i] .. " - ";
-            total_deficit_age         = col_struct.case_dir_list[i] .. " - ";
-            total_pot_inj_age         = col_struct.case_dir_list[i] .. " - ";
-            total_other_renw_gen_age  = col_struct.case_dir_list[i] .. " - ";
-            total_wind_gen_age        = col_struct.case_dir_list[i] .. " - ";
-            total_solar_gen_age       = col_struct.case_dir_list[i] .. " - ";
-            total_small_hydro_gen_age = col_struct.case_dir_list[i] .. " - ";
-            total_thermal_gen_age     = col_struct.case_dir_list[i] .. " - ";
-            total_csp_gen_age         = col_struct.case_dir_list[i] .. " - ";
+            total_hydro_gen_age       = col_struct.case_dir_list[i];
+            total_batt_gen_age        = col_struct.case_dir_list[i];
+            total_deficit_age         = col_struct.case_dir_list[i];
+            total_pot_inj_age         = col_struct.case_dir_list[i];
+            total_other_renw_gen_age  = col_struct.case_dir_list[i];
+            total_wind_gen_age        = col_struct.case_dir_list[i];
+            total_solar_gen_age       = col_struct.case_dir_list[i];
+            total_small_hydro_gen_age = col_struct.case_dir_list[i];
+            total_thermal_gen_age     = col_struct.case_dir_list[i];
+            total_csp_gen_age         = col_struct.case_dir_list[i];
         else
-            total_hydro_gen_age       = "";
-            total_batt_gen_age        = "";
-            total_deficit_age         = "";
-            total_pot_inj_age         = "";
-            total_other_renw_gen_age  = "";
-            total_wind_gen_age        = "";
-            total_solar_gen_age       = "";
-            total_small_hydro_gen_age = "";
-            total_thermal_gen_age     = "";
-            total_csp_gen_age         = "";
+            total_hydro_gen_age       = "Hydro";
+            total_batt_gen_age        = "Battery";
+            total_deficit_age         = "Deficit";
+            total_pot_inj_age         = "P. Inj.";
+            total_other_renw_gen_age  = "Renewable - Other tech.";
+            total_wind_gen_age        = "Renewable - Wind";
+            total_solar_gen_age       = "Renewable - Solar";
+            total_small_hydro_gen_age = "Renewable - Small hydro";
+            total_thermal_gen_age     = "Thermal";
+            total_csp_gen_age         = "Renewable - CSP";
         end
-
-        total_hydro_gen_age       = total_hydro_gen_age       .. "Total Hydro";
-        total_batt_gen_age        = total_batt_gen_age        .. "Total Battery";
-        total_deficit_age         = total_deficit_age         .. "Total Deficit";
-        total_pot_inj_age         = total_pot_inj_age         .. "Total P. Inj.";
-        total_other_renw_gen_age  = total_other_renw_gen_age  .. "Total Renewable - Other tech.";
-        total_wind_gen_age        = total_wind_gen_age        .. "Total Renewable - Wind";
-        total_solar_gen_age       = total_solar_gen_age       .. "Total Renewable - Solar";
-        total_small_hydro_gen_age = total_small_hydro_gen_age .. "Total Renewable - Small hydro";
-        total_thermal_gen_age     = total_thermal_gen_age     .. "Total Thermal";
-        total_csp_gen_age         = total_csp_gen_age         .. "Total Renewable - CSP";
 
         -- Data processing
         total_hydro_gen = gerhid[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_hydro_gen_age);
@@ -1956,6 +1945,7 @@ function create_gen_report(col_struct)
         end
     end
 
+    tab:push("## ".. dictionary.total_generation[LANGUAGE]);
     if studies > 1 then
         if #chart_tot_gerhid > 0 then
             tab:push(chart_tot_gerhid);
@@ -2005,21 +1995,21 @@ function create_gen_report(col_struct)
     renw_csp_report_name = dictionary.total_renewable_csp[LANGUAGE];
 
     local systems_data = {};
-
+    local has_more_than_one_study = studies > 1;
     for i = 1, studies do
 
         if studies > 1 then
-            hydro_agent_name   = col_struct.case_dir_list[i] .. " - " .. hydro_report_name;
-            thermal_agent_name = col_struct.case_dir_list[i] .. " - " .. thermal_report_name;
-            battery_agent_name = col_struct.case_dir_list[i] .. " - " .. battery_report_name;
-            deficit_agent_name = col_struct.case_dir_list[i] .. " - " .. deficit_report_name;
-            pinj_agent_name    = col_struct.case_dir_list[i] .. " - " .. pinj_report_name;
+            hydro_agent_name   = col_struct.case_dir_list[i];
+            thermal_agent_name = col_struct.case_dir_list[i];
+            battery_agent_name = col_struct.case_dir_list[i];
+            deficit_agent_name = col_struct.case_dir_list[i];
+            pinj_agent_name    = col_struct.case_dir_list[i];
 
-            renw_ot_agent_name     = col_struct.case_dir_list[i] .. " - " .. renw_ot_report_name;
-            renw_wind_agent_name   = col_struct.case_dir_list[i] .. " - " .. renw_wind_report_name;
-            renw_solar_agent_name  = col_struct.case_dir_list[i] .. " - " .. renw_solar_report_name;
-            renw_shydro_agent_name = col_struct.case_dir_list[i] .. " - " .. renw_shydro_report_name;
-            renw_csp_agent_name    = col_struct.case_dir_list[i] .. " - " .. renw_csp_report_name;
+            renw_ot_agent_name     = col_struct.case_dir_list[i];
+            renw_wind_agent_name   = col_struct.case_dir_list[i];
+            renw_solar_agent_name  = col_struct.case_dir_list[i];
+            renw_shydro_agent_name = col_struct.case_dir_list[i];
+            renw_csp_agent_name    = col_struct.case_dir_list[i];
         else
             hydro_agent_name   = hydro_report_name;
             thermal_agent_name = thermal_report_name;
@@ -2125,16 +2115,16 @@ function create_gen_report(col_struct)
         local chart_tot_potinj = Chart(dictionary.total_power_injection[LANGUAGE]);
         local chart_tot_defcit = Chart(dictionary.total_deficit[LANGUAGE]);
 
-        chart_tot_gerhid:add_column(concatenate(data.hydro), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_hydro }});
-        chart_tot_gerter:add_column(concatenate(data.thermal), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_thermal }});
-        chart_tot_renw_other:add_column(concatenate(data.other_renw), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_renw_other }});
-        chart_tot_renw_wind:add_column(concatenate(data.wind), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_wind }});
-        chart_tot_renw_solar:add_column(concatenate(data.solar), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_solar }});
-        chart_tot_renw_shyd:add_column(concatenate(data.small_hydro), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_small_hydro }});
-        chart_tot_renw_csp:add_column(concatenate(data.csp), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_csp }});
-        chart_tot_gerbat:add_column(concatenate(data.battery), { xUnit=dictionary.cell_stage, colors = { color_battery }});
-        chart_tot_potinj:add_column(concatenate(data.pot_inj), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_pinj }});
-        chart_tot_defcit:add_column(concatenate(data.deficit), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_deficit }});
+        chart_tot_gerhid:add_column(concatenate(data.hydro), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_hydro }, showInLegend = has_more_than_one_study});
+        chart_tot_gerter:add_column(concatenate(data.thermal), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_thermal }, showInLegend = has_more_than_one_study});
+        chart_tot_renw_other:add_column(concatenate(data.other_renw), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_renw_other }, showInLegend = has_more_than_one_study});
+        chart_tot_renw_wind:add_column(concatenate(data.wind), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_wind }, showInLegend = has_more_than_one_study});
+        chart_tot_renw_solar:add_column(concatenate(data.solar), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_solar }, showInLegend = has_more_than_one_study});
+        chart_tot_renw_shyd:add_column(concatenate(data.small_hydro), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_small_hydro }, showInLegend = has_more_than_one_study});
+        chart_tot_renw_csp:add_column(concatenate(data.csp), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_csp }, showInLegend = has_more_than_one_study});
+        chart_tot_gerbat:add_column(concatenate(data.battery), { xUnit=dictionary.cell_stage, colors = { color_battery }, showInLegend = has_more_than_one_study});
+        chart_tot_potinj:add_column(concatenate(data.pot_inj), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_pinj }, showInLegend = has_more_than_one_study});
+        chart_tot_defcit:add_column(concatenate(data.deficit), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_deficit }, showInLegend = has_more_than_one_study});
 
         tab:push("## ".. dictionary.total_generation_system[LANGUAGE] .. " - " .. agent);
         if #chart_tot_gerhid > 0 then
