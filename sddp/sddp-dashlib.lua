@@ -2236,7 +2236,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     -- Loading study collections
     load_collections(col_struct);
 
-    -- Violation outputs and titles struct
+    -- Violation sctruct (chart and study)
     local viol_report_structs = {};
     local viol_report_names = {};
     for istudy = 1, studies do
@@ -2247,22 +2247,27 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
         else
             -- Create list of violation outputs to be considered
             for lin = 1, #viol_files do
-                local file_name = viol_files[lin][1];
-                if not tableFind(viol_report_names,file_name) then
-                    table.insert(viol_report_names, file_name);
-                end
-
-                if file_name then
-                    local file_name_split = split(file_name, "_");
-                    local reference_name = file_name_split[#file_name_split];
-                    if #file_name_split > 5 then
-                        reference_name = reference_name[5] .. "_" .. file_name_split[#file_name_split];
+                local line = viol_files[lin][1];
+                if line then
+                    if not tableFind(viol_report_names, line) then
+                        table.insert(viol_report_names, line);
                     end
-                    if not viol_report_structs[file_name] then
-                        viol_report_structs[file_name] = {["chart"] = Chart(dictionary[reference_name][LANGUAGE]),
-                                                          ["study"] = {[istudy] = true}};
+                    
+                    local split_name = "sddp_dashboard_viol_";
+                    if string.find(line, "avg") then
+                        split_name = split_name .. "avg_";
+                    elseif string.find(line, "max") then
+                        split_name = split_name .. "max_";
                     else
-                        viol_report_structs[file_name]["study"][istudy] = true;
+                        error("Invalid violation file name: " .. line);
+                    end
+                    local line_split = split(line, split_name);
+                    local reference_name = line_split[#line_split];
+                    if not viol_report_structs[line] then
+                        viol_report_structs[line] = {["chart"] = Chart(dictionary[reference_name][LANGUAGE]),
+                                                     ["study"] = {[istudy] = true}};
+                    else
+                        viol_report_structs[line]["study"][istudy] = true;
                     end
                 end
             end
@@ -2395,6 +2400,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     tab_violations:set_disabled();
     tab_violations:set_icon("siren");
 
+    -- Add labels to violation chart
     for istudy = 1, studies do
         for file_name, struct in pairs(viol_report_structs) do
             if struct.study[istudy] then
