@@ -24,9 +24,25 @@ studies = PSR.studies();
 -----------------------------------------------------------------------------------------------
 -- Useful fuctions
 -----------------------------------------------------------------------------------------------
-
 function trim(s)
     return (s:gsub("^%s*(.-)%s*$", "%1"))
+end
+
+function split(s, delimiter)
+    result = {};
+    for match in (s..delimiter):gmatch("(.-)"..delimiter) do
+        table.insert(result, trim(match));
+    end
+    return result;
+end
+
+function tableFind(table, search_value)
+    for _, value in ipairs(table) do
+        if value == search_value then
+            return true
+        end
+    end
+    return false
 end
 
 function subrange(t, first, last)
@@ -212,10 +228,15 @@ function fix_conv_map_file(file_name, col_struct, study_index)
     return convertion_status;
 end
 
-
 function push_tab_to_tab(tab_from, tab_to)
     if #tab_from > 0 then
         tab_to:push(tab_from);
+    end
+end
+
+function Tab.push_chart_to_tab(self, chart)
+    if #chart > 0 then
+        self:push(chart);
     end
 end
 
@@ -2175,66 +2196,6 @@ function create_risk_report(col_struct)
 end
 
 -----------------------------------------------------------------------------------------------
--- Violation reports data and methods
------------------------------------------------------------------------------------------------
-
-function create_viol_report(tab, col_struct, viol_struct, suffix)
-    local file_name;
-    local viol_file;
-
-    -- TODO: otimizar isso aqui abaixo
-    if studies > 1 then
-        for i, struct in ipairs(viol_struct) do
-
-            file_name = "sddp_dashboard_viol_" .. suffix .. "_" .. struct.name;
-            viol_file = col_struct.generic[1]:force_load(file_name);
-
-            -- Assuming agents in reference case(1st case) are the same as the ones in the others
-            local agents = viol_file:agents();
-            for j, agent in ipairs(agents) do
-                local chart = Chart(struct.title .. " - " .. agent);
-                for k = 1, studies do
-                    viol_file = col_struct.generic[k]:force_load(file_name):select_agent(agent):rename_agent(case_dir_list[k]);
-                    if viol_file:loaded() then
-                        chart:add_column_stacking(viol_file, {xUnit=dictionary.cell_stage[LANGUAGE]});
-                    end
-                end
-                tab:push(chart);
-            end
-        end
-    else
-        for _, struct in ipairs(viol_struct) do
-            file_name = "sddp_dashboard_viol_" .. suffix .. "_" .. struct.name;
-            viol_file = col_struct.generic[1]:force_load(file_name);
-            if viol_file:loaded() then
-                local chart = Chart(struct.title);
-                chart:add_column_stacking(viol_file, {xUnit=dictionary.cell_stage[LANGUAGE]});
-                tab:push(chart);
-            end
-        end
-    end
-end
-
-function create_viol_report_from_list(tab, col_struct, viol_list, viol_struct, suffix)
-    local viol_name;
-
-    for _, file in ipairs(viol_list) do
-        -- Look for file title in violation structure
-        for _, struct in ipairs(viol_struct) do
-            viol_name = "sddp_dashboard_viol_" .. suffix .. "_" .. struct.name;
-            if file == viol_name then
-                local viol_file = col_struct.generic[1]:force_load(file);
-                if viol_file:loaded() then
-                    local chart = Chart(struct.title);
-                    chart:add_column_stacking(viol_file, {xUnit=dictionary.cell_stage[LANGUAGE]});
-                    tab:push(chart);
-                end
-            end
-        end
-    end
-end
-
------------------------------------------------------------------------------------------------
 -- Warning and errors
 -----------------------------------------------------------------------------------------------
 
@@ -2272,54 +2233,41 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
         case_dir_list   = {}  -- Cases' directory names
     };
 
-    -- Violation outputs and titles struct
-    local viol_report_structs = {
-        { name = "defcit"  , title = dictionary.defcit[LANGUAGE]},
-        { name = "nedefc"  , title = dictionary.nedefc[LANGUAGE]},
-        { name = "defbus"  , title = dictionary.defbus[LANGUAGE]},
-        { name = "defbusp"  , title = dictionary.defbusp[LANGUAGE]},
-        { name = "gncivio" , title = dictionary.gncivio[LANGUAGE]},
-        { name = "gncvio"  , title = dictionary.gncvio[LANGUAGE]},
-        { name = "vrestg"  , title = dictionary.vrestg[LANGUAGE]},
-        { name = "excbus"  , title = dictionary.excbus[LANGUAGE]},
-        { name = "excsis"  , title = dictionary.excsis[LANGUAGE]},
-        { name = "vvaler"  , title = dictionary.vvaler[LANGUAGE]},
-        { name = "vioguide", title = dictionary.vioguide[LANGUAGE]},
-        { name = "vriego"  , title = dictionary.vriego[LANGUAGE]},
-        { name = "vmxost"  , title = dictionary.vmxost[LANGUAGE]},
-        { name = "vimxsp"  , title = dictionary.vimxsp[LANGUAGE]},
-        { name = "vdefmx"  , title = dictionary.vdefmx[LANGUAGE]},
-        { name = "vvolmn"  , title = dictionary.vvolmn[LANGUAGE]},
-        { name = "vdefmn"  , title = dictionary.vdefmn[LANGUAGE]},
-        { name = "vturmn"  , title = dictionary.vturmn[LANGUAGE]},
-        { name = "vimnsp"  , title = dictionary.vimnsp[LANGUAGE]},
-        { name = "rampvio" , title = dictionary.rampvio[LANGUAGE]},
-        { name = "vreseg"  , title = dictionary.vreseg[LANGUAGE]},
-        { name = "vsarhd"  , title = dictionary.vsarhd[LANGUAGE]},
-        { name = "vsarhden", title = dictionary.vsarhden[LANGUAGE]},
-        { name = "viocar"  , title = dictionary.viocar[LANGUAGE]},
-        { name = "vgmint"  , title = dictionary.vgmint[LANGUAGE]},
-        { name = "vgmntt"  , title = dictionary.vgmntt[LANGUAGE]},
-        { name = "terunmin", title = dictionary.terunmin[LANGUAGE]},
-        { name = "vioemiq" , title = dictionary.vioemiq[LANGUAGE]},
-        { name = "vsecset" , title = dictionary.vsecset[LANGUAGE]},
-        { name = "valeset" , title = dictionary.valeset[LANGUAGE]},
-        { name = "vespset" , title = dictionary.vespset[LANGUAGE]},
-        { name = "fcoffvio", title = dictionary.fcoffvio[LANGUAGE]},
-        { name = "vflmnww" , title = dictionary.vflmnww[LANGUAGE]},
-        { name = "vflmxww" , title = dictionary.vflmxww[LANGUAGE]},
-        { name = "finjvio" , title = dictionary.finjvio[LANGUAGE]},
-        {name = "lsserac_positive", title = dictionary.lsserac_pos[LANGUAGE]},
-        {name = "lsserac_negative", title = dictionary.lsserac_neg[LANGUAGE]},
-        {name = "lsserdc_positive", title = dictionary.lsserdc_pos[LANGUAGE]},
-        {name = "lsserdc_negative", title = dictionary.lsserdc_neg[LANGUAGE]},
-        {name = "lsserdcl_positive", title = dictionary.lsserdcl_pos[LANGUAGE]},
-        {name = "lsserdcl_negative", title = dictionary.lsserdcl_neg[LANGUAGE]},
-        {name = "mnsplpvio", title = dictionary.mnsplpvio[LANGUAGE]}
-    }
-
     -- Loading study collections
     load_collections(col_struct);
+
+    -- Violation outputs and titles struct
+    local viol_report_structs = {};
+    local viol_report_names = {};
+    for istudy = 1, studies do
+        local viol_files = col_struct.generic[istudy]:load_table_without_header("sddp_viol.out");
+
+        if not viol_files or (#viol_files == 0) then
+            warning("The file viol_report_structs was not found or is empty.");
+        else
+            -- Create list of violation outputs to be considered
+            for lin = 1, #viol_files do
+                local file_name = viol_files[lin][1];
+                if not tableFind(viol_report_names,file_name) then
+                    table.insert(viol_report_names, file_name);
+                end
+
+                if file_name then
+                    local file_name_split = split(file_name, "_");
+                    local reference_name = file_name_split[#file_name_split];
+                    if #file_name_split > 5 then
+                        reference_name = reference_name[5] .. "_" .. file_name_split[#file_name_split];
+                    end
+                    if not viol_report_structs[file_name] then
+                        viol_report_structs[file_name] = {["chart"] = Chart(dictionary[reference_name][LANGUAGE]),
+                                                          ["study"] = {[istudy] = true}};
+                    else
+                        viol_report_structs[file_name]["study"][istudy] = true;
+                    end
+                end
+            end
+        end
+    end
 
     -- If at least one case does not have the .info file, info report is not displayed
     local create_info_report = true;
@@ -2447,39 +2395,36 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     tab_violations:set_disabled();
     tab_violations:set_icon("siren");
 
-    if studies == 1 then
-        local viol_files;
-        local viol_list = {};
-
-        local viol_file_name = "sddp_viol.out";
-
-        -- Load list of violations
-        viol_files = col_struct.generic[1]:load_table_without_header(viol_file_name);
-
-        if not viol_files or (#viol_files == 0) then
-            warning("The file " .. viol_file_name .. " was not found or is empty.");
-        else
-            -- Check if violation list file is present
-            if #viol_files > 0 then
-                -- Create list of violation outputs to be considered
-                for lin = 1, #viol_files do
-                    file = viol_files[lin][1];
-                    table.insert(viol_list,file);
+    for istudy = 1, studies do
+        for file_name, struct in pairs(viol_report_structs) do
+            if struct.study[istudy] then
+                local viol_file = col_struct.generic[istudy]:force_load(file_name);
+                if viol_file:loaded() then
+                    if studies == 1 then
+                        struct.chart:add_column_stacking(viol_file, {xUnit=dictionary.cell_stage[LANGUAGE]});
+                    else
+                        struct.chart:add_column_categories(viol_file, col_struct.case_dir_list[istudy]);
+                    end
                 end
-
-                create_viol_report_from_list(tab_viol_avg, col_struct, viol_list, viol_report_structs, "avg");
-                create_viol_report_from_list(tab_viol_max, col_struct, viol_list, viol_report_structs, "max");
-            else
-                create_viol_report(tab_viol_avg, col_struct, viol_report_structs, "avg");
-                create_viol_report(tab_viol_max, col_struct, viol_report_structs, "max");
             end
-
-            push_tab_to_tab(tab_viol_avg,tab_violations);
-            push_tab_to_tab(tab_viol_max,tab_violations);
-
-            push_tab_to_tab(tab_violations,dashboard);
         end
     end
+
+    for _, file_name in ipairs(viol_report_names) do
+        local struct = viol_report_structs[file_name];
+        if string.find(file_name, "avg") then
+            tab_viol_avg:push_chart_to_tab(struct.chart);
+        elseif string.find(file_name, "max") then
+            tab_viol_max:push_chart_to_tab(struct.chart);
+        else
+            error("Non recognized violation file name: " .. file_name);
+        end
+    end
+    
+    push_tab_to_tab(tab_viol_avg,tab_violations);
+    push_tab_to_tab(tab_viol_max,tab_violations);
+
+    push_tab_to_tab(tab_violations,dashboard);
 
     ----------
     -- Results
