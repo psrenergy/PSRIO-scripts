@@ -2249,7 +2249,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
                     elseif string.find(line, "max") then
                         split_name = split_name .. "max_";
                     else
-                        error("Invalid violation file name: " .. line);
+                        break;
                     end
                     local line_split = split(line, split_name);
                     local reference_name = line_split[#line_split];
@@ -2413,7 +2413,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
         elseif string.find(file_name, "max") then
             tab_viol_max:push_chart_to_tab(struct.chart);
         else
-            error("Non recognized violation file name: " .. file_name);
+            break;
         end
     end
     
