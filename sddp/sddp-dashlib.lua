@@ -128,6 +128,20 @@ function Expression.change_currency_configuration(self,index)
     return self;
 end
 
+function Generic.username(self)
+    local generic = Generic(1);
+    local index = self:get_study_index();
+
+    local user_name_file = generic:load_table_without_header("case_compare.metadata");
+
+    local user_name = "";
+    if #user_name_file >= index then
+        user_name = user_name_file[index][1];
+    else
+        user_name = self:dirname();
+    end
+    return user_name;
+end
 -----------------------------------------------------------------------------------------------
 -- Overloads
 -----------------------------------------------------------------------------------------------
@@ -320,7 +334,7 @@ function load_collections(col_struct, info_struct)
         table.insert(col_struct.system         , System(i));
         table.insert(col_struct.thermal        , Thermal(i));
 
-        table.insert(col_struct.case_dir_list  , Generic(i):dirname());
+        table.insert(col_struct.case_dir_list  , Generic(i):username());
     end
 end
 
