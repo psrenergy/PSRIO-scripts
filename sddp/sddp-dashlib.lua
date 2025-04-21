@@ -420,7 +420,7 @@ end
 -- Case summary report function
 -----------------------------------------------------------------------------------------------
 
-function get_nonconv_info(col_struct, file_name, nonconv_list, dimension, case_index)
+function get_nonconv_info(col_struct, file_name, nonconv_list, nonconv_order, case_index)
     -- Loading file
     local nonconv = col_struct.generic[case_index]:load_table(file_name);
 
@@ -429,8 +429,22 @@ function get_nonconv_info(col_struct, file_name, nonconv_list, dimension, case_i
     else
         local nonconv_size = #nonconv;
         for i = 1, nonconv_size do
-            nonconv_list[i] = non_convexities_labels[trim(nonconv[i]["Type"])];
-            dimension[i]    = trim(nonconv[i]["Dimension"]);
+            
+            local key = trim(nonconv[i]["Type"]);
+
+            local translated_label = non_convexities_labels[key]
+            if translated_label == nil then
+                translated_label = key;
+            end
+
+            if nonconv_list[translated_label] then
+                nonconv_list[translated_label]["case_" .. case_index] = trim(nonconv[i]["Dimension"]);
+            else
+                table.insert(nonconv_order, translated_label);
+                nonconv_list[translated_label] = {
+                    ["case_" .. case_index] = trim(nonconv[i]["Dimension"])
+                }
+            end
         end
     end
 end
@@ -774,66 +788,43 @@ function create_tab_summary(col_struct, info_struct)
     -- Use first case to build non-convexities type column
     local nconv_file_name = "nonconvrep.csv";
     local nonconv_list = {};
-    local dimension    = {};
-    local nconv_table_strings = {};
-    local has_nconv_data = {};
+    local nonconv_order = {};
 
-    get_nonconv_info(col_struct,nconv_file_name,nonconv_list,dimension,1);
-
-    has_nconv_data[1] = false;
-    if #nonconv_list > 0 then
-        has_nconv_data[1] = true;
-
-        for i = 1, #nonconv_list do
-            nconv_table_strings[i] = nonconv_list[i] .. "|" .. tostring(dimension[i]);
-        end
+    for i = 1, studies do
+        get_nonconv_info(col_struct,nconv_file_name,nonconv_list, nonconv_order,i);
     end
 
-    if has_nconv_data[1] then
+    if #nonconv_order then
         tab:push("## " .. dictionary.non_convexities[LANGUAGE]);
 
         header_string       = "| " .. dictionary.cell_non_convexities_type[LANGUAGE];
         lower_header_string = "|-------------------";
 
-        if studies == 1 then
-            header_string       = header_string       .. "| " .. dictionary.cell_count[LANGUAGE];
-            lower_header_string = lower_header_string .. "|-------------------";
-        else
-            header_string       = header_string       .. "|" .. col_struct.case_dir_list[1];
-            lower_header_string = lower_header_string .. "|-------------------";
-
-            for i = 2, studies do
-                nonconv_list = {};
-                dimension    = {};
-
-                get_nonconv_info(col_struct,nconv_file_name,nonconv_list,dimension,i);
-
-                has_nconv_data[i] = false;
-                if #nonconv_list > 0 then
-                    has_nconv_data[i] = true;
-
-                    header_string       = header_string       .. "|" .. col_struct.case_dir_list[i];
-                    lower_header_string = lower_header_string .. "|-------------------";
-
-                    for j = 1, #nonconv_list do
-                        nconv_table_strings[j] = nconv_table_strings[j] .. " | " .. tostring(dimension[j]);
-                    end
-                end
-
+        for i = 1, studies do
+            if studies == 1 then
+                header_string       = header_string       .. "| " .. dictionary.cell_count[LANGUAGE];
+                lower_header_string = lower_header_string .. "|-------------------";
+            else
+                header_string       = header_string       .. "|" .. col_struct.case_dir_list[i];
+                lower_header_string = lower_header_string .. "|-------------------";
             end
         end
-    end
 
-    if has_nconv_data[1] then
-        header_string       = header_string       .. "|";
-        lower_header_string = lower_header_string .. "|";
-        tab:push(header_string);
-        tab:push(lower_header_string);
+        tab:push(header_string .. "|");
+        tab:push(lower_header_string .. "|");
 
-        for i = 1, #nconv_table_strings do
-            nconv_table_strings[i] = nconv_table_strings[i] .. "|";
-            tab:push(nconv_table_strings[i]);
+        for _, non_convexity_name in ipairs(nonconv_order) do
+            local non_convexity_line = "| " .. non_convexity_name;
+            for j = 1, studies do
+                if nonconv_list[non_convexity_name]["case_" .. j] then
+                    non_convexity_line = non_convexity_line .. " | " .. nonconv_list[non_convexity_name]["case_" .. j];
+                else
+                    non_convexity_line = non_convexity_line .. " | - ";
+                end
+            end
+            tab:push(non_convexity_line .. "|");
         end
+        
     end
 
     return tab;
