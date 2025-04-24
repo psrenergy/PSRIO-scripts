@@ -1316,15 +1316,30 @@ function Tab.final_cost_table(self, col_struct)
     self:push("| " .. dictionary.cell_case[LANGUAGE] .. " | " .. dictionary.cell_average_total_cost[LANGUAGE] .. " | " .. dictionary.cell_std_total_cost[LANGUAGE] .." | ".. dictionary.cell_min_total_cost[LANGUAGE] .. " | " .. dictionary.cell_max_total_cost[LANGUAGE] .. " |");
     self:push("|:-:|:-:|:-:|:-:|:-:|");
     for i = 1, studies do
+    
+        local is_hourly = col_struct.study[i]:get_parameter("SIMH", -1) == 2;
 
-        local objcop = col_struct.generic[i]:load("objcop"):remove_agent(1);
+        local objcop = col_struct.generic[i]:load("objcop");
+        if not is_hourly then -- Hourly objcop does not have a "Total Cost" agent like in block execution
+            objcop = objcop:remove_agent(1);
+        end
         if objcop:loaded() then
             
             local cost = objcop / discount_rate(i);
 
-            local obj_cost = cost:remove_agent(-1):aggregate_agents(BY_SUM(), "Total cost"):aggregate_stages(BY_SUM()):save_cache();
-            local future_cost = cost:select_agent(-1):aggregate_stages(BY_LAST_VALUE());
-
+            -- Remove future cost
+            local obj_cost;
+            local future_cost;
+            if not is_hourly then
+                obj_cost    = cost:remove_agent(-1);
+                future_cost = cost:select_agent(-1);
+            else
+                obj_cost    = cost:remove_agent(1);
+                future_cost = cost:select_agent(1);
+            end
+            obj_cost    = obj_cost:aggregate_agents(BY_SUM(), "Total cost"):aggregate_stages(BY_SUM()):save_cache();
+            future_cost = future_cost:aggregate_stages(BY_LAST_VALUE());
+            
             local total_cost = obj_cost + future_cost;
 
             local average_cost = total_cost:aggregate_scenarios(BY_AVERAGE()):to_list()[1];
