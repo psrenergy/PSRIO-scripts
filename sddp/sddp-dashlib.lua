@@ -892,7 +892,7 @@ function get_conv_file_info(col_struct, file_name, pol_struct, file_names, case_
                     pol_struct[file_name] = {
                         ["Cases"] = {case_index},
                         ["System"] = system,
-                        ["Horiozon"] = horizon
+                        ["Horizon"] = horizon
                     }
                 end
             end
@@ -902,17 +902,19 @@ end
 
 function draw_simularion_cost(col_struct, total_iter, chart, case_index)
     -- Get operation mode parameter
-    -- local oper_mode = col_struct.study[case_index]:get_parameter("Opcion", -1); -- 1=AIS; 2=COO; 3=INT;
+    local oper_mode = col_struct.study[case_index]:get_parameter("Opcion", -1); -- 1=AIS; 2=COO; 3=INT;
+    local rol_horiz = col_struct.study[case_index]:get_parameter("RHRZ", 0);
+    local num_syste = #col_struct.system[case_index]:labels();
 
     local has_results_for_add_years = col_struct.study[case_index]:get_parameter("NumeroAnosAdicionaisParm2",-1) == 1;
 
     -- If there is only one FCF file in the case and no rolling horizons, print final simulation cost as columns
-    if (col_struct.study[case_index]:get_parameter("RHRZ", 0) == 0) then
+    if (rol_horiz == 0 and (num_syste == 1 or oper_mode == 3)) then
 
         local objcop = col_struct.generic[case_index]:load("objcop");
         local discount_rate = require("sddp/discount_rate")(1);
 
-        local immediate_cost = 0.0;
+        local immediate_cost;
         local future_cost_age;
         if col_struct.study[case_index]:get_parameter("SIMH", -1) == 2 then -- Hourly model writes objcop with different columns
             if not has_results_for_add_years then
@@ -1165,7 +1167,7 @@ function create_pol_report(col_struct)
     -- Creating policy report
     for _, file in ipairs(file_names) do
         local system = pol_struct[file]["System"];
-        local horizon = pol_struct[file]["Horiozon"];
+        local horizon = pol_struct[file]["Horizon"];
         local pol_studies = pol_struct[file]["Cases"];
 
         tab:push("## " .. dictionary.system[LANGUAGE] .. ": " .. system .. " | " .. dictionary.horizon[LANGUAGE] .. ": " .. horizon);
@@ -1225,7 +1227,7 @@ function create_pol_report(col_struct)
                 end
 
                 -- Validation
-                if studies > 0 then
+                if studies > 1 then
                     local zinf_final     = tonumber(conv_age:select_agents({ 1 }):select_stage(total_iter):to_list()[1]);
                     local zsup_tol_final = tonumber(conv_age:select_agents({ 2 }):select_stage(total_iter):to_list()[1]);
                     if zinf_final and zsup_tol_final then
@@ -1417,7 +1419,7 @@ function create_times_report(col_struct)
    -- Creating policy report
    for _, file in ipairs(file_names) do
        local system = pol_struct[file]["System"];
-       local horizon = pol_struct[file]["Horiozon"];
+       local horizon = pol_struct[file]["Horizon"];
        local pol_studies = pol_struct[file]["Cases"];
 
        tab:push("## " .. dictionary.system[LANGUAGE] .. ": " .. system .. " | " .. dictionary.horizon[LANGUAGE] .. ": " .. horizon);
