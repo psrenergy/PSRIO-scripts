@@ -900,10 +900,10 @@ function get_conv_file_info(col_struct, file_name, pol_struct, file_names, case_
     end
 end
 
-function draw_simularion_cost(col_struct, total_iter, chart, case_index)
+function Tab.draw_simularion_cost(self,col_struct, aux_data, chart, case_index)
     -- Get operation mode parameter
-    local oper_mode = col_struct.study[case_index]:get_parameter("Opcion", -1); -- 1=AIS; 2=COO; 3=INT;
-    local rol_horiz = col_struct.study[case_index]:get_parameter("RHRZ", 0);
+    local oper_mode =  col_struct.study[case_index]:get_parameter("Opcion", -1); -- 1=AIS; 2=COO; 3=INT;
+    local rol_horiz =  col_struct.study[case_index]:get_parameter("RHRZ", 0);
     local num_syste = #col_struct.system[case_index]:labels();
 
     local has_results_for_add_years = col_struct.study[case_index]:get_parameter("NumeroAnosAdicionaisParm2",-1) == 1;
@@ -941,12 +941,29 @@ function draw_simularion_cost(col_struct, total_iter, chart, case_index)
         end
 
         -- Take expression and use it as mask for "final_sim_cost"
-        local final_sim_cost = {};
-        for _ = 1,total_iter do
-            table.insert(final_sim_cost, immediate_cost);
+
+        -- Deviation error
+        local zsup = aux_data:select_agent(10);
+        local last_zsup = zsup:to_list()[zsup:stages()];
+        if last_zsup and immediate_cost then
+            local rel_diff = (immediate_cost - last_zsup)/immediate_cost;
+            if rel_diff > REP_DIFF_TOL or -rel_diff < -REP_DIFF_TOL then
+                self:push("**"..dictionary.warning[LANGUAGE].."**");
+                self:push(dictionary.deviation_error[1][LANGUAGE] .. string.format("%.1f",100*rel_diff) .. dictionary.deviation_error[2][LANGUAGE]);
+                self:push(dictionary.deviation_error[3][LANGUAGE]);
+            
+                advisor:push_warning("simulation_cost");
+            end
         end
-        local aux_data = col_struct.generic[case_index]:create(dictionary.final_simulation[LANGUAGE], "", final_sim_cost)
-        chart:add_line(aux_data, { colors = { "#D37295" }, xAllowDecimals = false })
+
+        chart:add_line(aux_data:select_agent(1):fill(immediate_cost):rename_agent(dictionary.final_simulation[LANGUAGE]), 
+                                { colors = { "#D37295" }, xAllowDecimals = false })
+
+        self:push(chart);
+
+        self:push("**" ..dictionary.additional_years_mensage[LANGUAGE].."**");
+        self:push("* **"..dictionary.final_simulation[LANGUAGE].."**: "..dictionary.final_simulation_mensage[LANGUAGE]);
+        self:push("* **Zsup (IC + FCF)**: "..dictionary.zsup_mensage[LANGUAGE]);
 
     end
 end
@@ -1131,6 +1148,7 @@ function create_pol_report(col_struct)
     local pol_struct = {};
     local file_names = {};
     local total_iter = 0;
+    local aux_data;
     local convm_file_list = {};
 
     local conv_data         = {};
@@ -1175,9 +1193,11 @@ function create_pol_report(col_struct)
         local chart_conv      = Chart(dictionary.convergence[LANGUAGE]);
         local chart_cut_opt   = Chart(dictionary.new_cut_per_iteration_optimality[LANGUAGE]);
         local chart_cut_feas  = Chart(dictionary.new_cut_per_iteration_feasibility[LANGUAGE]);
+        local chart_policy_simulation  = Chart(dictionary.policy_simulation[LANGUAGE]);
         chart_conv:horizontal_legend();
         chart_cut_opt:horizontal_legend();
         chart_cut_feas:horizontal_legend();
+        chart_policy_simulation:horizontal_legend();
 
         for _,std in ipairs(pol_studies) do
 
@@ -1188,6 +1208,7 @@ function create_pol_report(col_struct)
 
             local conv_file = col_struct.generic[std]:force_load(file);
             total_iter = conv_file:last_stage();
+            aux_data = conv_file;
 
             local aux_vector = {};
             for i = 1, total_iter do
@@ -1208,10 +1229,19 @@ function create_pol_report(col_struct)
                                             xAllowDecimals = false,
                                             showInLegend = true });
 
+                chart_policy_simulation:add_area_range(conv_age:select_agents({ 2 }):rename_agent(prefix .. "Zsup - Tol"), 
+                                                       conv_age:select_agents({ 4 }):rename_agent(prefix .. "Zsup + Tol"), 
+                                                       { colors = { light_global_color[std],
+                                                       light_global_color[std] },
+                                                       xUnit = dictionary.iteration[LANGUAGE],
+                                                       xAllowDecimals = false,
+                                                       showInLegend = true });
                 -- Zsup
                 chart_conv:add_line(conv_age:select_agents({ 3 }):rename_agent(prefix .. "Zsup"),
                                     { colors = { main_global_color[std] }, xAllowDecimals = false, visible = zsup_is_visible });
 
+                chart_policy_simulation:add_line(conv_age:select_agents({ 3 }):rename_agent(prefix .. "Zsup"),
+                                    { colors = { main_global_color[std] }, xAllowDecimals = false, visible = zsup_is_visible });
                 -- Zinf
                 chart_conv:add_line(conv_age:select_agents({ 1 }):rename_agent(prefix .. "Zinf"),
                                     { colors = { main_global_color[std] }, xAllowDecimals = false, dashStyle = "dash" }); -- Zinf
@@ -1235,7 +1265,8 @@ function create_pol_report(col_struct)
                         if (diff > 0) then
                             if diff > CONVERGENCE_GAP_TOL then
                                 local sugestions = {};
-                                if (Study():get_series_forward() > 1 and Study():get_series_backward() > 1) then
+                                -- For stochastic cases, add the increase number of forwards series additional message
+                                if (Study():get_series_forward() > 1) then
                                     table.insert(sugestions, 'FORW');
                                 end
                                 advisor:push_warning("convergence_gap",1, sugestions);
@@ -1259,7 +1290,7 @@ function create_pol_report(col_struct)
         if #chart_conv > 0 then
             tab:push(chart_conv);
             if studies == 1 then
-                draw_simularion_cost(col_struct, total_iter, chart_conv, 1);
+                tab:draw_simularion_cost(col_struct, aux_data, chart_policy_simulation, 1);
             end
         end
         if #chart_cut_opt > 0 then
