@@ -6,7 +6,7 @@ function future_cost(i, suffix)
     if study:is_hourly() then
         return costs_by_category:select_agent(1);
     else
-        return costs_by_category:remove_agent(-1);
+        return costs_by_category:select_agent(-1);
     end
 end
 
@@ -1329,11 +1329,11 @@ function Tab.final_cost_table(self, col_struct)
     self:push("|:-:|:-:|:-:|:-:|:-:|");
     for i = 1, studies do
 
-        local objcop = require("sddp/costs")(i);
+        local ime_cost = require("sddp/costs")(i);
         local fut_cost = future_cost(i);
-        if objcop:loaded() then
+        if ime_cost:loaded() then
             
-            local cost = objcop / discount_rate(i);
+            local cost = ime_cost / discount_rate(i);
 
             local obj_cost = cost:aggregate_agents(BY_SUM(), "Total cost"):aggregate_stages(BY_SUM()):save_cache();
             local future_cost = fut_cost:aggregate_stages(BY_LAST_VALUE());
