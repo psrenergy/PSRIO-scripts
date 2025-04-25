@@ -1,3 +1,15 @@
+function future_cost(i, suffix)
+    local generic<const> = Generic(i or 1);
+    local costs_by_category = generic:load("objcop" .. (suffix or ""));
+    
+    local study<const> = Study(i or 1);
+    if study:is_hourly() then
+        return costs_by_category:select_agent(1);
+    else
+        return costs_by_category:remove_agent(-1);
+    end
+end
+
 -- Macros
 EXECUTION_MODE_OPERATION     = 0
 EXECUTION_MODE_EXPANSION_IT  = 1
@@ -1317,13 +1329,14 @@ function Tab.final_cost_table(self, col_struct)
     self:push("|:-:|:-:|:-:|:-:|:-:|");
     for i = 1, studies do
 
-        local objcop = col_struct.generic[i]:load("objcop"):remove_agent(1);
+        local objcop = require("sddp/costs")(i);
+        local fut_cost = future_cost(i);
         if objcop:loaded() then
             
             local cost = objcop / discount_rate(i);
 
-            local obj_cost = cost:remove_agent(-1):aggregate_agents(BY_SUM(), "Total cost"):aggregate_stages(BY_SUM()):save_cache();
-            local future_cost = cost:select_agent(-1):aggregate_stages(BY_LAST_VALUE());
+            local obj_cost = cost:aggregate_agents(BY_SUM(), "Total cost"):aggregate_stages(BY_SUM()):save_cache();
+            local future_cost = fut_cost:aggregate_stages(BY_LAST_VALUE());
 
             local total_cost = obj_cost + future_cost;
 
