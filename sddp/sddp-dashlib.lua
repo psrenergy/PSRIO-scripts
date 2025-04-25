@@ -1320,11 +1320,13 @@ function Tab.final_cost_table(self, col_struct)
         local is_hourly = col_struct.study[i]:get_parameter("SIMH", -1) == 2;
 
         local objcop = col_struct.generic[i]:load("objcop");
-        if not is_hourly then -- Hourly objcop does not have a "Total Cost" agent like in block execution
-            objcop = objcop:remove_agent(1);
-        end
         if objcop:loaded() then
-            
+        
+            -- Removing "Total cost": hourly objcop does not have a "Total Cost" agent like in block execution
+            if not is_hourly then 
+                objcop = objcop:remove_agent(1);
+            end
+                
             local cost = objcop / discount_rate(i);
 
             -- Remove future cost
