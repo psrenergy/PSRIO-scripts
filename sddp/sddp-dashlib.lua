@@ -797,7 +797,7 @@ function create_tab_summary(col_struct, info_struct)
 
     -- Non-convexities dimension report
 
-    -- Use first case to build non-convexities type column
+
     local nconv_file_name = "nonconvrep.csv";
     local nonconv_list = {};
     local nonconv_order = {};
@@ -880,34 +880,103 @@ end
 -- Policy report functions
 -----------------------------------------------------------------------------------------------
 
-function get_conv_file_info(col_struct, file_name, file_list, systems, horizons, case_index)
+function get_conv_file_info(col_struct, file_name, pol_struct, file_names, case_index)
     -- Loading file
     local sddppol = col_struct.generic[case_index]:load_table(file_name);
 
     if not sddppol or (#sddppol == 0) then
         warning("The file " .. file_name .. " was not found or is empty.");
     else
-        local file_name = "";
         for i = 1, #sddppol do
-            file_name = sddppol[i]["FileNames"];
-            file_list[i] = string.sub(file_name, 1, #file_name - 4);
-
-            systems[i] = sddppol[i]["System"];
-            if systems[i] == "INTEGRATED" then
-                systems[i] = dictionary.integrated[LANGUAGE];
+            local system = trim(sddppol[i]["System"]);
+            if system == "INTEGRATED" then
+                system = dictionary.integrated[LANGUAGE];
             end
-            
-            horizons[i] = sddppol[i]["InitialHorizon"] .. "-" .. sddppol[i]["FinalHorizon"];
+            local file_name = sddppol[i]["FileNames"];
+            file_name = string.sub(file_name, 1, #file_name - 4);
+
+            local horizon = sddppol[i]["InitialHorizon"] .. " - " .. sddppol[i]["FinalHorizon"];
+            if file_name then
+                if pol_struct[file_name] then
+                    table.insert(pol_struct[file_name]["Cases"], case_index);
+                else
+                    table.insert(file_names, file_name);
+                    pol_struct[file_name] = {
+                        ["Cases"] = {case_index},
+                        ["System"] = system,
+                        ["Horizon"] = horizon
+                    }
+                end
+            end
         end
     end
 end
 
-function get_convergence_file_agents(col_struct, file_list, conv_age, cuts_age, time_age, case_index)
-    for i, file in ipairs(file_list) do
-        local conv_file = col_struct.generic[case_index]:force_load(file);
-        conv_age[i] = conv_file:select_agents({ 1, 2, 3, 4 }); -- Zinf, Zsup - Tol, Zsup, Zsup + Tol
-        cuts_age[i] = conv_file:select_agents({ 5, 6 }); -- Optimality, Feasibility
-        time_age[i] = conv_file:select_agents({ 7, 8 }); -- Forw. time, Back. time
+function Tab.draw_simularion_cost(self,col_struct, aux_data, chart, case_index)
+    -- Get operation mode parameter
+    local oper_mode =  col_struct.study[case_index]:get_parameter("Opcion", -1); -- 1=AIS; 2=COO; 3=INT;
+    local rol_horiz =  col_struct.study[case_index]:get_parameter("RHRZ", 0);
+    local num_syste = #col_struct.system[case_index]:labels();
+
+    local has_results_for_add_years = col_struct.study[case_index]:get_parameter("NumeroAnosAdicionaisParm2",-1) == 1;
+
+    -- If there is only one FCF file in the case and no rolling horizons, print final simulation cost as columns
+    if (rol_horiz == 0 and (num_syste == 1 or oper_mode == 3)) then
+
+        local objcop = col_struct.generic[case_index]:load("objcop");
+        local discount_rate = require("sddp/discount_rate")(1);
+
+        local immediate_cost;
+        local future_cost_age;
+        if col_struct.study[case_index]:get_parameter("SIMH", -1) == 2 then -- Hourly model writes objcop with different columns
+            if not has_results_for_add_years then
+                future_cost_age = objcop:select_agent(1):aggregate_scenarios(BY_AVERAGE());
+            end
+
+            -- Remove first column(Future cost) of hourly objcop
+            immediate_cost = (objcop:remove_agent(1) / discount_rate):aggregate_agents(BY_SUM(), "Immediate cost"):aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):to_list()[1];
+        else
+            -- Select total cost and future cost agents
+            local total_cost_age = objcop:select_agent(1):aggregate_scenarios(BY_AVERAGE());
+            future_cost_age = objcop:select_agent(-1):aggregate_scenarios(BY_AVERAGE());
+
+            -- Calculating total cost as sum of immediate costs per stage
+            immediate_cost = ((total_cost_age - future_cost_age) / discount_rate):aggregate_stages(BY_SUM()):rename_agent("Total cost"):to_list()[1];
+        end
+
+        if not has_results_for_add_years then
+            local fcf_last_stage_index = future_cost_age:last_stage();
+            local fcf_last_stage_cost  = future_cost_age:select_stage(fcf_last_stage_index):to_list()[1];
+            local last_stage_disc      = discount_rate:select_stage(fcf_last_stage_index):to_list()[1];
+
+            immediate_cost = immediate_cost + fcf_last_stage_cost / last_stage_disc;
+        end
+
+        -- Take expression and use it as mask for "final_sim_cost"
+
+        -- Deviation error
+        local zsup = aux_data:select_agent(10);
+        local last_zsup = zsup:to_list()[zsup:stages()];
+        if last_zsup and immediate_cost then
+            local rel_diff = (immediate_cost - last_zsup)/immediate_cost;
+            if rel_diff > REP_DIFF_TOL or -rel_diff < -REP_DIFF_TOL then
+                self:push("**"..dictionary.warning[LANGUAGE].."**");
+                self:push(dictionary.deviation_error[1][LANGUAGE] .. string.format("%.1f",100*rel_diff) .. dictionary.deviation_error[2][LANGUAGE]);
+                self:push(dictionary.deviation_error[3][LANGUAGE]);
+            
+                advisor:push_warning("simulation_cost");
+            end
+        end
+
+        chart:add_line(aux_data:select_agent(1):fill(immediate_cost):rename_agent(dictionary.final_simulation[LANGUAGE]), 
+                                { colors = { "#D37295" }, xAllowDecimals = false })
+
+        self:push(chart);
+
+        self:push("**" ..dictionary.additional_years_mensage[LANGUAGE].."**");
+        self:push("* **"..dictionary.final_simulation[LANGUAGE].."**: "..dictionary.final_simulation_mensage[LANGUAGE]);
+        self:push("* **Zsup (IC + FCF)**: "..dictionary.zsup_mensage[LANGUAGE]);
+
     end
 end
 
@@ -1088,10 +1157,11 @@ function create_pol_report(col_struct)
     local fcf_last_stage_cost;
     local rel_diff;
 
-    local file_list = {};
+    local pol_struct = {};
+    local file_names = {};
+    local total_iter = 0;
+    local aux_data;
     local convm_file_list = {};
-    local systems = {};
-    local horizon = {};
 
     local conv_data         = {};
     local cuts_data         = {};
@@ -1104,6 +1174,7 @@ function create_pol_report(col_struct)
     local has_results_for_add_years;
     local zsup_is_visible = true;
 
+    
     -- -- Convergence map report
     -- get_conv_file_info(col_struct, "sddpconvm.csv", convm_file_list, systems, horizon, 1);
     -- convertion_status = get_convergence_map_status(col_struct, convm_file_list, conv_status, 1);
@@ -1114,206 +1185,131 @@ function create_pol_report(col_struct)
     -- end
     
     -- Convergence report
-    get_conv_file_info(col_struct, "sddppol.csv", file_list, systems, horizon, 1);
-    get_convergence_file_agents(col_struct, file_list, conv_data, cuts_data, time_data, 1);
+    local pol_file = "sddppol.csv";
+    for i = 1, studies do
+        get_conv_file_info(col_struct, pol_file, pol_struct, file_names, i);
+    end
 
-    if #file_list < 1 then
+    if #file_names < 1 then
         tab:push("### " .. dictionary.error_load_sddppol[LANGUAGE]);
     end
 
     -- Creating policy report
-    for i, file in ipairs(file_list) do
-        tab:push("## " .. dictionary.system[LANGUAGE] .. ": " .. systems[i] .. " | " .. dictionary.horizon[LANGUAGE] .. ": " .. horizon[i]);
+    for _, file in ipairs(file_names) do
+        local system = pol_struct[file]["System"];
+        local horizon = pol_struct[file]["Horizon"];
+        local pol_studies = pol_struct[file]["Cases"];
+
+        tab:push("## " .. dictionary.system[LANGUAGE] .. ": " .. system .. " | " .. dictionary.horizon[LANGUAGE] .. ": " .. horizon);
+
         local chart_conv      = Chart(dictionary.convergence[LANGUAGE]);
+        local chart_cut_opt   = Chart(dictionary.new_cut_per_iteration_optimality[LANGUAGE]);
+        local chart_cut_feas  = Chart(dictionary.new_cut_per_iteration_feasibility[LANGUAGE]);
+        local chart_policy_simulation  = Chart(dictionary.policy_simulation[LANGUAGE]);
+        chart_conv:horizontal_legend();
+        chart_cut_opt:horizontal_legend();
+        chart_cut_feas:horizontal_legend();
+        chart_policy_simulation:horizontal_legend();
 
-        if studies > 1 then
-            local chart_cut_opt   = Chart(dictionary.new_cut_per_iteration_optimality[LANGUAGE]);
-            local chart_cut_feas  = Chart(dictionary.new_cut_per_iteration_feasibility[LANGUAGE]);
+        for _,std in ipairs(pol_studies) do
 
-            for j = 1, studies do
-
-                conv_file = col_struct.generic[j]:force_load(file);
-                if conv_file:loaded() then
-                    conv_age = conv_file:select_agents({ 1, 2, 3, 4 }); -- Zinf        ,Zsup - Tol  ,Zsup        ,Zsup + Tol
-                    cuts_age = conv_file:select_agents({ 5, 6 }); -- Optimality  ,Feasibility
-
-                    -- Confidence interval
-                    chart_conv:add_area_range(conv_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup - Tol"), conv_age:select_agents({ 4 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup + Tol"), { colors = { light_global_color[j], light_global_color[j] }, xUnit = dictionary.iteration[LANGUAGE], xAllowDecimals = false, showInLegend = true });
-
-                    -- Zsup
-                    chart_conv:add_line(conv_age:select_agents({ 3 }):rename_agent(col_struct.case_dir_list[j] .. " - Zsup"), { colors = { main_global_color[j] }, xAllowDecimals = false, visible = zsup_is_visible });
-
-                    -- Zinf
-                    chart_conv:add_line(conv_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j] .. " - Zinf"), { colors = { main_global_color[j] }, xAllowDecimals = false, dashStyle = "dash" }); -- Zinf
-
-                    -- Cuts - optimality
-                    chart_cut_opt:add_column(cuts_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = dictionary.iteration[LANGUAGE], xAllowDecimals = false });
-
-                    -- Cuts - feasibility
-                    if is_greater_than_zero(cuts_age:select_agents({ 2 })) then
-                        chart_cut_feas:add_column(cuts_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[j]), { xUnit = dictionary.iteration[LANGUAGE], xAllowDecimals = false });
-                    end
-                else
-                    info("Comparing cases have different policy horizons! Policy will only contain the main case data.");
-                end
+            local prefix = "";
+            if studies > 1 then
+                prefix = col_struct.case_dir_list[std] .. " - ";
             end
 
-            if #chart_conv > 0 then
-                tab:push(chart_conv);
-            end
-            if #chart_cut_opt > 0 then
-                tab:push(chart_cut_opt);
-            end
-            if #chart_cut_feas > 0 then
-                tab:push(chart_cut_feas);
-            end
-        else
-            -- Get operation mode parameter
-            oper_mode = col_struct.study[1]:get_parameter("Opcion", -1); -- 1=AIS; 2=COO; 3=INT;
+            local conv_file = col_struct.generic[std]:force_load(file);
+            total_iter = conv_file:last_stage();
+            aux_data = conv_file;
 
-            has_results_for_add_years = col_struct.study[1]:get_parameter("NumeroAnosAdicionaisParm2",-1) == 1;
-
-            nsys = calculate_number_of_systems(systems);
-            
-            conv_file = col_struct.generic[1]:force_load(file);
-            if not conv_file:loaded() then
-                tab:push("#### ⚠️ " .. dictionary.error_load_sddppol_files[1][LANGUAGE] .. file .. ".csv" .. dictionary.error_load_sddppol_files[2][LANGUAGE]);
+            local aux_vector = {};
+            for i = 1, total_iter do
+                table.insert(aux_vector, tostring(i));
             end
 
-            conv_age = conv_file:select_agents({ 1, 2, 3, 4 }); -- Zinf        ,Zsup - Tol  ,Zsup        ,Zsup + Tol
-            cuts_age = conv_file:select_agents({ 5, 6 }); -- Optimality  ,Feasibility
-            
-            -- If there is only one FCF file in the case and no rolling horizons, print final simulation cost as columns
-            show_sim_cost = false;
-            if ( ((oper_mode < 3 and nsys == 1) or oper_mode == 3) and col_struct.study[1]:get_parameter("RHRZ", 0) == 0) then
-                show_sim_cost = true;
-
-                local objcop = col_struct.generic[1]:load("objcop");
-                local discount_rate = require("sddp/discount_rate")(1);
-
-                immediate_cost = 0.0;
-                if col_struct.study[1]:get_parameter("SIMH", -1) == 2 then -- Hourly model writes objcop with different columns
-                    if not has_results_for_add_years then
-                        future_cost_age = objcop:select_agent(1):aggregate_scenarios(BY_AVERAGE());
-                    end
-
-                    -- Remove first column(Future cost) of hourly objcop
-                    immediate_cost = (objcop:remove_agent(1) / discount_rate):aggregate_agents(BY_SUM(), "Immediate cost"):aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):to_list()[1];
-                else
-                    -- Select total cost and future cost agents
-                    total_cost_age = objcop:select_agent(1):aggregate_scenarios(BY_AVERAGE());
-                    future_cost_age = objcop:select_agent(-1):aggregate_scenarios(BY_AVERAGE());
-
-                    -- Calculating total cost as sum of immediate costs per stage
-                    immediate_cost = ((total_cost_age - future_cost_age) / discount_rate):aggregate_stages(BY_SUM()):rename_agent("Total cost"):to_list()[1];
-                end
-
-                if not has_results_for_add_years then
-                    fcf_last_stage_index = future_cost_age:last_stage();
-                    fcf_last_stage_cost  = future_cost_age:select_stage(fcf_last_stage_index):to_list()[1];
-                    last_stage_disc      = discount_rate:select_stage(fcf_last_stage_index):to_list()[1];
-
-                    immediate_cost = immediate_cost + fcf_last_stage_cost / last_stage_disc;
-                end
-
-                -- Take expression and use it as mask for "final_sim_cost"
-                conv_age_aux = conv_age:select_agent(1):rename_agent(dictionary.final_simulation[LANGUAGE]);
-                final_sim_cost = conv_age_aux:fill(immediate_cost);
-
-            end
-
-            -----------------------------------------------------------------------------------------------------------
-            -- Convergence chart
-            -----------------------------------------------------------------------------------------------------------
-            -- Zinf
-            chart_conv:add_line(conv_age:select_agents({ 1 }), { xUnit = dictionary.iteration[LANGUAGE], colors = { "#3CB7CC" }, xAllowDecimals = false });
-            -- Zsup
-            chart_conv:add_line(conv_age:select_agents({ 3 }):rename_agent("Zsup"), { colors = { "#32A251" }, xAllowDecimals = false });
-            -- Confidence interval
-            chart_conv:add_area_range(conv_age:select_agents({ 2 }):rename_agent(""), conv_age:select_agents({ 4 }):rename_agent("Zsup +- Tol"), { colors = { "#ACD98D", "#ACD98D" }, xUnit = dictionary.iteration[LANGUAGE], xAllowDecimals = false, visible = zsup_is_visible });
-            
-            local total_iter = conv_age:last_stage();
-
-            local zinf_final     = tonumber(conv_age:select_agents({ 1 }):select_stage(total_iter):to_list()[1]);
-            local zsup_tol_final = tonumber(conv_age:select_agents({ 2 }):select_stage(total_iter):to_list()[1]);
-            
-            if zinf_final and zsup_tol_final then
-                local diff = zsup_tol_final - zinf_final;
-                if (diff > 0) then
-                    if diff > CONVERGENCE_GAP_TOL then
-                        local sugestions = {};
-                        if (Study():get_series_forward() > 1 and Study():get_series_backward() > 1) then
-                            table.insert(sugestions, 'FORW');
-                        end
-                        advisor:push_warning("convergence_gap",1, sugestions);
-                    end
-                else
-                    -- to_do: negative gap msg
-                end
-            end
-
-            if (show_sim_cost and has_results_for_add_years) then
-                -- Final simulation cost
-                chart_conv:add_line(final_sim_cost:rename_agent(dictionary.final_simulation[LANGUAGE]), { colors = { "#D37295" }, xAllowDecimals = false });
-
-            end
-            tab:push(chart_conv);
-
-            -----------------------------------------------------------------------------------------------------------
-            -- Final simulation chart
-            -----------------------------------------------------------------------------------------------------------
-            if (show_sim_cost and not has_results_for_add_years) then
-                local chart = Chart(dictionary.policy_simulation[LANGUAGE]);
-
-                local conv_age = conv_file:select_agents({ 9, 10, 11}); -- Zsup - Tol  ,Zsup        ,Zsup + Tol   (With FCF added in the last stage before additional years)
-
-                -- Zsup
-                chart:add_line(conv_age:select_agents({ 2 }):rename_agent("Zsup (IC+FCF)"), { colors = { "#FF9DA7" }, xAllowDecimals = false, xLabel = dictionary.iteration[LANGUAGE]});
+            if conv_file:loaded() then
+                local conv_age = conv_file:select_agents({ 1, 2, 3, 4 }); -- Zinf        ,Zsup - Tol  ,Zsup        ,Zsup + Tol
+                local cuts_opt = conv_file:select_agents({5}):stages_to_agents():rename_agents(aux_vector);
+                local cuts_feas = conv_file:select_agents({6}):stages_to_agents():rename_agents(aux_vector);
 
                 -- Confidence interval
-                chart:add_area_range(conv_age:select_agents({ 1 }):rename_agent(""), conv_age:select_agents({ 3 }):rename_agent("Zsup (IC+FCF) +- Tol"), { colors = { "#FFD8DC", "#FFD8DC" }, xAllowDecimals = false, showInLegend = true });
+                chart_conv:add_area_range(conv_age:select_agents({ 2 }):rename_agent(prefix .. "Zsup - Tol"), 
+                                          conv_age:select_agents({ 4 }):rename_agent(prefix .. "Zsup + Tol"), 
+                                          { colors = { light_global_color[std],
+                                            light_global_color[std] },
+                                            xUnit = dictionary.iteration[LANGUAGE],
+                                            xAllowDecimals = false,
+                                            showInLegend = true });
 
-                -- Final simulation cost
-                chart:add_line(final_sim_cost:rename_agent(dictionary.final_simulation[LANGUAGE]), { colors = { "#D37295" }, xAllowDecimals = false });
+                chart_policy_simulation:add_area_range(conv_age:select_agents({ 2 }):rename_agent(prefix .. "Zsup - Tol"), 
+                                                       conv_age:select_agents({ 4 }):rename_agent(prefix .. "Zsup + Tol"), 
+                                                       { colors = { light_global_color[std],
+                                                       light_global_color[std] },
+                                                       xUnit = dictionary.iteration[LANGUAGE],
+                                                       xAllowDecimals = false,
+                                                       showInLegend = true });
+                -- Zsup
+                chart_conv:add_line(conv_age:select_agents({ 3 }):rename_agent(prefix .. "Zsup"),
+                                    { colors = { main_global_color[std] }, xAllowDecimals = false, visible = zsup_is_visible });
 
-                -- Deviation error
-                local zsup = conv_file:select_agent(10);
-                local last_zsup = zsup:to_list()[zsup:stages()];
-                if last_zsup and immediate_cost then
-                    rel_diff = (immediate_cost - last_zsup)/immediate_cost;
-                    if rel_diff > REP_DIFF_TOL or -rel_diff < -REP_DIFF_TOL then
-                        tab:push("**"..dictionary.warning[LANGUAGE].."**");
-                        tab:push(dictionary.deviation_error[1][LANGUAGE] .. string.format("%.1f",100*rel_diff) .. dictionary.deviation_error[2][LANGUAGE]);
-                        tab:push(dictionary.deviation_error[3][LANGUAGE]);
-                    
-                        advisor:push_warning("simulation_cost");
-                    end
+                chart_policy_simulation:add_line(conv_age:select_agents({ 3 }):rename_agent(prefix .. "Zsup"),
+                                    { colors = { main_global_color[std] }, xAllowDecimals = false, visible = zsup_is_visible });
+                -- Zinf
+                chart_conv:add_line(conv_age:select_agents({ 1 }):rename_agent(prefix .. "Zinf"),
+                                    { colors = { main_global_color[std] }, xAllowDecimals = false, dashStyle = "dash" }); -- Zinf
+
+                -- Cuts - optimality
+                chart_cut_opt:add_categories(cuts_opt,col_struct.case_dir_list[std],
+                                        { xUnit = dictionary.iteration[LANGUAGE], xAllowDecimals = false, showInLegend = studies > 1 });
+
+                -- Cuts - feasibility
+                if is_greater_than_zero(cuts_feas) then
+                    chart_cut_feas:add_categories(cuts_feas,col_struct.case_dir_list[std],
+                                             { xUnit = dictionary.iteration[LANGUAGE], xAllowDecimals = false, showInLegend = studies > 1 });
                 end
 
-                tab:push(chart);
-
-                tab:push("**" ..dictionary.additional_years_mensage[LANGUAGE].."**");
-                tab:push("* **"..dictionary.final_simulation[LANGUAGE].."**: "..dictionary.final_simulation_mensage[LANGUAGE]);
-                tab:push("* **Zsup (IC + FCF)**: "..dictionary.zsup_mensage[LANGUAGE]);
+                -- Validation
+                if studies > 1 then
+                    local zinf_final     = tonumber(conv_age:select_agents({ 1 }):select_stage(total_iter):to_list()[1]);
+                    local zsup_tol_final = tonumber(conv_age:select_agents({ 2 }):select_stage(total_iter):to_list()[1]);
+                    if zinf_final and zsup_tol_final then
+                        local diff = zsup_tol_final - zinf_final;
+                        if (diff > 0) then
+                            if diff > CONVERGENCE_GAP_TOL then
+                                local sugestions = {};
+                                -- For stochastic cases, add the increase number of forwards series additional message
+                                if (Study():get_series_forward() > 1) then
+                                    table.insert(sugestions, 'FORW');
+                                end
+                                advisor:push_warning("convergence_gap",1, sugestions);
+                            end
+                        else
+                            -- to_do: negative gap msg
+                        end
+                    end
+                end
+            else
+                tab:push("#### ⚠️ " .. dictionary.error_load_sddppol_files[1][LANGUAGE] .. "case " .. col_struct.case_dir_list[std] .. " " .. file .. ".csv" .. dictionary.error_load_sddppol_files[2][LANGUAGE]);
             end
 
-            -----------------------------------------------------------------------------------------------------------
-            -- Cuts per iteration
-            -----------------------------------------------------------------------------------------------------------
-            chart = Chart(dictionary.new_cuts_per_iteration[LANGUAGE]);
-
-            chart:add_column(cuts_age:select_agents({ 1 }):rename_agent(dictionary.optimality[LANGUAGE]), { xUnit = dictionary.iteration[LANGUAGE], xAllowDecimals = false }); -- Optimality
-
-            -- For feas. cuts, plot only if at least one cut
-            if is_greater_than_zero(cuts_age:select_agents({ 2 })) then
-                chart:add_column(cuts_age:select_agents({ 2 }):rename_agent(dictionary.feasibility[LANGUAGE]), { xAllowDecimals = false }); -- Feasibility
-            end
-            tab:push(chart);
 
             -----------------------------------------------------------------------------------------------------------
             -- Convergence map
             -----------------------------------------------------------------------------------------------------------
             -- create_conv_map_graph(tab, convm_file_list[i], col_struct, 1);
+        end
+
+        if #chart_conv > 0 then
+            tab:push(chart_conv);
+            if studies == 1 then
+                tab:draw_simularion_cost(col_struct, aux_data, chart_policy_simulation, 1);
+            end
+        end
+        if #chart_cut_opt > 0 then
+            tab:push(chart_cut_opt);
+        end
+        if #chart_cut_feas > 0 then
+            tab:push(chart_cut_feas);
         end
     end
 
@@ -1381,6 +1377,7 @@ function create_sim_report(col_struct)
         local adjusted_table = adjust_data_for_add_categories(aux_table);  -- will be deprecated soon (next PSRIO version)
         local agents_order = adjusted_table[1]:agents();
         for i = 1, studies do
+            cost_chart:horizontal_legend();
             cost_chart:add_column_categories(adjusted_table[i]:reorder_agents(agents_order):change_currency_configuration(i), col_struct.case_dir_list[i]);
         end
     else
@@ -1443,7 +1440,8 @@ function create_times_report(col_struct)
     ---------
     -- Policy
     ---------
-    local file_list = {};
+    local pol_struct = {};
+    local file_names = {};
     local systems = {};
     local horizon = {};
     
@@ -1452,73 +1450,74 @@ function create_times_report(col_struct)
     local time_data         = {};
     local conv_status       = {};
     
-    -- Loading convergence data
-    get_conv_file_info(col_struct, "sddppol.csv", file_list, systems, horizon, 1);
-    get_convergence_file_agents(col_struct, file_list, conv_data, cuts_data, time_data, 1);
-    
-    -- Print header if policy files exist
-    if #file_list > 0 then
-        tab:push("## " .. dictionary.tab_policy[LANGUAGE]);
-    end
-    
-    for i, file in ipairs(file_list) do
-        tab:push("# " .. dictionary.system[LANGUAGE] .. ": " .. systems[i] .. " | " .. dictionary.horizon[LANGUAGE] .. ": " .. horizon[i]);
-    
-        if studies > 1 then
-            local chart_time_forw = Chart(dictionary.forward_time[LANGUAGE]);
-            local chart_time_back = Chart(dictionary.backward_time[LANGUAGE]);
-            local chart_exe_pol = Chart(dictionary.exe_pol_times[LANGUAGE]);
-            
-            for jstudy = 1, studies do
-                conv_file = col_struct.generic[jstudy]:force_load(file);
-                time_age = conv_file:select_agents({ 7, 8 }); -- Forw. time, Back. time
-                
-                if conv_file:loaded() then
-                    -- Execution time - forward
-                    chart_time_forw:add_column(time_age:select_agents({ 1 }):rename_agent(col_struct.case_dir_list[jstudy]), { xUnit = dictionary.iteration[LANGUAGE], yUnit = "s", xAllowDecimals = false });
-    
-                    -- Execution time - backward
-                    chart_time_back:add_column(time_age:select_agents({ 2 }):rename_agent(col_struct.case_dir_list[jstudy]), { xUnit = dictionary.iteration[LANGUAGE], yUnit = "s", xAllowDecimals = false });
-                else
-                    info("Comparing cases have different policy horizons! Policy will only contain the main case data.");
-                end
+   -- Convergence report
+   local pol_file = "sddppol.csv";
+   for i = 1, studies do
+       get_conv_file_info(col_struct, pol_file, pol_struct, file_names, i);
+   end
 
-                local exe_times = col_struct.generic[jstudy]:force_load("sddptimes");
-                if conv_file:loaded() then
-                    chart_exe_pol:add_column(exe_times:select_agent(2):rename_agent(col_struct.case_dir_list[jstudy]), {showInLegend = false});
-                end
-            end
-            
-            if #chart_exe_pol > 0 then
-                tab:push(chart_exe_pol);
-             end
+   if #file_names < 1 then
+       tab:push("### " .. dictionary.error_load_sddppol[LANGUAGE]);
+   end
 
-            if #chart_time_forw > 0 then
-                tab:push(chart_time_forw);
+   -- Creating policy report
+   for _, file in ipairs(file_names) do
+       local system = pol_struct[file]["System"];
+       local horizon = pol_struct[file]["Horizon"];
+       local pol_studies = pol_struct[file]["Cases"];
+
+       tab:push("## " .. dictionary.system[LANGUAGE] .. ": " .. system .. " | " .. dictionary.horizon[LANGUAGE] .. ": " .. horizon);
+
+       local chart_time_forw = Chart(dictionary.forward_time[LANGUAGE]);
+       local chart_time_back = Chart(dictionary.backward_time[LANGUAGE]);
+       local chart_exe_pol = Chart(dictionary.exe_pol_times[LANGUAGE]);
+       chart_time_forw:horizontal_legend();
+       chart_time_back:horizontal_legend();
+       chart_exe_pol:horizontal_legend();
+
+       for i,std in ipairs(pol_studies) do
+            local conv_file = col_struct.generic[std]:force_load(file);
+            local total_iter = conv_file:last_stage();
+            local aux_vector = {};
+            for i = 1, total_iter do
+                table.insert(aux_vector, tostring(i));
             end
 
-            if #chart_time_back > 0 then
-                tab:push(chart_time_back);
-            end
-        else
-            conv_file = col_struct.generic[1]:force_load(file);
-            time_age = conv_file:select_agents({ 7, 8 }); -- Forw. time, Back. time
-            
-            chart = Chart(dictionary.fwd_bwd_time[LANGUAGE]);
-            chart:add_line(time_age:rename_agents({"Forward","Backward"}), { xUnit = dictionary.iteration[LANGUAGE], yUnit = "s", xAllowDecimals = false }); -- Forw. and Back. times
-            
-            local exe_times = col_struct.generic[1]:force_load("sddptimes");
-            local chart_exe_pol = Chart(dictionary.exe_pol_times[LANGUAGE]);
-            chart_exe_pol:add_column(exe_times:select_agent(2), {showInLegend = false});
+            local time_forw = conv_file:select_agents({ 7 }):stages_to_agents():rename_agents(aux_vector);
+            local time_back = conv_file:select_agents({ 8 }):stages_to_agents():rename_agents(aux_vector);
 
-            if #chart > 0 then
-                tab:push(chart);
+            if conv_file:loaded() then
+                -- Execution time - forward
+                chart_time_forw:add_categories(time_forw, col_struct.case_dir_list[std], { xUnit = dictionary.iteration[LANGUAGE], 
+                                                                                       yUnit = "s", 
+                                                                                       xAllowDecimals = false, 
+                                                                                       showInLegend = studies > 1 });
+
+                -- Execution time - backward
+                chart_time_back:add_categories(time_back, col_struct.case_dir_list[std], { xUnit = dictionary.iteration[LANGUAGE], 
+                                                                                       yUnit = "s", 
+                                                                                       xAllowDecimals = false, 
+                                                                                       showInLegend = studies > 1 });
+            else
+                info("Comparing cases have different policy horizons! Policy will only contain the main case data.");
             end
 
-            if #chart_exe_pol > 0 then
-                tab:push(chart_exe_pol);
+            local exe_times = col_struct.generic[std]:force_load("sddptimes");
+            if conv_file:loaded() then
+                chart_exe_pol:add_categories(exe_times:select_agent(2),col_struct.case_dir_list[std], {showInLegend = studies > 1});
             end
-            
+        end
+
+        if #chart_exe_pol > 0 then
+            tab:push(chart_exe_pol);
+        end
+
+        if #chart_time_forw > 0 then
+            tab:push(chart_time_forw);
+        end
+
+        if #chart_time_back > 0 then
+            tab:push(chart_time_back);
         end
     end
     
@@ -1529,7 +1528,8 @@ function create_times_report(col_struct)
     
     if studies > 1 then
         local chart_exe_sim = Chart(dictionary.exe_sim_times[LANGUAGE]);
-        
+        chart_exe_sim:horizontal_legend();
+
         for istudy = 1, studies do
             -- Execution times
             local exe_times = col_struct.generic[istudy]:load("sddptimes");
@@ -1567,7 +1567,9 @@ end
 function create_costs_and_revs(col_struct, tab)
 
     local chart = Chart(dictionary.disp_of_operation_cost[LANGUAGE]);
+    chart:horizontal_legend();
     local chart_avg = Chart(dictionary.avg_operation_cost[LANGUAGE]);
+    chart_avg:horizontal_legend();
 
     for i = 1, studies do
         local objcop = require("sddp/costs");
