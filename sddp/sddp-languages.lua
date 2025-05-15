@@ -77,6 +77,11 @@ dictionary = {
         es = "Informe de infeasibilidad",
         pt = "Relatório de inviabilidade"
     },
+    tuvio = {
+        en = "Hydro: generator group minimum turbining",
+        es = "Hidro: turbinamiento mínimo de grupo generador",
+        pt = "Hidro: turbinamento mínimo de grupo gerador"
+    },
     inflow_energy = {
         en = "Total inflow energy",
         es = "Energía total afluente",
@@ -296,6 +301,11 @@ dictionary = {
         en = "Deficit",
         es = "Déficit",
         pt = "Déficit"
+    },
+    edemdef = {
+        en = "Supply chain: demand deficit",
+        es = "Cadena energética: déficit de demanda",
+        pt = "Cadeia energética: déficit de demanda "
     },
     nedefc = {
         en = "Deficit associated to non-electrical gas demand",
