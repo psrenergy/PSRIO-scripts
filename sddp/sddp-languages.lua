@@ -122,6 +122,11 @@ dictionary = {
         es = "Estado de la solución por etapa y escenario",
         pt = "Status da solução por estágio e cenário"
     },
+    mip_gap = {
+        en = "GAP of the last MIP problem solved per stage and scenario",
+        es = "GAP del último problema MIP resuelto por etapa y escenario",
+        pt = "GAP do último problema MIP resolvido por estágio e cenário"
+    },
     dispersion_of_time = {
         en = "Dispersion of execution times per scenario",
         es = "Dispersión de los tiempos de ejecución por escenario",
