@@ -1110,6 +1110,38 @@ function create_hourly_sol_status_graph(tab, col_struct, i)
     end
 end
 
+function create_mipgap_graph(tab, col_struct, i)
+    local output_name  = "mipgap";
+    local report_title = dictionary.mip_gap[LANGUAGE];
+    local mip_gap = col_struct.generic[i]:load(output_name);
+
+    if not mip_gap:loaded() then
+        info(output_name .. " output could not be loaded. ".. "'" .. report_title .. "'" .. "report will not be displayed");
+        return
+    else
+        -- Check if any mip problem was solved in the simulation
+        mip_gap_check = mip_gap:aggregate_scenarios(BY_MIN()):aggregate_stages(BY_MIN()):to_list()[1];
+        if mip_gap_check < 0 then
+            info(output_name .. ": invalid MIP Gaps found. Assumed no MIP problem was solved. The report will not be displayed");
+            return
+        end
+    end
+
+    local options = {
+    yLabel = dictionary.cell_scenarios[LANGUAGE],
+    xLabel = dictionary.cell_stages[LANGUAGE],
+    showInLegend = false,
+    stops = {{ 0.0, "#4E79A7" }, { 0.5, "#FBEEB3" }, { 1.0, "#C64B3E" }}, 
+    stopsMin = 0.0, 
+    stopsMax = 100.0
+    };
+
+    local chart = Chart(report_title);
+    chart:add_heatmap(mip_gap,options);
+    
+    tab:push(chart);
+end
+
 -- Execution times per scenario (dispersion)
 function create_exe_timer_per_scen(tab, col_struct, i)
     local extime_chart;
@@ -1427,6 +1459,9 @@ function create_sim_report(col_struct)
         if col_struct.study[1]:get_parameter("SIMH", -1) == 2 then
             create_hourly_sol_status_graph(tab, col_struct, 1);
         end
+        
+        -- MIP Gap heat map
+        create_mipgap_graph(tab, col_struct, 1);
 
         create_penalty_proportion_graph(tab, col_struct, 1);
     end
