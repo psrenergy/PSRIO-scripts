@@ -1128,13 +1128,17 @@ function create_mipgap_graph(tab, col_struct, i)
     end
 
     local options = {
-    yLabel = "Scenario",
+    yLabel = dictionary.cell_scenarios[LANGUAGE],
     xLabel = dictionary.cell_stages[LANGUAGE],
     showInLegend = false,
+    stops = {{ 0.0, "#4E79A7" }, { 0.5, "#FBEEB3" }, { 1.0, "#C64B3E" }}, 
+    stopsMin = 0.0, 
+    stopsMax = 100.0
     };
 
     local chart = Chart(report_title);
     chart:add_heatmap(mip_gap,options);
+    
     tab:push(chart);
 end
 
