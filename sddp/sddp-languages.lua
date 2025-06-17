@@ -1015,5 +1015,5 @@ non_convexities_labels = {
     ['Controladores de fluxo'] = 'Controladores de fluxo',   
     ['Usinas termicas multi-combustivel com geracao exclusiva'] = 'Usinas térmicas multi-combustível com geração exclusiva',
     ['Usinas hidroeletricas com representacao de queda liquida (v. inteira)'] = 'Usinas hidroelétricas com representação de queda líquida (v. inteira)',
-	['Variaveis genericas binarias'] = 'Variaveis genéricas binárias',
+	['Variaveis genericas binarias'] = 'Variáveis genéricas binárias',
 };
