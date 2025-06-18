@@ -1494,9 +1494,8 @@ function create_times_report(col_struct)
    for i = 1, studies do
        get_conv_file_info(col_struct, pol_file, pol_struct, file_names, i);
    end
-
    if #file_names < 1 then
-       tab:push("### " .. dictionary.error_load_sddppol[LANGUAGE]);
+       info(dictionary.error_load_sddppol_times[LANGUAGE]);
    end
 
    -- Creating policy report

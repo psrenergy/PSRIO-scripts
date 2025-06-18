@@ -919,6 +919,11 @@ dictionary = {
         es = "Hubo un error al cargar el archivo sddppol.csv, el informe de convergencia no se mostrará, por favor contacte al equipo de soporte.",
         pt = "Houve um erro ao carregar o arquivo sddppol.csv, o relatório de convergência não será exibido, por favor, entre em contato com a equipe de suporte."
     },
+    error_load_sddppol_times = {
+        en = "The data from the sddppol.csv file is not available, the execution times report for the policy phase will not be displayed.",
+        es = "Los datos del archivo sddppol.csv no están disponibles, el informe de tiempo de ejecución para la política no se mostrará.",
+        pt = "Os dados do arquivo sddppol.csv não estão disponíveis, o relatório de tempo de execução para a política não será exibido."
+    },
     error_load_sddppol_files = {
         [1] = {
             en = "There was an error loading the ",
