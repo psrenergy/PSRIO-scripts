@@ -674,7 +674,7 @@ dictionary = {
     },
     cell_buses = {
         en = "Buses",
-        es = "Buses",
+        es = "Barras",
         pt = "Barras",
     },
     cell_ac_circuits = {
