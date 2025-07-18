@@ -2457,7 +2457,8 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
                     if studies == 1 then
                         struct.chart:add_column_stacking(viol_file, {xUnit=dictionary.cell_stage[LANGUAGE]});
                     else
-                        struct.chart:add_column_categories(viol_file, col_struct.case_dir_list[istudy]);
+                        struct.chart:add_column_categories(viol_file, col_struct.case_dir_list[istudy], {color = main_global_color[istudy]});
+                        struct.chart:horizontal_legend();
                     end
                 end
             end
