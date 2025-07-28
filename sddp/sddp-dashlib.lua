@@ -1292,12 +1292,12 @@ function create_pol_report(col_struct)
 
                 -- Cuts - optimality
                 chart_cut_opt:add_categories(cuts_opt,col_struct.case_dir_list[std],
-                                        { xUnit = dictionary.iteration[LANGUAGE], xAllowDecimals = false, showInLegend = studies > 1 });
+                                        { colors = { main_global_color[std] }, xUnit = dictionary.iteration[LANGUAGE], xAllowDecimals = false, showInLegend = studies > 1 });
 
                 -- Cuts - feasibility
                 if is_greater_than_zero(cuts_feas) then
                     chart_cut_feas:add_categories(cuts_feas,col_struct.case_dir_list[std],
-                                             { xUnit = dictionary.iteration[LANGUAGE], xAllowDecimals = false, showInLegend = studies > 1 });
+                                             { colors = { main_global_color[std] }, xUnit = dictionary.iteration[LANGUAGE], xAllowDecimals = false, showInLegend = studies > 1 });
                 end
 
                 -- Validation
