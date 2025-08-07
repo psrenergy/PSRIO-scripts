@@ -174,7 +174,7 @@ else
 end
 
 -- LSSERACPU - ACLine quadratic losses error PU
-acline = Circuits();
+acline = Circuit();
 local acline_capacity = acline.capacity;
 local acline_losses_error = acline:load("lsserac");
 if acline_losses_error:is_hourly() then
@@ -184,7 +184,7 @@ else
 end
 
 -- LSSERDCPU - DCLine quadratic losses error PU
-dcline = Circuits();
+dcline = Circuit();
 local dcline_capacity = dcline.capacity;
 local dcline_losses_error = dcline:load("lsserdc");
 if dcline_losses_error:is_hourly() then
