@@ -212,12 +212,12 @@ local viol_structs = {
 	{name = "fcofdvio", block_aggregation = BY_SUM()},
 	{name = "edemdef", block_aggregation = BY_SUM()},
 	{name = "tuvio", block_aggregation = BY_SUM()},
-	{name = "lsserac", block_aggregation = BY_AVERAGE(), signal = "positive"},
-	{name = "lsserac", block_aggregation = BY_AVERAGE(), signal = "negative"},
-	{name = "lsserdc", block_aggregation = BY_AVERAGE(), signal = "positive"},
-	{name = "lsserdc", block_aggregation = BY_AVERAGE(), signal = "negative"},
-	{name = "lsserdcl", block_aggregation = BY_AVERAGE(), signal = "positive"},
-	{name = "lsserdcl", block_aggregation = BY_AVERAGE(), signal = "negative"},
+	{name = "acline_quadratic_losses_error_pu", block_aggregation = BY_AVERAGE(), signal = "positive"},
+	{name = "acline_quadratic_losses_error_pu", block_aggregation = BY_AVERAGE(), signal = "negative"},
+	{name = "dcline_quadratic_losses_error_pu", block_aggregation = BY_AVERAGE(), signal = "positive"},
+	{name = "dcline_quadratic_losses_error_pu", block_aggregation = BY_AVERAGE(), signal = "negative"},
+	{name = "dclink_quadratic_losses_error_pu", block_aggregation = BY_AVERAGE(), signal = "positive"},
+	{name = "dclink_quadratic_losses_error_pu", block_aggregation = BY_AVERAGE(), signal = "negative"},
 	{name = "mnsplpvio", block_aggregation = BY_AVERAGE()}
 }
 
@@ -259,8 +259,8 @@ log_viol.file:close();
 -----------------------------------------------------------------------------------------------
 -- LGC
 -----------------------------------------------------------------------------------------------
-local lgcgen = Hydro():load("lgcgen");
-local lgcrev = Hydro():load("lgcrev");
+local lgcgen = Generic():load("lgcgen");
+local lgcrev = Generic():load("lgcrev");
 
 -- sddp_dashboard_lgc_gen
 if lgcgen:loaded() then
