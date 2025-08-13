@@ -58,7 +58,8 @@ local function violation_output(log_viol, out_list, viol_structs, tol)
 
 					local x = maximum:aggregate_agents(BY_SUM(),"Total"):to_list()[1];
 
-					if x > tol then
+					local data_tolerance = (viol_struct.tol or tol);
+					if x > data_tolerance then
 				--      Aggregation by Max
 						violation_aggregation(log_viol,violation_agg,file_name,BY_MAX(),"max",maximum,viol_struct.agent_aggregation)
 				--      Aggregation by Average
@@ -212,12 +213,12 @@ local viol_structs = {
 	{name = "fcofdvio", block_aggregation = BY_SUM()},
 	{name = "edemdef", block_aggregation = BY_SUM()},
 	{name = "tuvio", block_aggregation = BY_SUM()},
-	{name = "lsserac", block_aggregation = BY_AVERAGE(), signal = "positive"},
-	{name = "lsserac", block_aggregation = BY_AVERAGE(), signal = "negative"},
-	{name = "lsserdc", block_aggregation = BY_AVERAGE(), signal = "positive"},
-	{name = "lsserdc", block_aggregation = BY_AVERAGE(), signal = "negative"},
-	{name = "lsserdcl", block_aggregation = BY_AVERAGE(), signal = "positive"},
-	{name = "lsserdcl", block_aggregation = BY_AVERAGE(), signal = "negative"},
+	{name = "acline_quadratic_losses_error_pu", block_aggregation = BY_AVERAGE(), signal = "positive", tol = 10e-5},
+	{name = "acline_quadratic_losses_error_pu", block_aggregation = BY_AVERAGE(), signal = "negative", tol = 10e-5},
+	{name = "dcline_quadratic_losses_error_pu", block_aggregation = BY_AVERAGE(), signal = "positive", tol = 10e-5},
+	{name = "dcline_quadratic_losses_error_pu", block_aggregation = BY_AVERAGE(), signal = "negative", tol = 10e-5},
+	{name = "dclink_quadratic_losses_error_pu", block_aggregation = BY_AVERAGE(), signal = "positive", tol = 10e-5},
+	{name = "dclink_quadratic_losses_error_pu", block_aggregation = BY_AVERAGE(), signal = "negative", tol = 10e-5},
 	{name = "mnsplpvio", block_aggregation = BY_AVERAGE()}
 }
 
@@ -259,8 +260,8 @@ log_viol.file:close();
 -----------------------------------------------------------------------------------------------
 -- LGC
 -----------------------------------------------------------------------------------------------
-local lgcgen = Hydro():load("lgcgen");
-local lgcrev = Hydro():load("lgcrev");
+local lgcgen = Generic():load("lgcgen");
+local lgcrev = Generic():load("lgcrev");
 
 -- sddp_dashboard_lgc_gen
 if lgcgen:loaded() then
