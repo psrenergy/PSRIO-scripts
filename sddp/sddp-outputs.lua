@@ -1,3 +1,16 @@
+function Expression.select_stages_of_outputs(self)
+    if self:loaded() then
+        local index = self:study_index();
+        local last_stage = Study(index):stages_without_buffer_years();
+        if Study(index):get_parameter("NumeroAnosAdicionaisParm2",-1) == 1 then
+            last_stage = Study(index):stages();
+        end
+
+        return self:select_stages(1,last_stage)
+    end
+    return self
+end
+
 -- Verifying format option
 is_csv = Study():get_parameter("BINF",0) == 0;
 
@@ -175,7 +188,7 @@ end
 
 -- LSSERACPU - ACLine quadratic losses error PU
 acline = Circuit();
-local acline_capacity = acline.capacity;
+local acline_capacity = acline.capacity:select_stages_of_outputs();
 local acline_losses_error = acline:load("lsserac");
 if acline_losses_error:is_hourly() then
   (acline_losses_error/acline_capacity):save("acline_quadratic_losses_error_pu", {variable_by_block=2, csv=is_csv});
@@ -185,7 +198,7 @@ end
 
 -- LSSERDCPU - DCLine quadratic losses error PU
 dcline = Circuit();
-local dcline_capacity = dcline.capacity;
+local dcline_capacity = dcline.capacity:select_stages_of_outputs();
 local dcline_losses_error = dcline:load("lsserdc");
 if dcline_losses_error:is_hourly() then
   (dcline_losses_error/dcline_capacity):save("dcline_quadratic_losses_error_pu", {variable_by_block=2, csv=is_csv});
@@ -195,7 +208,7 @@ end
 
 -- LSSERDCLPU - DCLink quadratic losses error PU
 dclink = DCLink();
-local dclink_capacity = (dclink.capacity_from + dclink.capacity_to) / 2;
+local dclink_capacity = (dclink.capacity_from + dclink.capacity_to):select_stages_of_outputs() / 2;
 local dclink_losses_error = dclink:load("lsserdcl");
 if dclink_losses_error:is_hourly() then
   (dclink_losses_error/dclink_capacity):save("dclink_quadratic_losses_error_pu", {variable_by_block=2, csv=is_csv});
