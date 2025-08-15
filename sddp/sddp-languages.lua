@@ -854,6 +854,36 @@ dictionary = {
         es = "Errores y advertencias",
         pt = "Erros e avisos"
     },
+    lsserac_positive = {
+        en = "AC circuit losses positive error",
+        es = "Error positivo de pérdidas en circuitos AC",
+        pt = "Erro positivo de perdas em circuitos AC"
+    },
+    lsserac_negative = {
+        en = "AC circuit losses negative error",
+        es = "Error negativo de pérdidas en circuitos AC",
+        pt = "Erro negativo de perdas em circuitos AC"
+    },
+    lsserdc_positive = {
+        en = "DC circuit losses positive error",
+        es = "Error positivo de pérdidas en circuitos CC",
+        pt = "Erro positivo de perdas em circuitos CC"
+    },
+    lsserdc_negative = {
+        en = "DC circuit losses negative error",
+        es = "Error negativo de pérdidas en circuitos CC",
+        pt = "Erro negativo de perdas em circuitos CC"
+    },
+    lsserdcl_positive = {
+        en = "DC link losses positive error",
+        es = "Error positivo de pérdidas en enlaces CC",
+        pt = "Erro positivo de perdas em elos CC"
+    },
+    lsserdcl_negative = {
+        en = "DC link losses negative error",
+        es = "Error negativo de pérdidas en enlaces CC",
+        pt = "Erro negativo de perdas em elos CC"
+    },
     acline_quadratic_losses_error_pu_positive = {
         en = "AC circuit losses positive error (pu)",
         es = "Error positivo de pérdidas en circuitos AC (pu)",
