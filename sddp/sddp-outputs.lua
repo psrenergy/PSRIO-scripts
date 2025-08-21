@@ -172,3 +172,7 @@ if thermal_bid:is_hourly() then
 else
   thermal_bid:save("terbdprc", {csv=is_csv});
 end
+
+-- Thermal outage scenarios
+thermal_outage_scen = Generic():load("thermal_outage_scenarios");
+thermal_outage_scen:save("thermal_outage_scenarios",{csv=is_csv});
