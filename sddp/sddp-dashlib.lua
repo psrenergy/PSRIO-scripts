@@ -2312,7 +2312,11 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
                     local line_split = split(line, split_name);
                     local reference_name = line_split[#line_split];
                     if not viol_report_structs[line] then
-                        viol_report_structs[line] = {["chart"] = Chart(dictionary[reference_name][LANGUAGE]),
+                        local ref_name = reference_name;
+                        if dictionary[reference_name] then
+                            ref_name = dictionary[reference_name][LANGUAGE];
+                        end
+                        viol_report_structs[line] = {["chart"] = Chart(ref_name),
                                                      ["study"] = {[istudy] = true}};
                     else
                         viol_report_structs[line]["study"][istudy] = true;
