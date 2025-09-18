@@ -8,5 +8,5 @@ end
 
 local info_existence_log = load_model_info(generic_collections, info_struct);
 
-local dashboard = Dashboard();
+local dashboard = DashboardVue();
 create_operation_report(dashboard, studies, info_struct, info_existence_log, true);

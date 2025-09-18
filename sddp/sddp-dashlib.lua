@@ -254,13 +254,13 @@ function fix_conv_map_file(file_name, col_struct, study_index)
     return convertion_status;
 end
 
-function push_tab_to_tab(tab_from, tab_to)
+function push_tab_to_TabVue(tab_from, tab_to)
     if #tab_from > 0 then
         tab_to:push(tab_from);
     end
 end
 
-function Tab.push_chart_to_tab(self, chart)
+function TabVue.push_chart_to_TabVue(self, chart)
     if #chart > 0 then
         self:push(chart);
     end
@@ -463,7 +463,7 @@ end
 
 function create_tab_summary(col_struct, info_struct)
 
-    local tab = Tab(dictionary.tab_info[LANGUAGE]);
+    local tab = TabVue(dictionary.tab_info[LANGUAGE]);
     tab:set_icon("info");
 
     tab:push("# " .. dictionary.case_summary[LANGUAGE]);
@@ -847,7 +847,7 @@ end
 -----------------------------------------------------------------------------------------------
 
 function create_inflow_energy(col_struct)
-    local tab = Tab(dictionary.tab_inflow_energy[LANGUAGE]);
+    local tab = TabVue(dictionary.tab_inflow_energy[LANGUAGE]);
 
     local inferg = {};
     for i = 1, studies do
@@ -855,7 +855,7 @@ function create_inflow_energy(col_struct)
     end
 
     -- Color vectors
-    local chart = Chart(dictionary.inflow_energy[LANGUAGE]);
+    local chart = ChartVue(dictionary.inflow_energy[LANGUAGE]);
     if studies > 1 then
         for i = 1, studies do
 
@@ -912,7 +912,7 @@ function get_conv_file_info(col_struct, file_name, pol_struct, file_names, case_
     end
 end
 
-function Tab.draw_simularion_cost(self,col_struct, aux_data, chart, case_index)
+function TabVue.draw_simularion_cost(self,col_struct, aux_data, chart, case_index)
     -- Get operation mode parameter
     local oper_mode =  col_struct.study[case_index]:get_parameter("Opcion", -1); -- 1=AIS; 2=COO; 3=INT;
     local rol_horiz =  col_struct.study[case_index]:get_parameter("RHRZ", 0);
@@ -1001,7 +1001,7 @@ end
 
 function make_convergence_graphs(dashboard, conv_age, systems, horizon)
     for i, conv in ipairs(conv_age) do
-        local chart = Chart(dictionary.convergence[LANGUAGE] .. " | " .. dictionary.system[LANGUAGE] .. " : " .. systems[i] .. " | " .. dictionary.horizon[LANGUAGE] .. " : " .. horizon[i]);
+        local chart = ChartVue(dictionary.convergence[LANGUAGE] .. " | " .. dictionary.system[LANGUAGE] .. " : " .. systems[i] .. " | " .. dictionary.horizon[LANGUAGE] .. " : " .. horizon[i]);
         chart:add_area_range(conv:select_agents({ 2 }), conv:select_agents({ 4 }), { colors = { "#ACD98D", "#ACD98D" }, xAllowDecimals = false }); -- Confidence interval
         chart:add_line(conv:select_agents({ 1 }), { colors = { "#3CB7CC" }, xAllowDecimals = false }); -- Zinf
         chart:add_line(conv:select_agents({ 3 }), { colors = { "#32A251" }, xAllowDecimals = false }); -- Zsup
@@ -1011,7 +1011,7 @@ end
 
 function make_added_cuts_graphs(dashboard, cuts_age, systems, horizon)
     for i, cuts in ipairs(cuts_age) do
-        local chart = Chart(dictionary.number_of_added_cut[LANGUAGE] .. " | " .. dictionary.system[LANGUAGE] .. " : " .. systems[i] .. dictionary.horizon[LANGUAGE] .. " : " .. horizon[i]);
+        local chart = ChartVue(dictionary.number_of_added_cut[LANGUAGE] .. " | " .. dictionary.system[LANGUAGE] .. " : " .. systems[i] .. dictionary.horizon[LANGUAGE] .. " : " .. horizon[i]);
         chart:add_column(cuts:select_agents({ 1 }), { xAllowDecimals = false }); -- Opt
         chart:add_column(cuts:select_agents({ 2 }), { xAllowDecimals = false }); -- Feas
         dashboard:push(chart);
@@ -1045,7 +1045,7 @@ function create_penalty_proportion_graph(tab, col_struct, i)
         return
     end
 
-    local chart = Chart(report_title .. " (%)");
+    local chart = ChartVue(report_title .. " (%)");
     chart:add_heatmap_series(penp, { yLabel = dictionary.cell_scenarios[LANGUAGE], xLabel = dictionary.cell_stage[LANGUAGE], showInLegend = false, stops = { { 0.0, "#4E79A7" }, { 0.5, "#FBEEB3" }, { 1.0, "#C64B3E" } }, stopsMin = 0.0, stopsMax = 100.0 });
     tab:push(chart);
 end
@@ -1072,7 +1072,7 @@ function create_conv_map_graph(tab, file_name, col_struct, i)
         }
     };
 
-    local chart = Chart(report_title);
+    local chart = ChartVue(report_title);
     chart:add_heatmap(conv_map,options);
     tab:push(chart);
 end
@@ -1101,7 +1101,7 @@ function create_hourly_sol_status_graph(tab, col_struct, i)
                   }
     };
 
-    local chart = Chart(report_title);
+    local chart = ChartVue(report_title);
     chart:add_heatmap(status,options);
     tab:push(chart);
 
@@ -1136,7 +1136,7 @@ function create_mipgap_graph(tab, col_struct, i)
     stopsMax = 100.0
     };
 
-    local chart = Chart(report_title);
+    local chart = ChartVue(report_title);
     chart:add_heatmap(mip_gap,options);
     
     tab:push(chart);
@@ -1167,7 +1167,7 @@ function create_exe_timer_per_scen(tab, col_struct, i)
             end
         end
 
-        extime_chart = Chart(dictionary.dispersion_of_time[LANGUAGE]);
+        extime_chart = ChartVue(dictionary.dispersion_of_time[LANGUAGE]);
         extime_chart:add_area_range(extime_disp:select_agent("MIN"):convert(unit),
                                     extime_disp:select_agent("MAX"):convert(unit),
                                     { xUnit = dictionary.cell_stage[LANGUAGE], colors = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
@@ -1181,7 +1181,7 @@ function create_exe_timer_per_scen(tab, col_struct, i)
 end
 
 function create_pol_report(col_struct)
-    local tab = Tab(dictionary.tab_policy[LANGUAGE]);
+    local tab = TabVue(dictionary.tab_policy[LANGUAGE]);
 
     local total_cost_age;
     local future_cost_age;
@@ -1234,10 +1234,10 @@ function create_pol_report(col_struct)
 
         tab:push("## " .. dictionary.system[LANGUAGE] .. ": " .. system .. " | " .. dictionary.horizon[LANGUAGE] .. ": " .. horizon);
 
-        local chart_conv      = Chart(dictionary.convergence[LANGUAGE]);
-        local chart_cut_opt   = Chart(dictionary.new_cut_per_iteration_optimality[LANGUAGE]);
-        local chart_cut_feas  = Chart(dictionary.new_cut_per_iteration_feasibility[LANGUAGE]);
-        local chart_policy_simulation  = Chart(dictionary.policy_simulation[LANGUAGE]);
+        local chart_conv      = ChartVue(dictionary.convergence[LANGUAGE]);
+        local chart_cut_opt   = ChartVue(dictionary.new_cut_per_iteration_optimality[LANGUAGE]);
+        local chart_cut_feas  = ChartVue(dictionary.new_cut_per_iteration_feasibility[LANGUAGE]);
+        local chart_policy_simulation  = ChartVue(dictionary.policy_simulation[LANGUAGE]);
         chart_conv:horizontal_legend();
         chart_cut_opt:horizontal_legend();
         chart_cut_feas:horizontal_legend();
@@ -1348,7 +1348,7 @@ function create_pol_report(col_struct)
     return tab;
 end
 
-function Tab.final_cost_table(self, col_struct)
+function TabVue.final_cost_table(self, col_struct)
     local discount_rate = require("sddp/discount_rate");
 
     self:push("## " .. dictionary.final_cost[LANGUAGE]);
@@ -1388,7 +1388,7 @@ end
 -----------------------------------------------------------------------------------------------
 
 function create_sim_report(col_struct)
-    local tab = Tab(dictionary.tab_simulation[LANGUAGE]);
+    local tab = TabVue(dictionary.tab_simulation[LANGUAGE]);
 
     local costs;
     local costs_agg;
@@ -1396,8 +1396,8 @@ function create_sim_report(col_struct)
 
     tab:final_cost_table(col_struct);
     
-    local cost_chart    = Chart(dictionary.breakdown_cost_time[LANGUAGE]);
-    local revenue_chart = Chart(dictionary.breakdown_revenue_time[LANGUAGE]);
+    local cost_chart    = ChartVue(dictionary.breakdown_cost_time[LANGUAGE]);
+    local revenue_chart = ChartVue(dictionary.breakdown_revenue_time[LANGUAGE]);
 
     local objcop = require("sddp/costs");
     local discount_rate = require("sddp/discount_rate");
@@ -1474,7 +1474,7 @@ end
 -----------------------------------------------------------------------------------------------
 
 function create_times_report(col_struct)
-    local tab = Tab(dictionary.execution_times[LANGUAGE]);
+    local tab = TabVue(dictionary.execution_times[LANGUAGE]);
 
     ---------
     -- Policy
@@ -1506,9 +1506,9 @@ function create_times_report(col_struct)
 
        tab:push("## " .. dictionary.system[LANGUAGE] .. ": " .. system .. " | " .. dictionary.horizon[LANGUAGE] .. ": " .. horizon);
 
-       local chart_time_forw = Chart(dictionary.forward_time[LANGUAGE]);
-       local chart_time_back = Chart(dictionary.backward_time[LANGUAGE]);
-       local chart_exe_pol = Chart(dictionary.exe_pol_times[LANGUAGE]);
+       local chart_time_forw = ChartVue(dictionary.forward_time[LANGUAGE]);
+       local chart_time_back = ChartVue(dictionary.backward_time[LANGUAGE]);
+       local chart_exe_pol = ChartVue(dictionary.exe_pol_times[LANGUAGE]);
        chart_time_forw:horizontal_legend();
        chart_time_back:horizontal_legend();
        chart_exe_pol:horizontal_legend();
@@ -1565,7 +1565,7 @@ function create_times_report(col_struct)
     tab:push("## " .. dictionary.tab_simulation[LANGUAGE]);
     
     if studies > 1 then
-        local chart_exe_sim = Chart(dictionary.exe_sim_times[LANGUAGE]);
+        local chart_exe_sim = ChartVue(dictionary.exe_sim_times[LANGUAGE]);
         chart_exe_sim:horizontal_legend();
 
         for istudy = 1, studies do
@@ -1579,7 +1579,7 @@ function create_times_report(col_struct)
         end
 
     else
-        local chart_exe_sim = Chart(dictionary.exe_sim_times[LANGUAGE]);
+        local chart_exe_sim = ChartVue(dictionary.exe_sim_times[LANGUAGE]);
         
         -- Simulation execution times
         local exe_times = col_struct.generic[1]:load("sddptimes");
@@ -1604,9 +1604,9 @@ end
 
 function create_costs_and_revs(col_struct, tab)
 
-    local chart = Chart(dictionary.disp_of_operation_cost[LANGUAGE]);
+    local chart = ChartVue(dictionary.disp_of_operation_cost[LANGUAGE]);
     chart:horizontal_legend();
-    local chart_avg = Chart(dictionary.avg_operation_cost[LANGUAGE]);
+    local chart_avg = ChartVue(dictionary.avg_operation_cost[LANGUAGE]);
     chart_avg:horizontal_legend();
 
     for i = 1, studies do
@@ -1657,7 +1657,7 @@ end
 -----------------------------------------------------------------------------------------------
 
 function create_marg_costs(col_struct)
-    local tab = Tab(dictionary.tab_cmo[LANGUAGE]);
+    local tab = TabVue(dictionary.tab_cmo[LANGUAGE]);
 
     local cmg = {};
     local cmg_aggsum;
@@ -1693,7 +1693,7 @@ function create_marg_costs(col_struct)
         
         local count_sys = 1;
         for system, data in pairs(system_data) do
-            local chart = Chart(system);
+            local chart = ChartVue(system);
 
             -- Add marginal costs outputs
             for _,individual_data in ipairs(data) do
@@ -1704,7 +1704,7 @@ function create_marg_costs(col_struct)
             count_sys = count_sys + 1;
         end
     else
-        local chart = Chart();
+        local chart = ChartVue();
         cmg_aggyear = cmg[1]:aggregate_blocks_by_duracipu():aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[1].hours:select_stages_of_outputs(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE());
         chart:add_column(cmg_aggyear:change_currency_configuration(), { xUnit=dictionary.cell_year[LANGUAGE] });
         tab:push(chart);
@@ -1714,7 +1714,7 @@ function create_marg_costs(col_struct)
     if studies > 1 then
         local agents = cmg[1]:agents();
         for _, agent in ipairs(agents) do
-            local chart = Chart(agent);
+            local chart = ChartVue(agent);
             local aux_tab = {};
             for j = 1, studies do
                 cmg_aggsum = cmg[j]:aggregate_blocks_by_duracipu(j):aggregate_scenarios(BY_AVERAGE());
@@ -1725,7 +1725,7 @@ function create_marg_costs(col_struct)
             tab:push(chart);
         end
     else
-        local chart = Chart();
+        local chart = ChartVue();
         cmg_aggsum = cmg[1]:aggregate_blocks_by_duracipu():aggregate_scenarios(BY_AVERAGE());
         chart:add_column(cmg_aggsum:change_currency_configuration(),{xUnit=dictionary.cell_stage[LANGUAGE]}, {colors = main_global_color});
         tab:push(chart);
@@ -1744,7 +1744,7 @@ function create_marg_costs(col_struct)
         tab:push("## " .. dictionary.stg_cmo_sto[LANGUAGE]);
         local systems = col_struct.system[1]:labels(); -- First case sets base agents
         for i,system in ipairs(systems) do
-            local chart = Chart(system);
+            local chart = ChartVue(system);
             for istudy = 1, studies do
             
                 
@@ -1781,7 +1781,7 @@ end
 -----------------------------------------------------------------------------------------------
 
 function create_gen_report(col_struct)
-    local tab = Tab(dictionary.tab_generation[LANGUAGE]);
+    local tab = TabVue(dictionary.tab_generation[LANGUAGE]);
 
     -- Color preferences
     if studies == 1 then
@@ -1864,19 +1864,19 @@ function create_gen_report(col_struct)
     end
 
     if studies > 1 then
-        chart_tot_gerhid     = Chart(dictionary.total_hydro[LANGUAGE]);
-        chart_tot_sml_hid    = Chart(dictionary.total_small_hydro[LANGUAGE]);
-        chart_tot_gerter     = Chart(dictionary.total_thermal[LANGUAGE]);
-        chart_tot_other_renw = Chart(dictionary.total_renewable_other[LANGUAGE]);
-        chart_tot_renw_wind  = Chart(dictionary.total_renewable_wind[LANGUAGE]);
-        chart_tot_renw_solar = Chart(dictionary.total_renewable_solar[LANGUAGE]);
-        chart_tot_renw_shyd  = Chart(dictionary.total_renewable_small_hydro[LANGUAGE]);
-        chart_tot_renw_csp   = Chart(dictionary.total_renewable_csp[LANGUAGE]);
-        chart_tot_gerbat     = Chart(dictionary.total_battery[LANGUAGE]);
-        chart_tot_potinj     = Chart(dictionary.total_power_injection[LANGUAGE]);
-        chart_tot_defcit     = Chart(dictionary.total_deficit[LANGUAGE]);
+        chart_tot_gerhid     = ChartVue(dictionary.total_hydro[LANGUAGE]);
+        chart_tot_sml_hid    = ChartVue(dictionary.total_small_hydro[LANGUAGE]);
+        chart_tot_gerter     = ChartVue(dictionary.total_thermal[LANGUAGE]);
+        chart_tot_other_renw = ChartVue(dictionary.total_renewable_other[LANGUAGE]);
+        chart_tot_renw_wind  = ChartVue(dictionary.total_renewable_wind[LANGUAGE]);
+        chart_tot_renw_solar = ChartVue(dictionary.total_renewable_solar[LANGUAGE]);
+        chart_tot_renw_shyd  = ChartVue(dictionary.total_renewable_small_hydro[LANGUAGE]);
+        chart_tot_renw_csp   = ChartVue(dictionary.total_renewable_csp[LANGUAGE]);
+        chart_tot_gerbat     = ChartVue(dictionary.total_battery[LANGUAGE]);
+        chart_tot_potinj     = ChartVue(dictionary.total_power_injection[LANGUAGE]);
+        chart_tot_defcit     = ChartVue(dictionary.total_deficit[LANGUAGE]);
     else
-        chart = Chart("");
+        chart = ChartVue("");
     end
 
     -- Total generation report
@@ -2162,16 +2162,16 @@ function create_gen_report(col_struct)
     end
 
     for agent, data in pairs(systems_data) do
-        local chart_tot_gerhid = Chart(dictionary.total_hydro[LANGUAGE]);
-        local chart_tot_gerter = Chart(dictionary.total_thermal[LANGUAGE]);
-        local chart_tot_renw_other = Chart(dictionary.total_renewable_other[LANGUAGE]);
-        local chart_tot_renw_wind = Chart(dictionary.total_renewable_wind[LANGUAGE]);
-        local chart_tot_renw_solar = Chart(dictionary.total_renewable_solar[LANGUAGE]);
-        local chart_tot_renw_shyd = Chart(dictionary.total_renewable_small_hydro[LANGUAGE]);
-        local chart_tot_renw_csp = Chart(dictionary.total_renewable_csp[LANGUAGE]);
-        local chart_tot_gerbat = Chart(dictionary.total_battery[LANGUAGE]);
-        local chart_tot_potinj = Chart(dictionary.total_power_injection[LANGUAGE]);
-        local chart_tot_defcit = Chart(dictionary.total_deficit[LANGUAGE]);
+        local chart_tot_gerhid = ChartVue(dictionary.total_hydro[LANGUAGE]);
+        local chart_tot_gerter = ChartVue(dictionary.total_thermal[LANGUAGE]);
+        local chart_tot_renw_other = ChartVue(dictionary.total_renewable_other[LANGUAGE]);
+        local chart_tot_renw_wind = ChartVue(dictionary.total_renewable_wind[LANGUAGE]);
+        local chart_tot_renw_solar = ChartVue(dictionary.total_renewable_solar[LANGUAGE]);
+        local chart_tot_renw_shyd = ChartVue(dictionary.total_renewable_small_hydro[LANGUAGE]);
+        local chart_tot_renw_csp = ChartVue(dictionary.total_renewable_csp[LANGUAGE]);
+        local chart_tot_gerbat = ChartVue(dictionary.total_battery[LANGUAGE]);
+        local chart_tot_potinj = ChartVue(dictionary.total_power_injection[LANGUAGE]);
+        local chart_tot_defcit = ChartVue(dictionary.total_deficit[LANGUAGE]);
 
         chart_tot_gerhid:add_column(concatenate(data.hydro), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_hydro }, showInLegend = has_more_than_one_study});
         chart_tot_gerter:add_column(concatenate(data.thermal), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_thermal }, showInLegend = has_more_than_one_study});
@@ -2221,8 +2221,8 @@ function create_gen_report(col_struct)
 end
 
 function create_risk_report(col_struct)
-    local tab = Tab(dictionary.tab_defict_risk[LANGUAGE]);
-    local chart = Chart(dictionary.total_defict_risk[LANGUAGE]);
+    local tab = TabVue(dictionary.tab_defict_risk[LANGUAGE]);
+    local chart = ChartVue(dictionary.total_defict_risk[LANGUAGE]);
 
     if studies > 1 then
         for i = 1, studies do
@@ -2247,8 +2247,8 @@ end
 -- Warning and errors
 -----------------------------------------------------------------------------------------------
 
-function create_warning_and_errors_tab()
-    local tab = Tab(dictionary.error_and_warnings_tab[LANGUAGE]);
+function create_warning_and_errors_TabVue()
+    local tab = TabVue(dictionary.error_and_warnings_tab[LANGUAGE]);
     tab:set_icon("shield-alert");
     tab:push_advices(advisor);
     return tab
@@ -2316,7 +2316,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
                         if dictionary[reference_name] then
                             ref_name = dictionary[reference_name][LANGUAGE];
                         end
-                        viol_report_structs[line] = {["chart"] = Chart(ref_name),
+                        viol_report_structs[line] = {["chart"] = ChartVue(ref_name),
                                                      ["study"] = {[istudy] = true}};
                     else
                         viol_report_structs[line]["study"][istudy] = true;
@@ -2352,7 +2352,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     ----------------
     -- Infeasibility
     ----------------
-    local tab_inf = Tab(dictionary.tab_infeasibility[LANGUAGE]);
+    local tab_inf = TabVue(dictionary.tab_infeasibility[LANGUAGE]);
     tab_inf:set_icon("alert-triangle");
     
     -- Infeasibility report
@@ -2361,8 +2361,8 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
         if studies == 1 then
             if info_struct[1].status > 0 then
                 dash_infeasibility(tab_inf,info_struct[1].infrep .. ".out",1);
-                push_tab_to_tab(tab_inf,dashboard);                                     -- Infeasibility
-                push_tab_to_tab(create_tab_summary(col_struct, info_struct),dashboard); -- Case information summary
+                push_tab_to_TabVue(tab_inf,dashboard);                                     -- Infeasibility
+                push_tab_to_TabVue(create_tab_summary(col_struct, info_struct),dashboard); -- Case information summary
                 dashboard:save(dashboard_name);
 
                 return
@@ -2377,7 +2377,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
             if #has_inf > 0 then
                 for i = 1, #has_inf do
                     j = has_inf[i]; -- Pointer to case
-                    local tab_inf_sub = Tab(col_struct.case_dir_list[j]);
+                    local tab_inf_sub = TabVue(col_struct.case_dir_list[j]);
                     dash_infeasibility(tab_inf_sub,info_struct[j].infrep .. ".out",j);
 
                     tab_inf:push(tab_inf_sub);
@@ -2390,8 +2390,8 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
 
                 -- If only one study was successful, comparison does not exist
                 if studies == 1 then
-                    push_tab_to_tab(tab_inf,dashboard);
-                    push_tab_to_tab(create_tab_summary(col_struct, info_struct),dashboard); -- Case information summary
+                    push_tab_to_TabVue(tab_inf,dashboard);
+                    push_tab_to_TabVue(create_tab_summary(col_struct, info_struct),dashboard); -- Case information summary
                     dashboard:save(dashboard_name);
                     return
                 end
@@ -2401,7 +2401,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
 
         -- If infeasibilities are present, dashboard
         if #has_inf > 0 then
-            push_tab_to_tab(tab_inf,dashboard);
+            push_tab_to_TabVue(tab_inf,dashboard);
         end
     end
 
@@ -2409,7 +2409,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     -- Solution quality
     -------------------
 
-    local tab_solution_quality = Tab(dictionary.tab_solution_quality[LANGUAGE]);
+    local tab_solution_quality = TabVue(dictionary.tab_solution_quality[LANGUAGE]);
     tab_solution_quality:set_collapsed(false);
     tab_solution_quality:set_disabled();
     tab_solution_quality:set_icon("alert-triangle");
@@ -2425,28 +2425,28 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
 
     -- Policy report
     if create_policy_report then -- SDDP scenarios does not have policy phase
-        push_tab_to_tab(create_pol_report(col_struct),tab_solution_quality);
+        push_tab_to_TabVue(create_pol_report(col_struct),tab_solution_quality);
     else
         info("file " .. pol_file_name .. " does not exist. Policy report will not be displayed.");
     end
 
     -- Simulation report
-    push_tab_to_tab(create_sim_report(col_struct),tab_solution_quality);
+    push_tab_to_TabVue(create_sim_report(col_struct),tab_solution_quality);
     
     -- Execution times
-    push_tab_to_tab(create_times_report(col_struct),tab_solution_quality);
+    push_tab_to_TabVue(create_times_report(col_struct),tab_solution_quality);
     
     -- Finish solution quality
-    push_tab_to_tab(tab_solution_quality, dashboard);
+    push_tab_to_TabVue(tab_solution_quality, dashboard);
 
     ------------
     -- Violation
     ------------
 
     -- Violation tabs
-    local tab_violations = Tab(dictionary.tab_violations[LANGUAGE]);
-    local tab_viol_avg   = Tab(dictionary.tab_average[LANGUAGE]);
-    local tab_viol_max   = Tab(dictionary.tab_maximum[LANGUAGE]);
+    local tab_violations = TabVue(dictionary.tab_violations[LANGUAGE]);
+    local tab_viol_avg   = TabVue(dictionary.tab_average[LANGUAGE]);
+    local tab_viol_max   = TabVue(dictionary.tab_maximum[LANGUAGE]);
 
     tab_violations:set_collapsed(true);
     tab_violations:set_disabled();
@@ -2472,48 +2472,48 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     for _, file_name in ipairs(viol_report_names) do
         local struct = viol_report_structs[file_name];
         if string.find(file_name, "avg") then
-            tab_viol_avg:push_chart_to_tab(struct.chart);
+            tab_viol_avg:push_chart_to_TabVue(struct.chart);
         elseif string.find(file_name, "max") then
-            tab_viol_max:push_chart_to_tab(struct.chart);
+            tab_viol_max:push_chart_to_TabVue(struct.chart);
         else
             break;
         end
     end
     
-    push_tab_to_tab(tab_viol_avg,tab_violations);
-    push_tab_to_tab(tab_viol_max,tab_violations);
+    push_tab_to_TabVue(tab_viol_avg,tab_violations);
+    push_tab_to_TabVue(tab_viol_max,tab_violations);
 
-    push_tab_to_tab(tab_violations,dashboard);
+    push_tab_to_TabVue(tab_violations,dashboard);
 
     ----------
     -- Results
     ----------
 
-    local tab_results = Tab(dictionary.tab_results[LANGUAGE]);
+    local tab_results = TabVue(dictionary.tab_results[LANGUAGE]);
     tab_results:set_collapsed(true);
     tab_results:set_disabled();
     tab_results:set_icon("line-chart");
     
-    push_tab_to_tab(create_marg_costs(col_struct)    ,tab_results);
-    push_tab_to_tab(create_gen_report(col_struct)    ,tab_results);
-    push_tab_to_tab(create_risk_report(col_struct)   ,tab_results);
-    push_tab_to_tab(create_inflow_energy(col_struct) ,tab_results);
+    push_tab_to_TabVue(create_marg_costs(col_struct)    ,tab_results);
+    push_tab_to_TabVue(create_gen_report(col_struct)    ,tab_results);
+    push_tab_to_TabVue(create_risk_report(col_struct)   ,tab_results);
+    push_tab_to_TabVue(create_inflow_energy(col_struct) ,tab_results);
 
-    push_tab_to_tab(tab_results,dashboard);
+    push_tab_to_TabVue(tab_results,dashboard);
 
     ---------------------------
     -- Warning and error
     ---------------------------
-    local warning_error_tab = create_warning_and_errors_tab();
+    local warning_error_tab = create_warning_and_errors_TabVue();
     if #warning_error_tab > 0 then
-        push_tab_to_tab(warning_error_tab,dashboard);
+        push_tab_to_TabVue(warning_error_tab,dashboard);
     end
 
     ---------------------------
     -- Case information summary
     ---------------------------
     if create_info_report then
-        push_tab_to_tab(create_tab_summary(col_struct, info_struct),dashboard);
+        push_tab_to_TabVue(create_tab_summary(col_struct, info_struct),dashboard);
     end
 
     -- Save dashboard and return execution mode
