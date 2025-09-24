@@ -213,12 +213,12 @@ local viol_structs = {
 	{name = "fcofdvio", block_aggregation = BY_SUM()},
 	{name = "edemdef", block_aggregation = BY_SUM()},
 	{name = "tuvio", block_aggregation = BY_SUM()},
-	{name = "acline_quadratic_losses_error_pu", block_aggregation = BY_AVERAGE(), signal = "positive", tol = 10e-5},
-	{name = "acline_quadratic_losses_error_pu", block_aggregation = BY_AVERAGE(), signal = "negative", tol = 10e-5},
-	{name = "dcline_quadratic_losses_error_pu", block_aggregation = BY_AVERAGE(), signal = "positive", tol = 10e-5},
-	{name = "dcline_quadratic_losses_error_pu", block_aggregation = BY_AVERAGE(), signal = "negative", tol = 10e-5},
-	{name = "dclink_quadratic_losses_error_pu", block_aggregation = BY_AVERAGE(), signal = "positive", tol = 10e-5},
-	{name = "dclink_quadratic_losses_error_pu", block_aggregation = BY_AVERAGE(), signal = "negative", tol = 10e-5},
+	-- {name = "acline_quadratic_losses_error_pu", block_aggregation = BY_AVERAGE(), signal = "positive", tol = 10e-5},
+	-- {name = "acline_quadratic_losses_error_pu", block_aggregation = BY_AVERAGE(), signal = "negative", tol = 10e-5},
+	-- {name = "dcline_quadratic_losses_error_pu", block_aggregation = BY_AVERAGE(), signal = "positive", tol = 10e-5},
+	-- {name = "dcline_quadratic_losses_error_pu", block_aggregation = BY_AVERAGE(), signal = "negative", tol = 10e-5},
+	-- {name = "dclink_quadratic_losses_error_pu", block_aggregation = BY_AVERAGE(), signal = "positive", tol = 10e-5},
+	-- {name = "dclink_quadratic_losses_error_pu", block_aggregation = BY_AVERAGE(), signal = "negative", tol = 10e-5},
 	{name = "mnsplpvio", block_aggregation = BY_AVERAGE()}
 }
 

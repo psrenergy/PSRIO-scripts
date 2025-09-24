@@ -186,32 +186,32 @@ else
   thermal_bid:save("terbdprc", {csv=is_csv});
 end
 
--- LSSERACPU - ACLine quadratic losses error PU
-acline = Circuit();
-local acline_capacity = acline.capacity:select_stages_of_outputs();
-local acline_losses_error = acline:load("lsserac");
-if acline_losses_error:is_hourly() then
-  (acline_losses_error/acline_capacity):save("acline_quadratic_losses_error_pu", {variable_by_block=2, csv=is_csv});
-else
-  (acline_losses_error/acline_capacity):save("acline_quadratic_losses_error_pu", {csv=is_csv});
-end
+-- -- LSSERACPU - ACLine quadratic losses error PU
+-- acline = Circuit();
+-- local acline_capacity = acline.capacity:select_stages_of_outputs();
+-- local acline_losses_error = acline:load("lsserac");
+-- if acline_losses_error:is_hourly() then
+--   (acline_losses_error/acline_capacity):save("acline_quadratic_losses_error_pu", {variable_by_block=2, csv=is_csv});
+-- else
+--   (acline_losses_error/acline_capacity):save("acline_quadratic_losses_error_pu", {csv=is_csv});
+-- end
 
--- LSSERDCPU - DCLine quadratic losses error PU
-dcline = Circuit();
-local dcline_capacity = dcline.capacity:select_stages_of_outputs();
-local dcline_losses_error = dcline:load("lsserdc");
-if dcline_losses_error:is_hourly() then
-  (dcline_losses_error/dcline_capacity):save("dcline_quadratic_losses_error_pu", {variable_by_block=2, csv=is_csv});
-else
-  (dcline_losses_error/dcline_capacity):save("dcline_quadratic_losses_error_pu", {csv=is_csv});
-end
+-- -- LSSERDCPU - DCLine quadratic losses error PU
+-- dcline = Circuit();
+-- local dcline_capacity = dcline.capacity:select_stages_of_outputs();
+-- local dcline_losses_error = dcline:load("lsserdc");
+-- if dcline_losses_error:is_hourly() then
+--   (dcline_losses_error/dcline_capacity):save("dcline_quadratic_losses_error_pu", {variable_by_block=2, csv=is_csv});
+-- else
+--   (dcline_losses_error/dcline_capacity):save("dcline_quadratic_losses_error_pu", {csv=is_csv});
+-- end
 
--- LSSERDCLPU - DCLink quadratic losses error PU
-dclink = DCLink();
-local dclink_capacity = (dclink.capacity_from + dclink.capacity_to):select_stages_of_outputs() / 2;
-local dclink_losses_error = dclink:load("lsserdcl");
-if dclink_losses_error:is_hourly() then
-  (dclink_losses_error/dclink_capacity):save("dclink_quadratic_losses_error_pu", {variable_by_block=2, csv=is_csv});
-else
-  (dclink_losses_error/dclink_capacity):save("dclink_quadratic_losses_error_pu", {csv=is_csv});
-end
+-- -- LSSERDCLPU - DCLink quadratic losses error PU
+-- dclink = DCLink();
+-- local dclink_capacity = (dclink.capacity_from + dclink.capacity_to):select_stages_of_outputs() / 2;
+-- local dclink_losses_error = dclink:load("lsserdcl");
+-- if dclink_losses_error:is_hourly() then
+--   (dclink_losses_error/dclink_capacity):save("dclink_quadratic_losses_error_pu", {variable_by_block=2, csv=is_csv});
+-- else
+--   (dclink_losses_error/dclink_capacity):save("dclink_quadratic_losses_error_pu", {csv=is_csv});
+-- end
