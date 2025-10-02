@@ -1361,10 +1361,11 @@ function Tab.final_cost_table(self, col_struct)
         local fut_cost = future_cost(i);
         if ime_cost:loaded() then
             
-            local cost = ime_cost / discount_rate(i);
+            local study_discount_rate = discount_rate(i):select_stages_of_outputs();
+            local cost = ime_cost / study_discount_rate;
 
             local obj_cost = cost:aggregate_agents(BY_SUM(), "Total cost"):aggregate_stages(BY_SUM()):save_cache();
-            local future_cost = fut_cost:aggregate_stages(BY_LAST_VALUE());
+            local future_cost = fut_cost:aggregate_stages(BY_LAST_VALUE()) / study_discount_rate:aggregate_stages(BY_LAST_VALUE());
 
             local total_cost = obj_cost + future_cost;
 
