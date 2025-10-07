@@ -162,9 +162,9 @@ local dictionary<const> = {
         pt = "Custos totais"
     },
     total_operational_costs = {
-        en = "Total operational costs",
-        es = "Costos totales operacionais",
-        pt = "Custos totais operacionais"
+        en = "Total operating costs",
+        es = "Costos operativos totales",
+        pt = "Custos operativos totais"
     },
     total_investment_cost = {
         en = "Investment costs",
@@ -182,9 +182,9 @@ local dictionary<const> = {
         pt = "Total hidro"
     },
     total_renewable = {
-        en = "Total others renewable",
-        es = "Total otras renovable",
-        pt = "Total outra renovável"
+        en = "Total other renewables",
+        es = "Total otras renovables",
+        pt = "Total outras renováveis"
     },
     total_solar = {
         en = "Total solar",
@@ -212,14 +212,14 @@ local dictionary<const> = {
         pt = "Total injeção"
     },
     total_ac_circuit = {
-        en = "Total circuit AC",
-        es = "Total circuito AC",
-        pt = "Total circuito AC"
+        en = "Total AC circuit",
+        es = "Total circuito CA",
+        pt = "Total circuito CA"
     },
     total_dc_circuit = {
-        en = "Total circuit DC",
-        es = "Total circuito DC",
-        pt = "Total circuito DC"
+        en = "Total DC circuit",
+        es = "Total circuito CC",
+        pt = "Total circuito CC"
     },
     deficit = {
         en = "Deficit",
@@ -228,13 +228,13 @@ local dictionary<const> = {
     },
     total_installed_capacity = {
         en = "Total installed capacity",
-        es = "Capacidad total instalada",
-        pt = "Capacidade total instalada"
+        es = "Capacidad instalada total",
+        pt = "Capacidade instalada total"
     },
     total_installed_capacity_mix = {
-        en = "Total installed capacity Mix",
-        es = "Mix de capacidad total instalada",
-        pt = "Mix de capacidade total instalada"
+        en = "Total installed capacity mix",
+        es = "Mix de capacidad instalada total",
+        pt = "Mix de capacidade instalada total"
     },
     firm_capacity = {
         en = "Firm capacity",
@@ -244,7 +244,7 @@ local dictionary<const> = {
     firm_capacity_mix = {
         en = "Firm capacity mix",
         es = "Mix de capacidad firme",
-        pt = "Mix de Capacidade firme"
+        pt = "Mix de capacidade firme"
     },
     firm_energy = {
         en = "Firm energy",
@@ -267,7 +267,7 @@ local dictionary<const> = {
         pt = "Custo marginal mensal"
     },
     hourly_marginal_cost_typical = {
-        en = "Hourly marginal cost per yypical day",
+        en = "Hourly marginal cost per typical day",
         es = "Costo marginal horario por día típico",
         pt = "Custo marginal horário por dia típico"
     },
@@ -279,7 +279,7 @@ local dictionary<const> = {
     deficit_risk = {
         en = "Deficit risk",
         es = "Riesgo de déficit",
-        pt = "Risco de deficit"
+        pt = "Risco de déficit"
     },
     generation_in_season = {
         en = "Generation in each season of the year",
@@ -292,7 +292,7 @@ local dictionary<const> = {
         pt = "Geração horária por dia típico"
     },
     season = {
-        en = "Seson",
+        en = "Season",
         es = "Estación",
         pt = "Estação"
     },
@@ -317,7 +317,7 @@ local dictionary<const> = {
         pt = "Função objetivo"
     },
     data_not_exist = {
-        en = "None data to graph",
+        en = "No data to plot",
         es = "Ningún dato para graficar",
         pt = "Nenhum dado para graficar"
     },
