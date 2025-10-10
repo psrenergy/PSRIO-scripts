@@ -566,39 +566,39 @@ local function chart_total_cost(case)
         costs = (objcop:remove_agents({1}):remove_agents({-1}) * outdfact):aggregate_stages(BY_SUM()); -- remove total cost -- remove future cost
     end
 
-    local inv_total = outdisbu:aggregate_stages(BY_SUM()):remove_zeros():round(0);
-    local inv_therm = outdisbu:select_agents(Collection.THERMAL):aggregate_stages(BY_SUM()):remove_zeros():round(0);
-    local inv_hydro = outdisbu:select_agents(Collection.HYDRO  ):aggregate_stages(BY_SUM()):remove_zeros():round(0);
-    local inv_batte = outdisbu:select_agents(Collection.BATTERY):aggregate_stages(BY_SUM()):remove_zeros():round(0);
+    local inv_total = outdisbu:aggregate_stages(BY_SUM()):remove_zeros():round(1);
+    local inv_therm = outdisbu:select_agents(Collection.THERMAL):aggregate_stages(BY_SUM()):remove_zeros():round(1);
+    local inv_hydro = outdisbu:select_agents(Collection.HYDRO  ):aggregate_stages(BY_SUM()):remove_zeros():round(1);
+    local inv_batte = outdisbu:select_agents(Collection.BATTERY):aggregate_stages(BY_SUM()):remove_zeros():round(1);
     local inv_solar = outdisbu:select_agents(Collection.RENEWABLE)
                               :select_agents(renewable[case].tech_type:eq(2) )
-                              :aggregate_stages(BY_SUM()):remove_zeros():round(0);
+                              :aggregate_stages(BY_SUM()):remove_zeros():round(1);
     local inv_wind  = outdisbu:select_agents(Collection.RENEWABLE)
                               :select_agents(renewable[case].tech_type:eq(1) )
-                              :aggregate_stages(BY_SUM()):remove_zeros():round(0);
+                              :aggregate_stages(BY_SUM()):remove_zeros():round(1);
     local inv_csp   = outdisbu:select_agents(Collection.RENEWABLE)
                               :select_agents(renewable[case].tech_type:eq(5) )
-                              :aggregate_stages(BY_SUM()):remove_zeros():round(0);
+                              :aggregate_stages(BY_SUM()):remove_zeros():round(1);
     local inv_other = outdisbu:select_agents(Collection.RENEWABLE)
                               :select_agents(renewable[case].tech_type:ne(1 | 2 | 5) )
-                              :aggregate_stages(BY_SUM()):remove_zeros():round(0);
-    local inv_ac    = outdisbu:select_agents(Collection.CIRCUIT):aggregate_stages(BY_SUM()):remove_zeros():round(0);
-    local inv_dc    = outdisbu:select_agents(Collection.DCLINK ):aggregate_stages(BY_SUM()):remove_zeros():round(0);
+                              :aggregate_stages(BY_SUM()):remove_zeros():round(1);
+    local inv_ac    = outdisbu:select_agents(Collection.CIRCUIT):aggregate_stages(BY_SUM()):remove_zeros():round(1);
+    local inv_dc    = outdisbu:select_agents(Collection.DCLINK ):aggregate_stages(BY_SUM()):remove_zeros():round(1);
 
     local chart_a = create_chart("", case);
-    chart_a:add_pie(costs:aggregate_agents(BY_SUM(), dictionary.total_operational_costs[language]), { color = colors.total_costs.operational });
-    chart_a:add_pie(inv_total:aggregate_agents(BY_SUM(), dictionary.total_investment_cost[language]), { color = colors.total_costs.invetiment });
+    chart_a:add_pie(costs:aggregate_agents(BY_SUM(), dictionary.total_operational_costs[language]):round(1), { color = colors.total_costs.operational });
+    chart_a:add_pie(inv_total:aggregate_agents(BY_SUM(), dictionary.total_investment_cost[language]):round(1), { color = colors.total_costs.invetiment });
 
     local chart_b = create_chart("", case);
-    chart_b:add_pie(inv_therm:aggregate_agents(BY_SUM(), dictionary.total_thermal[language]), { color = colors.total_costs.thermal });
-    chart_b:add_pie(inv_hydro:aggregate_agents(BY_SUM(), dictionary.total_hydro[language]), { color = colors.total_costs.hydro });
-    chart_b:add_pie(inv_other:aggregate_agents(BY_SUM(), dictionary.total_renewable[language]), { color = colors.total_costs.renewable });
-    chart_b:add_pie(inv_solar:aggregate_agents(BY_SUM(), dictionary.total_solar[language]), { color = colors.total_costs.solar });
-    chart_b:add_pie(inv_wind:aggregate_agents(BY_SUM(), dictionary.total_wind[language]), { color = colors.total_costs.wind });
-    chart_b:add_pie(inv_csp:aggregate_agents(BY_SUM(), dictionary.total_csp[language]), { color = colors.total_costs.csp });
-    chart_b:add_pie(inv_batte:aggregate_agents(BY_SUM(), dictionary.total_battery[language]), { color = colors.total_costs.battery });
-    chart_b:add_pie(inv_ac:aggregate_agents(BY_SUM(), dictionary.total_ac_circuit[language]), { color = colors.total_costs.ac });
-    chart_b:add_pie(inv_dc:aggregate_agents(BY_SUM(), dictionary.total_dc_circuit[language]), { color = colors.total_costs.dc });
+    chart_b:add_pie(inv_therm:aggregate_agents(BY_SUM(), dictionary.total_thermal[language]):round(1), { color = colors.total_costs.thermal });
+    chart_b:add_pie(inv_hydro:aggregate_agents(BY_SUM(), dictionary.total_hydro[language]):round(1), { color = colors.total_costs.hydro });
+    chart_b:add_pie(inv_other:aggregate_agents(BY_SUM(), dictionary.total_renewable[language]):round(1), { color = colors.total_costs.renewable });
+    chart_b:add_pie(inv_solar:aggregate_agents(BY_SUM(), dictionary.total_solar[language]):round(1), { color = colors.total_costs.solar });
+    chart_b:add_pie(inv_wind:aggregate_agents(BY_SUM(), dictionary.total_wind[language]):round(1), { color = colors.total_costs.wind });
+    chart_b:add_pie(inv_csp:aggregate_agents(BY_SUM(), dictionary.total_csp[language]):round(1), { color = colors.total_costs.csp });
+    chart_b:add_pie(inv_batte:aggregate_agents(BY_SUM(), dictionary.total_battery[language]):round(1), { color = colors.total_costs.battery });
+    chart_b:add_pie(inv_ac:aggregate_agents(BY_SUM(), dictionary.total_ac_circuit[language]):round(1), { color = colors.total_costs.ac });
+    chart_b:add_pie(inv_dc:aggregate_agents(BY_SUM(), dictionary.total_dc_circuit[language]):round(1), { color = colors.total_costs.dc });
 
     if #chart_a == 0 or #chart_b == 0 then
         return
