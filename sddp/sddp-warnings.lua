@@ -19,7 +19,7 @@ The convergence gap was not met according to the "Convergence" chart in the "Pol
 
 🠊 Increase the number of iterations to be considered by the model.
 ```
-1. Go to Execution options -> Economic dispatch -> Study options.
+1. Click the "Configuration" button on the toolbar, then navigate to "Study options" -> "Convergence".
 2. Increase the 'Maximum number of iterations' in the corresponding text box.
 ```
 ]],
@@ -28,8 +28,8 @@ El gap de convergencia no se cumplió, según lo indicado en el gráfico de "Con
 
 🠊 Aumenta el número de iteraciones a considerar por el modelo.
 ```
-1. Vaya a Opciones de ejecución -> Despacho económico -> Opciones de estudio.
-2. Aumente el 'No. máximo de iteraciones' en el cuadro de texto correspondiente.
+1. Haz clic en el botón "Configuración" en la barra de herramientas y navega a "Opciones de estudio" -> "Convergencia".
+2. Aumente el 'Número máximo de iteraciones' en el cuadro de texto correspondiente.
 ```
 ]],
             pt = [[
@@ -37,8 +37,8 @@ O gap de convergência não foi atendido, conforme indicado pelo gráfico de "Co
 
 🠊 Aumente o número de iterações a serem consideradas pelo modelo.
 ```
-1. Vá para Opções de execução -> Despacho econômico -> Opções de estudo.
-2. Aumente o 'No. máximo de iterações' na caixa de texto correspondente.
+1. Clique no botão "Configuração" na barra de ferramentas e navegue até "Opções de estudo" -> "Convergência".
+2. Aumente o 'Número máximo de iterações' na caixa de texto correspondente.
 ```
 ]]
         },
@@ -47,21 +47,21 @@ O gap de convergência não foi atendido, conforme indicado pelo gráfico de "Co
             en = [[
 🠊 Increase the number of forward series in the study.
 ```
-1. Go to Exection options -> Economic dispatch -> Study options.
+1. Click the "Configuration" button on the toolbar, then navigate to "Study options" -> "Scenarios".
 2. Increase the 'Number of forward series' in the corresponding text box.
 ```
 ]],
             es = [[
 🠊 Aumenta el número de series forward en tu estudio.
 ```
-1. Vaya a Opciones de ejecución -> Despacho económico -> Opciones de estudio.
+1. Haz clic en el botón "Configuración" en la barra de herramientas y navega a "Opciones de estudio" -> "Escenarios".
 2. Aumenta el 'Número de series forward' en el cuadro de texto correspondiente.
 ```
 ]],
             pt = [[
 🠊 Aumente o número de séries forward em seu estudo.
 ```
-1. Vá para Opções de execução -> Despacho econômico -> Opções de estudo.
+1. Clique no botão "Configuração" na barra de ferramentas e navegue até "Opções de estudo" -> "Cenários".
 2. Aumente o 'Número de séries forward' na caixa de texto correspondente.
 ```
 ]]
@@ -74,7 +74,7 @@ The estimated cost in the operating policy does not match the simulation cost ac
 
 🠊 Consider non-linearities during the calculation of the policy made by the model.
 ```
-1. Go to Exection options -> Economic dispatch -> Solution strategy.
+1. Click the "Configuration" button on the toolbar, then navigate to "Solution strategy" -> "Non-convexity in policy".
 2. Select the 'Non-convexity representation in policy' checkbox.
 3. Define the iterations where the non-convexities should be considered in 'Initial iteration' text box.
 ```
@@ -85,7 +85,7 @@ El costo estimado en la política operativa no coincide con el costo de la simul
 
 🠊 Considere las no linealidades durante el cálculo de la política realizada por el modelo.
 ```
-1. Vaya a Opciones de ejecución -> Despacho económico -> Estrategia de solución.
+1. Haz clic en el botón "Configuración" en la barra de herramientas y navega a "Estrategia de solución" -> "No convexidad en la política".
 2. Seleccione la casilla 'Representación de no convexidad en la política'.
 3. Defina las iteraciones en las que se deben considerar las no convexidades en el cuadro de texto de 'Iteración inicial'.
 ```
@@ -95,7 +95,7 @@ O custo estimado na política operativa não condiz com o custo da simulação d
 
 🠊 Considere as não linearidades durante o cálculo da política feita pelo modelo.
 ```
-1. Vá para Opções de execução -> Despacho econômico -> Estratégia de solução.
+1. Clique no botão "Configuração" na barra de ferramentas e navegue até "Estratégia de solução" -> "Não-convexidade na política".
 2. Selecione a checkbox 'Representação de não convexidade na política'.
 3. Defina as iterações onde as não linearidades devem ser consideradas na caixa de texto de 'Iteração inicial'.
 ```
@@ -109,13 +109,13 @@ The MIP convergence gap was not met for some solutions, as indicated by the "Sol
 
 🠊 Increase the MIP maximum execution time
 ```
-1. Go to Execution Options -> Economic Dispatch -> Solution Strategy.
-2. In 'Optimization Parameters', increase the 'MIP maximum execution time (s)' text box value.
+1. Click the "Configuration" button on the toolbar, then navigate to "Solution strategy" -> "Optimization Parameters".
+2. Increase the 'MIP maximum execution time (s)' in its respective text box value.
 ```
 🠊 Reduce the Slice Duration
 ```
-1. Go to Execution Options -> Economic Dispatch -> Solution Strategy.
-2. In 'Intra-stage Representation', select the checkbox 'Decompose stages in slice'.
+1. Click the "Configuration" button on the toolbar, then navigate to "Solution strategy" -> "Intra-stage Representation".
+2. Select the checkbox 'Decompose stages in slice'.
 3. Decrease the 'Slice Duration (hour)' text box value.
 ```
 ]],
@@ -124,13 +124,13 @@ El gap de convergencia del MIP no se cumplió para algunas soluciones, según lo
 
 🠊 Aumentar el tiempo máximo de ejecución de MIP
 ```
-1. Vaya a Opciones de Ejecución -> Despacho Económico -> Estrategia de Solución.
-2. En 'Parámetros de Optimización', incremente el valor en la caja de texto 'Tiempo máximo de ejecución de MIP (s)'.
+1. Haz clic en el botón "Configuración" en la barra de herramientas y navega a "Estrategia de solución" -> "Parámetros de optimización".
+2. Incremente el valor en la caja de texto 'Tiempo máximo de ejecución de MIP (s)'.
 ```
 🠊 Reducir la Duración de las sub-etapas
 ```
-1. Vaya a Opciones de Ejecución -> Despacho Económico -> Estrategia de Solución.
-2. En 'Representación Intra-etapa', seleccione la casilla 'Decomponer etapas en sub-etapas'.
+1. Haz clic en el botón "Configuración" en la barra de herramientas y navega a "Estrategia de solución" -> "Representación intra-etapa".
+2. Seleccione la casilla 'Decomponer etapas en sub-etapas'.
 3. Disminuya el valor en la caja de texto 'Duración de las sub-etapas (hora)'.
 ```
 ]],
@@ -139,13 +139,13 @@ O gap de convergência do MIP não foi atendido para algumas soluções, conform
 
 🠊 Aumentar o tempo máximo de execução do MIP
 ```
-1. Vá para Opções de Execução -> Despacho Econômico -> Estratégia de Solução.
-2. Em 'Parâmetros de Otimização', aumente o valor da caixa de texto 'Tempo máximo de execução do MIP (s)'.
+1. Clique no botão "Configuração" na barra de ferramentas e navegue até "Estratégia de solução" -> "Parâmetros de otimização".
+2. Aumente o valor da caixa de texto 'Máximo tempo de execução do MIP (s)'.
 ```
 🠊 Reduzir a Duração de intra-estágio
 ```
-1. Vá para Opções de Execução -> Despacho Econômico -> Estratégia de Solução.
-2. Em 'Representação Intra-estágio', marque a caixa de seleção "Decompor estágios em sub-subtágios".
+1. Clique no botão "Configuração" na barra de ferramentas e navegue até "Estratégia de solução" -> "Representação intra-estágio".
+2. Marque a caixa de seleção "Decompor estágios em sub-subtágios".
 3. Diminua o valor da caixa de texto "Duração dos sub-subtágios (hora)".
 ```
 ]]
