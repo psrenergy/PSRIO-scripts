@@ -313,59 +313,59 @@ dictionary = {
         pt = "Cadeia energética: déficit de demanda "
     },
     nedefc = {
-        en = "Deficit associated to non-electrical gas demand",
-        es = "Déficit asociado a la demanda de gas no eléctrico",
-        pt = "Déficit associado à demanda de gás não elétrico"
+        en = "Gas: deficit",
+        es = "Gas: déficit",
+        pt = "Gás: déficit"
     },
     defbus = {
-        en = "Deficit per bus",
-        es = "Déficit por barra",
-        pt = "Déficit por barra"
+        en = "Bus: deficit",
+        es = "Barra: déficit",
+        pt = "Barra: déficit"
     },
     defbusp = {
-        en = "Deficit per bus (% of load)",
-        es = "Déficit por barra (% de carga)",
-        pt = "Déficit por barra (% da carga)"
+        en = "Bus: deficit (% of load)",
+        es = "Barra: déficit (% de carga)",
+        pt = "Barra: déficit (% da carga)"
     },
     gncivio = {
-        en = "Generic interpolation constraint violation",
-        es = "Violación de restricción genérica de interpolación",
-        pt = "Violação de restrição genérica de interpolação"
+        en = "Generic modeling: interpolation constraints",
+        es = "Modelado genérico: restricciones de interpolación",
+        pt = "Modelagem genérica: restrições de interpolação"
     },
     gncvio = {
-        en = "General constraint: linear",
-        es = "Restricción general: lineal",
-        pt = "Restrição geral: linear"
+        en = "Generic modeling: linear constraint",
+        es = "Modelado genérico: restricciones lineales",
+        pt = "Modelagem genérica: restrições lineares"
     },
     vrestg = {
-        en = "Generation constraint violation",
-        es = "Violación de restricción de generación",
-        pt = "Violação da restrição de geração"
+        en = "System: generation constraint",
+        es = "Sistema: restricción de generación",
+        pt = "Sistema: restrição de geração"
     },
     excbus = {
-        en = "Generation excess per AC bus",
-        es = "Exceso de generación por bus de CA",
-        pt = "Excesso de geração por barramento de CA"
+        en = "AC bus: generation excess",
+        es = "Barra CA: exceso de generación",
+        pt = "Barra CA: excesso de geração"
     },
     excsis = {
-        en = "Generation excess per system",
-        es = "Exceso de generación por sistema",
-        pt = "Excesso de geração por sistema"
+        en = "System: generation excess",
+        es = "Sistema: exceso de generación",
+        pt = "Sistema: excesso de geração"
     },
     vvaler = {
-        en = "Alert storage violation",
-        es = "Violación de almacenamiento de alerta",
-        pt = "Violação de armazenamento de alerta"
+        en = "Hydro: alert storage",
+        es = "Hidro: almacenamiento de alerta",
+        pt = "Hidro: armazenamento de alerta"
     },
     vioguide = {
-        en = "Guide curve violation per hydro reservoir",
-        es = "Violación de curva guía por embalse hidro",
-        pt = "Violação de curva guia por reservatório hidro"
+        en = "Hydro: guide curve",
+        es = "Hidro: curva guía",
+        pt = "Hidro: curva guia"
     },
     vriego = {
-        en = "Irrigation violation",
-        es = "Violación de riego",
-        pt = "Violação da irrigação"
+        en = "Hydro: irrigation",
+        es = "Hidro: riego",
+        pt = "Hidro: irrigação"
     },
     vmxost = {
         en = "Hydro: maximum operative storage",
@@ -417,20 +417,10 @@ dictionary = {
         es = "Reserva: requisito conjunto",
         pt = "Reserva: requisito conjunto"
     },
-    vsarhd = {
-        en = "RAS target storage violation %",
-        es = "Violación de volumen meta de SAR %",
-        pt = "Violação de volume meta da SAR %"
-    },
-    vsarhden = {
-        en = "RAS target storage violation GWh",
-        es = "Violación de volumen meta de SAR GWh",
-        pt = "Violação de volume meta da SAR GWh"
-    },
     viocar = {
-        en = "Risk Aversion Curve violation",
-        es = "Violación de la curva de aversión a riesgo",
-        pt = "Violação da curva de aversão a risco"
+        en = "System: risk aversion",
+        es = "Sistema: aversión a riesgo",
+        pt = "Sistema: aversão a risco"
     },
     vgmint = {
         en = "Thermal: minimum generation",
@@ -448,9 +438,9 @@ dictionary = {
         pt = "Grupo gerador térmico: geração mínima técnica"
     },
     vioemiq = {
-        en = "Emission budget violation",
-        es = "Violación del presupuesto de emisiones",
-        pt = "Violação do orçamento de emissões"
+        en = "Emission: budget constraint",
+        es = "Emisión: restricción de presupuesto",
+        pt = "Emissão: restrição de cota"
     },
     vsecset = {
         en = "Reservoir set: security energy constraint",
@@ -463,29 +453,29 @@ dictionary = {
         pt = "Conjunto de reservatórios: restrição de energia de alerta"
     },
     vespset = {
-        en = "Violation of flood control energy constraint by reservoir set",
-        es = "Violación de restricción de energía de espera por conjunto de embalses",
-        pt = "Violação de restrição de energia de espera por conjunto de reservatórios"
+        en = "Reservoir set: flood control energy constraint",
+        es = "Conjunto de embalses: restricción de energía de espera",
+        pt = "Conjunto de reservatórios: restrição de energia de espera"
     },
     fcoffvio = {
-        en = "Fuel contract minimum offtake rate violation",
-        es = "Violación de mínima tasa de retiro de contrato de combustible",
-        pt = "Violação de mínima taxa de retirada contrato de combustível"
+        en = "Fuel contract: minimum offtake rate",
+        es = "Contrato de combustible: mínima tasa de retiro",
+        pt = "Contrato de combustível: mínima taxa de retirada"
     },
     vflmnww = {
-        en = "Minimum hydro bypass flow violation",
-        es = "Violación de flujo mínimo de de desvío hidro",
-        pt = "Violação de fluxo mínimo de desvio hidro"
+        en = "Waterway: minimum flow",
+        es = "Canal hídrico: flujo mínimo",
+        pt = "Canal hídrico: fluxo mínimo"
     },
     fcofdvio = {
-        en = "Fuel contract minimum daily offtake rate violation",
-        es = "Violación de mínima tasa de retiro diario de contrato de combustible",
-        pt = "Violação de mínima taxa de retirada diária de contrato de combustível"
+        en = "Fuel contract: minimum daily offtake rate",
+        es = "Contrato de combustible: mínima tasa de retiro diario",
+        pt = "Contrato de combustível: mínima taxa de retirada diária"
     },
     vflmxww = {
-        en = "Maximum hydro bypass flow violation cost",
-        es = "Violación de flujo máximo de de desvío hidro",
-        pt = "Violação de fluxo máximo de desvio hidro"
+        en = "Waterway: maximum flow",
+        es = "Canal hídrico: flujo máximo",
+        pt = "Canal hídrico: fluxo máximo"
     },
     finjvio = {
         en = "Power injection: fixed injection",
