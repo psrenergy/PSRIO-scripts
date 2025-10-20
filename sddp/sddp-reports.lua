@@ -225,7 +225,8 @@ local viol_structs = {
 	-- {name = "dcline_quadratic_losses_error_pu", block_aggregation = BY_AVERAGE(), signal = "negative", tol = 10e-5},
 	-- {name = "dclink_quadratic_losses_error_pu", block_aggregation = BY_AVERAGE(), signal = "positive", tol = 10e-5},
 	-- {name = "dclink_quadratic_losses_error_pu", block_aggregation = BY_AVERAGE(), signal = "negative", tol = 10e-5},
-	{name = "mnsplpvio", block_aggregation = BY_AVERAGE()}
+	{name = "mnsplpvio", block_aggregation = BY_AVERAGE()},
+	{name = "fcofsvio", block_aggregation = BY_SUM()}
 }
 
 local viol_structs_debug = {

@@ -472,6 +472,11 @@ dictionary = {
         es = "Contrato de combustible: mínima tasa de retiro diario",
         pt = "Contrato de combustível: mínima taxa de retirada diária"
     },
+    fcofsvio = {
+        en = "Fuel contract: minimum offtake rate per stage",
+        es = "Contrato de combustible: mínima tasa de retiro por etapa",
+        pt = "Contrato de combustível: mínima taxa de retirada por etapa"
+    },
     vflmxww = {
         en = "Waterway: maximum flow",
         es = "Canal hídrico: flujo máximo",
