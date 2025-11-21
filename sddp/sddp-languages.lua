@@ -492,6 +492,11 @@ dictionary = {
         es = "Acerca del modelo y ambiente",
         pt = "Sobre o modelo e ambiente"
     },
+    about_nodes = {
+        en = "About the execution nodes",
+        es = "Acerca de los nodos de ejecución",
+        pt = "Sobre os nós de execução"
+    },
     case_title = {
         en = "Case title",
         es = "Título del caso",
@@ -772,6 +777,21 @@ dictionary = {
         es = "Representación de pérdidas",
         pt = "Representação de perdas"
     },
+    cell_total_processes = {
+        en = "Total processes",
+        es = "Procesos totales",
+        pt = "Processos totais"
+    },
+    cell_node_names = {
+        en = "Node names",
+        es = "Nombres de nodos",
+        pt = "Nomes dos nós"
+    },
+    cell_node_processes = {
+        en = "Node processes",
+        es = "Procesos por nodo",
+        pt = "Processos por nó"
+    },
     inflows_type = {
         en = "Type of inflows",
         es = "Tipos de afluencias",
@@ -816,6 +836,11 @@ dictionary = {
         en = "WARNING",
         es = "ADVERTENCIA",
         pt = "AVISO"
+    },
+    node_details = {
+        en = "Node details",
+        es = "Detalles del nodo",
+        pt = "Detalhes do nó"
     },
     deviation_error = {
         [1] = {

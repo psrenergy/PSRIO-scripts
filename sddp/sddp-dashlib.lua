@@ -283,19 +283,23 @@ end
 function load_info_file(file_name,case_index)
 
     -- Initialize struct
-    info_struct = {{model = ""}, {user = ""}, {version = ""}, {hash = ""}, {model = ""}, {status = ""}, {infrep = ""}, {dash_name = ""}, {cloud = ""}, {exe_mode=0}, {arch = ""}};
+    info_struct = {{model = ""}, {user = ""}, {version = ""}, {hash = ""}, {model = ""}, {status = ""}, {infrep = ""}, {dash_name = ""}, {cloud = ""}, {exe_mode=0}, {arch = ""}, {nodes = {}}, {processes = {}}, {total_processes = 1}, {processing_type = ""}};
 
-    local toml = Generic(case_index):load_toml(file_name);
-    model      = toml:get_string("model", "-");
-    user       = toml:get_string("user", "-");
-    version    = toml:get_string("version", "-");
-    hash       = toml:get_string("hash", "-");
-    status     = toml:get_string("status", "-");
-    infrep     = toml:get_string("infrep", "-");
-    dash_name  = toml:get_string("dash", "-");
-    cloud      = toml:get_string("cloud", "-");
-    exe_mode   = toml:get_integer("mode", 0);
-	arch       = toml:get_string("arch", "-");
+    local toml      = Generic(case_index):load_toml(file_name);
+    model           = toml:get_string("model", "-");
+    user            = toml:get_string("user", "-");
+    version         = toml:get_string("version", "-");
+    hash            = toml:get_string("hash", "-");
+    status          = toml:get_string("status", "-");
+    infrep          = toml:get_string("infrep", "-");
+    dash_name       = toml:get_string("dash", "-");
+    cloud           = toml:get_string("cloud", "-");
+    exe_mode        = toml:get_integer("mode", 0);
+	arch            = toml:get_string("arch", "-");
+    nodes           = toml:get_string_array("node");
+    processes       = toml:get_integer_array("process");
+    total_processes = toml:get_integer("total_processes", 1);
+    processing_type = toml:get_string("processing_type", "-");
 
     info_struct.model     = model;
     info_struct.user      = user;
@@ -307,6 +311,10 @@ function load_info_file(file_name,case_index)
     info_struct.cloud     = cloud;
     info_struct.exe_mode  = exe_mode;
 	info_struct.arch      = arch;
+    info_struct.nodes     = nodes;
+    info_struct.processes = processes;
+    info_struct.total_processes = total_processes;
+    info_struct.processing_type = processing_type;
 
     return info_struct;
 end
@@ -497,6 +505,10 @@ function create_tab_summary(col_struct, info_struct)
     local ID               = dictionary.cell_ID[LANGUAGE];
 	local cloud_arch       = dictionary.cell_arch[LANGUAGE];
     local title            = dictionary.cell_title[LANGUAGE];
+    local execution_type   = dictionary.cell_execution_type[LANGUAGE];
+    local total_process    = dictionary.cell_total_processes[LANGUAGE];
+    local node_names       = dictionary.cell_node_names[LANGUAGE];
+    local node_processes   = dictionary.cell_node_processes[LANGUAGE];
 
 	-- Execution status
     if studies == 1 then 
@@ -538,6 +550,38 @@ function create_tab_summary(col_struct, info_struct)
             tab:push("| " .. i .. " | " .. info_struct[i].model .. " | " .. info_struct[i].user .. " | " .. info_struct[i].version .. " | " .. info_struct[i].hash .. " | " .. info_struct[i].arch .. " |");
         end
     end
+
+    -- About nodes
+    tab:push("## " .. dictionary.about_nodes[LANGUAGE]);
+    if studies == 1 then
+        tab:push("| " .. execution_type .. " | " .. total_process .. " |");
+        tab:push("|:-----------------:|:-----------------:|");
+        tab:push("| " .. info_struct[1].processing_type .. " | " .. info_struct[1].total_processes .. " |");
+
+        tab:push("### " .. dictionary.node_details[LANGUAGE]);
+        tab:push("| " .. node_names .. " | " .. node_processes .. " |");
+        tab:push("|:-----------------:|:-----------------:|");
+        for i = 1, #info_struct[1].nodes do
+            tab:push("| " .. info_struct[1].nodes[i] .. " | " .. info_struct[1].processes[i] .. " |");
+        end
+    else
+        tab:push("| " .. case .. " | " .. execution_type .. " | " .. total_process .. " |");
+        tab:push("|:----:|:-----------------:|:-----------------:|");
+        for i = 1, studies do
+            tab:push("| " .. i .. " | " .. info_struct[i].processing_type .. " | " .. info_struct[i].total_processes .. " |");
+        end
+
+        for i = 1, studies do
+            tab:push("### " .. dictionary.case[LANGUAGE] .. " " .. i .. " - " .. dictionary.node_details[LANGUAGE]);
+            tab:push("| " .. node_names .. " | " .. node_processes .. " |");
+            tab:push("|:-----------------:|:-----------------:|");
+            for j = 1, #info_struct[i].nodes do
+                tab:push("| " .. info_struct[i].nodes[j] .. " | " .. info_struct[i].processes[j] .. " |");
+            end
+        end
+    end
+
+
 
 	-- Cases' titles
     tab:push("## " .. dictionary.case_title[LANGUAGE]);
