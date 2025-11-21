@@ -48,7 +48,7 @@ oemgnd:save("oemgnd",{csv=is_csv});
 
 -- PBATSTG - Percentual of battery storage
 battery = Battery();
-batstg = battery:load("batstg"):convert("MW");
+batstg = battery:load("batstg");
 if batstg:loaded() then
   max_storage = battery.max_storage;
   pbatstg = safe_divide(batstg,max_storage):convert("%");
