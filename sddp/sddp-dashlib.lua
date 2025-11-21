@@ -572,7 +572,7 @@ function create_tab_summary(col_struct, info_struct)
         end
 
         for i = 1, studies do
-            tab:push("### " .. dictionary.case[LANGUAGE] .. " " .. i .. " - " .. dictionary.node_details[LANGUAGE]);
+            tab:push("### " .. case .. " " .. i .. " - " .. dictionary.node_details[LANGUAGE]);
             tab:push("| " .. node_names .. " | " .. node_processes .. " |");
             tab:push("|:-----------------:|:-----------------:|");
             for j = 1, #info_struct[i].nodes do
