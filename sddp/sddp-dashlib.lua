@@ -576,7 +576,7 @@ function create_tab_summary(col_struct, info_struct)
             tab:push("| " .. node_names .. " | " .. node_processes .. " |");
             tab:push("|:-----------------:|:-----------------:|");
             for j = 1, #info_struct[i].nodes do
-                tab:push("| " .. info_struct[i].nodes[j] .. " | " .. info_struct[i].processes[j] .. " |");
+                tab:push("| " .. trim(info_struct[i].nodes[j]) .. " | " .. info_struct[i].processes[j] .. " |");
             end
         end
     end
