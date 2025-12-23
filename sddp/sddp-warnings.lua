@@ -161,7 +161,7 @@ The costs associated with violations exceed 20% of the objective function cost i
 🠊 Evaluate if the values of penalties for each violation were correclty calibrated.
 ]],
             es = [[
-Los costos asociados con las violaciones superan el 20% de el costo de la funcion objetivo en la simulacion, como se indica en el gráfico "Porciones de el costo operativo total" dentro de la pestaña de "Simulación". Por favor, considere las siguientes opciones:
+Los costos asociados con las violaciones superan el 20% del costo de la función objetivo en la simulación, como se indica en el gráfico "Porciones de el costo operativo total" dentro de la pestaña de "Simulación". Por favor, considere las siguientes opciones:
 
 🠊 Revise la pestaña de Violaciones para comprender mejor las violaciones más significativas e identificar las etapas donde las penalidades son más pronunciadas.
 🠊 Evalúe si se pueden cumplir las restricciones o si deben ser relajadas.
