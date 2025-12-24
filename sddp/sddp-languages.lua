@@ -517,6 +517,21 @@ dictionary = {
         es = "No convexidades",
         pt = "Não-convexidades"
     },
+    lower_bound = {
+        en = "Lower bound",
+        es = "Límite inferior",
+        pt = "Limite inferior"
+    },
+    upper_bound = {
+        en = "Upper bound",
+        es = "Límite superior",
+        pt = "Limite superior"
+    },
+    tolerance = {
+        en = "Tolerance",
+        es = "Tolerancia",
+        pt = "Tolerância"
+    },
     cell_average = {
         en = "Average",
         es = "Promedio",

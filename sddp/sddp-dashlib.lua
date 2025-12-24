@@ -1304,34 +1304,37 @@ function create_pol_report(col_struct)
             end
 
             if conv_file:loaded() then
+                local lb_str = dictionary.lower_bound[LANGUAGE];
+                local ub_str = dictionary.upper_bound[LANGUAGE];
+                local tol_str = dictionary.tolerance[LANGUAGE];
                 local conv_age = conv_file:select_agents({ 1, 2, 3, 4 }); -- Zinf        ,Zsup - Tol  ,Zsup        ,Zsup + Tol
                 local cuts_opt = conv_file:select_agents({5}):stages_to_agents():rename_agents(aux_vector);
                 local cuts_feas = conv_file:select_agents({6}):stages_to_agents():rename_agents(aux_vector);
 
                 -- Confidence interval
-                chart_conv:add_area_range(conv_age:select_agents({ 2 }):rename_agent(prefix .. "Zsup - Tol"), 
-                                          conv_age:select_agents({ 4 }):rename_agent(prefix .. "Zsup + Tol"), 
+                chart_conv:add_area_range(conv_age:select_agents({ 2 }):rename_agent("(" .. prefix .. ub_str .. " - " .. tol_str .. ")"), 
+                                          conv_age:select_agents({ 4 }):rename_agent("(" .. prefix .. ub_str .. " + " .. tol_str .. ")"), 
                                           { colors = { light_global_color[std],
                                             light_global_color[std] },
                                             xUnit = dictionary.iteration[LANGUAGE],
                                             xAllowDecimals = false,
                                             showInLegend = true });
 
-                chart_policy_simulation:add_area_range(conv_age:select_agents({ 2 }):rename_agent(prefix .. "Zsup - Tol"), 
-                                                       conv_age:select_agents({ 4 }):rename_agent(prefix .. "Zsup + Tol"), 
+                chart_policy_simulation:add_area_range(conv_age:select_agents({ 2 }):rename_agent("(" .. prefix .. ub_str .. " - " .. tol_str .. ")"), 
+                                                       conv_age:select_agents({ 4 }):rename_agent("(" .. prefix .. ub_str .. " + " .. tol_str .. ")"), 
                                                        { colors = { light_global_color[std],
                                                        light_global_color[std] },
                                                        xUnit = dictionary.iteration[LANGUAGE],
                                                        xAllowDecimals = false,
                                                        showInLegend = true });
                 -- Zsup
-                chart_conv:add_line(conv_age:select_agents({ 3 }):rename_agent(prefix .. "Zsup"),
+                chart_conv:add_line(conv_age:select_agents({ 3 }):rename_agent(prefix .. " " .. ub_str),
                                     { colors = { main_global_color[std] }, xAllowDecimals = false, visible = zsup_is_visible });
 
-                chart_policy_simulation:add_line(conv_age:select_agents({ 3 }):rename_agent(prefix .. "Zsup"),
+                chart_policy_simulation:add_line(conv_age:select_agents({ 3 }):rename_agent(prefix .. " " .. ub_str),
                                     { colors = { main_global_color[std] }, xAllowDecimals = false, visible = zsup_is_visible });
                 -- Zinf
-                chart_conv:add_line(conv_age:select_agents({ 1 }):rename_agent(prefix .. "Zinf"),
+                chart_conv:add_line(conv_age:select_agents({ 1 }):rename_agent(prefix .. " " .. lb_str),
                                     { colors = { main_global_color[std] }, xAllowDecimals = false, dashStyle = "dash" }); -- Zinf
 
                 -- Cuts - optimality
