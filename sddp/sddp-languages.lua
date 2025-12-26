@@ -497,6 +497,11 @@ dictionary = {
         es = "Acerca del modelo y ambiente",
         pt = "Sobre o modelo e ambiente"
     },
+    about_nodes = {
+        en = "About the execution nodes",
+        es = "Acerca de los nodos de ejecución",
+        pt = "Sobre os nós de execução"
+    },
     case_title = {
         en = "Case title",
         es = "Título del caso",
@@ -516,6 +521,21 @@ dictionary = {
         en = "Non-convexities",
         es = "No convexidades",
         pt = "Não-convexidades"
+    },
+    lower_bound = {
+        en = "Lower bound",
+        es = "Límite inferior",
+        pt = "Limite inferior"
+    },
+    upper_bound = {
+        en = "Upper bound",
+        es = "Límite superior",
+        pt = "Limite superior"
+    },
+    tolerance = {
+        en = "Tolerance",
+        es = "Tolerancia",
+        pt = "Tolerância"
     },
     cell_average = {
         en = "Average",
@@ -777,6 +797,21 @@ dictionary = {
         es = "Representación de pérdidas",
         pt = "Representação de perdas"
     },
+    cell_total_processes = {
+        en = "Total processes",
+        es = "Procesos totales",
+        pt = "Processos totais"
+    },
+    cell_node_names = {
+        en = "Node names",
+        es = "Nombres de nodos",
+        pt = "Nomes dos nós"
+    },
+    cell_node_processes = {
+        en = "Node processes",
+        es = "Procesos por nodo",
+        pt = "Processos por nó"
+    },
     inflows_type = {
         en = "Type of inflows",
         es = "Tipos de afluencias",
@@ -821,6 +856,11 @@ dictionary = {
         en = "WARNING",
         es = "ADVERTENCIA",
         pt = "AVISO"
+    },
+    node_details = {
+        en = "Node details",
+        es = "Detalles del nodo",
+        pt = "Detalhes do nó"
     },
     deviation_error = {
         [1] = {
@@ -1003,8 +1043,8 @@ non_convexities_labels = {
     ['Hydro plants with non-controllable spillage (penalized)'] = 'Hydro plants with non-controllable spillage (penalized)',
     ['Hydro plants with non-controllable spillage (integer var.)'] = 'Hydro plants with non-controllable spillage (integer var.)',
     ['Hydro plants with LGC'] = 'Hydro plants with LGC',
-    ['Hydro plants with commitment'] = 'Hydro plants with commitment',
-    ['Thermal plants with commitment'] = 'Thermal plants with commitment',
+    ['Hydro plants with commitment'] = 'Hydro plants with unit commitment',
+    ['Thermal plants with commitment'] = 'Thermal plants with unit commitment',
     ['Thermal combined-cycle plants with optimized operative status'] = 'Thermal combined-cycle plants with optimized operative status',
     ['Thermal plants with concave specific consumption curve'] = 'Thermal plants with concave specific consumption curve',
     ['Fuel contracts with make-up clause'] = 'Fuel contracts with make-up clause',
@@ -1022,8 +1062,8 @@ non_convexities_labels = {
     ['Centrales hidroelectricas con vertimiento no-controlable (penalizado)'] = 'Centrales hidroeléctricas con vertimiento no controlable (penalizado)',
     ['Centrales hidroelectricas con vertimiento no-controlable (var. entera)'] = 'Centrales hidroeléctricas con vertimiento no controlable (variante entera)',
     ['Centrales hidroelectricas con CGG'] = 'Centrales hidroeléctricas con CGG',
-    ['Centrales hidroelectricas con commitment'] = 'Centrales hidroelectricas con commitment',
-    ['Centrales termicas com commitment'] = 'Centrales térmicas con commitment',
+    ['Centrales hidroelectricas con commitment'] = 'Centrales hidroelectricas con unit commitment',
+    ['Centrales termicas com commitment'] = 'Centrales térmicas con unit commitment',
     ['Centrales termicas ciclo-combinado con estado operativo optimizado'] = 'Centrales térmicas de ciclo combinado con estado operativo optimizado',
     ['Centrales termicas con curva concava de consumo especifico'] = 'Centrales térmicas con curva cóncava de consumo específico',
     ['Contratos de combustible con clausula de make-up'] = 'Contratos de combustible con cláusula de make-up',
@@ -1040,8 +1080,8 @@ non_convexities_labels = {
     ['Usinas hidroeletricas com vertimento nao-controlavel (penalizado)'] = 'Usinas hidrelétricas com vazamento não controlável (penalizado)',
     ['Usinas hidroeletricas com vertimento nao-controlavel (var. inteira)'] = 'Usinas hidrelétricas com vazamento não controlável (var. inteira)',
     ['Usinas hidroeletricas com CGG'] = 'Usinas hidrelétricas com CGG',
-    ['Usinas hidroeletricas com commitment'] = 'Usinas hidrelétricas com commitment',
-    ['Usinas termicas com commitment'] = 'Usinas térmicas com commitment',
+    ['Usinas hidroeletricas com commitment'] = 'Usinas hidrelétricas com unit commitment',
+    ['Usinas termicas com commitment'] = 'Usinas térmicas com unit commitment',
     ['Usinas termicas ciclo-combinado com estado operativo otimizado'] = 'Usinas térmicas de ciclo combinado com estado operacional otimizado',
     ['Usinas termicas com curva concava de consumo especifico'] = 'Usinas térmicas com curva de consumo específico côncava',
     ['Contratos de combustivel com clausula de make-up'] = 'Contratos de combustível com cláusula de make-up',
