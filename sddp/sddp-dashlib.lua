@@ -298,7 +298,7 @@ function load_info_file(file_name,case_index)
 	arch            = toml:get_string("arch", "-");
     nodes           = toml:get_string_array("node");
     processes       = toml:get_integer_array("process");
-    total_processes = toml:get_integer("total_processes", 1);
+    total_processes = toml:get_integer("total_process", 1);
     processing_type = toml:get_string("processing_type", "-");
 
     info_struct.model     = model;
