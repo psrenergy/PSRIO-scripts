@@ -225,7 +225,7 @@ function Advisor.sort_messages(val_a, val_b)
     return val_a.level < val_b.level
 end
 
-function Tab.push_advices(self, advisor)
+function TabVue.push_advices(self, advisor)
     if advisor == nil then
         error("Input must not be nil");
     end
