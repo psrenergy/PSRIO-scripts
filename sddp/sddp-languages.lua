@@ -793,19 +793,14 @@ dictionary = {
         pt = "Representação de perdas"
     },
     cell_total_processes = {
-        en = "Total processes",
-        es = "Procesos totales",
-        pt = "Processos totais"
+        en = "Total number of processes",
+        es = "Numero total de procesos",
+        pt = "Número total de processos"
     },
-    cell_node_names = {
-        en = "Node names",
-        es = "Nombres de nodos",
-        pt = "Nomes dos nós"
-    },
-    cell_node_processes = {
-        en = "Node processes",
-        es = "Procesos por nodo",
-        pt = "Processos por nó"
+    cell_total_nodes = {
+        en = "Total number of nodes",
+        es = "Número total de nodos",
+        pt = "Número total de nós"
     },
     inflows_type = {
         en = "Type of inflows",
