@@ -501,7 +501,7 @@ end
 -- Create Base Functions
 --=================================================--
 local function create_tab(label, icon)
-    local tab<const> = Tab(label);
+    local tab<const> = TabVue(label);
     tab:set_icon(icon);
     tab:push("# " .. label);
     return tab;
@@ -509,9 +509,9 @@ end
 
 local function create_chart(label, case)
     if cases == 1 then
-        return Chart(label);
+        return ChartVue(label);
     else
-        return Chart(label .. " (case " .. case .. ")");
+        return ChartVue(label .. " (case " .. case .. ")");
     end
 end
 
@@ -1764,7 +1764,7 @@ end
 --=================================================--
 -- Create Dashboard
 --=================================================--
-local dashboard<const> = Dashboard();
+local dashboard<const> = DashboardVue();
 dashboard:push(tab_expansion_result());
 
 local sddp_tab = tab_sddp();
