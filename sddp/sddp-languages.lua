@@ -412,7 +412,7 @@ dictionary = {
         es = "Hidro: vertimiento porcentual mínimo",
         pt = "Hidro: vertimento percentual mínimo"
     },
-    hydro_min_sto_vio = {
+    hydro_minimum_storage_violation = {
         en = "Hydro: minimum storage",
         es = "Hidro: almacenamiento mínimo",
         pt = "Hidro: volume mínimo"
