@@ -383,9 +383,9 @@ dictionary = {
         pt = "Hidro: defluência máxima"
     },
     vvolmn = {
-        en = "Hydro: minimum storage",
-        es = "Hidro: volumen mínimo",
-        pt = "Hidro: volume mínimo"
+        en = "Hydro: minimum operative storage",
+        es = "Hidro: volumen mínimo operativo",
+        pt = "Hidro: volume mínimo operativo"
     },
     vdefmn = {
         en = "Hydro: minimum total outflow",
@@ -411,6 +411,11 @@ dictionary = {
         en = "Hydro: minimum percentual spillage",
         es = "Hidro: vertimiento porcentual mínimo",
         pt = "Hidro: vertimento percentual mínimo"
+    },
+    hydro_minimum_storage_violation = {
+        en = "Hydro: minimum storage",
+        es = "Hidro: almacenamiento mínimo",
+        pt = "Hidro: volume mínimo"
     },
     vreseg = {
         en = "Reserve: joint requirement",
@@ -471,6 +476,11 @@ dictionary = {
         en = "Fuel contract: minimum daily offtake rate",
         es = "Contrato de combustible: mínima tasa de retiro diario",
         pt = "Contrato de combustível: mínima taxa de retirada diária"
+    },
+    fcofsvio = {
+        en = "Fuel contract: minimum offtake rate per stage",
+        es = "Contrato de combustible: mínima tasa de retiro por etapa",
+        pt = "Contrato de combustível: mínima taxa de retirada por etapa"
     },
     vflmxww = {
         en = "Waterway: maximum flow",
