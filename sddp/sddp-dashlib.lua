@@ -21,6 +21,8 @@ REP_DIFF_TOL = 0.05 -- 10%
 
 CONVERGENCE_GAP_TOL = 0.01; -- absolute value
 
+LEGEND_MAX_CHAR = 20; -- maximum number of characters in legend before truncating with "..."
+
 -- Setting global colors
 main_global_color = { "#4E79A7", "#F28E2B", "#8CD17D", "#B6992D", "#E15759", "#76B7B2", "#FF9DA7", "#D7B5A6", "#B07AA1", "#59A14F", "#F1CE63", "#A0CBE8", "#E15759" };
 light_global_color = { "#B7C9DD", "#FAD2AA", "#D1EDCB", "#E9DAA4", "#F3BCBD", "#C8E2E0", "#FFD8DC", "#EFE1DB", "#DFCAD9", "#BBDBB7", "#F9EBC1", "#D9EAF6", "#F3BCBD" };
@@ -260,7 +262,7 @@ function push_tab_to_tab(tab_from, tab_to)
     end
 end
 
-function TabVue.push_chart_to_tab(self, chart)
+function Tab.push_chart_to_tab(self, chart)
     if #chart > 0 then
         self:push(chart);
     end
@@ -469,7 +471,7 @@ end
 
 function create_tab_summary(col_struct, info_struct)
 
-    local tab = TabVue(dictionary.tab_info[LANGUAGE]);
+    local tab = Tab(dictionary.tab_info[LANGUAGE]);
     tab:set_icon("info");
 
     tab:push("# " .. dictionary.case_summary[LANGUAGE]);
@@ -874,7 +876,7 @@ end
 -----------------------------------------------------------------------------------------------
 
 function create_inflow_energy(col_struct)
-    local tab = TabVue(dictionary.tab_inflow_energy[LANGUAGE]);
+    local tab = Tab(dictionary.tab_inflow_energy[LANGUAGE]);
 
     local inferg = {};
     for i = 1, studies do
@@ -882,18 +884,18 @@ function create_inflow_energy(col_struct)
     end
 
     -- Color vectors
-    local chart = ChartVue(dictionary.inflow_energy[LANGUAGE]);
+    local chart = Chart(dictionary.inflow_energy[LANGUAGE]);
     if studies > 1 then
         for i = 1, studies do
 
             -- Confidence interval
-            chart:add_area_range(inferg[i]:select_agent(1):add_prefix(col_struct.case_dir_list[i] .. " - "), inferg[i]:select_agent(3), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { light_global_color[i], light_global_color[i] } });
-            chart:add_line(inferg[i]:select_agent(2):add_prefix(col_struct.case_dir_list[i] .. " - ")); -- average
+            chart:add_area_range(inferg[i]:select_agent(1):add_prefix(col_struct.case_dir_list[i] .. " - "), inferg[i]:select_agent(3), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { light_global_color[i], light_global_color[i] }, legendSizeLimit = LEGEND_MAX_CHAR });
+            chart:add_line(inferg[i]:select_agent(2):add_prefix(col_struct.case_dir_list[i] .. " - "), { legendSizeLimit = LEGEND_MAX_CHAR }); -- average
         end
     else
         -- Confidence interval
-        chart:add_area_range(inferg[1]:select_agent(1), inferg[1]:select_agent(3), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { light_global_color[1], light_global_color[1] } });
-        chart:add_line(inferg[1]:select_agent(2)); -- average
+        chart:add_area_range(inferg[1]:select_agent(1), inferg[1]:select_agent(3), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { light_global_color[1], light_global_color[1] }, legendSizeLimit = LEGEND_MAX_CHAR });
+        chart:add_line(inferg[1]:select_agent(2), { legendSizeLimit = LEGEND_MAX_CHAR }); -- average
     end
 
     if #chart > 0 then
@@ -939,7 +941,7 @@ function get_conv_file_info(col_struct, file_name, pol_struct, file_names, case_
     end
 end
 
-function TabVue.draw_simularion_cost(self,col_struct, aux_data, chart, case_index)
+function Tab.draw_simularion_cost(self,col_struct, aux_data, chart, case_index)
     -- Get operation mode parameter
     local oper_mode =  col_struct.study[case_index]:get_parameter("Opcion", -1); -- 1=AIS; 2=COO; 3=INT;
     local rol_horiz =  col_struct.study[case_index]:get_parameter("RHRZ", 0);
@@ -996,7 +998,7 @@ function TabVue.draw_simularion_cost(self,col_struct, aux_data, chart, case_inde
         end
 
         chart:add_line(aux_data:select_agent(1):fill(immediate_cost):rename_agent(dictionary.final_simulation[LANGUAGE]), 
-                                { colors = { "#D37295" }, xAllowDecimals = false })
+                                { colors = { "#D37295" }, xAllowDecimals = false, legendSizeLimit = LEGEND_MAX_CHAR })
 
         self:push(chart);
 
@@ -1028,19 +1030,19 @@ end
 
 function make_convergence_graphs(dashboard, conv_age, systems, horizon)
     for i, conv in ipairs(conv_age) do
-        local chart = ChartVue(dictionary.convergence[LANGUAGE] .. " | " .. dictionary.system[LANGUAGE] .. " : " .. systems[i] .. " | " .. dictionary.horizon[LANGUAGE] .. " : " .. horizon[i]);
-        chart:add_area_range(conv:select_agents({ 2 }), conv:select_agents({ 4 }), { colors = { "#ACD98D", "#ACD98D" }, xAllowDecimals = false }); -- Confidence interval
-        chart:add_line(conv:select_agents({ 1 }), { colors = { "#3CB7CC" }, xAllowDecimals = false }); -- Zinf
-        chart:add_line(conv:select_agents({ 3 }), { colors = { "#32A251" }, xAllowDecimals = false }); -- Zsup
+        local chart = Chart(dictionary.convergence[LANGUAGE] .. " | " .. dictionary.system[LANGUAGE] .. " : " .. systems[i] .. " | " .. dictionary.horizon[LANGUAGE] .. " : " .. horizon[i]);
+        chart:add_area_range(conv:select_agents({ 2 }), conv:select_agents({ 4 }), { colors = { "#ACD98D", "#ACD98D" }, xAllowDecimals = false, legendSizeLimit = LEGEND_MAX_CHAR }); -- Confidence interval
+        chart:add_line(conv:select_agents({ 1 }), { colors = { "#3CB7CC" }, xAllowDecimals = false, legendSizeLimit = LEGEND_MAX_CHAR }); -- Zinf
+        chart:add_line(conv:select_agents({ 3 }), { colors = { "#32A251" }, xAllowDecimals = false, legendSizeLimit = LEGEND_MAX_CHAR }); -- Zsup
         dashboard:push(chart);
     end
 end
 
 function make_added_cuts_graphs(dashboard, cuts_age, systems, horizon)
     for i, cuts in ipairs(cuts_age) do
-        local chart = ChartVue(dictionary.number_of_added_cut[LANGUAGE] .. " | " .. dictionary.system[LANGUAGE] .. " : " .. systems[i] .. dictionary.horizon[LANGUAGE] .. " : " .. horizon[i]);
-        chart:add_column(cuts:select_agents({ 1 }), { xAllowDecimals = false }); -- Opt
-        chart:add_column(cuts:select_agents({ 2 }), { xAllowDecimals = false }); -- Feas
+        local chart = Chart(dictionary.number_of_added_cut[LANGUAGE] .. " | " .. dictionary.system[LANGUAGE] .. " : " .. systems[i] .. dictionary.horizon[LANGUAGE] .. " : " .. horizon[i]);
+        chart:add_column(cuts:select_agents({ 1 }), { xAllowDecimals = false, legendSizeLimit = LEGEND_MAX_CHAR }); -- Opt
+        chart:add_column(cuts:select_agents({ 2 }), { xAllowDecimals = false, legendSizeLimit = LEGEND_MAX_CHAR }); -- Feas
         dashboard:push(chart);
     end
 end
@@ -1072,8 +1074,8 @@ function create_penalty_proportion_graph(tab, col_struct, i)
         return
     end
 
-    local chart = ChartVue(report_title .. " (%)");
-    chart:add_heatmap_series(penp, { yLabel = dictionary.cell_scenarios[LANGUAGE], xLabel = dictionary.cell_stage[LANGUAGE], showInLegend = false, stops = { { 0.0, "#4E79A7" }, { 0.5, "#FBEEB3" }, { 1.0, "#C64B3E" } }, stopsMin = 0.0, stopsMax = 100.0 });
+    local chart = Chart(report_title .. " (%)");
+    chart:add_heatmap_series(penp, { yLabel = dictionary.cell_scenarios[LANGUAGE], xLabel = dictionary.cell_stage[LANGUAGE], showInLegend = false, stops = { { 0.0, "#4E79A7" }, { 0.5, "#FBEEB3" }, { 1.0, "#C64B3E" } }, stopsMin = 0.0, stopsMax = 100.0, legendSizeLimit = LEGEND_MAX_CHAR });
     tab:push(chart);
 end
 
@@ -1096,10 +1098,11 @@ function create_conv_map_graph(tab, file_name, col_struct, i)
             { color = "#C64B3E", from = -0.5, to = 0.5, name = "not converged" },
             { color = "#4E79A7", from =  0.5, to = 1.5, name = "converged"     },
             { color = "#FBEEB3", from =  1.5, to = 2.5, name = "warning"       }
-        }
+        }, 
+        legendSizeLimit = LEGEND_MAX_CHAR
     };
 
-    local chart = ChartVue(report_title);
+    local chart = Chart(report_title);
     chart:add_heatmap(conv_map,options);
     tab:push(chart);
 end
@@ -1125,10 +1128,12 @@ function create_hourly_sol_status_graph(tab, col_struct, i)
                   { color = "#4E79A7", from = 1, to = 2, name = "Feasible solution"},
                   { color = "#FBEEB3", from = 3        , name = "Relaxed solution" },
                   { color = "#C64B3E", from = 2, to = 3, name = "No solution"      }
-                  }
+                  },
+    legendSizeLimit = LEGEND_MAX_CHAR
     };
+    
 
-    local chart = ChartVue(report_title);
+    local chart = Chart(report_title);
     chart:add_heatmap(status,options);
     tab:push(chart);
 
@@ -1160,10 +1165,11 @@ function create_mipgap_graph(tab, col_struct, i)
     showInLegend = false,
     stops = {{ 0.0, "#4E79A7" }, { 0.5, "#FBEEB3" }, { 1.0, "#C64B3E" }}, 
     stopsMin = 0.0, 
-    stopsMax = 100.0
+    stopsMax = 100.0,
+    legendSizeLimit = LEGEND_MAX_CHAR
     };
 
-    local chart = ChartVue(report_title);
+    local chart = Chart(report_title);
     chart:add_heatmap(mip_gap,options);
     
     tab:push(chart);
@@ -1194,12 +1200,12 @@ function create_exe_timer_per_scen(tab, col_struct, i)
             end
         end
 
-        extime_chart = ChartVue(dictionary.dispersion_of_time[LANGUAGE]);
+        extime_chart = Chart(dictionary.dispersion_of_time[LANGUAGE]);
         extime_chart:add_area_range(extime_disp:select_agent("MIN"):convert(unit),
                                     extime_disp:select_agent("MAX"):convert(unit),
-                                    { xUnit = dictionary.cell_stage[LANGUAGE], colors = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
+                                    { xUnit = dictionary.cell_stage[LANGUAGE], colors = { "#EA6B73", "#EA6B73" }, legendSizeLimit = LEGEND_MAX_CHAR }); -- Confidence interval
         extime_chart:add_line(extime_disp:select_agent(dictionary.cell_average[LANGUAGE]):convert(unit),
-                              { xUnit = dictionary.cell_stages[LANGUAGE], colors = { "#F02720" } });                  -- Average
+                              { xUnit = dictionary.cell_stages[LANGUAGE], colors = { "#F02720" }, legendSizeLimit = LEGEND_MAX_CHAR });                  -- Average
 
         if #extime_chart > 0 then
             tab:push(extime_chart);
@@ -1208,7 +1214,7 @@ function create_exe_timer_per_scen(tab, col_struct, i)
 end
 
 function create_pol_report(col_struct)
-    local tab = TabVue(dictionary.tab_policy[LANGUAGE]);
+    local tab = Tab(dictionary.tab_policy[LANGUAGE]);
 
     local total_cost_age;
     local future_cost_age;
@@ -1261,10 +1267,10 @@ function create_pol_report(col_struct)
 
         tab:push("## " .. dictionary.system[LANGUAGE] .. ": " .. system .. " | " .. dictionary.horizon[LANGUAGE] .. ": " .. horizon);
 
-        local chart_conv      = ChartVue(dictionary.convergence[LANGUAGE]);
-        local chart_cut_opt   = ChartVue(dictionary.new_cut_per_iteration_optimality[LANGUAGE]);
-        local chart_cut_feas  = ChartVue(dictionary.new_cut_per_iteration_feasibility[LANGUAGE]);
-        local chart_policy_simulation  = ChartVue(dictionary.policy_simulation[LANGUAGE]);
+        local chart_conv      = Chart(dictionary.convergence[LANGUAGE]);
+        local chart_cut_opt   = Chart(dictionary.new_cut_per_iteration_optimality[LANGUAGE]);
+        local chart_cut_feas  = Chart(dictionary.new_cut_per_iteration_feasibility[LANGUAGE]);
+        local chart_policy_simulation  = Chart(dictionary.policy_simulation[LANGUAGE]);
         chart_conv:horizontal_legend();
         chart_cut_opt:horizontal_legend();
         chart_cut_feas:horizontal_legend();
@@ -1301,7 +1307,8 @@ function create_pol_report(col_struct)
                                             light_global_color[std] },
                                             xUnit = dictionary.iteration[LANGUAGE],
                                             xAllowDecimals = false,
-                                            showInLegend = true });
+                                            showInLegend = true,
+                                            legendSizeLimit = LEGEND_MAX_CHAR });
 
                 chart_policy_simulation:add_area_range(conv_age:select_agents({ 2 }):rename_agent("(" .. prefix .. ub_str .. " - " .. tol_str .. ")"), 
                                                        conv_age:select_agents({ 4 }):rename_agent("(" .. prefix .. ub_str .. " + " .. tol_str .. ")"), 
@@ -1309,25 +1316,26 @@ function create_pol_report(col_struct)
                                                        light_global_color[std] },
                                                        xUnit = dictionary.iteration[LANGUAGE],
                                                        xAllowDecimals = false,
-                                                       showInLegend = true });
+                                                       showInLegend = true,
+                                                       legendSizeLimit = LEGEND_MAX_CHAR });
                 -- Zsup
                 chart_conv:add_line(conv_age:select_agents({ 3 }):rename_agent(prefix .. " " .. ub_str),
-                                    { colors = { main_global_color[std] }, xAllowDecimals = false, visible = zsup_is_visible });
+                                    { colors = { main_global_color[std] }, xAllowDecimals = false, visible = zsup_is_visible, legendSizeLimit = LEGEND_MAX_CHAR });
 
                 chart_policy_simulation:add_line(conv_age:select_agents({ 3 }):rename_agent(prefix .. " " .. ub_str),
-                                    { colors = { main_global_color[std] }, xAllowDecimals = false, visible = zsup_is_visible });
+                                    { colors = { main_global_color[std] }, xAllowDecimals = false, visible = zsup_is_visible, legendSizeLimit = LEGEND_MAX_CHAR });
                 -- Zinf
                 chart_conv:add_line(conv_age:select_agents({ 1 }):rename_agent(prefix .. " " .. lb_str),
-                                    { colors = { main_global_color[std] }, xAllowDecimals = false, dashStyle = "dash" }); -- Zinf
+                                    { colors = { main_global_color[std] }, xAllowDecimals = false, dashStyle = "dash", legendSizeLimit = LEGEND_MAX_CHAR }); -- Zinf
 
                 -- Cuts - optimality
                 chart_cut_opt:add_categories(cuts_opt,col_struct.case_dir_list[std],
-                                        { colors = { main_global_color[std] }, xUnit = dictionary.iteration[LANGUAGE], xAllowDecimals = false, showInLegend = studies > 1 });
+                                        { colors = { main_global_color[std] }, xUnit = dictionary.iteration[LANGUAGE], xAllowDecimals = false, showInLegend = studies > 1, legendSizeLimit = LEGEND_MAX_CHAR });
 
                 -- Cuts - feasibility
                 if is_greater_than_zero(cuts_feas) then
                     chart_cut_feas:add_categories(cuts_feas,col_struct.case_dir_list[std],
-                                             { colors = { main_global_color[std] }, xUnit = dictionary.iteration[LANGUAGE], xAllowDecimals = false, showInLegend = studies > 1 });
+                                             { colors = { main_global_color[std] }, xUnit = dictionary.iteration[LANGUAGE], xAllowDecimals = false, showInLegend = studies > 1, legendSizeLimit = LEGEND_MAX_CHAR });
                 end
 
                 -- Validation
@@ -1378,7 +1386,7 @@ function create_pol_report(col_struct)
     return tab;
 end
 
-function TabVue.final_cost_table(self, col_struct)
+function Tab.final_cost_table(self, col_struct)
     local discount_rate = require("sddp/discount_rate");
 
     self:push("## " .. dictionary.final_cost[LANGUAGE]);
@@ -1419,7 +1427,7 @@ end
 -----------------------------------------------------------------------------------------------
 
 function create_sim_report(col_struct)
-    local tab = TabVue(dictionary.tab_simulation[LANGUAGE]);
+    local tab = Tab(dictionary.tab_simulation[LANGUAGE]);
 
     local costs;
     local costs_agg;
@@ -1427,8 +1435,8 @@ function create_sim_report(col_struct)
 
     tab:final_cost_table(col_struct);
     
-    local cost_chart    = ChartVue(dictionary.breakdown_cost_time[LANGUAGE]);
-    local revenue_chart = ChartVue(dictionary.breakdown_revenue_time[LANGUAGE]);
+    local cost_chart    = Chart(dictionary.breakdown_cost_time[LANGUAGE]);
+    local revenue_chart = Chart(dictionary.breakdown_revenue_time[LANGUAGE]);
 
     local objcop = require("sddp/costs");
     local discount_rate = require("sddp/discount_rate");
@@ -1445,7 +1453,7 @@ function create_sim_report(col_struct)
         local agents_order = adjusted_table[1]:agents();
         for i = 1, studies do
             cost_chart:horizontal_legend();
-            cost_chart:add_column_categories(adjusted_table[i]:reorder_agents(agents_order):change_currency_configuration(i), col_struct.case_dir_list[i]);
+            cost_chart:add_column_categories(adjusted_table[i]:reorder_agents(agents_order):change_currency_configuration(i), col_struct.case_dir_list[i], {legendSizeLimit = LEGEND_MAX_CHAR});
         end
     else
         costs = objcop() / discount_rate():select_stages_of_outputs();
@@ -1463,11 +1471,11 @@ function create_sim_report(col_struct)
             end
 
             if obj_cost:loaded() then
-                cost_chart:add_pie(obj_cost:change_currency_configuration(), {colors = main_global_color});
+                cost_chart:add_pie(obj_cost:change_currency_configuration(), {colors = main_global_color, legendSizeLimit = LEGEND_MAX_CHAR});
             end
 
             if obj_revenue:loaded() then
-                revenue_chart:add_pie(obj_revenue:abs():change_currency_configuration(), {colors = main_global_color});
+                revenue_chart:add_pie(obj_revenue:abs():change_currency_configuration(), {colors = main_global_color, legendSizeLimit = LEGEND_MAX_CHAR});
             end
             
         end
@@ -1505,7 +1513,7 @@ end
 -----------------------------------------------------------------------------------------------
 
 function create_times_report(col_struct)
-    local tab = TabVue(dictionary.execution_times[LANGUAGE]);
+    local tab = Tab(dictionary.execution_times[LANGUAGE]);
 
     ---------
     -- Policy
@@ -1537,9 +1545,9 @@ function create_times_report(col_struct)
 
        tab:push("## " .. dictionary.system[LANGUAGE] .. ": " .. system .. " | " .. dictionary.horizon[LANGUAGE] .. ": " .. horizon);
 
-       local chart_time_forw = ChartVue(dictionary.forward_time[LANGUAGE]);
-       local chart_time_back = ChartVue(dictionary.backward_time[LANGUAGE]);
-       local chart_exe_pol = ChartVue(dictionary.exe_pol_times[LANGUAGE]);
+       local chart_time_forw = Chart(dictionary.forward_time[LANGUAGE]);
+       local chart_time_back = Chart(dictionary.backward_time[LANGUAGE]);
+       local chart_exe_pol = Chart(dictionary.exe_pol_times[LANGUAGE]);
        chart_time_forw:horizontal_legend();
        chart_time_back:horizontal_legend();
        chart_exe_pol:horizontal_legend();
@@ -1560,20 +1568,22 @@ function create_times_report(col_struct)
                 chart_time_forw:add_categories(time_forw, col_struct.case_dir_list[std], { xUnit = dictionary.iteration[LANGUAGE], 
                                                                                        yUnit = "s", 
                                                                                        xAllowDecimals = false, 
-                                                                                       showInLegend = studies > 1 });
+                                                                                       showInLegend = studies > 1,
+                                                                                       legendSizeLimit = LEGEND_MAX_CHAR });
 
                 -- Execution time - backward
                 chart_time_back:add_categories(time_back, col_struct.case_dir_list[std], { xUnit = dictionary.iteration[LANGUAGE], 
                                                                                        yUnit = "s", 
                                                                                        xAllowDecimals = false, 
-                                                                                       showInLegend = studies > 1 });
+                                                                                       showInLegend = studies > 1,
+                                                                                       legendSizeLimit = LEGEND_MAX_CHAR });
             else
                 info("Comparing cases have different policy horizons! Policy will only contain the main case data.");
             end
 
             local exe_times = col_struct.generic[std]:force_load("sddptimes");
             if conv_file:loaded() then
-                chart_exe_pol:add_categories(exe_times:select_agent(2),col_struct.case_dir_list[std], {showInLegend = studies > 1});
+                chart_exe_pol:add_categories(exe_times:select_agent(2),col_struct.case_dir_list[std], {showInLegend = studies > 1, legendSizeLimit = LEGEND_MAX_CHAR});
             end
         end
 
@@ -1596,13 +1606,13 @@ function create_times_report(col_struct)
     tab:push("## " .. dictionary.tab_simulation[LANGUAGE]);
     
     if studies > 1 then
-        local chart_exe_sim = ChartVue(dictionary.exe_sim_times[LANGUAGE]);
+        local chart_exe_sim = Chart(dictionary.exe_sim_times[LANGUAGE]);
         chart_exe_sim:horizontal_legend();
 
         for istudy = 1, studies do
             -- Execution times
             local exe_times = col_struct.generic[istudy]:load("sddptimes");
-            chart_exe_sim:add_column(exe_times:select_agent(1):rename_agent(col_struct.case_dir_list[istudy]));
+            chart_exe_sim:add_column(exe_times:select_agent(1):rename_agent(col_struct.case_dir_list[istudy]), {legendSizeLimit = LEGEND_MAX_CHAR});
         end
         
         if #chart_exe_sim > 0 then
@@ -1610,11 +1620,11 @@ function create_times_report(col_struct)
         end
 
     else
-        local chart_exe_sim = ChartVue(dictionary.exe_sim_times[LANGUAGE]);
+        local chart_exe_sim = Chart(dictionary.exe_sim_times[LANGUAGE]);
         
         -- Simulation execution times
         local exe_times = col_struct.generic[1]:load("sddptimes");
-        chart_exe_sim:add_column(exe_times:select_agent(1), {showInLegend = false});
+        chart_exe_sim:add_column(exe_times:select_agent(1), {showInLegend = false, legendSizeLimit = LEGEND_MAX_CHAR});
         
         if #chart_exe_sim > 0 then
            tab:push(chart_exe_sim);
@@ -1635,9 +1645,9 @@ end
 
 function create_costs_and_revs(col_struct, tab)
 
-    local chart = ChartVue(dictionary.disp_of_operation_cost[LANGUAGE]);
+    local chart = Chart(dictionary.disp_of_operation_cost[LANGUAGE]);
     chart:horizontal_legend();
-    local chart_avg = ChartVue(dictionary.avg_operation_cost[LANGUAGE]);
+    local chart_avg = Chart(dictionary.avg_operation_cost[LANGUAGE]);
     chart_avg:horizontal_legend();
 
     for i = 1, studies do
@@ -1655,20 +1665,20 @@ function create_costs_and_revs(col_struct, tab)
 
         if studies > 1 then
             if is_greater_than_zero(disp) then
-                chart:add_area_range(disp:select_agent(1):add_prefix(col_struct.case_dir_list[i] .. " - "):change_currency_configuration(i), disp:select_agent(3):change_currency_configuration(i), { xUnit=dictionary.cell_stage[LANGUAGE], colors = light_global_color[i] }); -- Confidence interval
-                chart:add_line(disp:select_agent(2):add_prefix(col_struct.case_dir_list[i] .. " - "):change_currency_configuration(i),{xUnit=dictionary.cell_stage[LANGUAGE], colors = {main_global_color[i]} }); -- Average
+                chart:add_area_range(disp:select_agent(1):add_prefix(col_struct.case_dir_list[i] .. " - "):change_currency_configuration(i), disp:select_agent(3):change_currency_configuration(i), { xUnit=dictionary.cell_stage[LANGUAGE], colors = light_global_color[i], legendSizeLimit = LEGEND_MAX_CHAR }); -- Confidence interval
+                chart:add_line(disp:select_agent(2):add_prefix(col_struct.case_dir_list[i] .. " - "):change_currency_configuration(i),{xUnit=dictionary.cell_stage[LANGUAGE], colors = {main_global_color[i]}, legendSizeLimit = LEGEND_MAX_CHAR }); -- Average
             end
         else
             if is_greater_than_zero(disp) then
-                chart:add_area_range(disp:select_agent(1):change_currency_configuration(i), disp:select_agent(3):change_currency_configuration(), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { "#EA6B73", "#EA6B73" } }); -- Confidence interval
-                chart:add_line(disp:select_agent(2):change_currency_configuration(), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { "#F02720" } }); -- Average
+                chart:add_area_range(disp:select_agent(1):change_currency_configuration(i), disp:select_agent(3):change_currency_configuration(), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { "#EA6B73", "#EA6B73" }, legendSizeLimit = LEGEND_MAX_CHAR }); -- Confidence interval
+                chart:add_line(disp:select_agent(2):change_currency_configuration(), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { "#F02720" }, legendSizeLimit = LEGEND_MAX_CHAR }); -- Average
             end
         end
 
         -- sddp_dashboard_cost_avg
         local costs_avg = costs:aggregate_scenarios(BY_AVERAGE()):remove_zeros();
         if studies == 1 and is_greater_than_zero(costs_avg) then
-            chart_avg:add_column_stacking(costs_avg:change_currency_configuration(),{xUnit=dictionary.cell_stage[LANGUAGE]});
+            chart_avg:add_column_stacking(costs_avg:change_currency_configuration(),{xUnit=dictionary.cell_stage[LANGUAGE], legendSizeLimit = LEGEND_MAX_CHAR});
         end
     end
 
@@ -1688,7 +1698,7 @@ end
 -----------------------------------------------------------------------------------------------
 
 function create_marg_costs(col_struct)
-    local tab = TabVue(dictionary.tab_cmo[LANGUAGE]);
+    local tab = Tab(dictionary.tab_cmo[LANGUAGE]);
 
     local cmg = {};
     local cmg_aggsum;
@@ -1724,20 +1734,20 @@ function create_marg_costs(col_struct)
         
         local count_sys = 1;
         for system, data in pairs(system_data) do
-            local chart = ChartVue(system);
+            local chart = Chart(system);
 
             -- Add marginal costs outputs
             for _,individual_data in ipairs(data) do
-                chart:add_column(individual_data:force_unit(system_unit[count_sys]));-- Annual Marg. cost
+                chart:add_column(individual_data:force_unit(system_unit[count_sys]), {legendSizeLimit = LEGEND_MAX_CHAR});-- Annual Marg. cost
             end
             -- chart:add_column(concatenate(data):force_unit(system_unit[count_sys])); 
             tab:push(chart);
             count_sys = count_sys + 1;
         end
     else
-        local chart = ChartVue();
+        local chart = Chart();
         cmg_aggyear = cmg[1]:aggregate_blocks_by_duracipu():aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[1].hours:select_stages_of_outputs(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE());
-        chart:add_column(cmg_aggyear:change_currency_configuration(), { xUnit=dictionary.cell_year[LANGUAGE] });
+        chart:add_column(cmg_aggyear:change_currency_configuration(), { xUnit=dictionary.cell_year[LANGUAGE], legendSizeLimit = LEGEND_MAX_CHAR });
         tab:push(chart);
     end
 
@@ -1745,20 +1755,20 @@ function create_marg_costs(col_struct)
     if studies > 1 then
         local agents = cmg[1]:agents();
         for _, agent in ipairs(agents) do
-            local chart = ChartVue(agent);
+            local chart = Chart(agent);
             local aux_tab = {};
             for j = 1, studies do
                 cmg_aggsum = cmg[j]:aggregate_blocks_by_duracipu(j):aggregate_scenarios(BY_AVERAGE());
                 local cmg_aggsum_agents = cmg_aggsum:select_agent(agent):rename_agent(col_struct.case_dir_list[j]);
                
-                chart:add_line(cmg_aggsum_agents:change_currency_configuration(j),{xUnit=dictionary.cell_stage[LANGUAGE]});
+                chart:add_line(cmg_aggsum_agents:change_currency_configuration(j),{xUnit=dictionary.cell_stage[LANGUAGE], legendSizeLimit = LEGEND_MAX_CHAR});
             end
             tab:push(chart);
         end
     else
-        local chart = ChartVue();
+        local chart = Chart();
         cmg_aggsum = cmg[1]:aggregate_blocks_by_duracipu():aggregate_scenarios(BY_AVERAGE());
-        chart:add_column(cmg_aggsum:change_currency_configuration(),{xUnit=dictionary.cell_stage[LANGUAGE]}, {colors = main_global_color});
+        chart:add_column(cmg_aggsum:change_currency_configuration(),{xUnit=dictionary.cell_stage[LANGUAGE], legendSizeLimit = LEGEND_MAX_CHAR, colors = main_global_color});
         tab:push(chart);
     end
 
@@ -1775,7 +1785,7 @@ function create_marg_costs(col_struct)
         tab:push("## " .. dictionary.stg_cmo_sto[LANGUAGE]);
         local systems = col_struct.system[1]:labels(); -- First case sets base agents
         for i,system in ipairs(systems) do
-            local chart = ChartVue(system);
+            local chart = Chart(system);
             for istudy = 1, studies do
             
                 
@@ -1789,15 +1799,17 @@ function create_marg_costs(col_struct)
                     chart:add_area_range(disp:select_agent(1):add_prefix(col_struct.case_dir_list[istudy] .. " - "):change_currency_configuration(), -- Area range
                                          disp:select_agent(3):change_currency_configuration(),
                                          {xUnit = dictionary.cell_stage[LANGUAGE],
-                                         colors = { light_global_color[istudy], light_global_color[istudy] } });
-                    chart:add_line(disp:select_agent(2):add_prefix(col_struct.case_dir_list[istudy] .. " - "):change_currency_configuration()); -- Average
+                                         colors = { light_global_color[istudy], light_global_color[istudy] },
+                                        legendSizeLimit = LEGEND_MAX_CHAR });
+                    chart:add_line(disp:select_agent(2):add_prefix(col_struct.case_dir_list[istudy] .. " - "):change_currency_configuration(), {legendSizeLimit = LEGEND_MAX_CHAR}); -- Average
                 
                 else
                     chart:add_area_range(disp:select_agent(1):change_currency_configuration(), -- Area range
                                          disp:select_agent(3):change_currency_configuration(),
                                          {xUnit = dictionary.cell_stage[LANGUAGE],
-                                         colors = { light_global_color[istudy], light_global_color[istudy] } });
-                    chart:add_line(disp:select_agent(2):change_currency_configuration()); -- Average
+                                         colors = { light_global_color[istudy], light_global_color[istudy] },
+                                         legendSizeLimit = LEGEND_MAX_CHAR });
+                    chart:add_line(disp:select_agent(2):change_currency_configuration(), {legendSizeLimit = LEGEND_MAX_CHAR}); -- Average
                 end
             end
             tab:push(chart);
@@ -1812,7 +1824,7 @@ end
 -----------------------------------------------------------------------------------------------
 
 function create_gen_report(col_struct)
-    local tab = TabVue(dictionary.tab_generation[LANGUAGE]);
+    local tab = Tab(dictionary.tab_generation[LANGUAGE]);
 
     -- Color preferences
     if studies == 1 then
@@ -1895,19 +1907,19 @@ function create_gen_report(col_struct)
     end
 
     if studies > 1 then
-        chart_tot_gerhid     = ChartVue(dictionary.total_hydro[LANGUAGE]);
-        chart_tot_sml_hid    = ChartVue(dictionary.total_small_hydro[LANGUAGE]);
-        chart_tot_gerter     = ChartVue(dictionary.total_thermal[LANGUAGE]);
-        chart_tot_other_renw = ChartVue(dictionary.total_renewable_other[LANGUAGE]);
-        chart_tot_renw_wind  = ChartVue(dictionary.total_renewable_wind[LANGUAGE]);
-        chart_tot_renw_solar = ChartVue(dictionary.total_renewable_solar[LANGUAGE]);
-        chart_tot_renw_shyd  = ChartVue(dictionary.total_renewable_small_hydro[LANGUAGE]);
-        chart_tot_renw_csp   = ChartVue(dictionary.total_renewable_csp[LANGUAGE]);
-        chart_tot_gerbat     = ChartVue(dictionary.total_battery[LANGUAGE]);
-        chart_tot_potinj     = ChartVue(dictionary.total_power_injection[LANGUAGE]);
-        chart_tot_defcit     = ChartVue(dictionary.total_deficit[LANGUAGE]);
+        chart_tot_gerhid     = Chart(dictionary.total_hydro[LANGUAGE]);
+        chart_tot_sml_hid    = Chart(dictionary.total_small_hydro[LANGUAGE]);
+        chart_tot_gerter     = Chart(dictionary.total_thermal[LANGUAGE]);
+        chart_tot_other_renw = Chart(dictionary.total_renewable_other[LANGUAGE]);
+        chart_tot_renw_wind  = Chart(dictionary.total_renewable_wind[LANGUAGE]);
+        chart_tot_renw_solar = Chart(dictionary.total_renewable_solar[LANGUAGE]);
+        chart_tot_renw_shyd  = Chart(dictionary.total_renewable_small_hydro[LANGUAGE]);
+        chart_tot_renw_csp   = Chart(dictionary.total_renewable_csp[LANGUAGE]);
+        chart_tot_gerbat     = Chart(dictionary.total_battery[LANGUAGE]);
+        chart_tot_potinj     = Chart(dictionary.total_power_injection[LANGUAGE]);
+        chart_tot_defcit     = Chart(dictionary.total_deficit[LANGUAGE]);
     else
-        chart = ChartVue("");
+        chart = Chart("");
     end
 
     -- Total generation report
@@ -1961,34 +1973,34 @@ function create_gen_report(col_struct)
 
         if studies > 1 then
             if total_hydro_gen:loaded() then
-                chart_tot_gerhid:add_column(total_hydro_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_hydro }});
+                chart_tot_gerhid:add_column(total_hydro_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_hydro }, legendSizeLimit = LEGEND_MAX_CHAR});
             end
             if total_thermal_gen:loaded() then
-                chart_tot_gerter:add_column(total_thermal_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_thermal }});
+                chart_tot_gerter:add_column(total_thermal_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_thermal }, legendSizeLimit = LEGEND_MAX_CHAR});
             end
             if total_other_renw_gen:loaded() then
-                chart_tot_other_renw:add_column(total_other_renw_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_renw_other }});
+                chart_tot_other_renw:add_column(total_other_renw_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_renw_other }, legendSizeLimit = LEGEND_MAX_CHAR});
             end
             if total_wind_gen:loaded() then
-                chart_tot_renw_wind:add_column(total_wind_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_wind }});
+                chart_tot_renw_wind:add_column(total_wind_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_wind }, legendSizeLimit = LEGEND_MAX_CHAR});
             end
             if total_solar_gen:loaded() then
-                chart_tot_renw_solar:add_column(total_solar_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_solar }});
+                chart_tot_renw_solar:add_column(total_solar_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_solar }, legendSizeLimit = LEGEND_MAX_CHAR});
             end
             if total_small_hydro_gen:loaded() then
-                chart_tot_renw_shyd:add_column(total_small_hydro_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_small_hydro }});
+                chart_tot_renw_shyd:add_column(total_small_hydro_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_small_hydro }, legendSizeLimit = LEGEND_MAX_CHAR});
             end
             if total_csp_gen:loaded() then
-                chart_tot_renw_csp:add_column(total_csp_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_csp }});
+                chart_tot_renw_csp:add_column(total_csp_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_csp }, legendSizeLimit = LEGEND_MAX_CHAR});
             end
             if total_batt_gen:loaded() then
-                chart_tot_gerbat:add_column(total_batt_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_battery }});
+                chart_tot_gerbat:add_column(total_batt_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_battery }, legendSizeLimit = LEGEND_MAX_CHAR});
             end
             if total_pot_inj:loaded() then
-                chart_tot_potinj:add_column(total_pot_inj, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_pinj }});
+                chart_tot_potinj:add_column(total_pot_inj, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_pinj }, legendSizeLimit = LEGEND_MAX_CHAR});
             end
             if total_deficit:loaded() then
-                chart_tot_defcit:add_column(total_deficit, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_deficit }});
+                chart_tot_defcit:add_column(total_deficit, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_deficit }, legendSizeLimit = LEGEND_MAX_CHAR});
             end
         else
             local colors_vector = {};
@@ -2034,7 +2046,7 @@ function create_gen_report(col_struct)
                 table.insert(total_vector, total_deficit);
             end
             local total_generation = concatenate(total_vector);
-            chart:add_area_stacking(total_generation, {xUnit=dictionary.cell_stage[LANGUAGE], colors = colors_vector});
+            chart:add_area_stacking(total_generation, {xUnit=dictionary.cell_stage[LANGUAGE], colors = colors_vector, legendSizeLimit = LEGEND_MAX_CHAR});
         end
     end
 
@@ -2197,27 +2209,27 @@ function create_gen_report(col_struct)
     end
 
     for agent, data in pairs(systems_data) do
-        local chart_tot_gerhid = ChartVue(dictionary.total_hydro[LANGUAGE]);
-        local chart_tot_gerter = ChartVue(dictionary.total_thermal[LANGUAGE]);
-        local chart_tot_renw_other = ChartVue(dictionary.total_renewable_other[LANGUAGE]);
-        local chart_tot_renw_wind = ChartVue(dictionary.total_renewable_wind[LANGUAGE]);
-        local chart_tot_renw_solar = ChartVue(dictionary.total_renewable_solar[LANGUAGE]);
-        local chart_tot_renw_shyd = ChartVue(dictionary.total_renewable_small_hydro[LANGUAGE]);
-        local chart_tot_renw_csp = ChartVue(dictionary.total_renewable_csp[LANGUAGE]);
-        local chart_tot_gerbat = ChartVue(dictionary.total_battery[LANGUAGE]);
-        local chart_tot_potinj = ChartVue(dictionary.total_power_injection[LANGUAGE]);
-        local chart_tot_defcit = ChartVue(dictionary.total_deficit[LANGUAGE]);
+        local chart_tot_gerhid = Chart(dictionary.total_hydro[LANGUAGE]);
+        local chart_tot_gerter = Chart(dictionary.total_thermal[LANGUAGE]);
+        local chart_tot_renw_other = Chart(dictionary.total_renewable_other[LANGUAGE]);
+        local chart_tot_renw_wind = Chart(dictionary.total_renewable_wind[LANGUAGE]);
+        local chart_tot_renw_solar = Chart(dictionary.total_renewable_solar[LANGUAGE]);
+        local chart_tot_renw_shyd = Chart(dictionary.total_renewable_small_hydro[LANGUAGE]);
+        local chart_tot_renw_csp = Chart(dictionary.total_renewable_csp[LANGUAGE]);
+        local chart_tot_gerbat = Chart(dictionary.total_battery[LANGUAGE]);
+        local chart_tot_potinj = Chart(dictionary.total_power_injection[LANGUAGE]);
+        local chart_tot_defcit = Chart(dictionary.total_deficit[LANGUAGE]);
 
-        chart_tot_gerhid:add_column(concatenate(data.hydro), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_hydro }, showInLegend = has_more_than_one_study});
-        chart_tot_gerter:add_column(concatenate(data.thermal), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_thermal }, showInLegend = has_more_than_one_study});
-        chart_tot_renw_other:add_column(concatenate(data.other_renw), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_renw_other }, showInLegend = has_more_than_one_study});
-        chart_tot_renw_wind:add_column(concatenate(data.wind), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_wind }, showInLegend = has_more_than_one_study});
-        chart_tot_renw_solar:add_column(concatenate(data.solar), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_solar }, showInLegend = has_more_than_one_study});
-        chart_tot_renw_shyd:add_column(concatenate(data.small_hydro), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_small_hydro }, showInLegend = has_more_than_one_study});
-        chart_tot_renw_csp:add_column(concatenate(data.csp), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_csp }, showInLegend = has_more_than_one_study});
-        chart_tot_gerbat:add_column(concatenate(data.battery), { xUnit=dictionary.cell_stage, colors = { color_battery }, showInLegend = has_more_than_one_study});
-        chart_tot_potinj:add_column(concatenate(data.pot_inj), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_pinj }, showInLegend = has_more_than_one_study});
-        chart_tot_defcit:add_column(concatenate(data.deficit), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_deficit }, showInLegend = has_more_than_one_study});
+        chart_tot_gerhid:add_column(concatenate(data.hydro), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_hydro }, showInLegend = has_more_than_one_study, legendSizeLimit = LEGEND_MAX_CHAR});
+        chart_tot_gerter:add_column(concatenate(data.thermal), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_thermal }, showInLegend = has_more_than_one_study, legendSizeLimit = LEGEND_MAX_CHAR});
+        chart_tot_renw_other:add_column(concatenate(data.other_renw), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_renw_other }, showInLegend = has_more_than_one_study, legendSizeLimit = LEGEND_MAX_CHAR});
+        chart_tot_renw_wind:add_column(concatenate(data.wind), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_wind }, showInLegend = has_more_than_one_study, legendSizeLimit = LEGEND_MAX_CHAR});
+        chart_tot_renw_solar:add_column(concatenate(data.solar), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_solar }, showInLegend = has_more_than_one_study, legendSizeLimit = LEGEND_MAX_CHAR});
+        chart_tot_renw_shyd:add_column(concatenate(data.small_hydro), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_small_hydro }, showInLegend = has_more_than_one_study, legendSizeLimit = LEGEND_MAX_CHAR});
+        chart_tot_renw_csp:add_column(concatenate(data.csp), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_csp }, showInLegend = has_more_than_one_study, legendSizeLimit = LEGEND_MAX_CHAR});
+        chart_tot_gerbat:add_column(concatenate(data.battery), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_battery }, showInLegend = has_more_than_one_study, legendSizeLimit = LEGEND_MAX_CHAR});
+        chart_tot_potinj:add_column(concatenate(data.pot_inj), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_pinj }, showInLegend = has_more_than_one_study, legendSizeLimit = LEGEND_MAX_CHAR});
+        chart_tot_defcit:add_column(concatenate(data.deficit), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_deficit }, showInLegend = has_more_than_one_study, legendSizeLimit = LEGEND_MAX_CHAR});
 
         tab:push("## ".. dictionary.total_generation_system[LANGUAGE] .. " - " .. agent);
         if #chart_tot_gerhid > 0 then
@@ -2256,19 +2268,19 @@ function create_gen_report(col_struct)
 end
 
 function create_risk_report(col_struct)
-    local tab = TabVue(dictionary.tab_defict_risk[LANGUAGE]);
-    local chart = ChartVue(dictionary.total_defict_risk[LANGUAGE]);
+    local tab = Tab(dictionary.tab_defict_risk[LANGUAGE]);
+    local chart = Chart(dictionary.total_defict_risk[LANGUAGE]);
 
     if studies > 1 then
         for i = 1, studies do
             local risk_file = col_struct.system[i]:load("sddprisk"):aggregate_agents(BY_AVERAGE(), Collection.SYSTEM):aggregate_stages(BY_AVERAGE());
 
             -- Add marginal costs outputs
-            chart:add_column_categories(risk_file, col_struct.case_dir_list[i]); -- Annual Marg. cost
+            chart:add_column_categories(risk_file, col_struct.case_dir_list[i], { legendSizeLimit = LEGEND_MAX_CHAR }); -- Annual Marg. cost
         end
     else
         local risk_file = col_struct.system[1]:load("sddprisk");
-        chart:add_column(risk_file);
+        chart:add_column(risk_file, { legendSizeLimit = LEGEND_MAX_CHAR });
     end
 
     if #chart > 0 then
@@ -2283,7 +2295,7 @@ end
 -----------------------------------------------------------------------------------------------
 
 function create_warning_and_errors_tab()
-    local tab = TabVue(dictionary.error_and_warnings_tab[LANGUAGE]);
+    local tab = Tab(dictionary.error_and_warnings_tab[LANGUAGE]);
     tab:set_icon("shield-alert");
     tab:push_advices(advisor);
     return tab
@@ -2351,7 +2363,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
                         if dictionary[reference_name] then
                             ref_name = dictionary[reference_name][LANGUAGE];
                         end
-                        viol_report_structs[line] = {["chart"] = ChartVue(ref_name),
+                        viol_report_structs[line] = {["chart"] = Chart(ref_name),
                                                      ["study"] = {[istudy] = true}};
                     else
                         viol_report_structs[line]["study"][istudy] = true;
@@ -2387,7 +2399,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     ----------------
     -- Infeasibility
     ----------------
-    local tab_inf = TabVue(dictionary.tab_infeasibility[LANGUAGE]);
+    local tab_inf = Tab(dictionary.tab_infeasibility[LANGUAGE]);
     tab_inf:set_icon("alert-triangle");
     
     -- Infeasibility report
@@ -2412,7 +2424,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
             if #has_inf > 0 then
                 for i = 1, #has_inf do
                     j = has_inf[i]; -- Pointer to case
-                    local tab_inf_sub = TabVue(col_struct.case_dir_list[j]);
+                    local tab_inf_sub = Tab(col_struct.case_dir_list[j]);
                     dash_infeasibility(tab_inf_sub,info_struct[j].infrep .. ".out",j);
 
                     tab_inf:push(tab_inf_sub);
@@ -2444,7 +2456,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     -- Solution quality
     -------------------
 
-    local tab_solution_quality = TabVue(dictionary.tab_solution_quality[LANGUAGE]);
+    local tab_solution_quality = Tab(dictionary.tab_solution_quality[LANGUAGE]);
     tab_solution_quality:set_collapsed(false);
     tab_solution_quality:set_disabled();
     tab_solution_quality:set_icon("alert-triangle");
@@ -2479,9 +2491,9 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     ------------
 
     -- Violation tabs
-    local tab_violations = TabVue(dictionary.tab_violations[LANGUAGE]);
-    local tab_viol_avg   = TabVue(dictionary.tab_average[LANGUAGE]);
-    local tab_viol_max   = TabVue(dictionary.tab_maximum[LANGUAGE]);
+    local tab_violations = Tab(dictionary.tab_violations[LANGUAGE]);
+    local tab_viol_avg   = Tab(dictionary.tab_average[LANGUAGE]);
+    local tab_viol_max   = Tab(dictionary.tab_maximum[LANGUAGE]);
 
     tab_violations:set_collapsed(true);
     tab_violations:set_disabled();
@@ -2494,9 +2506,9 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
                 local viol_file = col_struct.generic[istudy]:force_load(file_name);
                 if viol_file:loaded() then
                     if studies == 1 then
-                        struct.chart:add_column_stacking(viol_file, {xUnit=dictionary.cell_stage[LANGUAGE]});
+                        struct.chart:add_column_stacking(viol_file, {xUnit=dictionary.cell_stage[LANGUAGE], legendSizeLimit = LEGEND_MAX_CHAR});
                     else
-                        struct.chart:add_column_categories(viol_file, col_struct.case_dir_list[istudy], {color = main_global_color[istudy]});
+                        struct.chart:add_column_categories(viol_file, col_struct.case_dir_list[istudy], {color = main_global_color[istudy], legendSizeLimit = LEGEND_MAX_CHAR});
                         struct.chart:horizontal_legend();
                     end
                 end
@@ -2524,7 +2536,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     -- Results
     ----------
 
-    local tab_results = TabVue(dictionary.tab_results[LANGUAGE]);
+    local tab_results = Tab(dictionary.tab_results[LANGUAGE]);
     tab_results:set_collapsed(true);
     tab_results:set_disabled();
     tab_results:set_icon("line-chart");
