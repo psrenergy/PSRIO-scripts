@@ -1914,9 +1914,9 @@ function create_gen_report(col_struct)
         total_pot_inj   = potinj[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_pot_inj_age);
 
         -- Renewable generation is broken into 3 types
-        local wind_agents  = col_struct.renewable[i].tech_type:ne(1):remove_zeros():agents();
-        local solar_agents = col_struct.renewable[i].tech_type:ne(2):remove_zeros():agents();
-        local small_hydro_agents = col_struct.renewable[i].tech_type:ne(4):remove_zeros():agents();
+        local wind_agents  = col_struct.renewable[i].tech_type:eq(1):remove_zeros():agents();
+        local solar_agents = col_struct.renewable[i].tech_type:eq(2):remove_zeros():agents();
+        local small_hydro_agents = col_struct.renewable[i].tech_type:eq(4):remove_zeros():agents();
 
         total_other_renw_gen  = gergnd[i]:remove_agents(wind_agents)
                                          :remove_agents(solar_agents)
@@ -1980,7 +1980,7 @@ function create_gen_report(col_struct)
                 table.insert(total_vector, total_solar_gen);
             end
             if total_small_hydro_gen:loaded() then
-                table.insert(colors_vector, color_thermal);
+                table.insert(colors_vector, color_small_hydro);
                 table.insert(total_vector, total_small_hydro_gen);
             end
             if total_csp_gen:loaded() then
