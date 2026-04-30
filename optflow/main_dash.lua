@@ -58,6 +58,7 @@ local dictionary = {
     reactive_injection = {en = "Reactive injection", es = "Inyección reactiva", pt = "Injeção reativa"},
     max_pos_reactive_injection = {en = "Maximum positive reactive injection", es = "Inyección reactiva positiva máxima", pt = "Máxima injeção reativa positiva"},
     max_neg_reactive_injection = {en = "Maximum negative reactive injection", es = "Inyección reactiva negativa máxima", pt = "Máxima injeção reativa negativa"},
+    reactive_injection_warning = {en = "*No bus has positive or negative reactive power injection in this case.*", es = "*Ninguna barra presenta inyección de potencia reactiva positiva o negativa en este caso.*", pt = "*Nenhuma barra apresenta injeção de potência reativa positiva ou negativa neste caso.*"},
     shunt = {en = "Shunt", es = "Shunt", pt = "Shunt"},
     sincron = {en = "Sincron", es = "Síncron", pt = "Síncron"},
     static_compensator = {en = "Static compensator", es = "Compensador estático", pt = "Compensador estático"},
@@ -1024,6 +1025,9 @@ function Tab.reactive_injection_chart(self, n_cases, Lang, output)
     end
     if #chart_neg > 0 then
         self:push(chart_neg);
+    end
+    if not (#chart_pos > 0 or #chart_neg > 0) then
+        self:push(dictionary.reactive_injection_warning[lang]);
     end
 end
 
