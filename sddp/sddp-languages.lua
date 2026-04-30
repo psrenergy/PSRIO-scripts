@@ -427,6 +427,11 @@ dictionary = {
         es = "Hidro: vertimiento no controlable",
         pt = "Hidro: vertimento nao controlavel"
     },
+    inertia_violation = {
+        en = "Inertia",
+        es = "Inércia",
+        pt = "Inercia"
+    },
     vreseg = {
         en = "Reserve: joint requirement",
         es = "Reserva: requisito conjunto",
