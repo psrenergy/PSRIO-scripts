@@ -487,21 +487,21 @@ local dictionary = {
     }
 }
 
-function Expression.select_optflow_date_scn_blcks(self, optflow_data_case, system_codes)
+function Expression.select_optflow_date_scn_blcks(self, optflow_data_case, system_codes, select_system)
     local self_selected = self:select_stages(optflow_data_case.initial_stage, optflow_data_case.final_stage); --self:select_stages(1, 36)
     --local self_selected = self:select_stages_by_year_period(optflow_data_case.initial_stage, optflow_data_case.initial_year, optflow_data_case.final_stage, optflow_data_case.final_year);
 
     if optflow_data_case.serie_representation ~= 0 then
-        self_selected:select_scenarios(optflow_data_case.selected_series);
+        self_selected = self_selected:select_scenarios(optflow_data_case.selected_series);
     end
 
     if optflow_data_case.resolution_representation ~= 0 then
-        self_selected:select_blocks(optflow_data_case.selected_resolutions);
+        self_selected = self_selected:select_blocks(optflow_data_case.selected_resolutions);
     end
 
-    if optflow_data_case.system_representation ~= 0 then
+    if optflow_data_case.system_representation ~= 0 and select_system then
         local selected_systems_names = system_codes:select_agents_by_code(optflow_data_case.selected_systems):agents();
-        self_selected:select_agents(Collection.SYSTEM, selected_systems_names);
+        self_selected = self_selected:select_agents(Collection.SYSTEM, selected_systems_names);
     end
 
     return self_selected;
@@ -524,48 +524,48 @@ function load_data(output, lang, optflow_data)
         output.sddp = output.sddp or {};
         output.sddp[case] = {};
 
-        output.optflow[case].solution_status = generic:load("opf_status"):select_optflow_date_scn_blcks(optflow_data[case], system_codes);
-        output.optflow[case].solution_time = generic:load("opf_tcpu"):select_optflow_date_scn_blcks(optflow_data[case], system_codes);
+        output.optflow[case].solution_status = generic:load("opf_status"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, false);
+        output.optflow[case].solution_time = generic:load("opf_tcpu"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, false);
 
-        output.optflow[case].thermal_cost = thermal:load("opf_cotr"):select_optflow_date_scn_blcks(optflow_data[case], system_codes):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.thermal[lang]);
-        output.optflow[case].hydro_cost = hydro:load("opf_cohd"):select_optflow_date_scn_blcks(optflow_data[case], system_codes):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.hydro[lang]);
-        output.optflow[case].renewable_cost = renewable:load("opf_corn"):select_optflow_date_scn_blcks(optflow_data[case], system_codes):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.renewable[lang]);
-        output.optflow[case].pot_injection_penalty_cost = bus:load("opf_cinj"):select_optflow_date_scn_blcks(optflow_data[case], system_codes):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.reactive_injection_power_penalty[lang]);
+        output.optflow[case].thermal_cost = thermal:load("opf_cotr"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.thermal[lang]);
+        output.optflow[case].hydro_cost = hydro:load("opf_cohd"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.hydro[lang]);
+        output.optflow[case].renewable_cost = renewable:load("opf_corn"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.renewable[lang]);
+        output.optflow[case].pot_injection_penalty_cost = bus:load("opf_cinj"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.reactive_injection_power_penalty[lang]);
 
-        output.optflow[case].active_power_mismatches = bus:load("opf_mismatmw"):select_optflow_date_scn_blcks(optflow_data[case], system_codes);
-        output.optflow[case].reactive_power_mismatches = bus:load("opf_mismatmvar"):select_optflow_date_scn_blcks(optflow_data[case], system_codes);
+        output.optflow[case].active_power_mismatches = bus:load("opf_mismatmw"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true);
+        output.optflow[case].reactive_power_mismatches = bus:load("opf_mismatmvar"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true);
 
-        output.optflow[case].active_thermal_generation = thermal:load("opf_pter"):select_optflow_date_scn_blcks(optflow_data[case], system_codes):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.thermal[lang]);
-        output.optflow[case].active_hydro_generation = hydro:load("opf_phdr"):select_optflow_date_scn_blcks(optflow_data[case], system_codes):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.hydro[lang]);
-        output.optflow[case].active_renewable_generation = renewable:load("opf_pgnd"):select_optflow_date_scn_blcks(optflow_data[case], system_codes):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.renewable[lang]);
-        output.optflow[case].active_batt_generation = battery:load("opf_pbat"):select_optflow_date_scn_blcks(optflow_data[case], system_codes):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.battery[lang]);
-        output.optflow[case].active_demand = bus:load("opf_ploa"):select_optflow_date_scn_blcks(optflow_data[case], system_codes):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.active_load[lang]);
+        output.optflow[case].active_thermal_generation = thermal:load("opf_pter"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.thermal[lang]);
+        output.optflow[case].active_hydro_generation = hydro:load("opf_phdr"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.hydro[lang]);
+        output.optflow[case].active_renewable_generation = renewable:load("opf_pgnd"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.renewable[lang]);
+        output.optflow[case].active_batt_generation = battery:load("opf_pbat"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.battery[lang]);
+        output.optflow[case].active_demand = bus:load("opf_ploa"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.active_load[lang]);
 
-        output.optflow[case].reactive_thermal_generation = thermal:load("opf_qter"):select_optflow_date_scn_blcks(optflow_data[case], system_codes):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.thermal[lang]);
-        output.optflow[case].reactive_hydro_generation = hydro:load("opf_qhdr"):select_optflow_date_scn_blcks(optflow_data[case], system_codes):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.hydro[lang]);
-        output.optflow[case].reactive_renewable_generation = renewable:load("opf_qgnd"):select_optflow_date_scn_blcks(optflow_data[case], system_codes):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.renewable[lang]);
-        output.optflow[case].reactive_batt_generation = battery:load("opf_qbat"):select_optflow_date_scn_blcks(optflow_data[case], system_codes):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.battery[lang]);
-        output.optflow[case].reactive_sinc_generation = Generic(case):load("opf_qsin"):select_optflow_date_scn_blcks(optflow_data[case], system_codes):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.sincron[lang]);
-        output.optflow[case].reactive_shunt_generation = Generic(case):load("opf_shtb"):select_optflow_date_scn_blcks(optflow_data[case], system_codes):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.shunt[lang]);
-        output.optflow[case].reactive_static_compensator_generation = Generic(case):load("opf_qsvc"):select_optflow_date_scn_blcks(optflow_data[case], system_codes):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.static_compensator[lang]);
-        local reactive_injection = bus:load("opf_qinj"):select_optflow_date_scn_blcks(optflow_data[case], system_codes):save_cache();
+        output.optflow[case].reactive_thermal_generation = thermal:load("opf_qter"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.thermal[lang]);
+        output.optflow[case].reactive_hydro_generation = hydro:load("opf_qhdr"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.hydro[lang]);
+        output.optflow[case].reactive_renewable_generation = renewable:load("opf_qgnd"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.renewable[lang]);
+        output.optflow[case].reactive_batt_generation = battery:load("opf_qbat"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.battery[lang]);
+        output.optflow[case].reactive_sinc_generation = Generic(case):load("opf_qsin"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, false):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.sincron[lang]);
+        output.optflow[case].reactive_shunt_generation = Generic(case):load("opf_shtb"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, false):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.shunt[lang]);
+        output.optflow[case].reactive_static_compensator_generation = Generic(case):load("opf_qsvc"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, false):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.static_compensator[lang]);
+        local reactive_injection = bus:load("opf_qinj"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):save_cache();
         output.optflow[case].reactive_injection_generation = reactive_injection:aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.injection[lang]);
         local reactive_injection_pos = ifelse(reactive_injection:gt(0), reactive_injection, 0);
         local reactive_injection_neg = ifelse(reactive_injection:lt(0), reactive_injection, 0);
         output.optflow[case].max_pos_reactive_injection_by_bus = reactive_injection_pos:aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX()):aggregate_stages(BY_MAX(), Profile.PER_YEAR):remove_zeros():sort_agents_descending();
         output.optflow[case].max_neg_reactive_injection_by_bus = reactive_injection_neg:aggregate_blocks(BY_MIN()):aggregate_scenarios(BY_MIN()):aggregate_stages(BY_MIN(), Profile.PER_YEAR):remove_zeros():sort_agents_ascending();
-        output.optflow[case].reactive_demand = bus:load("opf_qloa"):select_optflow_date_scn_blcks(optflow_data[case], system_codes):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.reactive_load[lang]);
+        output.optflow[case].reactive_demand = bus:load("opf_qloa"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.reactive_load[lang]);
 
-        output.optflow[case].active_load_shedding = bus:load("opf_lshp"):select_optflow_date_scn_blcks(optflow_data[case], system_codes):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.active_deficit[lang]);
-        output.optflow[case].reactive_load_shedding = bus:load("opf_lshq"):select_optflow_date_scn_blcks(optflow_data[case], system_codes):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.reactive_deficit[lang]);
+        output.optflow[case].active_load_shedding = bus:load("opf_lshp"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.active_deficit[lang]);
+        output.optflow[case].reactive_load_shedding = bus:load("opf_lshq"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.reactive_deficit[lang]);
 
-        output.optflow[case].voltage_margin_lower = bus:load("opf_voltagemarginlower"):select_optflow_date_scn_blcks(optflow_data[case], system_codes);
-        output.optflow[case].voltage_margin_upper = bus:load("opf_voltagemarginupper"):select_optflow_date_scn_blcks(optflow_data[case], system_codes);
+        output.optflow[case].voltage_margin_lower = bus:load("opf_voltagemarginlower"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true);
+        output.optflow[case].voltage_margin_upper = bus:load("opf_voltagemarginupper"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true);
 
-        output.sddp[case].active_thermal_generation = thermal:load("gerter"):select_optflow_date_scn_blcks(optflow_data[case], system_codes):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.thermal[lang]):convert("MW");
-        output.sddp[case].active_hydro_generation = hydro:load("gerhid"):select_optflow_date_scn_blcks(optflow_data[case], system_codes):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.hydro[lang]):convert("MW");
-        output.sddp[case].active_renewable_generation = renewable:load("gergnd"):select_optflow_date_scn_blcks(optflow_data[case], system_codes):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.renewable[lang]):convert("MW");
-        output.sddp[case].active_batt_generation = battery:load("gerbat"):select_optflow_date_scn_blcks(optflow_data[case], system_codes):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.battery[lang]):convert("MW");
+        output.sddp[case].active_thermal_generation = thermal:load("gerter"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):convert("MW"):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.thermal[lang]):convert("MW");
+        output.sddp[case].active_hydro_generation = hydro:load("gerhid"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):convert("MW"):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.hydro[lang]):convert("MW");
+        output.sddp[case].active_renewable_generation = renewable:load("gergnd"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):convert("MW"):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.renewable[lang]):convert("MW");
+        output.sddp[case].active_batt_generation = battery:load("gerbat"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):convert("MW"):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.battery[lang]):convert("MW");
     end
 end
 
