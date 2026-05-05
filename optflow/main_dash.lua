@@ -12,8 +12,7 @@ local function load_Lang()
     end
 end
 
--- local lang = load_Lang();
-local lang = "en";
+local lang = load_Lang();
 
 local table_case_color = {
     "#DB3C3C",
@@ -85,9 +84,9 @@ local dictionary = {
     cell_selected_resolution = {en = "Selected resolution", es = "Resolución seleccionada", pt = "Resolução selecionada"},
     cell_selected_systems = {en = "Selected systems", es = "Sistemas seleccionados", pt = "Sistemas selecionados"},
     objective_function = {en = "Objective function", es = "Función objetivo", pt = "Função objetivo"},
-    cell_minimun_cost = {en = "Minimun cost", es = "Costo mínimo", pt = "Custo mínimo"},
-    cell_minimun_loss = {en = "Minimun loss", es = "Pérdida mínima", pt = "Perda mínima"},
-    cell_minimun_deviation = {en = "Minimun deviation", es = "Desviación mínima", pt = "Desvio mínimo"},
+    cell_minimun_cost = {en = "Minimize reactive power injection", es = "Minimizar inyección de potencia reactiva", pt = "Minimizar injeção de potência reativa"},
+    cell_minimun_deviation = {en = "Minimize active power deviation", es = "Minimizar desvío de potencia activa", pt = "Minimizar desvio de potência ativa"},
+    cell_minimun_loss = {en = "Minimize active power losses", es = "Minimizar pérdidas activas", pt = "Minimizar perdas ativas"},
     cell_objective_function_type = {en = "Objective function type", es = "Tipo de función objetivo", pt = "Tipo de função objetivo"},
     variables_constraints = {en = "Variables and constraints", es = "Variables y restricciones", pt = "Variáveis e restrições"},
     cell_variables_constraints = {en = "Present variables and constraints", es = "Variables y restricciones presentes", pt = "Variáveis e restrições presentes"},
@@ -95,29 +94,29 @@ local dictionary = {
     cell_generator_voltage_control = {en = "Generator voltage control", es = "Control de voltaje de generadores", pt = "Controle de tensão de geradores"},
     cell_switched_shunt = {en = "Switched shunt", es = "Shunt conmutado", pt = "Shunt comutado"},
     cell_shunt_voltage_control = {en = "Shunt with voltage control", es = "Shunt con control de voltaje", pt = "Shunt com controle de tensão"},
-    cell_tap = {en = "Tap", es = "Tap", pt = "Tap"},
+    cell_tap_voltage_limit = {en = "Tap with voltage limit", es = "Tap con límite de voltaje", pt = "Tap com limite de tensão"},
     cell_tap_voltage_control = {en = "Tap with voltage control", es = "Tap con control de voltaje", pt = "Tap com controle de tensão"},
-    cell_phase_shifter = {en = "Phase shifter", es = "Desfasador", pt = "Desfasador"},
+    cell_phase_shifter_flow_limit = {en = "Phase shifter with flow limit", es = "Desfasador con límite de flujo", pt = "Desfasador com limite de fluxo"},
     cell_phase_shifter_flow_control = {en = "Phase shifter with flow control", es = "Desfasador con control de flujo", pt = "Desfasador com controle de fluxo"},
-    cell_series_capacitor = {en = "Series capacitor", es = "Capacitor en serie", pt = "Capacitor em série"},
+    cell_series_capacitor_flow_limit = {en = "Series capacitor with flow limit", es = "Capacitor en serie con límite de flujo", pt = "Capacitor em série com limite de fluxo"},
     cell_series_capacitor_flow_control = {en = "Series capacitor with flow control", es = "Capacitor en serie con control de flujo", pt = "Capacitor em série com controle de fluxo"},
     cell_acdc_converter_angle = {en = "AC-DC converter angle", es = "Ángulo de convertidor AC-DC", pt = "Ângulo de conversor AC-DC"},
     cell_acdc_converter_tap = {en = "AC-DC converter tap", es = "Tap de convertidor AC-DC", pt = "Tap de conversor AC-DC"},
     cell_syncrhonous_reactive_power = {en = "Syncrhonous reactive power", es = "Potencia reactiva síncrona", pt = "Potência reativa síncrona"},
-    cell_svc = {en = "SVC", es = "SVC", pt = "SVC"},
+    cell_svc_voltage_limit = {en = "SVC with voltage limit", es = "SVC con límite de voltaje", pt = "SVC com limite de tensão"},
     cell_svc_voltage_control = {en = "SVC with voltage control", es = "SVC con control de voltaje", pt = "SVC com controle de tensão"},
     cell_cons_flow_mw = {en = "Flow constraint in MW", es = "Restricción de flujo en MW", pt = "Restrição de fluxo em MW"},
     cell_cons_flow_mva = {en = "Flow constraint in MVA", es = "Restricción de flujo en MVA", pt = "Restrição de fluxo em MVA"},
     cell_cons_sum_circuit_flow = {en = "Sum of circuit flow constraint", es = "Restricción de suma de flujos en circuitos", pt = "Restrição de soma de fluxos em circuitos"},
     cell_ac_line = {
-        en = "AC line",
-        es = "Línea de CA",
-        pt = "Linha de CA",
+        en = "AC lines",
+        es = "Líneas de CA",
+        pt = "Linhas de CA",
     },
     cell_dc_line = {
-        en = "DC line",
-        es = "Línea de CC",
-        pt = "Linha de CC",
+        en = "DC lines",
+        es = "Líneas de CC",
+        pt = "Linhas de CC",
     },
     cell_transformers = {
         en = "Transformers",
@@ -145,7 +144,7 @@ local dictionary = {
     about_nodes = {en = "About the execution nodes", es = "Acerca de los nodos de ejecución", pt = "Sobre os nós de execução"},
     case_title = {en = "Case title", es = "Título del caso", pt = "Título do caso"},
     hor_resol_exec = {
-        en = "Horizon, resolution and execution options",
+        en = "Horizon, resolution, and execution options",
         es = "Horizonte, resolución y opciones de ejecución",
         pt = "Horizonte, resolução e opções de execução"
     },
@@ -220,9 +219,9 @@ local dictionary = {
         pt = "Representação de dias típicos"
     },
     cell_system = {
-        en = "System",
-        es = "Sistema",
-        pt = "Sistema",
+        en = "Systems",
+        es = "Sistemas",
+        pt = "Sistemas",
     },
     cell_batteries = {
         en = "Batteries",
@@ -401,24 +400,25 @@ local dictionary = {
     },
 
 
-
+    convergence = {en = "Convergence", es = "Convergencia", pt = "Convergência"},
+    execution_time = {en = "Execution Times", es = "Tiempos de Ejecución", pt = "Tempos de Execução"},
 
 
     solution_status = {en = "Convergence status", es = "Estado de convergencia", pt = "Status de convergência"},
     solution_time = {en = "Solution time", es = "Tiempo de solución", pt = "Tempo de solução"},
-    not_converged_solution = {en = "Not converged solution", es = "Solución no convergida", pt = "Solução não convergida"},
+    not_converged_solution = {en = "Non-converged solution", es = "Solución no convergente", pt = "Solução não convergente"},
     unselected = {en = "Unselected", es = "No seleccionado", pt = "Não selecionado"},
     optimal_solution = {en = "Optimal solution", es = "Solución óptima", pt = "Solução ótima"},
     feasible_solution = {en = "Feasible solution", es = "Solución factible", pt = "Solução factível"},
-    divergent_solution = {en = "Divergent solution", es = "Solución divergente", pt = "Solução divergente"},
+    divergent_solution = {en = "Diverging solution", es = "Solución divergente", pt = "Solução divergente"},
 
-    nonexceedance_solution_times = {en = "Nonexceedance solution times", es = "Tiempos de solución de no superación", pt = "Tempos de solução de não superação"},
+    nonexceedance_solution_times = {en = "Cumulative Distribution of Solution Times", es = "Distribución Acumulada de los Tiempos de Solución", pt = "Distribuição Acumulada dos Tempos de Solução"},
 
     stage_solution_times = {en = "Max stage solution times", es = "Tiempos máximos de solución por etapa", pt = "Tempos máximos de solução por etapa"},
 
-    operative_cost = {en = "Operative cost", es = "Costo operativo", pt = "Custo operativo"},
+    operative_cost = {en = "Average operating cost", es = "Costo operativo promedio", pt = "Custo operacional médio"},
 
-    operative_cost_stage = {en = "Operative cost per stage", es = "Costo operativo por etapa", pt = "Custo operativo por estágio"},
+    operative_cost_stage = {en = "Average operating cost per stage", es = "Costo operativo promedio por etapa", pt = "Custo operativo médio por estágio"},
 
     solution_mismatches = {en = "Solution mismatches", es = "Desajustes de la solución", pt = "Desajustes da solução"},
 
@@ -448,7 +448,7 @@ local dictionary = {
     solution_quality = {en = "Solution quality", es = "Calidad de la solución", pt = "Qualidade da solução"},
     solution_results = {en = "Solution results", es = "Resultados de la solución", pt = "Resultados da solução"},
 
-    summary = {en = "Summary", es = "Resumen", pt = "Resumo"},
+    summary = {en = "Info", es = "Información", pt = "Informações"},
     case_information = {en = "Case information", es = "Información del caso", pt = "Informações do caso"},
 
     mismatch_active_tolerance_msg = {
@@ -744,6 +744,8 @@ function Tab.reactive_solution_mismatches_charts(self, n_cases, Lang, optflow_da
             chart_neg:add_probability_of_nonexceedance_without_zeros(neg_reactive_power_mismatches_lt_tolerance, {showInLegend = false});
 
             self:push({chart_pos,chart_neg});
+            --self:push(chart_pos);
+            --self:push(chart_neg);
         else
             local msg = string.format(
             dictionary.mismatch_reactive_tolerance_msg[Lang],
@@ -1218,22 +1220,24 @@ function Tab.add_voltage_limits_lower_chart(self, n_cases, Lang, output)
 end
 
 function Tab.Solution_Quality(self, n_cases, Lang, optflow_data, output)
-    self:set_icon("thermometer");
+    self:set_icon("alert-triangle");
 
-    self:add_convergence_status_chart(n_cases, Lang, output);
+    local subTab = SubTab(dictionary.convergence[Lang]);
+    subTab:push("# " .. dictionary.solution_status[Lang]);
+    subTab:add_convergence_status_chart(n_cases, Lang, output);
+    subTab:push("# " .. dictionary.solution_mismatches[Lang]);
+    subTab:active_solution_mismatches_charts(n_cases, Lang, optflow_data, output);
+    subTab:reactive_solution_mismatches_charts(n_cases, Lang, optflow_data, output);
+    self:push(subTab);
 
-    self:push("# " .. dictionary.solution_time[Lang]);
-    self:add_nonexceedance_solution_times_chart(n_cases, Lang, output);
-    self:add_stage_solution_times_chart(n_cases, Lang, output);
-
-    -- local subTab = SubTab(dictionary.solution_mismatches[Lang]);
-    self:push("# " .. dictionary.solution_mismatches[Lang]);
-    self:active_solution_mismatches_charts(n_cases, Lang, optflow_data, output);
-    self:reactive_solution_mismatches_charts(n_cases, Lang, optflow_data, output);
-    -- self:push(subTab);
+    local subTabExeTime = SubTab(dictionary.execution_time[Lang]);
+    --subTabExeTime:push("# " .. dictionary.execution_time[Lang]);
+    subTabExeTime:add_nonexceedance_solution_times_chart(n_cases, Lang, output);
+    subTabExeTime:add_stage_solution_times_chart(n_cases, Lang, output);
+    self:push(subTabExeTime);
 
     local subTab_enable = true;
-    local subTab = SubTab(dictionary.costs[Lang]);
+    subTab = SubTab(dictionary.costs[Lang]);
     subTab:push("# " .. dictionary.costs[Lang]);
     subTab_enable = subTab_enable and subTab:operative_cost_charts(n_cases, Lang, output);
     subTab_enable = subTab_enable and subTab:operative_stage_cost_charts(n_cases, Lang, output);
@@ -1244,9 +1248,11 @@ function Tab.Solution_Quality(self, n_cases, Lang, optflow_data, output)
 end
 
 function Tab.Solution_Results(self, n_cases, Lang, output)
-    self:set_icon("file-waveform");
+    self:set_icon("line-chart");
 
     local subTab = SubTab(dictionary.generation[Lang]);
+    subTab:push("# " .. dictionary.reactive_injection[Lang]);
+    subTab:reactive_injection_chart(n_cases, Lang, output);
     subTab:push("# " .. dictionary.generation_results[Lang]);
     subTab:active_generation_charts(n_cases, Lang, output);
     --subTab:reactive_generation_charts(n_cases, Lang, output);
@@ -1254,8 +1260,6 @@ function Tab.Solution_Results(self, n_cases, Lang, output)
     subTab:active_load_shedding_chart(n_cases, Lang, output);
     --subTab:push("# " .. dictionary.reactive_load_shedding[Lang]);
     --subTab:reactive_load_shedding_chart(n_cases, Lang, output);
-    subTab:push("# " .. dictionary.reactive_injection[Lang]);
-    subTab:reactive_injection_chart(n_cases, Lang, output);
     self:push(subTab);
 
 
@@ -1312,7 +1316,7 @@ function Tab.create_summary(self, n_cases, Lang, info_struct, optflow_data)
     local total_nodes      = dictionary.cell_total_nodes[Lang];
 
 	-- Execution status
-    if n_cases == 1 then 
+    if n_cases == 1 then
         self:push("| " .. directory_name .. " | " .. path_cell .. " | " .. execution_status .. " |");
         self:push("|:--------------:|:----:|:----------------:|");
         for i = 1, n_cases do
@@ -1506,7 +1510,7 @@ function Tab.create_summary(self, n_cases, Lang, info_struct, optflow_data)
 
     -- objective function
     self:push("## " .. dictionary.objective_function[Lang]);
-    local header_string = "| " .. dictionary.cell_objective_function_type[Lang];
+    local header_string = "| " .. dictionary.objective_function[Lang];
     local lower_header_string              = "|---------------";
     local min_cost = "| " .. dictionary.cell_minimun_cost[Lang];
     local min_loss = "| " .. dictionary.cell_minimun_loss[Lang];
@@ -1558,16 +1562,16 @@ function Tab.create_summary(self, n_cases, Lang, info_struct, optflow_data)
     local cell_voltage_string               = "| " .. dictionary.cell_generator_voltage_control[Lang];
     local cell_switched_shunt_string        = "| " .. dictionary.cell_switched_shunt[Lang];
     local cell_shunt_voltage_control_string = "| " .. dictionary.cell_shunt_voltage_control[Lang];
-    local cell_tap_string                   = "| " .. dictionary.cell_tap[Lang];
+    local cell_tap_string                   = "| " .. dictionary.cell_tap_voltage_limit[Lang];
     local cell_tap_voltage_control_string    = "| " .. dictionary.cell_tap_voltage_control[Lang];
-    local cell_phase_shifter_string         = "| " .. dictionary.cell_phase_shifter[Lang];
+    local cell_phase_shifter_string         = "| " .. dictionary.cell_phase_shifter_flow_limit[Lang];
     local cell_phase_shifter_flow_control_string = "| " .. dictionary.cell_phase_shifter_flow_control[Lang];
-    local cell_series_capacitor_string      = "| " .. dictionary.cell_series_capacitor[Lang];
+    local cell_series_capacitor_string      = "| " .. dictionary.cell_series_capacitor_flow_limit[Lang];
     local cell_series_capacitor_flow_control_string = "| " .. dictionary.cell_series_capacitor_flow_control[Lang];
     local cell_acdc_converter_angle_string  = "| " .. dictionary.cell_acdc_converter_angle[Lang];
     local cell_acdc_converter_tap_string    = "| " .. dictionary.cell_acdc_converter_tap[Lang];
     local cell_syncrhonous_reactive_power_string = "| " .. dictionary.cell_syncrhonous_reactive_power[Lang];
-    local cell_svc_string                   = "| " .. dictionary.cell_svc[Lang];
+    local cell_svc_string                   = "| " .. dictionary.cell_svc_voltage_limit[Lang];
     local cell_svc_voltage_control_string    = "| " .. dictionary.cell_svc_voltage_control[Lang];
     local cell_cons_flow_mw_string           = "| " .. dictionary.cell_cons_flow_mw[Lang];
     local cell_cons_flow_mva_string          = "| " .. dictionary.cell_cons_flow_mva[Lang];
@@ -1988,13 +1992,9 @@ load_data(output, lang, optflow_data)
 
 local d = Dashboard();
 
-local summary_tab = Tab(dictionary.summary[lang]);
-summary_tab:push("# " .. dictionary.case_information[lang]);
-summary_tab:create_summary(N_cases, lang, info_struct, optflow_data);
-d:push(summary_tab);
-
-local tab_solution = Tab(dictionary.solutions[lang]);
-tab_solution:push("# " .. dictionary.solution_quality[lang]);
+local tab_solution = Tab(dictionary.solution_quality[lang]);
+tab_solution:set_disabled();
+tab_solution:push("# " .. dictionary.solution_results[lang]);
 tab_solution:Solution_Quality(N_cases, lang, optflow_data, output);
 d:push(tab_solution);
 
@@ -2008,6 +2008,11 @@ d:push(tab_results);
 --tab_voltage:push("# " .. dictionary.voltages[lang]);
 --tab_voltage:Voltage_Limits(N_cases, lang, output);
 --d:push(tab_voltage);
+
+local summary_tab = Tab(dictionary.summary[lang]);
+summary_tab:push("# " .. dictionary.case_information[lang]);
+summary_tab:create_summary(N_cases, lang, info_struct, optflow_data);
+d:push(summary_tab);
 
 d:hide_links();
 d:save("OptFlow");
