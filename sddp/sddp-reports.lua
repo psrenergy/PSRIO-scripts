@@ -230,7 +230,7 @@ local viol_structs = {
 	{name = "fcofsvio", block_aggregation = BY_SUM()},
     {name = "hydro_controllable_spillage_violation", block_aggregation = BY_AVERAGE()},
     {name = "hydro_non_controllable_spillage_violation", block_aggregation = BY_AVERAGE()},
-    {name = "inertia_violation", block_aggregation = BY_SUM()}
+    {name = "inertia_violation", block_aggregation = BY_AVERAGE()}
 }
 
 local viol_structs_debug = {
