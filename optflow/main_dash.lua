@@ -984,8 +984,16 @@ function Tab.reactive_injection_chart(self, n_cases, Lang, output)
     local pos_color = table_techtype_color.max_pos_reactive_injection;
     local neg_color = table_techtype_color.max_neg_reactive_injection;
 
-    local first_year = output.optflow[1].max_pos_reactive_injection_by_bus:initial_year();
-    local last_year = first_year + output.optflow[1].max_pos_reactive_injection_by_bus:stages() - 1;
+    local first_year = 2000;
+    local last_year = 2000;
+    if output.optflow[1].max_pos_reactive_injection_by_bus:loaded() then
+        first_year = output.optflow[1].max_pos_reactive_injection_by_bus:initial_year();
+        last_year = first_year + output.optflow[1].max_pos_reactive_injection_by_bus:stages() - 1;
+    end
+    if output.optflow[1].max_neg_reactive_injection_by_bus:loaded() then
+        first_year = output.optflow[1].max_neg_reactive_injection_by_bus:initial_year();
+        last_year = first_year + output.optflow[1].max_neg_reactive_injection_by_bus:stages() - 1;
+    end
 
     local seq = 0;
     local seq_label = tostring(first_year);
