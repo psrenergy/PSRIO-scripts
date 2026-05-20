@@ -42,6 +42,7 @@ local table_techtype_color = {
 
 local dictionary = {
     scenarios = {en = "Scenarios", es = "Escenarios", pt = "Cenários"},
+    scenarios_blocks = {en = "Resolution - Scenario", es = "Resolución - Escenario", pt = "Resolução - Cenário"},
     scenario = {en = "Scenario", es = "Escenario", pt = "Cenário"},
     stages = {en = "Stages", es = "Etapas", pt = "Estágios"},
     stage = {en = "Stage", es = "Etapa", pt = "Estágio"},
@@ -55,8 +56,8 @@ local dictionary = {
     reactive_load = {en = "Reactive load", es = "Carga reactiva", pt = "Carga reativa"},
     reactive_injection_power_penalty = {en = "Reactive injection power penalty", es = "Penalización de potencia de inyección reactiva", pt = "Penalidade de potência de injeção reativa"},
     reactive_injection = {en = "Reactive injection", es = "Inyección reactiva", pt = "Injeção reativa"},
-    max_pos_reactive_injection = {en = "Maximum positive reactive injection", es = "Inyección reactiva positiva máxima", pt = "Máxima injeção reativa positiva"},
-    max_neg_reactive_injection = {en = "Maximum negative reactive injection", es = "Inyección reactiva negativa máxima", pt = "Máxima injeção reativa negativa"},
+    max_pos_reactive_injection = {en = "Yearly maximum positive reactive injection", es = "Inyección reactiva positiva máxima anual", pt = "Máxima injeção reativa positiva anual"},
+    max_neg_reactive_injection = {en = "Yearly maximum negative reactive injection", es = "Inyección reactiva negativa máxima anual", pt = "Máxima injeção reativa negativa anual"},
     reactive_injection_warning = {en = "*No bus has positive or negative reactive power injection in this case.*", es = "*Ninguna barra presenta inyección de potencia reactiva positiva o negativa en este caso.*", pt = "*Nenhuma barra apresenta injeção de potência reativa positiva ou negativa neste caso.*"},
     shunt = {en = "Shunt", es = "Shunt", pt = "Shunt"},
     sincron = {en = "Sincron", es = "Síncron", pt = "Síncron"},
@@ -66,6 +67,9 @@ local dictionary = {
     results = {en = "Results", es = "Resultados", pt = "Resultados"},
     deviation = {en = "Deviation", es = "Desviación", pt = "Desvio"},
     voltages = {en = "Voltage", es = "Voltaje", pt = "Tensão"},
+    voltage_security_margin = {en = "Voltage safety margin", es = "Margen de seguridad de voltaje", pt = "Margem de segurança de tensão"},
+    voltage_level = {en = "Voltage level", es = "Nivel de voltaje", pt = "Nível de tensão"},
+    critical_buses = {en = "Critical buses", es = "Barras criticas", pt = "Barras críticas"},
     solutions = {en = "Solutions", es = "Soluciones", pt = "Soluções"},
     biggest_busses = {en = "Biggest buses values", es = "Valores de las barras más grandes", pt = "Maiores valores das barras"},
     active_deficit = {en = "Active deficit", es = "Déficit activo", pt = "Déficit ativo"},
@@ -442,9 +446,13 @@ local dictionary = {
     battery_generation_deviations = {en = "Battery generation", es = "Generación de baterías", pt = "Geração de baterias"},
 
     voltage_profiles = {en = "Voltage profiles", es = "Perfiles de voltaje", pt = "Perfis de tensão"},
+    lower_limit_margin = {en = "Lower limit margin", es = "Margen de límite inferior", pt = "Margem de limite inferior"},
+    upper_limit_margin = {en = "Upper limit margin", es = "Margen de límite superior", pt = "Margem de limite superior"},
     voltage_limits = {en = "Voltage limits", es = "Límites de voltaje", pt = "Limites de tensão"},
-    voltage_lower_limit = {en = "Voltage lower limit", es = "Límite inferior de voltaje", pt = "Limite inferior de tensão"},
-    voltage_upper_limit = {en = "Voltage upper limit", es = "Límite superior de voltaje", pt = "Limite superior de tensão"},
+    voltage_lower_limit = {en = "Voltage lower limit - Bus average", es = "Límite inferior de voltaje - Promedio de las barras", pt = "Limite inferior de tensão - Média das barras"},
+    voltage_upper_limit = {en = "Voltage upper limit - Bus average", es = "Límite superior de voltaje - Promedio de las barras", pt = "Limite superior de tensão - Média das barras"},
+    critical_buses_voltage_lower_limit = {en = "Buses with the lowest lower voltage margins per year", es = "Barras con los márgenes de voltaje inferiores más bajos por año", pt = "Barras com as margens superiores de tensão mais baixas por ano"},
+    critical_buses_voltage_upper_limit = {en = "Buses with the lowest upper voltage margins per year", es = "Barras con los márgenes de voltaje superiores más bajos por año", pt = "Barras com as margens inferiores de tensão mais baixas por ano"},
     solution_quality = {en = "Solution quality", es = "Calidad de la solución", pt = "Qualidade da solução"},
     solution_results = {en = "Solution results", es = "Resultados de la solución", pt = "Resultados da solução"},
 
@@ -464,15 +472,15 @@ local dictionary = {
     },
 
     upper_voltage_msg = {
-        en = "The upper limit margin indicates the distance to the upper limit, , relative to the range defined by its limits. It is calculated as: (Vmax - Vcur) / (Vmax-Vmin) where Vmax = upper voltage limit, Vmin = lower voltage limit and Vcur = current voltage value. Margin values equal to 1 pu indicate that it is at the lower limit, while values equal to 0 pu indicate it is at the upper limit.",
-        es = "La margen del límite superior indica la distancia al límite superior, relativa al rango definido por sus límites. Se calcula como: (Vmax - Vcur) / (Vmax-Vmin) donde Vmax = límite de voltaje superior, Vmin = límite de voltaje inferior y Vcur = valor de voltaje actual. Valores de margen iguales a 1 pu indican que está en el límite inferior, mientras que valores iguales a 0 pu indican que está en el límite superior.",
-        pt = "A margem do limite superior indica a distância ao limite superior, relativa à faixa definida por seus limites. É calculada como: (Vmax - Vcur) / (Vmax-Vmin) onde Vmax = limite de tensão superior, Vmin = limite de tensão inferior e Vcur = valor de tensão atual. Valores de margem iguais a 1 pu indicam que está no limite inferior, enquanto que valores iguais a 0 pu indicam que está no limite superior."
+        en = "The upper limit margin indicates the distance to the upper limit, relative to the range defined by its limits. It is calculated as: $$ UpperMargin = \\frac{Vmax - Vcur}{Vmax - Vmin} $$ where Vmax = upper voltage limit, Vmin = lower voltage limit and Vcur = current voltage value. Margin values equal to 1 pu indicate that it is at the lower limit, while values equal to 0 pu indicate it is at the upper limit.",
+        es = "La margen del límite superior indica la distancia al límite superior, relativa al rango definido por sus límites. Se calcula como: $$ UpperMargin = \\frac{Vmax - Vcur}{Vmax - Vmin} $$ donde Vmax = límite de voltaje superior, Vmin = límite de voltaje inferior y Vcur = valor de voltaje actual. Valores de margen iguales a 1 pu indican que está en el límite inferior, mientras que valores iguales a 0 pu indican que está en el límite superior.",
+        pt = "A margem do limite superior indica a distância ao limite superior, relativa à faixa definida por seus limites. É calculada como: $$ UpperMargin = \\frac{Vmax - Vcur}{Vmax - Vmin} $$ onde Vmax = limite de tensão superior, Vmin = limite de tensão inferior e Vcur = valor de tensão atual. Valores de margem iguais a 1 pu indicam que está no limite inferior, enquanto que valores iguais a 0 pu indicam que está no limite superior."
     },
 
     lower_voltage_msg = {
-        en = "The lower limit margin indicates the distance to the lower limit, relative to the range defined by its limits. It is calculated as: (Vcur - Vmin) / (Vmax-Vmin) where Vmax = upper voltage limit, Vmin = lower voltage limit and Vcur = current voltage. Margin values equal to 1 pu indicate that it is at the upper limit, while values equal to 0 pu indicate it is at the lower limit.",
-        es = "La margen del límite inferior indica la distancia al límite inferior, relativa al rango definido por sus límites. Se calcula como: (Vcur - Vmin) / (Vmax-Vmin) donde Vmax = límite de voltaje superior, Vmin = límite de voltaje inferior y Vcur = valor de voltaje actual. Valores de margen iguales a 1 pu indican que está en el límite superior, mientras que valores iguales a 0 pu indican que está en el límite inferior.",
-        pt = "A margem do limite inferior indica a distância ao limite inferior, relativa à faixa definida por seus limites. É calculada como: (Vcur - Vmin) / (Vmax-Vmin) onde Vmax = limite de tensão superior, Vmin = limite de tensão inferior e Vcur = valor de tensão atual. Valores de margem iguais a 1 pu indicam que está no limite superior, enquanto que valores iguais a 0 pu indicam que está no limite inferior."
+        en = "The lower limit margin indicates the distance to the lower limit, relative to the range defined by its limits. It is calculated as: $$ LowerMargin = \\frac{Vcur - Vmin}{Vmax - Vmin} $$ where Vmax = upper voltage limit, Vmin = lower voltage limit and Vcur = current voltage. Margin values equal to 1 pu indicate that it is at the upper limit, while values equal to 0 pu indicate it is at the lower limit.",
+        es = "La margen del límite inferior indica la distancia al límite inferior, relativa al rango definido por sus límites. Se calcula como: $$ LowerMargin = \\frac{Vcur - Vmin}{Vmax - Vmin} $$ donde Vmax = límite de voltaje superior, Vmin = límite de voltaje inferior y Vcur = valor de voltaje actual. Valores de margen iguales a 1 pu indican que está en el límite superior, mientras que valores iguales a 0 pu indican que está en el límite inferior.",
+        pt = "A margem do limite inferior indica a distância ao limite inferior, relativa à faixa definida por seus limites. É calculada como: $$ LowerMargin = \\frac{Vcur - Vmin}{Vmax - Vmin} $$ onde Vmax = limite de tensão superior, Vmin = limite de tensão inferior e Vcur = valor de tensão atual. Valores de margem iguais a 1 pu indicam que está no limite superior, enquanto que valores iguais a 0 pu indicam que está no limite inferior."
     },
 
     mismatch_solution_msg = {
@@ -488,16 +496,32 @@ local dictionary = {
     }
 }
 
-function Expression.select_optflow_date_scn_blcks(self, optflow_data_case, system_codes, select_system)
-    local self_selected = self:select_stages(optflow_data_case.initial_stage, optflow_data_case.final_stage); --self:select_stages(1, 36)
-    --local self_selected = self:select_stages_by_year_period(optflow_data_case.initial_stage, optflow_data_case.initial_year, optflow_data_case.final_stage, optflow_data_case.final_year);
-
-    if optflow_data_case.serie_representation ~= 0 then
-        self_selected = self_selected:select_scenarios(optflow_data_case.selected_series);
-    end
+function Expression.select_optflow_date_scn_blcks(self, optflow_data_case, system_codes, select_system, agg_blocks, agg_scenarios)
+    --local self_selected = self:select_stages(optflow_data_case.initial_stage, optflow_data_case.final_stage);
+    local self_selected = self:select_stages_by_year_period(optflow_data_case.initial_year, optflow_data_case.initial_stage, optflow_data_case.final_year, optflow_data_case.final_stage);
 
     if optflow_data_case.resolution_representation ~= 0 then
-        self_selected = self_selected:select_blocks(optflow_data_case.selected_resolutions);
+        if agg_blocks then
+            self_selected = self_selected:aggregate_blocks(optflow_data_case.selected_resolutions);
+        else
+            self_selected = self_selected:select_blocks(optflow_data_case.selected_resolutions);
+        end
+    else
+        if agg_blocks then
+            self_selected = self_selected:aggregate_blocks();
+        end
+    end
+
+    if optflow_data_case.serie_representation ~= 0 then
+        if agg_scenarios then
+            self_selected = self_selected:aggregate_scenarios(BY_AVERAGE(), optflow_data_case.selected_series);
+        else
+            self_selected = self_selected:select_scenarios(optflow_data_case.selected_series);
+        end
+    else
+        if agg_scenarios then
+            self_selected = self_selected:aggregate_scenarios(BY_AVERAGE());
+        end
     end
 
     if optflow_data_case.system_representation ~= 0 and select_system then
@@ -517,6 +541,9 @@ function load_data(output, lang, optflow_data)
         local renewable = Renewable(case);
         local battery = Battery(case);
         local bus = Bus(case);
+        local shunt = Shunt(case);
+        local svc = StaticVarCompensator(case);
+        local sync_compensator = SynchronousCompensator(case);
         local system_codes = System(case).code;
 
         output.optflow = output.optflow or {};
@@ -525,55 +552,58 @@ function load_data(output, lang, optflow_data)
         output.sddp = output.sddp or {};
         output.sddp[case] = {};
 
-        output.optflow[case].solution_status = generic:load("opf_status"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, false);
-        output.optflow[case].solution_time = generic:load("opf_tcpu"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, false);
+        output.optflow[case].solution_status = generic:load("opf_status"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, false, false, false);
+        output.optflow[case].solution_time = generic:load("opf_tcpu"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, false, false, false);
 
-        output.optflow[case].thermal_cost = thermal:load("opf_cotr"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.thermal[lang]);
-        output.optflow[case].hydro_cost = hydro:load("opf_cohd"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.hydro[lang]);
-        output.optflow[case].renewable_cost = renewable:load("opf_corn"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.renewable[lang]);
-        output.optflow[case].pot_injection_penalty_cost = bus:load("opf_cinj"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.reactive_injection_power_penalty[lang]);
+        output.optflow[case].thermal_cost = thermal:load("opf_cotr"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.thermal[lang]);
+        output.optflow[case].hydro_cost = hydro:load("opf_cohd"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.hydro[lang]);
+        output.optflow[case].renewable_cost = renewable:load("opf_corn"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.renewable[lang]);
+        output.optflow[case].pot_injection_penalty_cost = bus:load("opf_cinj"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.reactive_injection_power_penalty[lang]);
 
-        output.optflow[case].active_power_mismatches = bus:load("opf_mismatmw"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true);
-        output.optflow[case].reactive_power_mismatches = bus:load("opf_mismatmvar"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true);
+        output.optflow[case].active_power_mismatches = bus:load("opf_mismatmw"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false);
+        output.optflow[case].reactive_power_mismatches = bus:load("opf_mismatmvar"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false);
 
-        output.optflow[case].active_thermal_generation = thermal:load("opf_pter"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.thermal[lang]);
-        output.optflow[case].active_hydro_generation = hydro:load("opf_phdr"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.hydro[lang]);
-        output.optflow[case].active_renewable_generation = renewable:load("opf_pgnd"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.renewable[lang]);
-        output.optflow[case].active_batt_generation = battery:load("opf_pbat"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.battery[lang]);
-        output.optflow[case].active_demand = bus:load("opf_ploa"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.active_load[lang]);
+        output.optflow[case].active_thermal_generation = thermal:load("opf_pter"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.thermal[lang]);
+        output.optflow[case].active_hydro_generation = hydro:load("opf_phdr"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.hydro[lang]);
+        output.optflow[case].active_renewable_generation = renewable:load("opf_pgnd"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.renewable[lang]);
+        output.optflow[case].active_batt_generation = battery:load("opf_pbat"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.battery[lang]);
+        output.optflow[case].active_demand = bus:load("opf_ploa"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.active_load[lang]);
 
-        output.optflow[case].reactive_thermal_generation = thermal:load("opf_qter"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.thermal[lang]);
-        output.optflow[case].reactive_hydro_generation = hydro:load("opf_qhdr"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.hydro[lang]);
-        output.optflow[case].reactive_renewable_generation = renewable:load("opf_qgnd"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.renewable[lang]);
-        output.optflow[case].reactive_batt_generation = battery:load("opf_qbat"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.battery[lang]);
-        output.optflow[case].reactive_sinc_generation = Generic(case):load("opf_qsin"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, false):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.sincron[lang]);
-        output.optflow[case].reactive_shunt_generation = Generic(case):load("opf_shtb"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, false):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.shunt[lang]);
-        output.optflow[case].reactive_static_compensator_generation = Generic(case):load("opf_qsvc"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, false):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.static_compensator[lang]);
-        local reactive_injection = bus:load("opf_qinj"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):save_cache();
-        output.optflow[case].reactive_injection_generation = reactive_injection:aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.injection[lang]);
-        local reactive_injection_pos = ifelse(reactive_injection:gt(0), reactive_injection, 0);
-        local reactive_injection_neg = ifelse(reactive_injection:lt(0), reactive_injection, 0);
+        output.optflow[case].reactive_thermal_generation = thermal:load("opf_qter"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.thermal[lang]);
+        output.optflow[case].reactive_hydro_generation = hydro:load("opf_qhdr"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.hydro[lang]);
+        output.optflow[case].reactive_renewable_generation = renewable:load("opf_qgnd"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.renewable[lang]);
+        output.optflow[case].reactive_batt_generation = battery:load("opf_qbat"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.battery[lang]);
+        output.optflow[case].reactive_sinc_generation = sync_compensator:load("opf_qsin"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.sincron[lang]);
+        output.optflow[case].reactive_shunt_generation = shunt:load("opf_shtb"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.shunt[lang]);
+        output.optflow[case].reactive_static_compensator_generation = svc:load("opf_qsvc"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.static_compensator[lang]);
+        output.optflow[case].reactive_injection_generation = bus:load("opf_qinj"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.injection[lang]);
+        local reactive_injection = bus:load("opf_qinj"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false):save_cache();
+        local reactive_injection_pos = ifelse(reactive_injection:ge(1), reactive_injection, 0);
+        local reactive_injection_neg = ifelse(reactive_injection:le(-1), reactive_injection, 0);
         output.optflow[case].max_pos_reactive_injection_by_bus = reactive_injection_pos:aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX()):aggregate_stages(BY_MAX(), Profile.PER_YEAR):remove_zeros():sort_agents_descending();
         output.optflow[case].max_neg_reactive_injection_by_bus = reactive_injection_neg:aggregate_blocks(BY_MIN()):aggregate_scenarios(BY_MIN()):aggregate_stages(BY_MIN(), Profile.PER_YEAR):remove_zeros():sort_agents_ascending();
-        output.optflow[case].reactive_demand = bus:load("opf_qloa"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.reactive_load[lang]);
+        output.optflow[case].reactive_demand = bus:load("opf_qloa"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.reactive_load[lang]);
 
-        output.optflow[case].active_load_shedding = bus:load("opf_lshp"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.active_deficit[lang]);
-        output.optflow[case].reactive_load_shedding = bus:load("opf_lshq"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):aggregate_blocks(BY_AVERAGE()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.reactive_deficit[lang]);
+        output.optflow[case].active_load_shedding = bus:load("opf_lshp"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.active_deficit[lang]);
+        output.optflow[case].reactive_load_shedding = bus:load("opf_lshq"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.reactive_deficit[lang]);
 
-        output.optflow[case].voltage_margin_lower = bus:load("opf_voltagemarginlower"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true);
-        output.optflow[case].voltage_margin_upper = bus:load("opf_voltagemarginupper"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true);
+        output.optflow[case].voltage = bus:load("opf_volt"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, false):save_cache();
+        output.optflow[case].voltage_margin_lower = bus:load("opf_voltagemarginlower"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, true):aggregate_agents(BY_AVERAGE(), dictionary.lower_limit_margin[lang]);
+        output.optflow[case].voltage_margin_upper = bus:load("opf_voltagemarginupper"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, true):aggregate_agents(BY_AVERAGE(), dictionary.upper_limit_margin[lang]);
+        output.optflow[case].voltage_margin_lower_min = bus:load("opf_voltagemarginlower"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false):aggregate_blocks(BY_MIN()):aggregate_scenarios(BY_MIN()):aggregate_stages(BY_MIN(), Profile.PER_YEAR);
+        output.optflow[case].voltage_margin_upper_min = bus:load("opf_voltagemarginupper"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false):aggregate_blocks(BY_MIN()):aggregate_scenarios(BY_MIN()):aggregate_stages(BY_MIN(), Profile.PER_YEAR);
 
-        output.sddp[case].active_thermal_generation = thermal:load("gerter"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):convert("MW"):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.thermal[lang]):convert("MW");
-        output.sddp[case].active_hydro_generation = hydro:load("gerhid"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):convert("MW"):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.hydro[lang]):convert("MW");
-        output.sddp[case].active_renewable_generation = renewable:load("gergnd"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):convert("MW"):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.renewable[lang]):convert("MW");
-        output.sddp[case].active_batt_generation = battery:load("gerbat"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true):convert("MW"):aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), dictionary.battery[lang]):convert("MW");
+        output.sddp[case].active_thermal_generation = thermal:load("gerter"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):convert("MW"):aggregate_agents(BY_SUM(), dictionary.thermal[lang]):convert("MW");
+        output.sddp[case].active_hydro_generation = hydro:load("gerhid"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):convert("MW"):aggregate_agents(BY_SUM(), dictionary.hydro[lang]):convert("MW");
+        output.sddp[case].active_renewable_generation = renewable:load("gergnd"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):convert("MW"):aggregate_agents(BY_SUM(), dictionary.renewable[lang]):convert("MW");
+        output.sddp[case].active_batt_generation = battery:load("gerbat"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):convert("MW"):aggregate_agents(BY_SUM(), dictionary.battery[lang]):convert("MW");
     end
 end
 
 function Tab.add_convergence_status_chart(self, n_cases, Lang, output)
 
     local options = {
-        yLabel = dictionary.scenarios[Lang],
+        yLabel = dictionary.scenarios_blocks[Lang],
         xLabel = dictionary.stages[Lang],
         showInLegend = true,
         dataClasses = {
@@ -744,8 +774,6 @@ function Tab.reactive_solution_mismatches_charts(self, n_cases, Lang, optflow_da
             chart_neg:add_probability_of_nonexceedance_without_zeros(neg_reactive_power_mismatches_lt_tolerance, {showInLegend = false});
 
             self:push({chart_pos,chart_neg});
-            --self:push(chart_pos);
-            --self:push(chart_neg);
         else
             local msg = string.format(
             dictionary.mismatch_reactive_tolerance_msg[Lang],
@@ -1026,8 +1054,6 @@ function Tab.reactive_injection_chart(self, n_cases, Lang, output)
                 chart_pos:add_column_categories(output.optflow[case].max_pos_reactive_injection_by_bus, Generic(case):cloudname(), {color = pos_color, showInLegend = show_in_legend});
                 chart_neg:add_column_categories(output.optflow[case].max_neg_reactive_injection_by_bus, Generic(case):cloudname(), {color = neg_color, showInLegend = show_in_legend});
             end
-            --chart_pos:add_column(output.optflow[case].max_pos_reactive_injection_by_bus, {color = pos_color});
-            --chart_neg:add_column(output.optflow[case].max_neg_reactive_injection_by_bus, {color = neg_color});
         end
     end
     if #chart_pos > 0 then
@@ -1045,12 +1071,12 @@ function Tab.generation_deviation_charts(self, n_cases, Lang, output)
     local deviation_charts = {};
     local subTitle = "";
     for case = 1, n_cases do
-        
+
         if n_cases > 1 then
             subTitle = Generic(case):cloudname();
         end
-        
-        local chart = Chart(dictionary.active_power_generation_deviations[Lang] .. " - OptFlow", subTitle);
+
+        local chart = Chart(dictionary.active_power_generation_deviations[Lang] .. " - NetPlan", subTitle);
         chart:horizontal_legend();
 
         chart:add_area_stacking(output.optflow[case].active_thermal_generation, {color = table_techtype_color.thermal});
@@ -1093,28 +1119,28 @@ function Tab.generation_deviation_individual_charts(self, n_cases, Lang, output)
         local chart_batt = Chart(dictionary.battery_generation_deviations[Lang], subtitle);
         chart_batt:horizontal_legend();
 
-        local thermal_generation = output.optflow[case].active_thermal_generation:rename_agent("OptFlow");
+        local thermal_generation = output.optflow[case].active_thermal_generation:rename_agent("NetPlan");
         local sddp_thermal_generation = output.sddp[case].active_thermal_generation:rename_agent("SDDP");
         local thermal_deviation = abs(thermal_generation - sddp_thermal_generation):rename_agent("Deviation");
         chart_thermal:add_column(thermal_generation, {color = table_case_color[1]});
         chart_thermal:add_column(sddp_thermal_generation, {color = table_case_color[2]});
         chart_thermal:add_line(thermal_deviation, {dashStyle = "ShortDash", color = "black"});
 
-        local hydro_generation = output.optflow[case].active_hydro_generation:rename_agent("OptFlow");
+        local hydro_generation = output.optflow[case].active_hydro_generation:rename_agent("NetPlan");
         local sddp_hydro_generation = output.sddp[case].active_hydro_generation:rename_agent("SDDP");
         local hydro_deviation = abs(hydro_generation - sddp_hydro_generation):rename_agent("Deviation");
         chart_hydro:add_column(hydro_generation, {color = table_case_color[1]});
         chart_hydro:add_column(sddp_hydro_generation, {color = table_case_color[2]});
         chart_hydro:add_line(hydro_deviation, {dashStyle = "ShortDash", color = "black"});
 
-        local renewable_generation = output.optflow[case].active_renewable_generation:rename_agent("OptFlow");
+        local renewable_generation = output.optflow[case].active_renewable_generation:rename_agent("NetPlan");
         local sddp_renewable_generation = output.sddp[case].active_renewable_generation:rename_agent("SDDP");
         local renewable_deviation = abs(renewable_generation - sddp_renewable_generation):rename_agent("Deviation");
         chart_renewable:add_column(renewable_generation, {color = table_case_color[1]});
         chart_renewable:add_column(sddp_renewable_generation, {color = table_case_color[2]});
         chart_renewable:add_line(renewable_deviation, {dashStyle = "ShortDash", color = "black"});
 
-        local batt_generation = output.optflow[case].active_batt_generation:rename_agent("OptFlow");
+        local batt_generation = output.optflow[case].active_batt_generation:rename_agent("NetPlan");
         local sddp_batt_generation = output.sddp[case].active_batt_generation:rename_agent("SDDP");
         local batt_deviation = abs(batt_generation - sddp_batt_generation):rename_agent("Deviation");
         chart_batt:add_column(batt_generation, {color = table_case_color[1]});
@@ -1140,8 +1166,6 @@ function Tab.add_voltage_limits_upper_chart(self, n_cases, Lang, output)
     local msg = dictionary.upper_voltage_msg[Lang];
     self:push(msg);
 
-    local n = 5;
-
     local max = 1;
     local min = 0;
 
@@ -1152,15 +1176,12 @@ function Tab.add_voltage_limits_upper_chart(self, n_cases, Lang, output)
             subtitle = Generic(case):cloudname();
         end
 
-         -- Voltage upper limit
-        local chart = Chart(dictionary.voltage_upper_limit[Lang] .. " (" .. n .. " " .. dictionary.biggest_busses[Lang] .. ")", subtitle);
-        chart:enable_controls();
-        chart:invert_axes();
-        chart:enable_vertical_zoom();
+        -- Voltage upper limit
+        local chart = Chart(dictionary.voltage_upper_limit[Lang], subtitle);
 
         local options = {
-            yLabel = dictionary.buses[Lang],
-            xLabel = dictionary.scenarios[Lang],
+            yLabel = dictionary.cell_blocks[Lang],
+            xLabel = dictionary.stage[Lang],
             showInLegend = false,
             xTickPixelInterval = 400/14,
             stopsMin = min,
@@ -1168,26 +1189,16 @@ function Tab.add_voltage_limits_upper_chart(self, n_cases, Lang, output)
             stops = { { min, "#C64B3E" }, { max, "#4E79A7" } }
         };
 
-        for s = 1,output.optflow[case].voltage_margin_upper:stages() do
-            local voltage_margin_upper_stage = output.optflow[case].voltage_margin_upper:select_stage(s);
-            local agents = voltage_margin_upper_stage:abs():select_largest_agents(n):agents();
+        chart:add_heatmap(output.optflow[case].voltage_margin_upper, options);
 
-            options.sequence = s;
-            options.sequence_label = dictionary.stage[Lang] .. " " .. s;
-            chart:add_heatmap_series_agents(voltage_margin_upper_stage:select_agents(agents), options);
-        end
-        
         self:push(chart);
     end
-
 end
 
 function Tab.add_voltage_limits_lower_chart(self, n_cases, Lang, output)
     local msg = dictionary.lower_voltage_msg[Lang];
     self:push(msg);
 
-    local n = 5;
-
     local max = 1;
     local min = 0;
 
@@ -1198,15 +1209,12 @@ function Tab.add_voltage_limits_lower_chart(self, n_cases, Lang, output)
             subtitle = Generic(case):cloudname();
         end
 
-         -- Voltage lower limit
-        local chart = Chart(dictionary.voltage_lower_limit[Lang] .. " (" .. n .. " " .. dictionary.biggest_busses[Lang] .. ")", subtitle);
-        chart:enable_controls();
-        chart:invert_axes();
-        chart:enable_vertical_zoom();
+        -- Voltage lower limit
+        local chart = Chart(dictionary.voltage_lower_limit[Lang], subtitle);
 
         local options = {
-            yLabel = dictionary.buses[Lang],
-            xLabel = dictionary.scenarios[Lang],
+            yLabel = dictionary.cell_blocks[Lang],
+            xLabel = dictionary.stage[Lang],
             showInLegend = false,
             xTickPixelInterval = 400/14,
             stopsMin = min,
@@ -1214,15 +1222,136 @@ function Tab.add_voltage_limits_lower_chart(self, n_cases, Lang, output)
             stops = { { min, "#C64B3E" }, { max, "#4E79A7" } }
         };
 
-        for s = 1,output.optflow[case].voltage_margin_lower:stages() do
-            local voltage_margin_lower_stage = output.optflow[case].voltage_margin_lower:select_stage(s);
-            local agents = voltage_margin_lower_stage:abs():select_largest_agents(n):agents();
+        chart:add_heatmap(output.optflow[case].voltage_margin_lower, options);
 
-            options.sequence = s;
-            options.sequence_label = dictionary.stage[Lang] .. " " .. s;
-            chart:add_heatmap_series_agents(voltage_margin_lower_stage:select_agents(agents), options);
+        self:push(chart);
+    end
+end
+
+function Tab.add_critical_buses_upper_voltage_chart(self, n_cases, Lang, output)
+    local show_in_legend = n_cases > 1;
+    local color = table_techtype_color.max_pos_reactive_injection;
+
+    local n_lowest = 30;
+
+    local first_year = 2000;
+    local last_year = 2000;
+    if output.optflow[1].voltage_margin_upper_min:loaded() then
+        first_year = output.optflow[1].voltage_margin_upper_min:initial_year();
+        last_year = first_year + output.optflow[1].voltage_margin_upper_min:stages() - 1;
+    end
+
+    local active_buses = output.optflow[1].voltage:remove_zeros():agents();
+
+    local seq = 0;
+    local seq_label = tostring(first_year);
+    local chart;
+    if first_year ~= last_year then
+        chart = Chart(dictionary.critical_buses_voltage_upper_limit[Lang]);
+        chart:enable_controls();
+    else
+        chart = Chart(dictionary.critical_buses_voltage_upper_limit[Lang], first_year);
+    end
+
+    for year = first_year, last_year do
+        seq = seq + 1;
+        seq_label = tostring(year);
+
+        local n = #output.optflow[1].voltage_margin_upper_min:select_agents(active_buses):agents();
+        if n > n_lowest then
+            n = n_lowest;
         end
-        
+
+        for case = 1, n_cases do
+            if n_cases > 1 then
+                color = table_case_color[case];
+            end
+
+            if first_year ~= last_year then
+                chart:add_column_categories(output.optflow[case].voltage_margin_upper_min:select_agents(active_buses):select_stage(seq):select_smallest_agents(n), Generic(case):cloudname(), {color = color, showInLegend = show_in_legend, sequence = seq, sequence_label = seq_label});
+            else
+                chart:add_column_categories(output.optflow[case].voltage_margin_upper_min:select_agents(active_buses):select_smallest_agents(n), Generic(case):cloudname(), {color = color, showInLegend = show_in_legend});
+            end
+        end
+    end
+
+    self:push(chart);
+end
+
+function Tab.add_critical_buses_lower_voltage_chart(self, n_cases, Lang, output)
+    local show_in_legend = n_cases > 1;
+    local color = table_techtype_color.max_neg_reactive_injection;
+
+    local n_lowest = 30;
+
+    local first_year = 2000;
+    local last_year = 2000;
+    if output.optflow[1].voltage_margin_lower_min:loaded() then
+        first_year = output.optflow[1].voltage_margin_lower_min:initial_year();
+        last_year = first_year + output.optflow[1].voltage_margin_lower_min:stages() - 1;
+    end
+
+    local active_buses = output.optflow[1].voltage:remove_zeros():agents();
+
+    local seq = 0;
+    local seq_label = tostring(first_year);
+    local chart;
+    if first_year ~= last_year then
+        chart = Chart(dictionary.critical_buses_voltage_lower_limit[Lang]);
+        chart:enable_controls();
+    else
+        chart = Chart(dictionary.critical_buses_voltage_lower_limit[Lang], first_year);
+    end
+
+    for year = first_year, last_year do
+        seq = seq + 1;
+        seq_label = tostring(year);
+
+        local n = #output.optflow[1].voltage_margin_lower_min:select_agents(active_buses):agents();
+        if n > n_lowest then
+            n = n_lowest;
+        end
+
+        for case = 1, n_cases do
+            if n_cases > 1 then
+                color = table_case_color[case];
+            end
+
+            if first_year ~= last_year then
+                chart:add_column_categories(output.optflow[case].voltage_margin_lower_min:select_agents(active_buses):select_stage(seq):select_smallest_agents(n), Generic(case):cloudname(), {color = color, showInLegend = show_in_legend, sequence = seq, sequence_label = seq_label});
+            else
+                chart:add_column_categories(output.optflow[case].voltage_margin_lower_min:select_agents(active_buses):select_smallest_agents(n), Generic(case):cloudname(), {color = color, showInLegend = show_in_legend});
+            end
+        end
+    end
+
+    self:push(chart);
+end
+
+function Tab.add_voltage_level_chart(self, n_cases, Lang, output) --TODO: Pensar como agregar o dado de tensão nas barras para criar esse chart
+
+    local subtitle = "";
+    for case = 1, n_cases do
+        if n_cases > 1 then
+            subtitle = Generic(case):cloudname();
+        end
+
+        local voltage_profile = output.optflow[case].voltage:aggregate_agents(BY_AVERAGE(), dictionary.voltages[lang]):save_cache();
+
+        local voltage_average = voltage_profile:aggregate_scenarios(BY_AVERAGE());
+        local voltage_p10 = voltage_profile:aggregate_scenarios(BY_PERCENTILE(10));
+        local voltage_p90 = voltage_profile:aggregate_scenarios(BY_PERCENTILE(90));
+
+        -- Voltage lower limit
+        local chart = Chart(dictionary.voltage_lower_limit[Lang], subtitle);
+
+        chart:add_line(voltage_average, {color = table_case_color[case]});
+        chart:add_area_range(
+            voltage_p10:rename_agents("(P10"),
+            voltage_p90:rename_agents("P90)"),
+            { color = table_case_color[case], lineWidth = 0, fillOpacity = 0.2 }
+        );
+
         self:push(chart);
     end
 end
@@ -1272,7 +1401,7 @@ function Tab.Solution_Results(self, n_cases, Lang, output)
 
 
     subTab = SubTab(dictionary.deviation[Lang]);
-    subTab:push("# OptFlow x SDDP " .. dictionary.results[Lang]);
+    subTab:push("# NetPlan x SDDP " .. dictionary.results[Lang]);
     subTab:push("## " .. dictionary.power_generation_deviations[Lang]);
     subTab:generation_deviation_charts(n_cases, Lang, output);
     subTab:generation_deviation_individual_charts(n_cases, Lang, output);
@@ -1281,9 +1410,18 @@ function Tab.Solution_Results(self, n_cases, Lang, output)
 end
 
 function Tab.Voltage_Limits(self, n_cases, Lang, output)
-    self:set_icon("bolt")
-    self:add_voltage_limits_upper_chart(n_cases, Lang, output);
-    self:add_voltage_limits_lower_chart(n_cases, Lang, output);
+    self:set_icon("bolt");
+
+    self:push("# " .. dictionary.voltage_level[lang]);
+    self:add_voltage_level_chart(n_cases, Lang, output);
+
+    --self:push("# " .. dictionary.voltage_security_margin[lang]);
+    --self:add_voltage_limits_upper_chart(n_cases, Lang, output);
+    --self:add_voltage_limits_lower_chart(n_cases, Lang, output);
+
+    self:push("# " .. dictionary.critical_buses[lang]);
+    self:add_critical_buses_upper_voltage_chart(n_cases, Lang, output);
+    self:add_critical_buses_lower_voltage_chart(n_cases, Lang, output);
 end
 
 
@@ -1932,7 +2070,9 @@ function load_optflow_data(file_name, case_index)
                     elseif key == "DCNV_SSIS" then optflow_struct.system_representation = val
                     elseif key == "DCNV_VSIS" then
                         for num in string.gmatch(val_str, "%S+") do
-                            table.insert(optflow_struct.selected_systems, tonumber(num))
+                            local number = tonumber(num) // 1;
+                            table.insert(optflow_struct.selected_systems, number)
+                            --table.insert(optflow_struct.selected_systems, num)
                         end
                         
                     -- Objective functions
@@ -2013,7 +2153,6 @@ tab_results:Solution_Results(N_cases, lang, output);
 d:push(tab_results);
 
 --local tab_voltage = Tab(dictionary.voltage_profiles[lang]);
---tab_voltage:push("# " .. dictionary.voltages[lang]);
 --tab_voltage:Voltage_Limits(N_cases, lang, output);
 --d:push(tab_voltage);
 
@@ -2023,4 +2162,4 @@ summary_tab:create_summary(N_cases, lang, info_struct, optflow_data);
 d:push(summary_tab);
 
 d:hide_links();
-d:save("OptFlow");
+d:save("NetPlan - AC OPF");
