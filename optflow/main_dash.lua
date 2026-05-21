@@ -46,6 +46,7 @@ local dictionary = {
     scenario = {en = "Scenario", es = "Escenario", pt = "Cenário"},
     stages = {en = "Stages", es = "Etapas", pt = "Estágios"},
     stage = {en = "Stage", es = "Etapa", pt = "Estágio"},
+    average = {en = "Average", es = "Promedio", pt = "Média"},
     costs = {en = "Costs", es = "Costos", pt = "Custos"},
     generation = {en = "Generation", es = "Generación", pt = "Geração"},
     thermal = {en = "Thermal", es = "Térmica", pt = "Térmica"},
@@ -69,6 +70,7 @@ local dictionary = {
     voltages = {en = "Voltage", es = "Voltaje", pt = "Tensão"},
     voltage_security_margin = {en = "Voltage safety margin", es = "Margen de seguridad de voltaje", pt = "Margem de segurança de tensão"},
     voltage_level = {en = "Voltage level", es = "Nivel de voltaje", pt = "Nível de tensão"},
+    voltage_level_bus_avg = {en = "Voltage level - Bus average", es = "Nivel de voltaje - Promedio de las barras ", pt = "Nível de tensão - Média das barras"},
     critical_buses = {en = "Critical buses", es = "Barras criticas", pt = "Barras críticas"},
     solutions = {en = "Solutions", es = "Soluciones", pt = "Soluções"},
     biggest_busses = {en = "Biggest buses values", es = "Valores de las barras más grandes", pt = "Maiores valores das barras"},
@@ -446,8 +448,6 @@ local dictionary = {
     battery_generation_deviations = {en = "Battery generation", es = "Generación de baterías", pt = "Geração de baterias"},
 
     voltage_profiles = {en = "Voltage profiles", es = "Perfiles de voltaje", pt = "Perfis de tensão"},
-    lower_limit_margin = {en = "Lower limit margin", es = "Margen de límite inferior", pt = "Margem de limite inferior"},
-    upper_limit_margin = {en = "Upper limit margin", es = "Margen de límite superior", pt = "Margem de limite superior"},
     voltage_limits = {en = "Voltage limits", es = "Límites de voltaje", pt = "Limites de tensão"},
     voltage_lower_limit = {en = "Voltage lower limit - Bus average", es = "Límite inferior de voltaje - Promedio de las barras", pt = "Limite inferior de tensão - Média das barras"},
     voltage_upper_limit = {en = "Voltage upper limit - Bus average", es = "Límite superior de voltaje - Promedio de las barras", pt = "Limite superior de tensão - Média das barras"},
@@ -471,16 +471,22 @@ local dictionary = {
         pt = "*A tolerância de mismatch de potência reativa (%.4f) foi respeitada em todos os problemas.*"
     },
 
-    upper_voltage_msg = {
-        en = "The upper limit margin indicates the distance to the upper limit, relative to the range defined by its limits. It is calculated as: $$ UpperMargin = \\frac{Vmax - Vcur}{Vmax - Vmin} $$ where Vmax = upper voltage limit, Vmin = lower voltage limit and Vcur = current voltage value. Margin values equal to 1 pu indicate that it is at the lower limit, while values equal to 0 pu indicate it is at the upper limit.",
-        es = "La margen del límite superior indica la distancia al límite superior, relativa al rango definido por sus límites. Se calcula como: $$ UpperMargin = \\frac{Vmax - Vcur}{Vmax - Vmin} $$ donde Vmax = límite de voltaje superior, Vmin = límite de voltaje inferior y Vcur = valor de voltaje actual. Valores de margen iguales a 1 pu indican que está en el límite inferior, mientras que valores iguales a 0 pu indican que está en el límite superior.",
-        pt = "A margem do limite superior indica a distância ao limite superior, relativa à faixa definida por seus limites. É calculada como: $$ UpperMargin = \\frac{Vmax - Vcur}{Vmax - Vmin} $$ onde Vmax = limite de tensão superior, Vmin = limite de tensão inferior e Vcur = valor de tensão atual. Valores de margem iguais a 1 pu indicam que está no limite inferior, enquanto que valores iguais a 0 pu indicam que está no limite superior."
+    voltage_margin_msg = {
+        en = "The voltage safety margin represents the **normalized distance** of the current voltage relative to its lower and upper operating limits. It is calculated as: $$ Margin = \\\\frac{Vcur - Vmin}{Vmax - Vmin} $$ where Vmax = upper voltage limit, Vmin = lower voltage limit and Vcur = current voltage value. Margin values equal to 1 pu indicate that the voltage is at the upper limit, while values equal to 0 pu indicate that it is at the lower limit.",
+        es = "El margen de seguridad de tensión representa la **distancia normalizada** del voltaje actual con respecto a sus límites inferior y superior de operación. Se calcula como: $$ Margen = \\\\frac{Vcur - Vmin}{Vmax - Vmin} $$ donde Vmax = límite superior de tensión, Vmin = límite inferior de tensión y Vcur = valor actual de la tensión. Valores de margen iguales a 1 pu indican que la tensión se encuentra en el límite superior, mientras que valores iguales a 0 pu indican que se encuentra en el límite inferior.",
+        pt = "A margem de segurança de tensão representa a **distância normalizada** da tensão atual em relação aos seus limites inferior e superior de operação. Ela é calculada como: $$ Margem = \\\\frac{Vcur - Vmin}{Vmax - Vmin} $$ onde Vmax = limite superior de tensão, Vmin = limite inferior de tensão e Vcur = valor atual da tensão. Valores de margem iguais a 1 pu indicam que a tensão está no limite superior, enquanto valores iguais a 0 pu indicam que ela está no limite inferior."
     },
 
-    lower_voltage_msg = {
-        en = "The lower limit margin indicates the distance to the lower limit, relative to the range defined by its limits. It is calculated as: $$ LowerMargin = \\frac{Vcur - Vmin}{Vmax - Vmin} $$ where Vmax = upper voltage limit, Vmin = lower voltage limit and Vcur = current voltage. Margin values equal to 1 pu indicate that it is at the upper limit, while values equal to 0 pu indicate it is at the lower limit.",
-        es = "La margen del límite inferior indica la distancia al límite inferior, relativa al rango definido por sus límites. Se calcula como: $$ LowerMargin = \\frac{Vcur - Vmin}{Vmax - Vmin} $$ donde Vmax = límite de voltaje superior, Vmin = límite de voltaje inferior y Vcur = valor de voltaje actual. Valores de margen iguales a 1 pu indican que está en el límite superior, mientras que valores iguales a 0 pu indican que está en el límite inferior.",
-        pt = "A margem do limite inferior indica a distância ao limite inferior, relativa à faixa definida por seus limites. É calculada como: $$ LowerMargin = \\frac{Vcur - Vmin}{Vmax - Vmin} $$ onde Vmax = limite de tensão superior, Vmin = limite de tensão inferior e Vcur = valor de tensão atual. Valores de margem iguais a 1 pu indicam que está no limite superior, enquanto que valores iguais a 0 pu indicam que está no limite inferior."
+    critical_buses_upper_msg = {
+        en = "#### Most critical voltage level observed among the buses with the highest voltage safety margins in each year.",
+        es = "#### Nivel de tensión más crítico observado entre las barras con los mayores márgenes de seguridad de tensión en cada año.",
+        pt = "#### Nível de tensão mais crítico observado entre as barras com as maiores margens de segurança de tensão em cada ano."
+    },
+
+    critical_buses_lower_msg = {
+        en = "#### Most critical voltage level observed among the buses with the lowest voltage safety margins in each year.",
+        es = "#### Nivel de tensión más crítico observado entre las barras con los menores márgenes de seguridad de tensión en cada año.",
+        pt = "#### Nível de tensão mais crítico observado entre as barras com as menores margens de segurança de tensão em cada ano."
     },
 
     mismatch_solution_msg = {
@@ -490,9 +496,9 @@ local dictionary = {
     },
 
     active_generation_optflow_msg = {
-        en = "This calculation uses only the OptFlow selected blocks and scenarios.",
-        es = "Este cálculo utiliza solo los bloques y escenarios seleccionados de OptFlow.",
-        pt = "Este cálculo utiliza apenas os blocos e cenários selecionados do OptFlow."
+        en = "This calculation uses only the 'NetPlan - AC OPF' selected blocks and scenarios.",
+        es = "Este cálculo utiliza solo los bloques y escenarios seleccionados de NetPlan - AC OPF.",
+        pt = "Este cálculo utiliza apenas os blocos e cenários selecionados do NetPlan - AC OPF."
     }
 }
 
@@ -587,11 +593,14 @@ function load_data(output, lang, optflow_data)
         output.optflow[case].active_load_shedding = bus:load("opf_lshp"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.active_deficit[lang]);
         output.optflow[case].reactive_load_shedding = bus:load("opf_lshq"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.reactive_deficit[lang]);
 
-        output.optflow[case].voltage = bus:load("opf_volt"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, false):save_cache();
-        output.optflow[case].voltage_margin_lower = bus:load("opf_voltagemarginlower"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, true):aggregate_agents(BY_AVERAGE(), dictionary.lower_limit_margin[lang]);
-        output.optflow[case].voltage_margin_upper = bus:load("opf_voltagemarginupper"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, true):aggregate_agents(BY_AVERAGE(), dictionary.upper_limit_margin[lang]);
-        output.optflow[case].voltage_margin_lower_min = bus:load("opf_voltagemarginlower"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false):aggregate_blocks(BY_MIN()):aggregate_scenarios(BY_MIN()):aggregate_stages(BY_MIN(), Profile.PER_YEAR);
-        output.optflow[case].voltage_margin_upper_min = bus:load("opf_voltagemarginupper"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false):aggregate_blocks(BY_MIN()):aggregate_scenarios(BY_MIN()):aggregate_stages(BY_MIN(), Profile.PER_YEAR);
+        output.optflow[case].voltage = bus:load("opf_volt"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, false):remove_zeros():save_cache();
+        local active_buses = output.optflow[case].voltage:agents();
+        output.optflow[case].voltage_max = bus:load("opf_volt"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false):remove_zeros():aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX()):aggregate_stages(BY_MAX(), Profile.PER_YEAR);
+        output.optflow[case].voltage_min = bus:load("opf_volt"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false):remove_zeros():aggregate_blocks(BY_MIN()):aggregate_scenarios(BY_MIN()):aggregate_stages(BY_MIN(), Profile.PER_YEAR);
+
+        local voltage_margin_lower = bus:load("opf_voltagemarginlower"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, true):select_agents(active_buses):save_cache();
+        output.optflow[case].voltage_margin_lower = voltage_margin_lower:select_agents(voltage_margin_lower:ne(-1)):aggregate_agents(BY_AVERAGE(), dictionary.voltage_security_margin[lang]);
+        output.optflow[case].voltage_margin_lower_min = bus:load("opf_voltagemarginlower"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false):select_agents(active_buses):select_agents(voltage_margin_lower:ne(-1)):aggregate_blocks(BY_MIN()):aggregate_scenarios(BY_MIN()):aggregate_stages(BY_MIN(), Profile.PER_YEAR);
 
         output.sddp[case].active_thermal_generation = thermal:load("gerter"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):convert("MW"):aggregate_agents(BY_SUM(), dictionary.thermal[lang]):convert("MW");
         output.sddp[case].active_hydro_generation = hydro:load("gerhid"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):convert("MW"):aggregate_agents(BY_SUM(), dictionary.hydro[lang]):convert("MW");
@@ -1162,44 +1171,12 @@ function Tab.generation_deviation_individual_charts(self, n_cases, Lang, output)
     end
 end
 
-function Tab.add_voltage_limits_upper_chart(self, n_cases, Lang, output)
-    local msg = dictionary.upper_voltage_msg[Lang];
+function Tab.add_voltage_margin_chart(self, n_cases, Lang, output)
+    local msg = dictionary.voltage_margin_msg[Lang];
     self:push(msg);
 
     local max = 1;
-    local min = 0;
-
-    local subtitle = "";
-    for case = 1, n_cases do
-
-        if n_cases > 1 then
-            subtitle = Generic(case):cloudname();
-        end
-
-        -- Voltage upper limit
-        local chart = Chart(dictionary.voltage_upper_limit[Lang], subtitle);
-
-        local options = {
-            yLabel = dictionary.cell_blocks[Lang],
-            xLabel = dictionary.stage[Lang],
-            showInLegend = false,
-            xTickPixelInterval = 400/14,
-            stopsMin = min,
-            stopsMax = max,
-            stops = { { min, "#C64B3E" }, { max, "#4E79A7" } }
-        };
-
-        chart:add_heatmap(output.optflow[case].voltage_margin_upper, options);
-
-        self:push(chart);
-    end
-end
-
-function Tab.add_voltage_limits_lower_chart(self, n_cases, Lang, output)
-    local msg = dictionary.lower_voltage_msg[Lang];
-    self:push(msg);
-
-    local max = 1;
+    local avg = 0.5;
     local min = 0;
 
     local subtitle = "";
@@ -1219,7 +1196,7 @@ function Tab.add_voltage_limits_lower_chart(self, n_cases, Lang, output)
             xTickPixelInterval = 400/14,
             stopsMin = min,
             stopsMax = max,
-            stops = { { min, "#C64B3E" }, { max, "#4E79A7" } }
+            stops = { { min, table_techtype_color.max_neg_reactive_injection }, { avg, "green" }, { max, table_techtype_color.max_pos_reactive_injection } }
         };
 
         chart:add_heatmap(output.optflow[case].voltage_margin_lower, options);
@@ -1229,6 +1206,8 @@ function Tab.add_voltage_limits_lower_chart(self, n_cases, Lang, output)
 end
 
 function Tab.add_critical_buses_upper_voltage_chart(self, n_cases, Lang, output)
+    self:push(dictionary.critical_buses_upper_msg[Lang]);
+
     local show_in_legend = n_cases > 1;
     local color = table_techtype_color.max_pos_reactive_injection;
 
@@ -1236,41 +1215,41 @@ function Tab.add_critical_buses_upper_voltage_chart(self, n_cases, Lang, output)
 
     local first_year = 2000;
     local last_year = 2000;
-    if output.optflow[1].voltage_margin_upper_min:loaded() then
-        first_year = output.optflow[1].voltage_margin_upper_min:initial_year();
-        last_year = first_year + output.optflow[1].voltage_margin_upper_min:stages() - 1;
+    if output.optflow[1].voltage_margin_lower_min:loaded() then
+        first_year = output.optflow[1].voltage_margin_lower_min:initial_year();
+        last_year = first_year + output.optflow[1].voltage_margin_lower_min:stages() - 1;
     end
-
-    local active_buses = output.optflow[1].voltage:remove_zeros():agents();
 
     local seq = 0;
     local seq_label = tostring(first_year);
     local chart;
     if first_year ~= last_year then
-        chart = Chart(dictionary.critical_buses_voltage_upper_limit[Lang]);
+        chart = Chart(dictionary.voltage_level[Lang]);
         chart:enable_controls();
     else
-        chart = Chart(dictionary.critical_buses_voltage_upper_limit[Lang], first_year);
+        chart = Chart(dictionary.voltage_level[Lang], first_year);
     end
 
     for year = first_year, last_year do
         seq = seq + 1;
         seq_label = tostring(year);
 
-        local n = #output.optflow[1].voltage_margin_upper_min:select_agents(active_buses):agents();
-        if n > n_lowest then
-            n = n_lowest;
-        end
-
         for case = 1, n_cases do
             if n_cases > 1 then
                 color = table_case_color[case];
             end
 
+            local n = #output.optflow[case].voltage_margin_lower_min:agents();
+            if n > n_lowest then
+                n = n_lowest;
+            end
+
             if first_year ~= last_year then
-                chart:add_column_categories(output.optflow[case].voltage_margin_upper_min:select_agents(active_buses):select_stage(seq):select_smallest_agents(n), Generic(case):cloudname(), {color = color, showInLegend = show_in_legend, sequence = seq, sequence_label = seq_label});
+                local critical_agents = output.optflow[case].voltage_margin_lower_min:select_stage(seq):select_largest_agents(n):agents();
+                chart:add_column_categories(output.optflow[case].voltage_max:select_stage(seq):select_agents(critical_agents), Generic(case):cloudname(), {color = color, showInLegend = show_in_legend, sequence = seq, sequence_label = seq_label});
             else
-                chart:add_column_categories(output.optflow[case].voltage_margin_upper_min:select_agents(active_buses):select_smallest_agents(n), Generic(case):cloudname(), {color = color, showInLegend = show_in_legend});
+                local critical_agents = output.optflow[case].voltage_margin_lower_min:select_largest_agents(n):agents();
+                chart:add_column_categories(output.optflow[case].voltage_max:select_agents(critical_agents), Generic(case):cloudname(), {color = color, showInLegend = show_in_legend});
             end
         end
     end
@@ -1279,6 +1258,8 @@ function Tab.add_critical_buses_upper_voltage_chart(self, n_cases, Lang, output)
 end
 
 function Tab.add_critical_buses_lower_voltage_chart(self, n_cases, Lang, output)
+    self:push(dictionary.critical_buses_lower_msg[Lang]);
+
     local show_in_legend = n_cases > 1;
     local color = table_techtype_color.max_neg_reactive_injection;
 
@@ -1291,36 +1272,36 @@ function Tab.add_critical_buses_lower_voltage_chart(self, n_cases, Lang, output)
         last_year = first_year + output.optflow[1].voltage_margin_lower_min:stages() - 1;
     end
 
-    local active_buses = output.optflow[1].voltage:remove_zeros():agents();
-
     local seq = 0;
     local seq_label = tostring(first_year);
     local chart;
     if first_year ~= last_year then
-        chart = Chart(dictionary.critical_buses_voltage_lower_limit[Lang]);
+        chart = Chart(dictionary.voltage_level[Lang]);
         chart:enable_controls();
     else
-        chart = Chart(dictionary.critical_buses_voltage_lower_limit[Lang], first_year);
+        chart = Chart(dictionary.voltage_level[Lang], first_year);
     end
 
     for year = first_year, last_year do
         seq = seq + 1;
         seq_label = tostring(year);
 
-        local n = #output.optflow[1].voltage_margin_lower_min:select_agents(active_buses):agents();
-        if n > n_lowest then
-            n = n_lowest;
-        end
-
         for case = 1, n_cases do
             if n_cases > 1 then
                 color = table_case_color[case];
             end
 
+            local n = #output.optflow[case].voltage_margin_lower_min:agents();
+            if n > n_lowest then
+                n = n_lowest;
+            end
+
             if first_year ~= last_year then
-                chart:add_column_categories(output.optflow[case].voltage_margin_lower_min:select_agents(active_buses):select_stage(seq):select_smallest_agents(n), Generic(case):cloudname(), {color = color, showInLegend = show_in_legend, sequence = seq, sequence_label = seq_label});
+                local critical_agents = output.optflow[case].voltage_margin_lower_min:select_stage(seq):select_smallest_agents(n):agents();
+                chart:add_column_categories(output.optflow[case].voltage_min:select_stage(seq):select_agents(critical_agents), Generic(case):cloudname(), {color = color, showInLegend = show_in_legend, sequence = seq, sequence_label = seq_label});
             else
-                chart:add_column_categories(output.optflow[case].voltage_margin_lower_min:select_agents(active_buses):select_smallest_agents(n), Generic(case):cloudname(), {color = color, showInLegend = show_in_legend});
+                local critical_agents = output.optflow[case].voltage_margin_lower_min:select_smallest_agents(n):agents();
+                chart:add_column_categories(output.optflow[case].voltage_min:select_agents(critical_agents), Generic(case):cloudname(), {color = color, showInLegend = show_in_legend});
             end
         end
     end
@@ -1328,7 +1309,7 @@ function Tab.add_critical_buses_lower_voltage_chart(self, n_cases, Lang, output)
     self:push(chart);
 end
 
-function Tab.add_voltage_level_chart(self, n_cases, Lang, output) --TODO: Pensar como agregar o dado de tensão nas barras para criar esse chart
+function Tab.add_voltage_level_chart(self, n_cases, Lang, output)
 
     local subtitle = "";
     for case = 1, n_cases do
@@ -1338,12 +1319,12 @@ function Tab.add_voltage_level_chart(self, n_cases, Lang, output) --TODO: Pensar
 
         local voltage_profile = output.optflow[case].voltage:aggregate_agents(BY_AVERAGE(), dictionary.voltages[lang]):save_cache();
 
-        local voltage_average = voltage_profile:aggregate_scenarios(BY_AVERAGE());
+        local voltage_average = voltage_profile:aggregate_scenarios(BY_AVERAGE()):rename_agents(dictionary.average[lang]);
         local voltage_p10 = voltage_profile:aggregate_scenarios(BY_PERCENTILE(10));
         local voltage_p90 = voltage_profile:aggregate_scenarios(BY_PERCENTILE(90));
 
         -- Voltage lower limit
-        local chart = Chart(dictionary.voltage_lower_limit[Lang], subtitle);
+        local chart = Chart(dictionary.voltage_level[Lang], subtitle);
 
         chart:add_line(voltage_average, {color = table_case_color[case]});
         chart:add_area_range(
@@ -1407,6 +1388,10 @@ function Tab.Solution_Results(self, n_cases, Lang, output)
     subTab:generation_deviation_individual_charts(n_cases, Lang, output);
     self:push(subTab);
 
+    subTab = SubTab(dictionary.voltage_profiles[lang]);
+    subTab:Voltage_Limits(N_cases, lang, output);
+    self:push(subTab);
+
 end
 
 function Tab.Voltage_Limits(self, n_cases, Lang, output)
@@ -1415,9 +1400,8 @@ function Tab.Voltage_Limits(self, n_cases, Lang, output)
     self:push("# " .. dictionary.voltage_level[lang]);
     self:add_voltage_level_chart(n_cases, Lang, output);
 
-    --self:push("# " .. dictionary.voltage_security_margin[lang]);
-    --self:add_voltage_limits_upper_chart(n_cases, Lang, output);
-    --self:add_voltage_limits_lower_chart(n_cases, Lang, output);
+    self:push("# " .. dictionary.voltage_security_margin[lang]);
+    self:add_voltage_margin_chart(n_cases, Lang, output);
 
     self:push("# " .. dictionary.critical_buses[lang]);
     self:add_critical_buses_upper_voltage_chart(n_cases, Lang, output);
@@ -2151,10 +2135,6 @@ tab_results:set_disabled();
 tab_results:push("# " .. dictionary.solution_results[lang]);
 tab_results:Solution_Results(N_cases, lang, output);
 d:push(tab_results);
-
---local tab_voltage = Tab(dictionary.voltage_profiles[lang]);
---tab_voltage:Voltage_Limits(N_cases, lang, output);
---d:push(tab_voltage);
 
 local summary_tab = Tab(dictionary.summary[lang]);
 summary_tab:push("# " .. dictionary.case_information[lang]);
