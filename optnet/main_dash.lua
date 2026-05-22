@@ -298,10 +298,15 @@ local dictionary = {
 ---------------------------------------------------------------------------
 
 function Expression.select_optnet_date_scn_blcks(self, optnet_data_case, system_codes, select_system, agg_blocks, agg_scenarios)
-    local self_selected = self:select_stages_by_year_period(optnet_data_case.initial_year, optnet_data_case.initial_stage, optnet_data_case.final_year, optnet_data_case.final_stage);
+    if not self:loaded() then
+        return self;
+    end
 
-    if not self_selected:loaded() then
-        return self_selected;
+    local self_selected;
+    if self:stage_type() == 10 then
+        self_selected = self:select_stages_by_year(optnet_data_case.initial_year, optnet_data_case.final_year);
+    else
+        self_selected = self:select_stages_by_year_period(optnet_data_case.initial_year, optnet_data_case.initial_stage, optnet_data_case.final_year, optnet_data_case.final_stage);
     end
 
     if self_selected:stage_type() ~= 10 then
@@ -316,17 +321,17 @@ function Expression.select_optnet_date_scn_blcks(self, optnet_data_case, system_
                 self_selected = self_selected:aggregate_blocks();
             end
         end
-    end
 
-    if optnet_data_case.serie_representation ~= 0 then
-        if agg_scenarios then
-            self_selected = self_selected:aggregate_scenarios(BY_AVERAGE(), optnet_data_case.selected_series);
+        if optnet_data_case.serie_representation ~= 0 then
+            if agg_scenarios then
+                self_selected = self_selected:aggregate_scenarios(BY_AVERAGE(), optnet_data_case.selected_series);
+            else
+                self_selected = self_selected:select_scenarios(optnet_data_case.selected_series);
+            end
         else
-            self_selected = self_selected:select_scenarios(optnet_data_case.selected_series);
-        end
-    else
-        if agg_scenarios then
-            self_selected = self_selected:aggregate_scenarios(BY_AVERAGE());
+            if agg_scenarios then
+                self_selected = self_selected:aggregate_scenarios(BY_AVERAGE());
+            end
         end
     end
 
@@ -401,42 +406,42 @@ function load_data(output, lang, optnet_data)
         output.optnet[case].acline_redundancy       = acline:load("opn_dashboard_acline_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false)
             :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
-            :remove_zeros();
+            --:remove_zeros();
 
-        output.optnet[case].transformer_redundancy  = transformer:load("opn_dashboard_transformers_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false)
+        output.optnet[case].transformer_redundancy  = transformer:load("opn_dashboard_transformer_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false)
             :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
-            :remove_zeros();
+            --:remove_zeros();
 
-        output.optnet[case].three_winding_redundancy = three_winding:load("opn_dashboard_threewindingtransformers_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false)
+        output.optnet[case].three_winding_redundancy = three_winding:load("opn_dashboard_threewindingtransformer_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false)
             :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
-            :remove_zeros();
+            --:remove_zeros();
 
         output.optnet[case].series_cap_redundancy   = series_capacitor:load("opn_dashboard_seriescapacitor_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false)
             :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
-            :remove_zeros();
+            --:remove_zeros();
 
         output.optnet[case].flow_ctrl_redundancy    = flwcontroller:load("opn_dashboard_flowcontroller_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false)
             :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
-            :remove_zeros();
+            --:remove_zeros();
 
         output.optnet[case].dc_line_redundancy      = dcline:load("opn_dashboard_dcline_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false)
             :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
-            :remove_zeros();
+            --:remove_zeros();
 
         output.optnet[case].converter_redundancy    = generic:load("opn_dashboard_converter_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, false, false, false)
             :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
-            :remove_zeros();
+            --:remove_zeros();
 
         output.optnet[case].dc_link_redundancy      = dclink:load("opn_dashboard_dclink_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false)
             :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
-            :remove_zeros();
+            --:remove_zeros();
 
         -- ── Investment results ──────────────────────────────────────────
         output.optnet[case].investment_capacity = generic:load("opn_dashboard_investment_capacity"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, false, true, true)
@@ -627,65 +632,73 @@ function Tab.add_circuit_loading_chart(self, n_cases, Lang, output)
     return has_data;
 end
 
-function Tab.add_redundancy_chart(self, n_cases, Lang, output)
+function Tab.add_redundancy_chart(self, n_cases, Lang, output, optnet_data)
     local has_data = false;
 
-    if n_cases > 1 then
-        for case = 1, n_cases do
-            local chart = Chart(dictionary.check_redundancy[Lang], Generic(case):cloudname());
-            chart:horizontal_legend();
-            chart:add_column(output.optnet[case].acline_redundancy,
-                { color = table_element_color.ac_line });
-            chart:add_column(output.optnet[case].transformer_redundancy,
-                { color = table_element_color.transformer });
-            chart:add_column(output.optnet[case].three_winding_redundancy,
-                { color = table_element_color.three_winding });
-            chart:add_column(output.optnet[case].series_cap_redundancy,
-                { color = table_element_color.series_capacitor });
-            chart:add_column(output.optnet[case].flow_ctrl_redundancy,
-                { color = table_element_color.flow_controller });
-            chart:add_column(output.optnet[case].dc_line_redundancy,
-                { color = table_element_color.dc_line });
-            chart:add_column(output.optnet[case].converter_redundancy,
-                { color = table_element_color.converter });
-            chart:add_column(output.optnet[case].dc_link_redundancy,
-                { color = table_element_color.dc_link });
+    local first_year = optnet_data[1].initial_year;
+    local last_year = optnet_data[1].final_year;
+    local seq = 0;
+    local seq_label = tostring(first_year);
+    local chart_redundancy;
+    --if first_year ~= last_year then
+    --    chart_redundancy = Chart(dictionary.check_redundancy[Lang]);
+    --    chart_redundancy:enable_controls();
+    --else
+    chart_redundancy = Chart(dictionary.check_redundancy[Lang], first_year);
+    --end
 
-            if #chart > 0 then
-                self:push(chart);
-                has_data = true;
-            end
-        end
-    else
-        local chart = Chart(dictionary.check_redundancy[Lang]);
-        chart:horizontal_legend();
-        chart:add_column(output.optnet[1].acline_redundancy,
-            { color = table_element_color.ac_line });
-        chart:add_column(output.optnet[1].transformer_redundancy,
+    for year = first_year, last_year do
+        seq = seq + 1;
+        seq_label = tostring(year);
+
+        local acline_stage = output.optnet[1].acline_redundancy:select_stage(seq);
+        local acline_redundancy = acline_stage:select_agents(acline_stage:ne(-1));
+        local transformer_stage = output.optnet[1].transformer_redundancy:select_stage(seq);
+        local transformer_redundancy = transformer_stage:select_agents(transformer_stage:ne(-1));
+        local transformer_3_stage = output.optnet[1].three_winding_redundancy:select_stage(seq);
+        local transformer_3_redundancy = transformer_3_stage:select_agents(transformer_3_stage:ne(-1));
+        local series_cap_stage = output.optnet[1].series_cap_redundancy:select_stage(seq);
+        local series_cap_redundancy = series_cap_stage:select_agents(series_cap_stage:ne(-1));
+        local flow_ctrl_stage = output.optnet[1].flow_ctrl_redundancy:select_stage(seq);
+        local flow_ctrl_redundancy = flow_ctrl_stage:select_agents(flow_ctrl_stage:ne(-1));
+        local dc_line_stage = output.optnet[1].dc_line_redundancy:select_stage(seq);
+        local dc_line_redundancy = dc_line_stage:select_agents(dc_line_stage:ne(-1));
+        local converter_stage = output.optnet[1].converter_redundancy:select_stage(seq);
+        local converter_redundancy = converter_stage:select_agents(converter_stage:ne(-1));
+        local dc_link_stage = output.optnet[1].dc_link_redundancy:select_stage(seq);
+        local dc_link_redundancy = dc_link_stage:select_agents(dc_link_stage:ne(-1));
+
+        --local all_data = concatenate(acline_redundancy, transformer_redundancy, transformer_3_redundancy, series_cap_redundancy, flow_ctrl_redundancy, dc_line_redundancy, converter_redundancy, dc_link_redundancy);
+        --chart_redundancy:add_column(all_data,
+        --    { sequence = seq, sequence_label = seq_label });
+
+        chart_redundancy:add_column(acline_redundancy,-- dictionary.ac_lines[lang],
+            { color = table_element_color.ac_line }); -- , sequence = seq, sequence_label = seq_label
+        chart_redundancy:add_column(transformer_redundancy,-- dictionary.transformers[lang],
             { color = table_element_color.transformer });
-        chart:add_column(output.optnet[1].three_winding_redundancy,
+        chart_redundancy:add_column(transformer_3_redundancy,-- dictionary.three_winding_transformers[lang],
             { color = table_element_color.three_winding });
-        chart:add_column(output.optnet[1].series_cap_redundancy,
+        chart_redundancy:add_column(series_cap_redundancy,-- dictionary.series_capacitors[lang],
             { color = table_element_color.series_capacitor });
-        chart:add_column(output.optnet[1].flow_ctrl_redundancy,
+        chart_redundancy:add_column(flow_ctrl_redundancy,-- dictionary.flow_controllers[lang],
             { color = table_element_color.flow_controller });
-        chart:add_column(output.optnet[1].dc_line_redundancy,
+        chart_redundancy:add_column(dc_line_redundancy,-- dictionary.dc_lines_label[lang],
             { color = table_element_color.dc_line });
-        chart:add_column(output.optnet[1].converter_redundancy,
+        chart_redundancy:add_column(converter_redundancy,-- dictionary.converters_label[lang],
             { color = table_element_color.converter });
-        chart:add_column(output.optnet[1].dc_link_redundancy,
-            { color = table_element_color.dc_link });
+        chart_redundancy:add_column(dc_link_redundancy,-- dictionary.dc_links_label[lang],
+        { color = table_element_color.dc_link });
+    end
 
-        if #chart > 0 then
-            self:push(chart);
-            has_data = true;
-        end
+    if #chart_redundancy > 0 then
+        self:push(chart_redundancy);
+        has_data = true;
     end
 
     return has_data;
 end
 
-function Tab.Solution_Quality(self, n_cases, Lang, output)
+function Tab.Solution_Quality(self, n_cases, Lang, output, optnet_data)
     self:set_icon("alert-triangle");
 
     local subTab_conv = SubTab(dictionary.convergence[Lang]);
@@ -706,7 +719,7 @@ function Tab.Solution_Quality(self, n_cases, Lang, output)
     end
 
     local subTab_redund = SubTab(dictionary.check_redundancy[Lang]);
-    subTab_redund:add_redundancy_chart(n_cases, Lang, output);
+    subTab_redund:add_redundancy_chart(n_cases, Lang, output, optnet_data);
     self:push(subTab_redund);
 end
 
@@ -1462,7 +1475,7 @@ local d = Dashboard();
 
 local tab_solution = Tab(dictionary.solution_quality[lang]);
 tab_solution:set_disabled();
-tab_solution:Solution_Quality(N_cases, lang, output);
+tab_solution:Solution_Quality(N_cases, lang, output, optnet_data);
 d:push(tab_solution);
 
 local tab_results = Tab(dictionary.results[lang]);
