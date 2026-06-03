@@ -124,6 +124,11 @@ local dictionary = {
         es = "Líneas de CC",
         pt = "Linhas de CC",
     },
+    cell_ac_interc = {
+        en = "AC Interconnection",
+        es = "Interconexión AC",
+        pt = "Interconexão AC",
+    },
     cell_transformers = {
         en = "Transformers",
         es = "Transformadores",
@@ -1573,7 +1578,7 @@ function Tab.create_summary(self, n_cases, Lang, info_struct, optflow_data)
 
 
         local selected_series =  dictionary.cell_all[Lang];
-        if #optflow_data[i].selected_series > 0 then
+        if optflow_data[i].serie_representation > 0 then
             selected_series = "";
             for j = 1, #optflow_data[i].selected_series do
                 selected_series = selected_series .. optflow_data[i].selected_series[j] .. ",";
@@ -1584,7 +1589,7 @@ function Tab.create_summary(self, n_cases, Lang, info_struct, optflow_data)
 
 
         local selected_resolution =  dictionary.cell_all[Lang];
-        if #optflow_data[i].selected_resolutions > 0 then
+        if optflow_data[i].resolution_representation > 0 then
             selected_resolution = "";
             for j = 1, #optflow_data[i].selected_resolutions do
                 selected_resolution = selected_resolution .. optflow_data[i].selected_resolutions[j] .. ",";
@@ -1595,7 +1600,7 @@ function Tab.create_summary(self, n_cases, Lang, info_struct, optflow_data)
 
 
         local selected_systems = dictionary.cell_all[Lang];
-        if #optflow_data[i].selected_systems > 0 then
+        if optflow_data[i].system_representation > 0 then
             selected_systems = "";
             for j = 1, #optflow_data[i].selected_systems do
                 selected_systems = selected_systems .. optflow_data[i].selected_systems[j] .. ",";
@@ -1858,6 +1863,7 @@ function Tab.create_summary(self, n_cases, Lang, info_struct, optflow_data)
     local bus_string            = "| " .. dictionary.cell_buses[Lang];
     local ac_line_string        = "| " .. dictionary.cell_ac_line[Lang];
     local dc_line_string        = "| " .. dictionary.cell_dc_line[Lang];
+    local ac_interc_string        = "| " .. dictionary.cell_ac_interc[Lang];
     local transformer_string    = "| " .. dictionary.cell_transformers[Lang];
     local three_winding_string  = "| " .. dictionary.cell_3wind_transformers[Lang];
     local hydro_string          = "| " .. dictionary.cell_hydro_plants[Lang];
@@ -1875,8 +1881,9 @@ function Tab.create_summary(self, n_cases, Lang, info_struct, optflow_data)
 
         bus_string     = bus_string        .. " | " .. tostring(#Bus(i):labels());
         ac_line_string = ac_line_string .. " | " .. tostring(#ACLine(i):labels());
-        dc_line_string = dc_line_string .. " | " .. tostring(#DCLink(i):labels());
-        transformer_string = transformer_string .. " | " .. tostring(#Transformer(i):labels());
+        dc_line_string = dc_line_string .. " | " .. tostring(#DCLine(i):labels());
+        ac_interc_string = ac_interc_string .. " | " .. tostring(#DCLink(i):labels());
+        transformer_string = transformer_string .. " | " .. tostring(#Transformer(i):labels() - #ThreeWindingTransformer(i):labels());
         three_winding_string = three_winding_string .. " | " .. tostring(#ThreeWindingTransformer(i):labels());
 
         hydro_string    = hydro_string    .. " | " .. tostring(#Hydro(i):labels());
@@ -1916,6 +1923,7 @@ function Tab.create_summary(self, n_cases, Lang, info_struct, optflow_data)
     self:push(bus_string);
     self:push(ac_line_string);
     self:push(dc_line_string);
+    self:push(ac_interc_string);
     self:push(transformer_string);
     self:push(three_winding_string);
 end
