@@ -472,6 +472,11 @@ dictionary = {
         es = "Violación de mínima tasa de retiro de contrato de combustible",
         pt = "Violação de mínima taxa de retirada contrato de combustível"
     },
+    fcofdvio = {
+        en = "Fuel contract minimum daily offtake rate violation",
+        es = "Violación de mínima tasa de retiro diario de contrato de combustible",
+        pt = "Violação de mínima taxa de retirada diária contrato de combustível"
+    },
     vflmnww = {
         en = "Minimum hydro bypass flow violation",
         es = "Violación de flujo mínimo de de desvío hidro",
