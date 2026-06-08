@@ -332,6 +332,11 @@ dictionary = {
         es = "Violación de restricción genérica de interpolación",
         pt = "Violação de restrição genérica de interpolação"
     },
+    cflwvio = {
+        en = "Circuit overload",
+        es = "Sobrecarga de circuito",
+        pt = "Sobrecarga de circuito"
+    },
     gncvio = {
         en = "General constraint: linear",
         es = "Restricción general: lineal",
