@@ -199,6 +199,11 @@ local dictionary = {
         es = "Horaria",
         pt = "Horária"
     },
+    cell_hours = {
+        en = "Hours",
+        es = "Horas",
+        pt = "Horas"
+    },
     cell_fwd_series = {
         en = "Foward series",
         es = "Series Foward",
@@ -1191,11 +1196,16 @@ function Tab.add_voltage_margin_chart(self, n_cases, Lang, output)
             subtitle = Generic(case):cloudname();
         end
 
+        local y_label_legend = dictionary.cell_blocks[Lang];
+        if Study(case):get_parameter("SIMH", -1) == 2 then
+            y_label_legend = dictionary.cell_hours[Lang];
+        end
+
         -- Voltage lower limit
         local chart = Chart(dictionary.voltage_lower_limit[Lang], subtitle);
 
         local options = {
-            yLabel = dictionary.cell_blocks[Lang],
+            yLabel = y_label_legend,
             xLabel = dictionary.stage[Lang],
             showInLegend = false,
             xTickPixelInterval = 400/14,
