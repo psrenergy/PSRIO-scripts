@@ -186,8 +186,8 @@ local dictionary = {
     cell_hourly             = {en = "Hourly",              es = "Horaria",                  pt = "Horária"},
     cell_monthly            = {en = "Monthly",             es = "Mensual",                  pt = "Mensal"},
     cell_weekly             = {en = "Weekly",              es = "Semanal",                  pt = "Semanal"},
-    cell_hourly_representation   = {en = "Hourly resolution",       es = "Resolución horaria",      pt = "Resolução horária"},
-    cell_typicalday_representation = {en = "Typical days resolution", es = "Resolución de días típicos", pt = "Resolução de dias típicos"},
+    cell_hourly_representation   = {en = "Hourly representation",       es = "Representación horaria",      pt = "Representação horária"},
+    cell_typicalday_representation = {en = "Typical days representation", es = "Representación de días típicos", pt = "Representação de dias típicos"},
     cell_blocks_resolution  = {en = "Block resolution",    es = "Resolución por bloques",   pt = "Resolução por blocos"},
     cell_initial_date       = {en = "Initial date",        es = "Fecha inicial",            pt = "Data inicial"},
     cell_final_date         = {en = "Final date",          es = "Fecha final",              pt = "Data final"},
@@ -1004,7 +1004,6 @@ function Tab.create_summary(self, n_cases, Lang, info_struct, optnet_data)
     local header_str      = "| " .. dictionary.cell_case_parameters[Lang];
     local sep_str         = "|---------------";
     local case_type_str   = "| " .. dictionary.cell_case_type[Lang];
-    local block_str       = "| " .. dictionary.cell_blocks_resolution[Lang];
     local hrep_str        = "| " .. dictionary.cell_hourly_representation[Lang];
     local typday_str      = "| " .. dictionary.cell_typicalday_representation[Lang];
     local ini_date_str    = "| " .. dictionary.cell_initial_date[Lang];
@@ -1017,10 +1016,6 @@ function Tab.create_summary(self, n_cases, Lang, info_struct, optnet_data)
         local stage_type = dictionary.cell_monthly[Lang];
         if Study(i):stage_type() == 1 then stage_type = dictionary.cell_weekly[Lang]; end
         case_type_str = case_type_str .. " | " .. stage_type;
-
-        local block_rep = "❌";
-        if Study(i):get_parameter("SIMB", -1) == 1 then block_rep = "✔️"; end
-        block_str = block_str .. " | " .. block_rep;
 
         local hour_rep = "❌";
         if Study(i):get_parameter("SIMH", -1) == 2 then hour_rep = "✔️"; end
@@ -1070,7 +1065,6 @@ function Tab.create_summary(self, n_cases, Lang, info_struct, optnet_data)
             header_str   = header_str     .. "|";
             sep_str      = sep_str        .. "|";
             case_type_str = case_type_str .. "|";
-            block_str    = block_str      .. "|";
             hrep_str     = hrep_str       .. "|";
             typday_str   = typday_str     .. "|";
             ini_date_str = ini_date_str   .. "|";
@@ -1084,7 +1078,6 @@ function Tab.create_summary(self, n_cases, Lang, info_struct, optnet_data)
     self:push(header_str);
     self:push(sep_str);
     self:push(case_type_str);
-    self:push(block_str);
     self:push(hrep_str);
     self:push(typday_str);
     self:push(ini_date_str);
