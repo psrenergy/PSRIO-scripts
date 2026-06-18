@@ -603,14 +603,30 @@ function load_data(output, lang, optflow_data)
         output.optflow[case].active_load_shedding = bus:load("opf_lshp"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.active_deficit[lang]);
         output.optflow[case].reactive_load_shedding = bus:load("opf_lshq"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.reactive_deficit[lang]);
 
-        output.optflow[case].voltage = bus:load("opf_volt"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, false):remove_zeros():save_cache();
-        local active_buses = output.optflow[case].voltage:agents();
-        output.optflow[case].voltage_max = bus:load("opf_volt"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false):remove_zeros():aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX()):aggregate_stages(BY_MAX(), Profile.PER_YEAR);
-        output.optflow[case].voltage_min = bus:load("opf_volt"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false):remove_zeros():aggregate_blocks(BY_MIN()):aggregate_scenarios(BY_MIN()):aggregate_stages(BY_MIN(), Profile.PER_YEAR);
+        local voltage = bus:load("opf_volt"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, false):save_cache();
 
-        local voltage_margin_lower = bus:load("opf_voltagemarginlower"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, true):select_agents(active_buses):save_cache();
-        output.optflow[case].voltage_margin_lower = voltage_margin_lower:select_agents(voltage_margin_lower:ne(-1)):aggregate_agents(BY_AVERAGE(), dictionary.voltage_security_margin[lang]);
-        output.optflow[case].voltage_margin_lower_min = bus:load("opf_voltagemarginlower"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false):select_agents(active_buses):select_agents(voltage_margin_lower:ne(-1)):aggregate_blocks(BY_MIN()):aggregate_scenarios(BY_MIN()):aggregate_stages(BY_MIN(), Profile.PER_YEAR);
+        local voltage_margin_lower_case = bus:load("opf_voltagemarginlower"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, true);
+        voltage_margin_lower_case = voltage_margin_lower_case:select_agents(voltage_margin_lower_case:ne(-1)):save_cache();
+
+        output.optflow[case].voltage_margin_lower_min = bus:load("opf_voltagemarginlower"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false):select_agents(voltage_margin_lower_case:agents()):aggregate_blocks(BY_MIN()):aggregate_scenarios(BY_MIN()):aggregate_stages(BY_MIN(), Profile.PER_YEAR);
+
+        local voltage_profile = {};
+        local voltage_margin_lower = {};
+        for stage = 1, voltage:stages() do
+            local voltage_stage = voltage:select_stage(stage);
+            local active_buses = voltage_stage:remove_zeros():agents();
+
+            local voltage_avg = voltage_stage:select_agents(active_buses):aggregate_agents(BY_AVERAGE(), dictionary.voltages[lang]);
+            local voltage_margin_lower_avg = voltage_margin_lower_case:select_stage(stage):select_agents(active_buses):aggregate_agents(BY_AVERAGE(), dictionary.voltage_security_margin[lang]);
+
+            table.insert(voltage_profile, voltage_avg);
+            table.insert(voltage_margin_lower, voltage_margin_lower_avg);
+        end
+        output.optflow[case].voltage = concatenate_stages(voltage_profile):save_cache();
+        output.optflow[case].voltage_margin_lower = concatenate_stages(voltage_margin_lower):save_cache();
+
+        output.optflow[case].voltage_max = bus:load("opf_volt"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false):aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX()):aggregate_stages(BY_MAX(), Profile.PER_YEAR);
+        output.optflow[case].voltage_min = bus:load("opf_volt"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false):aggregate_blocks(BY_MIN()):aggregate_scenarios(BY_MIN()):aggregate_stages(BY_MIN(), Profile.PER_YEAR);
 
         output.sddp[case].active_thermal_generation = thermal:load("gerter"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):convert("MW"):aggregate_agents(BY_SUM(), dictionary.thermal[lang]):convert("MW");
         output.sddp[case].active_hydro_generation = hydro:load("gerhid"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):convert("MW"):aggregate_agents(BY_SUM(), dictionary.hydro[lang]):convert("MW");
@@ -1254,17 +1270,20 @@ function Tab.add_critical_buses_upper_voltage_chart(self, n_cases, Lang, output)
                 color = table_case_color[case];
             end
 
-            local n = #output.optflow[case].voltage_margin_lower_min:agents();
+            local voltage_max = output.optflow[case].voltage_max:select_stage(seq);
+            local voltage_margin_min = output.optflow[case].voltage_margin_lower_min:select_stage(seq):select_agents(voltage_max:remove_zeros():agents());
+
+            local n = #voltage_margin_min:agents();
             if n > n_lowest then
                 n = n_lowest;
             end
 
             if first_year ~= last_year then
-                local critical_agents = output.optflow[case].voltage_margin_lower_min:select_stage(seq):select_largest_agents(n):agents();
-                chart:add_column_categories(output.optflow[case].voltage_max:select_stage(seq):select_agents(critical_agents), Generic(case):cloudname(), {color = color, showInLegend = show_in_legend, sequence = seq, sequence_label = seq_label});
+                local critical_agents = voltage_margin_min:select_largest_agents(n):agents();
+                chart:add_column_categories(voltage_max:select_agents(critical_agents), Generic(case):cloudname(), {color = color, showInLegend = show_in_legend, sequence = seq, sequence_label = seq_label});
             else
-                local critical_agents = output.optflow[case].voltage_margin_lower_min:select_largest_agents(n):agents();
-                chart:add_column_categories(output.optflow[case].voltage_max:select_agents(critical_agents), Generic(case):cloudname(), {color = color, showInLegend = show_in_legend});
+                local critical_agents = voltage_margin_min:select_largest_agents(n):agents();
+                chart:add_column_categories(voltage_max:select_agents(critical_agents), Generic(case):cloudname(), {color = color, showInLegend = show_in_legend});
             end
         end
     end
@@ -1306,17 +1325,20 @@ function Tab.add_critical_buses_lower_voltage_chart(self, n_cases, Lang, output)
                 color = table_case_color[case];
             end
 
-            local n = #output.optflow[case].voltage_margin_lower_min:agents();
+            local voltage_min = output.optflow[case].voltage_min:select_stage(seq);
+            local voltage_margin_min = output.optflow[case].voltage_margin_lower_min:select_stage(seq):select_agents(voltage_min:remove_zeros():agents());
+
+            local n = #voltage_margin_min:agents();
             if n > n_lowest then
                 n = n_lowest;
             end
 
             if first_year ~= last_year then
-                local critical_agents = output.optflow[case].voltage_margin_lower_min:select_stage(seq):select_smallest_agents(n):agents();
-                chart:add_column_categories(output.optflow[case].voltage_min:select_stage(seq):select_agents(critical_agents), Generic(case):cloudname(), {color = color, showInLegend = show_in_legend, sequence = seq, sequence_label = seq_label});
+                local critical_agents = voltage_margin_min:select_smallest_agents(n):agents();
+                chart:add_column_categories(voltage_min:select_agents(critical_agents), Generic(case):cloudname(), {color = color, showInLegend = show_in_legend, sequence = seq, sequence_label = seq_label});
             else
-                local critical_agents = output.optflow[case].voltage_margin_lower_min:select_smallest_agents(n):agents();
-                chart:add_column_categories(output.optflow[case].voltage_min:select_agents(critical_agents), Generic(case):cloudname(), {color = color, showInLegend = show_in_legend});
+                local critical_agents = voltage_margin_min:select_smallest_agents(n):agents();
+                chart:add_column_categories(voltage_min:select_agents(critical_agents), Generic(case):cloudname(), {color = color, showInLegend = show_in_legend});
             end
         end
     end
@@ -1332,11 +1354,9 @@ function Tab.add_voltage_level_chart(self, n_cases, Lang, output)
             subtitle = Generic(case):cloudname();
         end
 
-        local voltage_profile = output.optflow[case].voltage:aggregate_agents(BY_AVERAGE(), dictionary.voltages[lang]):save_cache();
-
-        local voltage_average = voltage_profile:aggregate_scenarios(BY_AVERAGE()):rename_agents(dictionary.average[lang]);
-        local voltage_p10 = voltage_profile:aggregate_scenarios(BY_PERCENTILE(10));
-        local voltage_p90 = voltage_profile:aggregate_scenarios(BY_PERCENTILE(90));
+        local voltage_average = output.optflow[case].voltage:aggregate_scenarios(BY_AVERAGE()):rename_agents(dictionary.average[lang]);
+        local voltage_p10 = output.optflow[case].voltage:aggregate_scenarios(BY_PERCENTILE(10));
+        local voltage_p90 = output.optflow[case].voltage:aggregate_scenarios(BY_PERCENTILE(90));
 
         -- Voltage lower limit
         local chart = Chart(dictionary.voltage_level[Lang], subtitle);
