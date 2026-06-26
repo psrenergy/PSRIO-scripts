@@ -488,15 +488,15 @@ local dictionary = {
     },
 
     critical_buses_upper_msg = {
-        en = "#### Most critical voltage level observed among the buses with the highest voltage safety margins in each year.",
-        es = "#### Nivel de tensión más crítico observado entre las barras con los mayores márgenes de seguridad de tensión en cada año.",
-        pt = "#### Nível de tensão mais crítico observado entre as barras com as maiores margens de segurança de tensão em cada ano."
+        en = "#### Maximum voltage reached by the buses with the highest voltage safety margins.",
+        es = "#### Máxima tensión alcanzada por las barras con los mayores márgenes de seguridad de tensión.",
+        pt = "#### Máxima tensão atingida pelas barras com as maiores margens de segurança de tensão."
     },
 
     critical_buses_lower_msg = {
-        en = "#### Most critical voltage level observed among the buses with the lowest voltage safety margins in each year.",
-        es = "#### Nivel de tensión más crítico observado entre las barras con los menores márgenes de seguridad de tensión en cada año.",
-        pt = "#### Nível de tensão mais crítico observado entre as barras com as menores margens de segurança de tensão em cada ano."
+        en = "#### Minimum voltage reached by the buses with the lowest voltage safety margins.",
+        es = "#### Mínima tensión alcanzada por las barras con los menores márgenes de seguridad de tensión.",
+        pt = "#### Mínima tensão atingida pelas barras com as menores margens de segurança de tensão."
     },
 
     mismatch_solution_msg = {
