@@ -139,6 +139,16 @@ local dictionary = {
         es = "Transformadores de tres devanados",
         pt = "Transformadores de três enrolamentos",
     },
+    cell_lcc_converter = {
+        en = "LCC converter",
+        es = "Convertidor LCC",
+        pt = "Conversor LCC",
+    },
+    cell_vsc_converter = {
+        en = "VSC Converter",
+        es = "Convertidor VSC",
+        pt = "Conversor VSC",
+    },
 
     ---
     cell_model = {en = "Model", es = "Modelo", pt = "Modelo"},
@@ -512,7 +522,29 @@ local dictionary = {
     }
 }
 
-function Expression.select_optflow_date_scn_blcks(self, optflow_data_case, system_codes, select_system, agg_blocks, agg_scenarios)
+-- auxiliar function to deal with selecting the correct scenarios
+function find_index(list1, list2)
+    local index_map = {}
+
+    -- Cria um mapa: valor -> índice
+    for i, value in ipairs(list1) do
+        index_map[value] = i
+    end
+
+    -- Procura os índices correspondentes
+    local result = {}
+    for _, value in ipairs(list2) do
+        local index = index_map[value]
+        if index == nil then
+            error(string.format("Value %d is not present in the first list.", value))
+        end
+        table.insert(result, index)
+    end
+
+    return result
+end
+
+function Expression.select_optflow_date_scn_blcks(self, optflow_data_case, system_codes, select_system, agg_blocks, agg_scenarios, selected_scenarios)
     --local self_selected = self:select_stages(optflow_data_case.initial_stage, optflow_data_case.final_stage);
     local self_selected = self:select_stages_by_year_period(optflow_data_case.initial_year, optflow_data_case.initial_stage, optflow_data_case.final_year, optflow_data_case.final_stage);
 
@@ -530,9 +562,9 @@ function Expression.select_optflow_date_scn_blcks(self, optflow_data_case, syste
 
     if optflow_data_case.serie_representation ~= 0 then
         if agg_scenarios then
-            self_selected = self_selected:aggregate_scenarios(BY_AVERAGE(), optflow_data_case.selected_series);
+            self_selected = self_selected:aggregate_scenarios(BY_AVERAGE(), selected_scenarios);
         else
-            self_selected = self_selected:select_scenarios(optflow_data_case.selected_series);
+            self_selected = self_selected:select_scenarios(selected_scenarios);
         end
     else
         if agg_scenarios then
@@ -562,57 +594,63 @@ function load_data(output, lang, optflow_data)
         local sync_compensator = SynchronousCompensator(case);
         local system_codes = System(case).code;
 
+        local series_index = Study(case):get_vector_values("IndexSeriesSimulacao", "");
+        local correct_series = optflow_data[case].selected_series;
+        if #series_index > 0 then
+            correct_series = find_index(series_index, optflow_data[case].selected_series);
+        end
+
         output.optflow = output.optflow or {};
         output.optflow[case] = {};
 
         output.sddp = output.sddp or {};
         output.sddp[case] = {};
 
-        output.optflow[case].solution_status = generic:load("opf_status"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, false, false, false);
-        output.optflow[case].solution_time = generic:load("opf_tcpu"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, false, false, false);
+        output.optflow[case].solution_status = generic:load("opf_status"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, false, false, false, correct_series);
+        output.optflow[case].solution_time = generic:load("opf_tcpu"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, false, false, false, correct_series);
 
-        output.optflow[case].thermal_cost = thermal:load("opf_cotr"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.thermal[lang]);
-        output.optflow[case].hydro_cost = hydro:load("opf_cohd"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.hydro[lang]);
-        output.optflow[case].renewable_cost = renewable:load("opf_corn"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.renewable[lang]);
-        output.optflow[case].pot_injection_penalty_cost = bus:load("opf_cinj"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.reactive_injection_power_penalty[lang]);
+        output.optflow[case].thermal_cost = thermal:load("opf_cotr"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.thermal[lang]);
+        output.optflow[case].hydro_cost = hydro:load("opf_cohd"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.hydro[lang]);
+        output.optflow[case].renewable_cost = renewable:load("opf_corn"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.renewable[lang]);
+        output.optflow[case].pot_injection_penalty_cost = bus:load("opf_cinj"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.reactive_injection_power_penalty[lang]);
 
-        output.optflow[case].active_power_mismatches = bus:load("opf_mismatmw"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false);
-        output.optflow[case].reactive_power_mismatches = bus:load("opf_mismatmvar"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false);
+        output.optflow[case].active_power_mismatches = bus:load("opf_mismatmw"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false, correct_series);
+        output.optflow[case].reactive_power_mismatches = bus:load("opf_mismatmvar"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false, correct_series);
 
-        output.optflow[case].active_thermal_generation = thermal:load("opf_pter"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.thermal[lang]);
-        output.optflow[case].active_hydro_generation = hydro:load("opf_phdr"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.hydro[lang]);
-        output.optflow[case].active_renewable_generation = renewable:load("opf_pgnd"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.renewable[lang]);
-        output.optflow[case].active_batt_generation = battery:load("opf_pbat"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.battery[lang]);
-        output.optflow[case].active_demand = bus:load("opf_ploa"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.active_load[lang]);
+        output.optflow[case].active_thermal_generation = thermal:load("opf_pter"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.thermal[lang]);
+        output.optflow[case].active_hydro_generation = hydro:load("opf_phdr"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.hydro[lang]);
+        output.optflow[case].active_renewable_generation = renewable:load("opf_pgnd"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.renewable[lang]);
+        output.optflow[case].active_batt_generation = battery:load("opf_pbat"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.battery[lang]);
+        output.optflow[case].active_demand = bus:load("opf_ploa"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.active_load[lang]);
 
-        output.optflow[case].reactive_thermal_generation = thermal:load("opf_qter"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.thermal[lang]);
-        output.optflow[case].reactive_hydro_generation = hydro:load("opf_qhdr"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.hydro[lang]);
-        output.optflow[case].reactive_renewable_generation = renewable:load("opf_qgnd"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.renewable[lang]);
-        output.optflow[case].reactive_batt_generation = battery:load("opf_qbat"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.battery[lang]);
-        output.optflow[case].reactive_sinc_generation = sync_compensator:load("opf_qsin"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.sincron[lang]);
-        output.optflow[case].reactive_shunt_generation = shunt:load("opf_shtb"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.shunt[lang]);
-        output.optflow[case].reactive_static_compensator_generation = svc:load("opf_qsvc"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.static_compensator[lang]);
-        output.optflow[case].reactive_injection_generation = bus:load("opf_qinj"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.injection[lang]);
-        local reactive_injection = bus:load("opf_qinj"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false):save_cache();
+        output.optflow[case].reactive_thermal_generation = thermal:load("opf_qter"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.thermal[lang]);
+        output.optflow[case].reactive_hydro_generation = hydro:load("opf_qhdr"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.hydro[lang]);
+        output.optflow[case].reactive_renewable_generation = renewable:load("opf_qgnd"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.renewable[lang]);
+        output.optflow[case].reactive_batt_generation = battery:load("opf_qbat"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.battery[lang]);
+        output.optflow[case].reactive_sinc_generation = sync_compensator:load("opf_qsin"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.sincron[lang]);
+        output.optflow[case].reactive_shunt_generation = shunt:load("opf_shtb"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.shunt[lang]);
+        output.optflow[case].reactive_static_compensator_generation = svc:load("opf_qsvc"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.static_compensator[lang]);
+        output.optflow[case].reactive_injection_generation = bus:load("opf_qinj"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.injection[lang]);
+        local reactive_injection = bus:load("opf_qinj"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false, correct_series):save_cache();
         local reactive_injection_pos = ifelse(reactive_injection:ge(1), reactive_injection, 0);
         local reactive_injection_neg = ifelse(reactive_injection:le(-1), reactive_injection, 0);
         output.optflow[case].max_pos_reactive_injection_by_bus = reactive_injection_pos:aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX()):aggregate_stages(BY_MAX(), Profile.PER_YEAR):remove_zeros():sort_agents_descending();
         output.optflow[case].max_neg_reactive_injection_by_bus = reactive_injection_neg:aggregate_blocks(BY_MIN()):aggregate_scenarios(BY_MIN()):aggregate_stages(BY_MIN(), Profile.PER_YEAR):remove_zeros():sort_agents_ascending();
-        output.optflow[case].reactive_demand = bus:load("opf_qloa"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.reactive_load[lang]);
+        output.optflow[case].reactive_demand = bus:load("opf_qloa"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.reactive_load[lang]);
 
-        output.optflow[case].active_load_shedding = bus:load("opf_lshp"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.active_deficit[lang]);
-        output.optflow[case].reactive_load_shedding = bus:load("opf_lshq"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):aggregate_agents(BY_SUM(), dictionary.reactive_deficit[lang]);
+        output.optflow[case].active_load_shedding = bus:load("opf_lshp"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.active_deficit[lang]);
+        output.optflow[case].reactive_load_shedding = bus:load("opf_lshq"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.reactive_deficit[lang]);
 
-        local voltage = bus:load("opf_volt"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, false):save_cache();
+        local voltage = bus:load("opf_volt"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, false, correct_series):save_cache();
 
-        local voltage_margin_lower_case = bus:load("opf_voltagemarginlower"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, true);
+        local voltage_margin_lower_case = bus:load("opf_voltagemarginlower"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, true, correct_series);
         voltage_margin_lower_case = voltage_margin_lower_case:select_agents(voltage_margin_lower_case:ne(-1)):save_cache();
 
-        output.optflow[case].voltage_margin_lower_min = bus:load("opf_voltagemarginlower"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false):select_agents(voltage_margin_lower_case:agents()):aggregate_blocks(BY_MIN()):aggregate_scenarios(BY_MIN()):aggregate_stages(BY_MIN(), Profile.PER_YEAR);
+        output.optflow[case].voltage_margin_lower_min = bus:load("opf_voltagemarginlower"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false, correct_series):select_agents(voltage_margin_lower_case:agents()):aggregate_blocks(BY_MIN()):aggregate_scenarios(BY_MIN()):aggregate_stages(BY_MIN(), Profile.PER_YEAR);
 
         local voltage_profile = {};
         local voltage_margin_lower = {};
-        for stage = 1, voltage:stages() do
+        for stage = voltage:first_stage(), (voltage:first_stage() + voltage:stages() -1) do
             local voltage_stage = voltage:select_stage(stage);
             local active_buses = voltage_stage:remove_zeros():agents();
 
@@ -625,13 +663,13 @@ function load_data(output, lang, optflow_data)
         output.optflow[case].voltage = concatenate_stages(voltage_profile):save_cache();
         output.optflow[case].voltage_margin_lower = concatenate_stages(voltage_margin_lower):save_cache();
 
-        output.optflow[case].voltage_max = bus:load("opf_volt"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false):aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX()):aggregate_stages(BY_MAX(), Profile.PER_YEAR);
-        output.optflow[case].voltage_min = bus:load("opf_volt"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false):aggregate_blocks(BY_MIN()):aggregate_scenarios(BY_MIN()):aggregate_stages(BY_MIN(), Profile.PER_YEAR);
+        output.optflow[case].voltage_max = bus:load("opf_volt"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false, correct_series):aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX()):aggregate_stages(BY_MAX(), Profile.PER_YEAR);
+        output.optflow[case].voltage_min = bus:load("opf_volt"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false, correct_series):aggregate_blocks(BY_MIN()):aggregate_scenarios(BY_MIN()):aggregate_stages(BY_MIN(), Profile.PER_YEAR);
 
-        output.sddp[case].active_thermal_generation = thermal:load("gerter"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):convert("MW"):aggregate_agents(BY_SUM(), dictionary.thermal[lang]):convert("MW");
-        output.sddp[case].active_hydro_generation = hydro:load("gerhid"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):convert("MW"):aggregate_agents(BY_SUM(), dictionary.hydro[lang]):convert("MW");
-        output.sddp[case].active_renewable_generation = renewable:load("gergnd"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):convert("MW"):aggregate_agents(BY_SUM(), dictionary.renewable[lang]):convert("MW");
-        output.sddp[case].active_batt_generation = battery:load("gerbat"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true):convert("MW"):aggregate_agents(BY_SUM(), dictionary.battery[lang]):convert("MW");
+        output.sddp[case].active_thermal_generation = thermal:load("gerter"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):convert("MW"):aggregate_agents(BY_SUM(), dictionary.thermal[lang]):convert("MW");
+        output.sddp[case].active_hydro_generation = hydro:load("gerhid"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):convert("MW"):aggregate_agents(BY_SUM(), dictionary.hydro[lang]):convert("MW");
+        output.sddp[case].active_renewable_generation = renewable:load("gergnd"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):convert("MW"):aggregate_agents(BY_SUM(), dictionary.renewable[lang]):convert("MW");
+        output.sddp[case].active_batt_generation = battery:load("gerbat"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):convert("MW"):aggregate_agents(BY_SUM(), dictionary.battery[lang]):convert("MW");
     end
 end
 
@@ -1247,7 +1285,7 @@ function Tab.add_critical_buses_upper_voltage_chart(self, n_cases, Lang, output)
     local first_year = 2000;
     local last_year = 2000;
     if output.optflow[1].voltage_margin_lower_min:loaded() then
-        first_year = output.optflow[1].voltage_margin_lower_min:initial_year();
+        first_year = output.optflow[1].voltage_margin_lower_min:initial_year() + output.optflow[1].voltage_margin_lower_min:first_stage() - 1;
         last_year = first_year + output.optflow[1].voltage_margin_lower_min:stages() - 1;
     end
 
@@ -1270,8 +1308,8 @@ function Tab.add_critical_buses_upper_voltage_chart(self, n_cases, Lang, output)
                 color = table_case_color[case];
             end
 
-            local voltage_max = output.optflow[case].voltage_max:select_stage(seq);
-            local voltage_margin_min = output.optflow[case].voltage_margin_lower_min:select_stage(seq):select_agents(voltage_max:remove_zeros():agents());
+            local voltage_max = output.optflow[case].voltage_max:select_stages_by_year(year);
+            local voltage_margin_min = output.optflow[case].voltage_margin_lower_min:select_stages_by_year(year):select_agents(voltage_max:remove_zeros():agents());
 
             local n = #voltage_margin_min:agents();
             if n > n_lowest then
@@ -1302,7 +1340,7 @@ function Tab.add_critical_buses_lower_voltage_chart(self, n_cases, Lang, output)
     local first_year = 2000;
     local last_year = 2000;
     if output.optflow[1].voltage_margin_lower_min:loaded() then
-        first_year = output.optflow[1].voltage_margin_lower_min:initial_year();
+        first_year = output.optflow[1].voltage_margin_lower_min:initial_year() + output.optflow[1].voltage_margin_lower_min:first_stage() - 1;
         last_year = first_year + output.optflow[1].voltage_margin_lower_min:stages() - 1;
     end
 
@@ -1325,8 +1363,8 @@ function Tab.add_critical_buses_lower_voltage_chart(self, n_cases, Lang, output)
                 color = table_case_color[case];
             end
 
-            local voltage_min = output.optflow[case].voltage_min:select_stage(seq);
-            local voltage_margin_min = output.optflow[case].voltage_margin_lower_min:select_stage(seq):select_agents(voltage_min:remove_zeros():agents());
+            local voltage_min = output.optflow[case].voltage_min:select_stages_by_year(year);
+            local voltage_margin_min = output.optflow[case].voltage_margin_lower_min:select_stages_by_year(year):select_agents(voltage_min:remove_zeros():agents());
 
             local n = #voltage_margin_min:agents();
             if n > n_lowest then
@@ -1893,9 +1931,11 @@ function Tab.create_summary(self, n_cases, Lang, info_struct, optflow_data)
     local bus_string            = "| " .. dictionary.cell_buses[Lang];
     local ac_line_string        = "| " .. dictionary.cell_ac_line[Lang];
     local dc_line_string        = "| " .. dictionary.cell_dc_line[Lang];
-    local ac_interc_string        = "| " .. dictionary.cell_ac_interc[Lang];
+    local ac_interc_string      = "| " .. dictionary.cell_ac_interc[Lang];
     local transformer_string    = "| " .. dictionary.cell_transformers[Lang];
     local three_winding_string  = "| " .. dictionary.cell_3wind_transformers[Lang];
+    local lcc_converter_string  = "| " .. dictionary.cell_lcc_converter[Lang];
+    local vsc_converter_string  = "| " .. dictionary.cell_vsc_converter[Lang];
     local hydro_string          = "| " .. dictionary.cell_hydro_plants[Lang];
     local pinj_string           = "| " .. dictionary.cell_power_injections[Lang];
     local renw_w_string         = "| " .. dictionary.cell_renewable_wind[Lang];
@@ -1906,6 +1946,9 @@ function Tab.create_summary(self, n_cases, Lang, info_struct, optflow_data)
     local thermal_string        = "| " .. dictionary.cell_thermal_plants[Lang];
 
     for i = 1, n_cases do
+
+        local threewtransf_aux = math.floor(#ThreeWindingTransformer(i):labels()/3);
+
         sys_string = sys_string             .. " | " .. tostring(#System(i):labels());
         battery_string = battery_string     .. " | " .. tostring(#Battery(i):labels());
 
@@ -1913,8 +1956,10 @@ function Tab.create_summary(self, n_cases, Lang, info_struct, optflow_data)
         ac_line_string = ac_line_string .. " | " .. tostring(#ACLine(i):labels());
         dc_line_string = dc_line_string .. " | " .. tostring(#DCLine(i):labels());
         ac_interc_string = ac_interc_string .. " | " .. tostring(#DCLink(i):labels());
-        transformer_string = transformer_string .. " | " .. tostring(#Transformer(i):labels() - #ThreeWindingTransformer(i):labels());
-        three_winding_string = three_winding_string .. " | " .. tostring(#ThreeWindingTransformer(i):labels());
+        transformer_string = transformer_string .. " | " .. tostring(#Transformer(i):labels());
+        three_winding_string = three_winding_string .. " | " .. tostring(threewtransf_aux);
+        lcc_converter_string = lcc_converter_string .. " | " .. tostring(#LCCConverter(i):labels());
+        vsc_converter_string = vsc_converter_string .. " | " .. tostring(#VSCConverter(i):labels());
 
         hydro_string    = hydro_string    .. " | " .. tostring(#Hydro(i):labels());
         pinj_string     = pinj_string     .. " | " .. tostring(#PowerInjection(i):labels());
@@ -1956,6 +2001,8 @@ function Tab.create_summary(self, n_cases, Lang, info_struct, optflow_data)
     self:push(ac_interc_string);
     self:push(transformer_string);
     self:push(three_winding_string);
+    self:push(lcc_converter_string);
+    self:push(vsc_converter_string);
 end
 
 
