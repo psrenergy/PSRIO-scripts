@@ -172,11 +172,6 @@ dictionary = {
         es = "Porciones de los ingresos operativos totales",
         pt = "Parcelas das receitas operativos totais"
     },
-    avg_operation_cost = {
-        en = "Average operating costs per stage",
-        es = "Costos operativos promedio por etapa",
-        pt = "Custos operativos médios por estágio"
-    },
     annual_cmo = {
         en = "Annual marginal cost by system",
         es = "Costo marginal anual por sistema",

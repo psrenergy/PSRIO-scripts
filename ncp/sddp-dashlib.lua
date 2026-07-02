@@ -1452,9 +1452,6 @@ function create_sim_report(col_struct)
         tab:push(revenue_chart);
     end
 
-    -- Add stage-wise cost reports
-    create_costs_and_revs(col_struct,tab);
-    
     -- Heatmap after the pizza graph in dashboard
     if studies == 1 then
         -- Creating simulation heatmap graphics
@@ -1469,38 +1466,6 @@ function create_sim_report(col_struct)
     end
 
     return tab;
-end
-
--- Simulation costs report function
------------------------------------------------------------------------------------------------
-
-function create_costs_and_revs(col_struct, tab)
-
-    local chart_avg = Chart(dictionary.avg_operation_cost[LANGUAGE]);
-    chart_avg:horizontal_legend();
-
-    for i = 1, studies do
-        local objcop = require("sddp/costs");
-        local discount_rate = require("sddp/discount_rate");
-        local costs = (max(objcop(i), 0) / discount_rate(i):select_stages_of_outputs()):save_cache();
-
-        -- sddp_dashboard_cost_tot
-        if studies == 1 then
-            costs:remove_zeros():save("sddp_dashboard_cost_tot");
-        end
-
-        -- sddp_dashboard_cost_avg
-        local costs_avg = costs:aggregate_scenarios(BY_AVERAGE()):remove_zeros();
-        if studies == 1 and is_greater_than_zero(costs_avg) then
-            chart_avg:add_column_stacking(costs_avg:change_currency_configuration(),{xUnit=dictionary.cell_stage[LANGUAGE], legendSizeLimit = LEGEND_MAX_CHAR});
-        end
-    end
-
-    if #chart_avg > 0 then
-        tab:push(chart_avg);
-    end
-    
-    return;
 end
 
 -----------------------------------------------------------------------------------------------
