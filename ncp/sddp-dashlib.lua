@@ -1391,8 +1391,9 @@ function create_sim_report(col_struct)
 
     tab:final_cost_table(col_struct);
     
-    local cost_chart    = Chart(dictionary.breakdown_cost_time[LANGUAGE]);
-    local revenue_chart = Chart(dictionary.breakdown_revenue_time[LANGUAGE]);
+    local cost_chart            = Chart(dictionary.breakdown_cost_time[LANGUAGE]);
+    local cost_categories_chart = Chart(dictionary.operating_cost_categories[LANGUAGE]);
+    local revenue_chart         = Chart(dictionary.breakdown_revenue_time[LANGUAGE]);
 
     local objcop = require("sddp/costs");
     local discount_rate = require("sddp/discount_rate");
@@ -1427,7 +1428,9 @@ function create_sim_report(col_struct)
             end
 
             if obj_cost:loaded() then
-                cost_chart:add_pie(obj_cost:change_currency_configuration(), {colors = main_global_color, legendSizeLimit = LEGEND_MAX_CHAR});
+                local obj_cost_chart_data = obj_cost:change_currency_configuration();
+                cost_chart:add_pie(obj_cost_chart_data, {colors = main_global_color, legendSizeLimit = LEGEND_MAX_CHAR});
+                cost_categories_chart:add_column_categories(obj_cost_chart_data, "", {showInLegend = false, colors = main_global_color, legendSizeLimit = LEGEND_MAX_CHAR});
             end
 
             if obj_revenue:loaded() then
@@ -1439,6 +1442,10 @@ function create_sim_report(col_struct)
 
     if #cost_chart > 0 then
         tab:push(cost_chart);
+    end
+
+    if #cost_categories_chart > 0 then
+        tab:push(cost_categories_chart);
     end
 
     if #revenue_chart > 0 then

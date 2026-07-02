@@ -162,6 +162,11 @@ dictionary = {
         es = "Porciones de el costo operativo total",
         pt = "Parcelas do custo operativo total"
     },
+    operating_cost_categories = {
+        en = "Operating cost categories",
+        es = "Categorías de los costos operativos",
+        pt = "Categorias dos custos operativos"
+    },
     breakdown_revenue_time = {
         en = "Breakdown of total operating revenues",
         es = "Porciones de los ingresos operativos totales",
