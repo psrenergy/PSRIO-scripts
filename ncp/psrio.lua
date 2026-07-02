@@ -1,4 +1,4 @@
-include("D:\\PSRIO-scripts\\ncp\\ncp-languages.lua")
-include("D:\\PSRIO-scripts\\ncp\\ncp-warnings.lua")
-include("D:\\PSRIO-scripts\\ncp\\ncp-dashlib.lua")
-include("D:\\PSRIO-scripts\\ncp\\ncp-dashboard.lua")
+include("ncp-languages.lua")
+include("ncp-warnings.lua")
+include("ncp-dashlib.lua")
+include("ncp-dashboard.lua")
