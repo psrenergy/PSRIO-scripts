@@ -144,6 +144,7 @@ local dictionary = {
     investment             = {en = "Investment",            es = "Inversión",             pt = "Investimento"},
     accumulated_capacity   = {en = "Accumulated Capacity",  es = "Capacidad acumulada",   pt = "Capacidade acumulada"},
     total_cost             = {en = "Total Cost",            es = "Costo total",           pt = "Custo total"},
+    accumulated_length     = {en = "Accumulated Length",    es = "Longitud acumulada",    pt = "Comprimento acumulado"},
 
     -- Active power results
     active_power           = {en = "Active Power",          es = "Potencia activa",       pt = "Potência ativa"},
@@ -291,13 +292,45 @@ local dictionary = {
     cell_transformers_dim   = {en = "Transformers",               es = "Transformadores",    pt = "Transformadores"},
     cell_3wind_transformers = {en = "Three winding transformers", es = "Transformadores de tres devanados", pt = "Transformadores de três enrolamentos"},
     cell_converters_dim     = {en = "AC-DC converters",           es = "Conversores CA-CC",  pt = "Conversores CA-CC"},
+    cell_lcc_converter = {
+        en = "LCC converter",
+        es = "Convertidor LCC",
+        pt = "Conversor LCC",
+    },
+    cell_vsc_converter = {
+        en = "VSC Converter",
+        es = "Convertidor VSC",
+        pt = "Conversor VSC",
+    },
 }
 
 ---------------------------------------------------------------------------
 -- Expression extension: filter by optnet date/series/resolution/system
 ---------------------------------------------------------------------------
 
-function Expression.select_optnet_date_scn_blcks(self, optnet_data_case, system_codes, select_system, agg_blocks, agg_scenarios)
+-- auxiliar function to deal with selecting the correct scenarios
+function find_index(list1, list2)
+    local index_map = {}
+
+    -- Cria um mapa: valor -> índice
+    for i, value in ipairs(list1) do
+        index_map[value] = i
+    end
+
+    -- Procura os índices correspondentes
+    local result = {}
+    for _, value in ipairs(list2) do
+        local index = index_map[value]
+        if index == nil then
+            error(string.format("Value %d is not present in the first list.", value))
+        end
+        table.insert(result, index)
+    end
+
+    return result
+end
+
+function Expression.select_optnet_date_scn_blcks(self, optnet_data_case, system_codes, select_system, agg_blocks, agg_scenarios, selected_scenarios)
     if not self:loaded() then
         return self;
     end
@@ -324,9 +357,9 @@ function Expression.select_optnet_date_scn_blcks(self, optnet_data_case, system_
 
         if optnet_data_case.serie_representation ~= 0 then
             if agg_scenarios then
-                self_selected = self_selected:aggregate_scenarios(BY_AVERAGE(), optnet_data_case.selected_series);
+                self_selected = self_selected:aggregate_scenarios(BY_AVERAGE(), selected_scenarios);
             else
-                self_selected = self_selected:select_scenarios(optnet_data_case.selected_series);
+                self_selected = self_selected:select_scenarios(selected_scenarios);
             end
         else
             if agg_scenarios then
@@ -364,133 +397,178 @@ function load_data(output, lang, optnet_data)
         local flwcontroller    = FlowController(case);
         local system_codes     = System(case).code;
 
+        local series_index = Study(case):get_vector_values("IndexSeriesSimulacao", "");
+        local correct_series = optnet_data[case].selected_series;
+        if #series_index > 0 then
+            correct_series = find_index(series_index, optnet_data[case].selected_series);
+        end
+
         output.optnet          = output.optnet or {};
         output.optnet[case]    = {};
 
         -- ── Convergence status ──────────────────────────────────────────
         output.optnet[case].investment_status = generic:load("opn_status_investment")
-            :select_optnet_date_scn_blcks(optnet_data[case], system_codes, false, false, false);
+            :select_optnet_date_scn_blcks(optnet_data[case], system_codes, false, false, false, correct_series);
 
         output.optnet[case].operative_status  = generic:load("opn_status_operative")
-            :select_optnet_date_scn_blcks(optnet_data[case], system_codes, false, false, false);
+            :select_optnet_date_scn_blcks(optnet_data[case], system_codes, false, false, false, correct_series);
 
         -- ── Solution time (annual totals already in the binary) ─────────
-        output.optnet[case].tcpu_investment = generic:load("opn_tcpu_investment"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, false, true, true)
+        output.optnet[case].tcpu_investment = generic:load("opn_tcpu_investment"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, false, true, true, correct_series)
             :aggregate_agents(BY_SUM(), dictionary.investment_problem[lang]);
 
-        output.optnet[case].tcpu_operative  = generic:load("opn_tcpu_operative"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, false, true, true)
+        output.optnet[case].tcpu_operative  = generic:load("opn_tcpu_operative"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, false, true, true, correct_series)
             :aggregate_agents(BY_SUM(), dictionary.operative_problem[lang]);
 
         -- ── Circuit loading (max annual loading per element) ────────────
-        output.optnet[case].acline_loading       = acline:load("opn_dashboard_acline_flow_loading"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false)
+        output.optnet[case].acline_loading       = acline:load("opn_dashboard_acline_flow_loading"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
             :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
             :aggregate_agents(BY_MAX(), dictionary.ac_lines[lang]);
 
-        output.optnet[case].transformer_loading  = transformer:load("opn_dashboard_transformers_flow_loading"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false)
+        output.optnet[case].transformer_loading  = transformer:load("opn_dashboard_transformers_flow_loading"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
             :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
             :aggregate_agents(BY_MAX(), dictionary.transformers[lang]);
 
-        output.optnet[case].three_winding_loading = three_winding:load("opn_dashboard_threewindingtransformers_flow_loading"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false)
+        output.optnet[case].three_winding_loading = three_winding:load("opn_dashboard_threewindingtransformers_flow_loading"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
             :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
             :aggregate_agents(BY_MAX(), dictionary.three_winding_transformers[lang]);
 
-        output.optnet[case].series_cap_loading   = series_capacitor:load("opn_dashboard_seriescapacitor_flow_loading"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false)
+        output.optnet[case].series_cap_loading   = series_capacitor:load("opn_dashboard_seriescapacitor_flow_loading"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
             :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
             :aggregate_agents(BY_MAX(), dictionary.series_capacitors[lang]);
 
         -- ── Redundancy (max annual violation per element) ───────────────
-        output.optnet[case].acline_redundancy       = acline:load("opn_dashboard_acline_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false)
+        output.optnet[case].acline_redundancy       = acline:load("opn_dashboard_acline_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
             :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
             --:remove_zeros();
 
-        output.optnet[case].transformer_redundancy  = transformer:load("opn_dashboard_transformer_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false)
+        output.optnet[case].transformer_redundancy  = transformer:load("opn_dashboard_transformer_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
             :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
             --:remove_zeros();
 
-        output.optnet[case].three_winding_redundancy = three_winding:load("opn_dashboard_threewindingtransformer_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false)
+        output.optnet[case].three_winding_redundancy = three_winding:load("opn_dashboard_threewindingtransformer_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
             :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
             --:remove_zeros();
 
-        output.optnet[case].series_cap_redundancy   = series_capacitor:load("opn_dashboard_seriescapacitor_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false)
+        output.optnet[case].series_cap_redundancy   = series_capacitor:load("opn_dashboard_seriescapacitor_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
             :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
             --:remove_zeros();
 
-        output.optnet[case].flow_ctrl_redundancy    = flwcontroller:load("opn_dashboard_flowcontroller_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false)
+        output.optnet[case].flow_ctrl_redundancy    = flwcontroller:load("opn_dashboard_flowcontroller_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
             :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
             --:remove_zeros();
 
-        output.optnet[case].dc_line_redundancy      = dcline:load("opn_dashboard_dcline_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false)
+        output.optnet[case].dc_line_redundancy      = dcline:load("opn_dashboard_dcline_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
             :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
             --:remove_zeros();
 
-        output.optnet[case].converter_redundancy    = generic:load("opn_dashboard_converter_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, false, false, false)
+        output.optnet[case].converter_redundancy    = generic:load("opn_dashboard_converter_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, false, false, false, correct_series)
             :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
             --:remove_zeros();
 
-        output.optnet[case].dc_link_redundancy      = dclink:load("opn_dashboard_dclink_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false)
+        output.optnet[case].dc_link_redundancy      = dclink:load("opn_dashboard_dclink_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
             :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
             --:remove_zeros();
+
+        -- ── Length of the Lines ──────────────────────────────────────────
+        local investment_decision = generic:load("opn_dashboard_investment_decision");
+        local ac_line_length = acline:load_parameter("Length", "km"):aggregate_stages(BY_LAST_VALUE()):save_cache();
+        local dc_line_length = dcline:load_parameter("Length", "km"):aggregate_stages(BY_LAST_VALUE()):save_cache();
+
+        local first_year = investment_decision:initial_year() + investment_decision:first_stage() - 1;
+        local last_year = first_year + investment_decision:stages() - 1;
+
+        local ac_line_length_year = {};
+        local dc_line_length_year = {};
+        for year = first_year, last_year do
+            local investment_decision_year = investment_decision:select_stages_by_year(year):remove_zeros():agents();
+            local ac_line_inv_length = ac_line_length:select_agents(investment_decision_year):aggregate_agents(BY_SUM(), "AC Line"):set_stage_type(10);
+            local dc_line_inv_length = dc_line_length:select_agents(investment_decision_year):aggregate_agents(BY_SUM(), "DC Line"):set_stage_type(10);
+
+            table.insert(ac_line_length_year, ac_line_inv_length);
+            table.insert(dc_line_length_year, dc_line_inv_length);
+        end
+        output.optnet[case].ac_line_length = concatenate_stages(ac_line_length_year);
+        output.optnet[case].dc_line_length = concatenate_stages(dc_line_length_year);
+
+
+        local investment_decision_agents = investment_decision:remove_zeros():agents()
+        local ac_line_inv_length = ac_line_length:select_agents(investment_decision_agents);
+        local dc_line_inv_length = dc_line_length:select_agents(investment_decision_agents);
+
+        local lines_without_length_ac = ac_line_inv_length:select_agents(ac_line_inv_length:eq(0));
+        local lines_without_length_dc = dc_line_inv_length:select_agents(dc_line_inv_length:eq(0));
+        if lines_without_length_ac:loaded() then
+            output.optnet[case].ac_lines_without_length = #lines_without_length_ac:agents();
+        else
+            output.optnet[case].ac_lines_without_length = 0;
+        end
+        if lines_without_length_dc:loaded() then
+            output.optnet[case].dc_lines_without_length = #lines_without_length_dc:agents();
+        else
+            output.optnet[case].dc_lines_without_length = 0;
+        end
 
         -- ── Investment results ──────────────────────────────────────────
-        output.optnet[case].investment_capacity = generic:load("opn_dashboard_investment_capacity"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, false, true, true)
+        output.optnet[case].investment_capacity = generic:load("opn_dashboard_investment_capacity"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, false, true, true, correct_series)
             :aggregate_stages(BY_SUM(), Profile.PER_YEAR);
 
-        output.optnet[case].investment_cost     = generic:load("opn_dashboard_investment_cost"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, false, true, true)
+        output.optnet[case].investment_cost     = generic:load("opn_dashboard_investment_cost"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, false, true, true, correct_series)
             :aggregate_stages(BY_SUM(), Profile.PER_YEAR);
 
         -- ── Active power: generation ────────────────────────────────────
-        output.optnet[case].thermal_generation   = thermal:load("opn_pter"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, true, true)
+        output.optnet[case].thermal_generation   = thermal:load("opn_pter"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, true, true, correct_series)
             :aggregate_agents(BY_SUM(), dictionary.thermal[lang]);
 
-        output.optnet[case].hydro_generation     = hydro:load("opn_phdr"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, true, true)
+        output.optnet[case].hydro_generation     = hydro:load("opn_phdr"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, true, true, correct_series)
             :aggregate_agents(BY_SUM(), dictionary.hydro[lang]);
 
-        output.optnet[case].renewable_generation = renewable:load("opn_pgnd"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, true, true)
+        output.optnet[case].renewable_generation = renewable:load("opn_pgnd"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, true, true, correct_series)
             :aggregate_agents(BY_SUM(), dictionary.renewable[lang]);
 
-        output.optnet[case].battery_generation   = battery:load("opn_pbat"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, true, true)
+        output.optnet[case].battery_generation   = battery:load("opn_pbat"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, true, true, correct_series)
             :aggregate_agents(BY_SUM(), dictionary.battery[lang]);
 
-        output.optnet[case].active_load          = bus:load("opn_ploa"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, true, true)
+        output.optnet[case].active_load          = bus:load("opn_ploa"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, true, true, correct_series)
             :aggregate_agents(BY_SUM(), dictionary.active_load[lang]);
 
         -- ── Active power: generation deviation ─────────────────────────
-        output.optnet[case].thermal_deviation   = thermal:load("opn_dter"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, true, true)
+        output.optnet[case].thermal_deviation   = thermal:load("opn_dter"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, true, true, correct_series)
             :aggregate_agents(BY_SUM(), dictionary.thermal_deviation[lang]);
 
-        output.optnet[case].hydro_deviation     = hydro:load("opn_dhdr"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, true, true)
+        output.optnet[case].hydro_deviation     = hydro:load("opn_dhdr"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, true, true, correct_series)
             :aggregate_agents(BY_SUM(), dictionary.hydro_deviation[lang]);
 
-        output.optnet[case].renewable_deviation = renewable:load("opn_dgnd"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, true, true)
+        output.optnet[case].renewable_deviation = renewable:load("opn_dgnd"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, true, true, correct_series)
             :aggregate_agents(BY_SUM(), dictionary.renewable_deviation[lang]);
 
         -- ── Load shedding ───────────────────────────────────────────────
-        output.optnet[case].load_shedding = bus:load("opn_lshd"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, true, true)
+        output.optnet[case].load_shedding = bus:load("opn_lshd"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, true, true, correct_series)
             :aggregate_agents(BY_SUM(), dictionary.total_load_shedding[lang]);
 
         -- ── Circuit slack ───────────────────────────────────────────────
-        output.optnet[case].acline_slack       = acline:load("opn_acline_slack"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, true, true)
+        output.optnet[case].acline_slack       = acline:load("opn_acline_slack"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, true, true, correct_series)
             :aggregate_agents(BY_SUM(), dictionary.ac_lines[lang]);
 
-        output.optnet[case].transformer_slack  = transformer:load("opn_transformer_slack"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, true, true)
+        output.optnet[case].transformer_slack  = transformer:load("opn_transformer_slack"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, true, true, correct_series)
             :aggregate_agents(BY_SUM(), dictionary.transformers[lang]);
 
-        output.optnet[case].three_winding_slack = three_winding:load("opn_threewindingtransformer_slack"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, true, true)
+        output.optnet[case].three_winding_slack = three_winding:load("opn_threewindingtransformer_slack"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, true, true, correct_series)
             :aggregate_agents(BY_SUM(), dictionary.three_winding_transformers[lang]);
 
-        output.optnet[case].series_cap_slack   = series_capacitor:load("opn_seriescapacitor_slack"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, true, true)
+        output.optnet[case].series_cap_slack   = series_capacitor:load("opn_seriescapacitor_slack"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, true, true, correct_series)
             :aggregate_agents(BY_SUM(), dictionary.series_capacitors[lang]);
     end
 end
@@ -635,66 +713,66 @@ end
 function Tab.add_redundancy_chart(self, n_cases, Lang, output, optnet_data)
     local has_data = false;
 
-    local first_year = optnet_data[1].initial_year;
-    local last_year = optnet_data[1].final_year;
-    local seq = 0;
-    local seq_label = tostring(first_year);
-    local chart_redundancy;
-    --if first_year ~= last_year then
-    --    chart_redundancy = Chart(dictionary.check_redundancy[Lang]);
-    --    chart_redundancy:enable_controls();
-    --else
-    chart_redundancy = Chart(dictionary.check_redundancy[Lang], first_year);
-    --end
+    for case = 1, n_cases do
+        local first_year = optnet_data[case].initial_year;
+        local last_year = optnet_data[case].final_year;
+        local seq = 0;
+        local seq_label = tostring(first_year);
+        local chart_redundancy;
+        if first_year ~= last_year then
+            chart_redundancy = Chart(dictionary.check_redundancy[Lang]);
+            chart_redundancy:enable_controls();
+        else
+            chart_redundancy = Chart(dictionary.check_redundancy[Lang], first_year);
+        end
 
-    for year = first_year, last_year do
-        seq = seq + 1;
-        seq_label = tostring(year);
+        for year = first_year, last_year do
+            seq = seq + 1;
+            seq_label = tostring(year);
 
-        local acline_stage = output.optnet[1].acline_redundancy:select_stage(seq);
-        local acline_redundancy = acline_stage:select_agents(acline_stage:ne(-1));
-        local transformer_stage = output.optnet[1].transformer_redundancy:select_stage(seq);
-        local transformer_redundancy = transformer_stage:select_agents(transformer_stage:ne(-1));
-        local transformer_3_stage = output.optnet[1].three_winding_redundancy:select_stage(seq);
-        local transformer_3_redundancy = transformer_3_stage:select_agents(transformer_3_stage:ne(-1));
-        local series_cap_stage = output.optnet[1].series_cap_redundancy:select_stage(seq);
-        local series_cap_redundancy = series_cap_stage:select_agents(series_cap_stage:ne(-1));
-        local flow_ctrl_stage = output.optnet[1].flow_ctrl_redundancy:select_stage(seq);
-        local flow_ctrl_redundancy = flow_ctrl_stage:select_agents(flow_ctrl_stage:ne(-1));
-        local dc_line_stage = output.optnet[1].dc_line_redundancy:select_stage(seq);
-        local dc_line_redundancy = dc_line_stage:select_agents(dc_line_stage:ne(-1));
-        local converter_stage = output.optnet[1].converter_redundancy:select_stage(seq);
-        local converter_redundancy = converter_stage:select_agents(converter_stage:ne(-1));
-        local dc_link_stage = output.optnet[1].dc_link_redundancy:select_stage(seq);
-        local dc_link_redundancy = dc_link_stage:select_agents(dc_link_stage:ne(-1));
+            local acline_stage = output.optnet[case].acline_redundancy:select_stage(seq);
+            local acline_redundancy = acline_stage:select_agents(acline_stage:ne(-1));
+            local transformer_stage = output.optnet[case].transformer_redundancy:select_stage(seq);
+            local transformer_redundancy = transformer_stage:select_agents(transformer_stage:ne(-1));
+            local transformer_3_stage = output.optnet[case].three_winding_redundancy:select_stage(seq);
+            local transformer_3_redundancy = transformer_3_stage:select_agents(transformer_3_stage:ne(-1));
+            local series_cap_stage = output.optnet[case].series_cap_redundancy:select_stage(seq);
+            local series_cap_redundancy = series_cap_stage:select_agents(series_cap_stage:ne(-1));
+            local flow_ctrl_stage = output.optnet[case].flow_ctrl_redundancy:select_stage(seq);
+            local flow_ctrl_redundancy = flow_ctrl_stage:select_agents(flow_ctrl_stage:ne(-1));
+            local dc_line_stage = output.optnet[case].dc_line_redundancy:select_stage(seq);
+            local dc_line_redundancy = dc_line_stage:select_agents(dc_line_stage:ne(-1));
+            local converter_stage = output.optnet[case].converter_redundancy:select_stage(seq);
+            local converter_redundancy = converter_stage:select_agents(converter_stage:ne(-1));
+            local dc_link_stage = output.optnet[case].dc_link_redundancy:select_stage(seq);
+            local dc_link_redundancy = dc_link_stage:select_agents(dc_link_stage:ne(-1));
 
-        --local all_data = concatenate(acline_redundancy, transformer_redundancy, transformer_3_redundancy, series_cap_redundancy, flow_ctrl_redundancy, dc_line_redundancy, converter_redundancy, dc_link_redundancy);
-        --chart_redundancy:add_column(all_data,
-        --    { sequence = seq, sequence_label = seq_label });
+            chart_redundancy:add_column_categories(acline_redundancy, dictionary.ac_lines[lang],
+                { color = table_element_color.ac_line, sequence = seq, sequence_label = seq_label });
+            chart_redundancy:add_column_categories(transformer_redundancy, dictionary.transformers[lang],
+                { color = table_element_color.transformer, sequence = seq, sequence_label = seq_label });
+            chart_redundancy:add_column_categories(transformer_3_redundancy, dictionary.three_winding_transformers[lang],
+                { color = table_element_color.three_winding, sequence = seq, sequence_label = seq_label });
+            chart_redundancy:add_column_categories(series_cap_redundancy, dictionary.series_capacitors[lang],
+                { color = table_element_color.series_capacitor, sequence = seq, sequence_label = seq_label });
+            chart_redundancy:add_column_categories(flow_ctrl_redundancy, dictionary.flow_controllers[lang],
+                { color = table_element_color.flow_controller, sequence = seq, sequence_label = seq_label });
+            chart_redundancy:add_column_categories(dc_line_redundancy, dictionary.dc_lines_label[lang],
+                { color = table_element_color.dc_line, sequence = seq, sequence_label = seq_label });
+            chart_redundancy:add_column_categories(converter_redundancy, dictionary.converters_label[lang],
+                { color = table_element_color.converter, sequence = seq, sequence_label = seq_label });
+            chart_redundancy:add_column_categories(dc_link_redundancy, dictionary.dc_links_label[lang],
+            { color = table_element_color.dc_link, sequence = seq, sequence_label = seq_label });
+        end
 
-        chart_redundancy:add_column(acline_redundancy,-- dictionary.ac_lines[lang],
-            { color = table_element_color.ac_line }); -- , sequence = seq, sequence_label = seq_label
-        chart_redundancy:add_column(transformer_redundancy,-- dictionary.transformers[lang],
-            { color = table_element_color.transformer });
-        chart_redundancy:add_column(transformer_3_redundancy,-- dictionary.three_winding_transformers[lang],
-            { color = table_element_color.three_winding });
-        chart_redundancy:add_column(series_cap_redundancy,-- dictionary.series_capacitors[lang],
-            { color = table_element_color.series_capacitor });
-        chart_redundancy:add_column(flow_ctrl_redundancy,-- dictionary.flow_controllers[lang],
-            { color = table_element_color.flow_controller });
-        chart_redundancy:add_column(dc_line_redundancy,-- dictionary.dc_lines_label[lang],
-            { color = table_element_color.dc_line });
-        chart_redundancy:add_column(converter_redundancy,-- dictionary.converters_label[lang],
-            { color = table_element_color.converter });
-        chart_redundancy:add_column(dc_link_redundancy,-- dictionary.dc_links_label[lang],
-        { color = table_element_color.dc_link });
+        if #chart_redundancy > 0 then
+            if n_cases == 1 then
+                self:push("# "..Generic(case):cloudname());
+            end
+            self:push(chart_redundancy);
+            has_data = true;
+        end
     end
-
-    if #chart_redundancy > 0 then
-        self:push(chart_redundancy);
-        has_data = true;
-    end
-
     return has_data;
 end
 
@@ -730,6 +808,7 @@ end
 function Tab.add_investment_charts(self, n_cases, Lang, output)
     if n_cases > 1 then
         for case = 1, n_cases do
+
             local chart_cap = Chart(dictionary.accumulated_capacity[Lang] .. " (MW)", Generic(case):cloudname());
             chart_cap:horizontal_legend();
             chart_cap:add_column_stacking(output.optnet[case].investment_capacity:remove_zeros(),
@@ -740,8 +819,36 @@ function Tab.add_investment_charts(self, n_cases, Lang, output)
             chart_cost:add_column_stacking(output.optnet[case].investment_cost:remove_zeros(),
                 { showInLegend = true, color = table_case_color[case] });
 
-            if #chart_cap > 0 then self:push(chart_cap); end
+            local chart_length = Chart(dictionary.accumulated_length[Lang] .. " (km)", Generic(case):cloudname());
+            chart_length:horizontal_legend();
+            chart_length:add_column(output.optnet[case].ac_line_length, {color = table_element_color.ac_line});
+            chart_length:add_column(output.optnet[case].dc_line_length, {color = table_element_color.dc_line});
+
+            if #chart_cap > 0 then self:push(chart_cap) end
             if #chart_cost > 0 then self:push(chart_cost) end
+            if #chart_length > 0 then self:push(chart_length) end
+            if output.optnet[case].ac_lines_without_length > 0 then
+                local msg_warn_ac = {   en = "⚠️ *There is "..output.optnet[case].dc_lines_without_length.." AC transmission line in the expansion plan with missing length data.*",
+                                        es = "⚠️ *Hay "..output.optnet[case].dc_lines_without_length.." línea de transmisión AC en el plan de expansión con datos de longitud faltantes.*",
+                                        pt = "⚠️ *Há "..output.optnet[case].dc_lines_without_length.." linha de transmissão AC no plano de expansão sem dados de comprimento.*"};
+                if output.optnet[case].ac_lines_without_length > 1 then
+                    msg_warn_ac = { en = "⚠️ *There are "..output.optnet[case].ac_lines_without_length.." AC transmission lines in the expansion plan with missing length data.*",
+                                    es = "⚠️ *Hay "..output.optnet[case].ac_lines_without_length.." líneas de transmisión AC en el plan de expansión con datos de longitud faltantes.*",
+                                    pt = "⚠️ *Existem "..output.optnet[case].ac_lines_without_length.." linhas de transmissão AC no plano de expansão sem dados de comprimento.*"};
+                end
+                self:push(msg_warn_ac[Lang]);
+            end
+            if output.optnet[case].dc_lines_without_length > 0 then
+                local msg_warn_dc = {   en = "⚠️ *There is "..output.optnet[case].dc_lines_without_length.." DC transmission line in the expansion plan with missing length data.*",
+                                        es = "⚠️ *Hay "..output.optnet[case].dc_lines_without_length.." línea de transmisión CC en el plan de expansión con datos de longitud faltantes.*",
+                                        pt = "⚠️ *Há "..output.optnet[case].dc_lines_without_length.." linha de transmissão CC no plano de expansão sem dados de comprimento.*"};
+                if output.optnet[case].dc_lines_without_length > 1 then
+                    msg_warn_dc = {  en = "⚠️ *There are "..output.optnet[case].dc_lines_without_length.." DC transmission lines in the expansion plan with missing length data.*",
+                        es = "⚠️ *Hay "..output.optnet[case].dc_lines_without_length.." líneas de transmisión CC en el plan de expansión con datos de longitud faltantes.*",
+                        pt = "⚠️ *Existem "..output.optnet[case].dc_lines_without_length.." linhas de transmissão CC no plano de expansão sem dados de comprimento.*"};
+                end
+                self:push(msg_warn_dc[Lang]);
+            end
         end
     else
         local chart_cap = Chart(dictionary.accumulated_capacity[Lang] .. " (MW)");
@@ -764,8 +871,37 @@ function Tab.add_investment_charts(self, n_cases, Lang, output)
         chart_cost:add_column(investment_cost:select_agent("Flow Controller"), {color = table_element_color.flow_controller});
         chart_cost:add_column(investment_cost:select_agent("DC Link"), {color = table_element_color.dc_link});
 
+        local chart_length = Chart(dictionary.accumulated_length[Lang] .. " (km)");
+        chart_length:horizontal_legend();
+        chart_length:add_column(output.optnet[1].ac_line_length, {color = table_element_color.ac_line});
+        chart_length:add_column(output.optnet[1].dc_line_length, {color = table_element_color.dc_line});
+
         if #chart_cap  > 0 then self:push(chart_cap)  end
         if #chart_cost > 0 then self:push(chart_cost) end
+        if #chart_length > 0 then self:push(chart_length) end
+
+        if output.optnet[1].ac_lines_without_length > 0 then
+            local msg_warn_ac = {   en = "⚠️ *There is "..output.optnet[1].dc_lines_without_length.." AC transmission line in the expansion plan with missing length data.*",
+                                    es = "⚠️ *Hay "..output.optnet[1].dc_lines_without_length.." línea de transmisión AC en el plan de expansión con datos de longitud faltantes.*",
+                                    pt = "⚠️ *Há "..output.optnet[1].dc_lines_without_length.." linha de transmissão AC no plano de expansão sem dados de comprimento.*"};
+            if output.optnet[1].ac_lines_without_length > 1 then
+                msg_warn_ac = { en = "⚠️ *There are "..output.optnet[1].ac_lines_without_length.." AC transmission lines in the expansion plan with missing length data.*",
+                                es = "⚠️ *Hay "..output.optnet[1].ac_lines_without_length.." líneas de transmisión AC en el plan de expansión con datos de longitud faltantes.*",
+                                pt = "⚠️ *Existem "..output.optnet[1].ac_lines_without_length.." linhas de transmissão AC no plano de expansão sem dados de comprimento.*"};
+            end
+            self:push(msg_warn_ac[Lang]);
+        end
+        if output.optnet[1].dc_lines_without_length > 0 then
+            local msg_warn_dc = {   en = "⚠️ *There is "..output.optnet[1].dc_lines_without_length.." DC transmission line in the expansion plan with missing length data.*",
+                                    es = "⚠️ *Hay "..output.optnet[1].dc_lines_without_length.." línea de transmisión CC en el plan de expansión con datos de longitud faltantes.*",
+                                    pt = "⚠️ *Há "..output.optnet[1].dc_lines_without_length.." linha de transmissão CC no plano de expansão sem dados de comprimento.*"};
+            if output.optnet[1].dc_lines_without_length > 1 then
+                msg_warn_dc = {  en = "⚠️ *There are "..output.optnet[1].dc_lines_without_length.." DC transmission lines in the expansion plan with missing length data.*",
+                    es = "⚠️ *Hay "..output.optnet[1].dc_lines_without_length.." líneas de transmisión CC en el plan de expansión con datos de longitud faltantes.*",
+                    pt = "⚠️ *Existem "..output.optnet[1].dc_lines_without_length.." linhas de transmissão CC no plano de expansão sem dados de comprimento.*"};
+            end
+            self:push(msg_warn_dc[Lang]);
+        end
     end
 end
 
@@ -1240,24 +1376,29 @@ function Tab.create_summary(self, n_cases, Lang, info_struct, optnet_data)
     local three_wind_str    = "| " .. dictionary.cell_3wind_transformers[Lang];
     local dc_line_str       = "| " .. dictionary.cell_dc_line_dim[Lang];
     local dc_link_str       = "| " .. dictionary.cell_ac_interconnection[Lang];
-    --local converter_str     = "| " .. dictionary.cell_converters_dim[Lang];
+    local lcc_converter_str = "| " .. dictionary.cell_lcc_converter[Lang];
+    local vsc_converter_str = "| " .. dictionary.cell_vsc_converter[Lang];
 
     for i = 1, n_cases do
+
+        local threewtransf_aux = math.floor(#ThreeWindingTransformer(i):labels()/3);
+
         dim_header    = dim_header    .. " | " .. Generic(i):username();
         dim_sep       = dim_sep       .. "|-----------";
 
-        sys_str       = sys_str       .. " | " .. tostring(#System(i):labels());
-        hydro_str     = hydro_str     .. " | " .. tostring(#Hydro(i):labels());
-        thermal_str   = thermal_str   .. " | " .. tostring(#Thermal(i):labels());
-        battery_str   = battery_str   .. " | " .. tostring(#Battery(i):labels());
-        bus_str       = bus_str       .. " | " .. tostring(#Bus(i):labels());
-        pinj_str      = pinj_str      .. " | " .. tostring(#PowerInjection(i):labels());
-        acline_str    = acline_str    .. " | " .. tostring(#ACLine(i):labels());
-        transformer_str = transformer_str .. " | " .. tostring(#Transformer(i):labels());
-        three_wind_str  = three_wind_str  .. " | " .. tostring(#ThreeWindingTransformer(i):labels());
-        dc_line_str   = dc_line_str   .. " | " .. tostring(#DCLine(i):labels());
-        dc_link_str   = dc_link_str   .. " | " .. tostring(#DCLink(i):labels());
-        --converter_str = converter_str .. " | " .. tostring(#DCLink(i):labels());
+        sys_str       = sys_str                 .. " | " .. tostring(#System(i):labels());
+        hydro_str     = hydro_str               .. " | " .. tostring(#Hydro(i):labels());
+        thermal_str   = thermal_str             .. " | " .. tostring(#Thermal(i):labels());
+        battery_str   = battery_str             .. " | " .. tostring(#Battery(i):labels());
+        bus_str       = bus_str                 .. " | " .. tostring(#Bus(i):labels());
+        pinj_str      = pinj_str                .. " | " .. tostring(#PowerInjection(i):labels());
+        acline_str    = acline_str              .. " | " .. tostring(#ACLine(i):labels());
+        transformer_str = transformer_str       .. " | " .. tostring(#Transformer(i):labels());
+        three_wind_str  = three_wind_str        .. " | " .. tostring(threewtransf_aux);
+        dc_line_str   = dc_line_str             .. " | " .. tostring(#DCLine(i):labels());
+        dc_link_str   = dc_link_str             .. " | " .. tostring(#DCLink(i):labels());
+        lcc_converter_str   = lcc_converter_str .. " | " .. tostring(#LCCConverter(i):labels());
+        vsc_converter_str   = vsc_converter_str .. " | " .. tostring(#VSCConverter(i):labels());
 
         local total_renw = #Renewable(i):labels();
         local renw_wind  = Renewable(i).tech_type:select_agents(Renewable(i).tech_type:eq(1)):agents_size();
@@ -1273,25 +1414,26 @@ function Tab.create_summary(self, n_cases, Lang, info_struct, optnet_data)
         renw_oth_str = renw_oth_str .. " | " .. tostring(renw_oth);
 
         if i == n_cases then
-            dim_header      = dim_header      .. "|";
-            dim_sep         = dim_sep         .. "|";
-            sys_str         = sys_str         .. "|";
-            hydro_str       = hydro_str       .. "|";
-            thermal_str     = thermal_str     .. "|";
-            renw_w_str      = renw_w_str      .. "|";
-            renw_s_str      = renw_s_str      .. "|";
-            renw_sh_str     = renw_sh_str     .. "|";
-            renw_csp_str    = renw_csp_str    .. "|";
-            renw_oth_str    = renw_oth_str    .. "|";
-            battery_str     = battery_str     .. "|";
-            bus_str         = bus_str         .. "|";
-            pinj_str        = pinj_str        .. "|";
-            acline_str      = acline_str      .. "|";
-            transformer_str = transformer_str .. "|";
-            three_wind_str  = three_wind_str  .. "|";
-            dc_line_str     = dc_line_str     .. "|";
-            dc_link_str     = dc_link_str     .. "|";
-            --converter_str   = converter_str   .. "|";
+            dim_header        = dim_header        .. "|";
+            dim_sep           = dim_sep           .. "|";
+            sys_str           = sys_str           .. "|";
+            hydro_str         = hydro_str         .. "|";
+            thermal_str       = thermal_str       .. "|";
+            renw_w_str        = renw_w_str        .. "|";
+            renw_s_str        = renw_s_str        .. "|";
+            renw_sh_str       = renw_sh_str       .. "|";
+            renw_csp_str      = renw_csp_str      .. "|";
+            renw_oth_str      = renw_oth_str      .. "|";
+            battery_str       = battery_str       .. "|";
+            bus_str           = bus_str           .. "|";
+            pinj_str          = pinj_str          .. "|";
+            acline_str        = acline_str        .. "|";
+            transformer_str   = transformer_str   .. "|";
+            three_wind_str    = three_wind_str    .. "|";
+            dc_line_str       = dc_line_str       .. "|";
+            dc_link_str       = dc_link_str       .. "|";
+            lcc_converter_str = lcc_converter_str .. "|";
+            vsc_converter_str = vsc_converter_str .. "|";
         end
     end
 
@@ -1313,7 +1455,8 @@ function Tab.create_summary(self, n_cases, Lang, info_struct, optnet_data)
     self:push(three_wind_str);
     self:push(dc_line_str);
     self:push(dc_link_str);
-    --self:push(converter_str);
+    self:push(lcc_converter_str);
+    self:push(vsc_converter_str);
 end
 
 ---------------------------------------------------------------------------
