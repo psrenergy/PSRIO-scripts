@@ -161,24 +161,6 @@ end
 -----------------------------------------------------------------------------------------------
 
 -- Temporary solution to SDDP remap executions (including typical days)
-function Expression.aggregate_blocks_by_duracipu(self,i)
-    if not IS_NCP then
-        local generic = Generic(i or 1);
-        local duracipu = generic:load("duracipu");
-        return (self * duracipu):aggregate_blocks();
-    else
-        return self;
-    end
-end
-
-function Expression.my_aggregate_blocks(self)
-    if not IS_NCP then
-        return (self):aggregate_blocks();
-    else
-        return self;
-    end
-    
-end
 
 -----------------------------------------------------------------------------------------------
 -- Auxiliary functions
@@ -1188,44 +1170,6 @@ function create_mipgap_graph(tab, col_struct, i)
     tab:push(chart);
 end
 
--- Execution times per scenario (dispersion)
-function create_exe_timer_per_scen(tab, col_struct, i)
-    local extime_chart;
-    local output_name  = "extime";
-    local extime = col_struct.generic[i]:load(output_name):aggregate_agents(BY_SUM(), "total"):save_cache();
-
-    if not extime:loaded() then
-        info(output_name .. " output could not be loaded. 'Dispersion of execution times per scenario' report will not be displayed");
-        return
-    end
-    
-    local extime_disp = concatenate(extime:aggregate_scenarios(BY_MIN()):rename_agent("MIN"), extime:aggregate_scenarios(BY_AVERAGE()):rename_agent(dictionary.cell_average[LANGUAGE]), extime:aggregate_scenarios(BY_MAX()):rename_agent("MAX")):save_cache();
-    if is_greater_than_zero(extime_disp) then
-        local unit = "hour";
-        local extime_disp_data = extime_disp:aggregate_scenarios(BY_MAX()):aggregate_stages(BY_MAX());
-
-        if extime_disp_data:loaded() then
-            local extime_disp_data_list = extime_disp_data:to_list()[1];
-            if extime_disp_data_list < 1.0 then
-                unit = "ms";
-            elseif extime_disp_data_list < 3600.0 then
-                unit = "s";
-            end
-        end
-
-        extime_chart = Chart(dictionary.dispersion_of_time[LANGUAGE]);
-        extime_chart:add_area_range(extime_disp:select_agent("MIN"):convert(unit),
-                                    extime_disp:select_agent("MAX"):convert(unit),
-                                    { xUnit = dictionary.cell_stage[LANGUAGE], colors = { "#EA6B73", "#EA6B73" }, legendSizeLimit = LEGEND_MAX_CHAR }); -- Confidence interval
-        extime_chart:add_line(extime_disp:select_agent(dictionary.cell_average[LANGUAGE]):convert(unit),
-                              { xUnit = dictionary.cell_stages[LANGUAGE], colors = { "#F02720" }, legendSizeLimit = LEGEND_MAX_CHAR });                  -- Average
-
-        if #extime_chart > 0 then
-            tab:push(extime_chart);
-        end
-    end
-end
-
 function create_pol_report(col_struct)
     local tab = Tab(dictionary.tab_policy[LANGUAGE]);
 
@@ -1444,7 +1388,6 @@ function create_sim_report(col_struct)
 
     local costs;
     local costs_agg;
-    local exe_times;
 
     tab:final_cost_table(col_struct);
     
@@ -1521,145 +1464,11 @@ function create_sim_report(col_struct)
     return tab;
 end
 
------------------------------------------------------------------------------------------------
--- Execution times report function
------------------------------------------------------------------------------------------------
-
-function create_times_report(col_struct)
-    local tab = Tab(dictionary.execution_times[LANGUAGE]);
-
-    ---------
-    -- Policy
-    ---------
-    local pol_struct = {};
-    local file_names = {};
-    local systems = {};
-    local horizon = {};
-    
-    local conv_data         = {};
-    local cuts_data         = {};
-    local time_data         = {};
-    local conv_status       = {};
-    
-   -- Convergence report
-   local pol_file = "sddppol.csv";
-   for i = 1, studies do
-       get_conv_file_info(col_struct, pol_file, pol_struct, file_names, i);
-   end
-   if #file_names < 1 then
-       info(dictionary.error_load_sddppol_times[LANGUAGE]);
-   end
-
-   -- Creating policy report
-   for _, file in ipairs(file_names) do
-       local system = pol_struct[file]["System"];
-       local horizon = pol_struct[file]["Horizon"];
-       local pol_studies = pol_struct[file]["Cases"];
-
-       tab:push("## " .. dictionary.system[LANGUAGE] .. ": " .. system .. " | " .. dictionary.horizon[LANGUAGE] .. ": " .. horizon);
-
-       local chart_time_forw = Chart(dictionary.forward_time[LANGUAGE]);
-       local chart_time_back = Chart(dictionary.backward_time[LANGUAGE]);
-       local chart_exe_pol = Chart(dictionary.exe_pol_times[LANGUAGE]);
-       chart_time_forw:horizontal_legend();
-       chart_time_back:horizontal_legend();
-       chart_exe_pol:horizontal_legend();
-
-       for i,std in ipairs(pol_studies) do
-            local conv_file = col_struct.generic[std]:force_load(file);
-            local total_iter = conv_file:last_stage();
-            local aux_vector = {};
-            for i = 1, total_iter do
-                table.insert(aux_vector, tostring(i));
-            end
-
-            local time_forw = conv_file:select_agents({ 7 }):stages_to_agents():rename_agents(aux_vector);
-            local time_back = conv_file:select_agents({ 8 }):stages_to_agents():rename_agents(aux_vector);
-
-            if conv_file:loaded() then
-                -- Execution time - forward
-                chart_time_forw:add_categories(time_forw, col_struct.case_dir_list[std], { xUnit = dictionary.iteration[LANGUAGE], 
-                                                                                       yUnit = "s", 
-                                                                                       xAllowDecimals = false, 
-                                                                                       showInLegend = studies > 1,
-                                                                                       legendSizeLimit = LEGEND_MAX_CHAR });
-
-                -- Execution time - backward
-                chart_time_back:add_categories(time_back, col_struct.case_dir_list[std], { xUnit = dictionary.iteration[LANGUAGE], 
-                                                                                       yUnit = "s", 
-                                                                                       xAllowDecimals = false, 
-                                                                                       showInLegend = studies > 1,
-                                                                                       legendSizeLimit = LEGEND_MAX_CHAR });
-            else
-                info("Comparing cases have different policy horizons! Policy will only contain the main case data.");
-            end
-
-            local exe_times = col_struct.generic[std]:force_load("sddptimes");
-            if conv_file:loaded() then
-                chart_exe_pol:add_categories(exe_times:select_agent(2),col_struct.case_dir_list[std], {showInLegend = studies > 1, legendSizeLimit = LEGEND_MAX_CHAR});
-            end
-        end
-
-        if #chart_exe_pol > 0 then
-            tab:push(chart_exe_pol);
-        end
-
-        if #chart_time_forw > 0 then
-            tab:push(chart_time_forw);
-        end
-
-        if #chart_time_back > 0 then
-            tab:push(chart_time_back);
-        end
-    end
-    
-    -------------
-    -- Simulation
-    -------------
-    tab:push("## " .. dictionary.tab_simulation[LANGUAGE]);
-    
-    if studies > 1 then
-        local chart_exe_sim = Chart(dictionary.exe_sim_times[LANGUAGE]);
-        chart_exe_sim:horizontal_legend();
-
-        for istudy = 1, studies do
-            -- Execution times
-            local exe_times = col_struct.generic[istudy]:load("sddptimes");
-            chart_exe_sim:add_column(exe_times:select_agent(1):rename_agent(col_struct.case_dir_list[istudy]), {legendSizeLimit = LEGEND_MAX_CHAR});
-        end
-        
-        if #chart_exe_sim > 0 then
-           tab:push(chart_exe_sim);
-        end
-
-    else
-        local chart_exe_sim = Chart(dictionary.exe_sim_times[LANGUAGE]);
-        
-        -- Simulation execution times
-        local exe_times = col_struct.generic[1]:load("sddptimes");
-        chart_exe_sim:add_column(exe_times:select_agent(1), {showInLegend = false, legendSizeLimit = LEGEND_MAX_CHAR});
-        
-        if #chart_exe_sim > 0 then
-           tab:push(chart_exe_sim);
-        end
-        
-        -- Execution times per scenario
-        if col_struct.study[1]:get_parameter("SCEN", 0) == 0 then -- SDDP scenarios does not have execution times per scenario
-            create_exe_timer_per_scen(tab, col_struct, 1);
-        end
-    end
-    
-    return tab;
-end 
-
------------------------------------------------------------------------------------------------
 -- Simulation costs report function
 -----------------------------------------------------------------------------------------------
 
 function create_costs_and_revs(col_struct, tab)
 
-    local chart = Chart(dictionary.disp_of_operation_cost[LANGUAGE]);
-    chart:horizontal_legend();
     local chart_avg = Chart(dictionary.avg_operation_cost[LANGUAGE]);
     chart_avg:horizontal_legend();
 
@@ -1673,21 +1482,6 @@ function create_costs_and_revs(col_struct, tab)
             costs:remove_zeros():save("sddp_dashboard_cost_tot");
         end
 
-        local costs_agg = costs:aggregate_agents(BY_SUM(), "Total cost");
-        local disp = concatenate(costs_agg:aggregate_scenarios(BY_PERCENTILE(10)):rename_agent("P10"), costs_agg:aggregate_scenarios(BY_AVERAGE()):rename_agent(dictionary.cell_average[LANGUAGE]), costs_agg:aggregate_scenarios(BY_PERCENTILE(90)):rename_agent("P90")):save_cache();
-
-        if studies > 1 then
-            if is_greater_than_zero(disp) then
-                chart:add_area_range(disp:select_agent(1):add_prefix(col_struct.case_dir_list[i] .. " - "):change_currency_configuration(i), disp:select_agent(3):change_currency_configuration(i), { xUnit=dictionary.cell_stage[LANGUAGE], colors = light_global_color[i], legendSizeLimit = LEGEND_MAX_CHAR }); -- Confidence interval
-                chart:add_line(disp:select_agent(2):add_prefix(col_struct.case_dir_list[i] .. " - "):change_currency_configuration(i),{xUnit=dictionary.cell_stage[LANGUAGE], colors = {main_global_color[i]}, legendSizeLimit = LEGEND_MAX_CHAR }); -- Average
-            end
-        else
-            if is_greater_than_zero(disp) then
-                chart:add_area_range(disp:select_agent(1):change_currency_configuration(i), disp:select_agent(3):change_currency_configuration(), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { "#EA6B73", "#EA6B73" }, legendSizeLimit = LEGEND_MAX_CHAR }); -- Confidence interval
-                chart:add_line(disp:select_agent(2):change_currency_configuration(), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { "#F02720" }, legendSizeLimit = LEGEND_MAX_CHAR }); -- Average
-            end
-        end
-
         -- sddp_dashboard_cost_avg
         local costs_avg = costs:aggregate_scenarios(BY_AVERAGE()):remove_zeros();
         if studies == 1 and is_greater_than_zero(costs_avg) then
@@ -1697,10 +1491,6 @@ function create_costs_and_revs(col_struct, tab)
 
     if #chart_avg > 0 then
         tab:push(chart_avg);
-    end
-
-    if #chart > 0 then
-        tab:push(chart);
     end
     
     return;
@@ -1733,7 +1523,7 @@ function create_marg_costs(col_struct)
             local system_data = {};
             local system_unit = {};
             for i = 1, studies do
-                cmg_aggyear = cmg[i]:aggregate_blocks_by_duracipu(i):aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[i].hours:select_stages_of_outputs(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):save_cache();
+                cmg_aggyear = cmg[i]:aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[i].hours:select_stages_of_outputs(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):save_cache();
 
                 for _,system in ipairs(cmg_aggyear:agents()) do
                     local cmgdem_data = cmg_aggyear:select_agent(system):rename_agent(col_struct.case_dir_list[i]):change_currency_configuration(i);
@@ -1760,7 +1550,7 @@ function create_marg_costs(col_struct)
             end
         else
             local chart = Chart();
-            cmg_aggyear = cmg[1]:aggregate_blocks_by_duracipu():aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[1].hours:select_stages_of_outputs(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE());
+            cmg_aggyear = cmg[1]:aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[1].hours:select_stages_of_outputs(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE());
             chart:add_column(cmg_aggyear:change_currency_configuration(), { xUnit=dictionary.cell_year[LANGUAGE], legendSizeLimit = LEGEND_MAX_CHAR });
             tab:push(chart);
         end
@@ -1773,7 +1563,7 @@ function create_marg_costs(col_struct)
             local chart = Chart(agent);
             local aux_tab = {};
             for j = 1, studies do
-                cmg_aggsum = cmg[j]:aggregate_blocks_by_duracipu(j):aggregate_scenarios(BY_AVERAGE());
+                cmg_aggsum = cmg[j]:aggregate_scenarios(BY_AVERAGE());
                 local cmg_aggsum_agents = cmg_aggsum:select_agent(agent):rename_agent(col_struct.case_dir_list[j]);
                
                 chart:add_line(cmg_aggsum_agents:change_currency_configuration(j),{xUnit=dictionary.cell_stage[LANGUAGE], legendSizeLimit = LEGEND_MAX_CHAR});
@@ -1782,7 +1572,7 @@ function create_marg_costs(col_struct)
         end
     else
         local chart = Chart();
-        cmg_aggsum = cmg[1]:aggregate_blocks_by_duracipu():aggregate_scenarios(BY_AVERAGE());
+        cmg_aggsum = cmg[1]:aggregate_scenarios(BY_AVERAGE());
         chart:add_column(cmg_aggsum:change_currency_configuration(),{xUnit=dictionary.cell_stage[LANGUAGE], legendSizeLimit = LEGEND_MAX_CHAR, colors = main_global_color});
         tab:push(chart);
     end
@@ -1804,7 +1594,7 @@ function create_marg_costs(col_struct)
             for istudy = 1, studies do
             
                 
-                local cmg_agg = cmg[istudy]:aggregate_blocks_by_duracipu():select_agents({system}):save_cache();
+                local cmg_agg = cmg[istudy]:select_agents({system}):save_cache();
 	    
                 local disp = concatenate(cmg_agg:aggregate_scenarios(BY_PERCENTILE(10)):rename_agent("P10"),
                                          cmg_agg:aggregate_scenarios(BY_AVERAGE()):rename_agent(dictionary.cell_average[LANGUAGE]),
@@ -1912,13 +1702,13 @@ function create_gen_report(col_struct)
     -- Loading generations files
     for i = 1, studies do
 
-        gerter[i] = col_struct.thermal[i]:load("gerter"):select_stages_of_outputs():my_aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):save_cache();
-        gerhid[i] = col_struct.hydro[i]:load("gerhid"):select_stages_of_outputs():my_aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):save_cache();
-        gergnd[i] = col_struct.renewable[i]:load("gergnd"):select_stages_of_outputs():my_aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):save_cache();
-        gercsp[i] = col_struct.csp[i]:load("cspgen"):convert("GWh"):select_stages_of_outputs():my_aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):save_cache();
-        gerbat[i] = col_struct.battery[i]:load("gerbat"):convert("GWh"):select_stages_of_outputs():my_aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):save_cache(); -- Explicitly converting to GWh
-        potinj[i] = col_struct.power_injection[i]:load("powinj"):select_stages_of_outputs():my_aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):save_cache();
-        defcit[i] = col_struct.system[i]:load("defcit"):select_stages_of_outputs():my_aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):save_cache();
+        gerter[i] = col_struct.thermal[i]:load("gerter"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache();
+        gerhid[i] = col_struct.hydro[i]:load("gerhid"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache();
+        gergnd[i] = col_struct.renewable[i]:load("gergnd"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache();
+        gercsp[i] = col_struct.csp[i]:load("cspgen"):convert("GWh"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache();
+        gerbat[i] = col_struct.battery[i]:load("gerbat"):convert("GWh"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache(); -- Explicitly converting to GWh
+        potinj[i] = col_struct.power_injection[i]:load("powinj"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache();
+        defcit[i] = col_struct.system[i]:load("defcit"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache();
     end
 
     if studies > 1 then
@@ -1965,10 +1755,10 @@ function create_gen_report(col_struct)
         end
 
         -- Data processing
-        total_hydro_gen = gerhid[i]:my_aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_hydro_gen_age);
-        total_batt_gen  = gerbat[i]:my_aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_batt_gen_age);
-        total_deficit   = defcit[i]:my_aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_deficit_age);
-        total_pot_inj   = potinj[i]:my_aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_pot_inj_age);
+        total_hydro_gen = gerhid[i]:aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_hydro_gen_age);
+        total_batt_gen  = gerbat[i]:aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_batt_gen_age);
+        total_deficit   = defcit[i]:aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_deficit_age);
+        total_pot_inj   = potinj[i]:aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_pot_inj_age);
 
         -- Renewable generation is broken into 3 types
         local wind_agents  = col_struct.renewable[i].tech_type:eq(1):remove_zeros():agents();
@@ -1979,12 +1769,12 @@ function create_gen_report(col_struct)
                                          :remove_agents(solar_agents)
                                          :remove_agents(small_hydro_agents);
 
-        total_other_renw_gen  = total_other_renw_gen:my_aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_other_renw_gen_age);
-        total_wind_gen        = gergnd[i]:select_agents(wind_agents):my_aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_wind_gen_age);
-        total_solar_gen       = gergnd[i]:select_agents(solar_agents):my_aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_solar_gen_age);
-        total_small_hydro_gen = gergnd[i]:select_agents(small_hydro_agents):my_aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_small_hydro_gen_age);
-        total_csp_gen         = gercsp[i]:my_aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_csp_gen_age);
-        total_thermal_gen = gerter[i]:my_aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_thermal_gen_age);
+        total_other_renw_gen  = total_other_renw_gen:aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_other_renw_gen_age);
+        total_wind_gen        = gergnd[i]:select_agents(wind_agents):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_wind_gen_age);
+        total_solar_gen       = gergnd[i]:select_agents(solar_agents):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_solar_gen_age);
+        total_small_hydro_gen = gergnd[i]:select_agents(small_hydro_agents):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_small_hydro_gen_age);
+        total_csp_gen         = gercsp[i]:aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_csp_gen_age);
+        total_thermal_gen = gerter[i]:aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_thermal_gen_age);
 
         if studies > 1 then
             if total_hydro_gen:loaded() then
@@ -2147,15 +1937,15 @@ function create_gen_report(col_struct)
         local agents = col_struct.system[i]:labels();
 
         -- Data processing
-        total_hydro_gen   = gerhid[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM):my_aggregate_blocks():aggregate_scenarios(BY_AVERAGE());
-        total_thermal_gen = gerter[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM):my_aggregate_blocks():aggregate_scenarios(BY_AVERAGE());
-        total_batt_gen    = gerbat[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM):my_aggregate_blocks():aggregate_scenarios(BY_AVERAGE());
-        total_deficit     = defcit[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM):my_aggregate_blocks():aggregate_scenarios(BY_AVERAGE());
-        total_pot_inj     = potinj[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM):my_aggregate_blocks():aggregate_scenarios(BY_AVERAGE());
-        total_csp_gen     = gercsp[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM):my_aggregate_blocks():aggregate_scenarios(BY_AVERAGE());
+        total_hydro_gen   = gerhid[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_scenarios(BY_AVERAGE());
+        total_thermal_gen = gerter[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_scenarios(BY_AVERAGE());
+        total_batt_gen    = gerbat[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_scenarios(BY_AVERAGE());
+        total_deficit     = defcit[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_scenarios(BY_AVERAGE());
+        total_pot_inj     = potinj[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_scenarios(BY_AVERAGE());
+        total_csp_gen     = gercsp[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_scenarios(BY_AVERAGE());
 
         -- Renewable generation is broken into 3 types
-        local renw_gen = gergnd[i]:my_aggregate_blocks():aggregate_scenarios(BY_AVERAGE()):save_cache();
+        local renw_gen = gergnd[i]:aggregate_scenarios(BY_AVERAGE()):save_cache();
         total_other_renw_gen = renw_gen:select_agents(col_struct.renewable[i].tech_type:ne(1) &
                                       col_struct.renewable[i].tech_type:ne(2) &
                                       col_struct.renewable[i].tech_type:ne(4))
@@ -2494,9 +2284,6 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
 
     -- Simulation report
     push_tab_to_tab(create_sim_report(col_struct),tab_solution_quality);
-    
-    -- Execution times
-    push_tab_to_tab(create_times_report(col_struct),tab_solution_quality);
     
     -- Finish solution quality
     push_tab_to_tab(tab_solution_quality, dashboard);
