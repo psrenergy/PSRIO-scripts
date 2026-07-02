@@ -160,7 +160,7 @@ end
 -- Overloads
 -----------------------------------------------------------------------------------------------
 
--- Temporary solution to SDDP remap executions (including typical days)
+-- Temporary solution to NCP remap executions (including typical days)
 
 -----------------------------------------------------------------------------------------------
 -- Auxiliary functions
@@ -693,15 +693,15 @@ function create_tab_summary(col_struct, info_struct)
         end
         loss_representation_string = loss_representation_string .. " | " .. loss_repr[i];
 
-        local sddp_inflow_type = col_struct.study[i]:get_parameter("Vazoes", -1);
-        if sddp_inflow_type > 0 then
-            if sddp_inflow_type == 1 then
+        local ncp_inflow_type = col_struct.study[i]:get_parameter("Vazoes", -1);
+        if ncp_inflow_type > 0 then
+            if ncp_inflow_type == 1 then
                 inflow_repr[i] = dictionary.arp[LANGUAGE];
-            elseif sddp_inflow_type == 2 then
+            elseif ncp_inflow_type == 2 then
                 inflow_repr[i] = dictionary.historical[LANGUAGE];
-            elseif sddp_inflow_type == 3 then
+            elseif ncp_inflow_type == 3 then
                 inflow_repr[i] = dictionary.external_f_b[LANGUAGE];
-            elseif sddp_inflow_type == 4 then
+            elseif ncp_inflow_type == 4 then
                 inflow_repr[i] = dictionary.external_f[LANGUAGE];
             else
                 inflow_repr[i] = "-";
@@ -875,7 +875,7 @@ function create_inflow_energy(col_struct)
 
     local inferg = {};
     for i = 1, studies do
-        inferg[i] = col_struct.generic[i]:load("sddp_dashboard_input_enaflu");
+        inferg[i] = col_struct.generic[i]:load("ncp_dashboard_input_enaflu");
     end
 
     -- Color vectors
@@ -1402,7 +1402,7 @@ function create_sim_report(col_struct)
         local aux_table = {};
         for i = 1, studies do
             costs = objcop(i) / discount_rate(i):select_stages_of_outputs();
-            -- sddp_dashboard_cost_tot
+            -- ncp_dashboard_cost_tot
             costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
             table.insert(aux_table,costs_agg);
         end
@@ -2083,7 +2083,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     -- Function parameters
     -- dashboard: tab or dashboard object
     -- studies: number of studies loaded by PSRIO
-    -- info_struct: struct containing SDDP execution information
+    -- info_struct: struct containing NCP execution information
     -- info_existence_log: array cointaing flags whether the information was loaded or not
     -- create_dashboard: flag that indicates if dashboard html must be created
 
@@ -2112,7 +2112,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     local viol_report_structs = {};
     local viol_report_names = {};
     for istudy = 1, studies do
-        local viol_files = col_struct.generic[istudy]:load_table_without_header("sddp_viol.out");
+        local viol_files = col_struct.generic[istudy]:load_table_without_header("ncp_viol.out");
 
         if not viol_files or (#viol_files == 0) then
             warning("The file viol_report_structs was not found or is empty.");
@@ -2125,7 +2125,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
                         table.insert(viol_report_names, line);
                     end
                     
-                    local split_name = "sddp_dashboard_viol_";
+                    local split_name = "ncp_dashboard_viol_";
                     if string.find(line, "avg") then
                         split_name = split_name .. "avg_";
                     elseif string.find(line, "max") then
@@ -2164,7 +2164,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     -----------------------------------------------------------------------------------------------
 
     -- Dashboard name configuration
-    local dashboard_name = "SDDP";
+    local dashboard_name = "NCP";
     if #info_struct > 0 and not (info_struct[1].dash_name == "-") then
         dashboard_name = info_struct[1].dash_name;
     end
@@ -2248,7 +2248,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     end
 
     -- Policy report
-    if create_policy_report then -- SDDP scenarios does not have policy phase
+    if create_policy_report then -- Scenario executions do not have policy phase
         push_tab_to_tab(create_pol_report(col_struct),tab_solution_quality);
     else
         info("file " .. pol_file_name .. " does not exist. Policy report will not be displayed.");

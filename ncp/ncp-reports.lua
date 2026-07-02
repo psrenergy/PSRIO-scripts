@@ -18,7 +18,7 @@ local function violation_aggregation(log_viol, data, data_name, scen_aggregation
 			violation_agg:remove_agents(largest_agents):aggregate_agents(agent_aggregation, "Others")
 		);
 	end
-	local violation_file_name = "sddp_dashboard_viol_" .. suffix .. "_" .. data_name
+	local violation_file_name = "ncp_dashboard_viol_" .. suffix .. "_" .. data_name
 	violation_agg:save(violation_file_name);
 
 	if log_viol.file:is_open() then
@@ -108,7 +108,7 @@ end
 -- Inflow energy
 local enaflu = Generic():load("enaflu");
 
-dispersion(enaflu,"sddp_dashboard_input_enaflu")
+dispersion(enaflu,"ncp_dashboard_input_enaflu")
 
 -----------------------------------------------------------------------------------------------
 -- COSTS
@@ -120,13 +120,13 @@ local objcop = objcop_function();
 local costs = max(objcop,0):save_cache();
 
 if( costs:loaded() ) then
-    -- sddp_dashboard_cost_tot. Considering discount rate in the cost aggregation
-    (costs/discount_rate):aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros():save("sddp_dashboard_cost_tot");
+    -- ncp_dashboard_cost_tot. Considering discount rate in the cost aggregation
+    (costs/discount_rate):aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros():save("ncp_dashboard_cost_tot");
     
-    -- sddp_dashboard_cost_avg
-    costs:aggregate_scenarios(BY_AVERAGE()):remove_zeros():save("sddp_dashboard_cost_avg");
+    -- ncp_dashboard_cost_avg
+    costs:aggregate_scenarios(BY_AVERAGE()):remove_zeros():save("ncp_dashboard_cost_avg");
     
-    -- sddp_dashboard_cost_disp
+    -- ncp_dashboard_cost_disp
 	local cost_agg = costs:aggregate_agents(BY_SUM(), "P10"):save_cache();
     local costs = concatenate(
         cost_agg:aggregate_scenarios(BY_PERCENTILE(10)),
@@ -135,7 +135,7 @@ if( costs:loaded() ) then
     );
     local x = costs:aggregate_stages(BY_SUM()):aggregate_scenarios(BY_SUM()):to_list()[1];
     if x > 0.0 then
-        costs:save("sddp_dashboard_cost_disp");
+        costs:save("ncp_dashboard_cost_disp");
     end
 end
 
@@ -145,13 +145,13 @@ end
 local revenues = (-min(objcop,0)):save_cache();
 
 if( revenues:loaded() ) then
-    -- sddp_dashboard_rev_tot. Considering discount rate in the revenue aggregation
-    (revenues/discount_rate):aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros():save("sddp_dashboard_rev_tot");
+    -- ncp_dashboard_rev_tot. Considering discount rate in the revenue aggregation
+    (revenues/discount_rate):aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros():save("ncp_dashboard_rev_tot");
     
-    -- sddp_dashboard_rev_avg
-    revenues:aggregate_scenarios(BY_AVERAGE()):remove_zeros():save("sddp_dashboard_rev_avg");
+    -- ncp_dashboard_rev_avg
+    revenues:aggregate_scenarios(BY_AVERAGE()):remove_zeros():save("ncp_dashboard_rev_avg");
     
-    -- sddp_dashboard_rev_disp
+    -- ncp_dashboard_rev_disp
 	local disp_agg = costs:aggregate_agents(BY_SUM(), "P10"):save_cache();
     local x = disp_agg:aggregate_stages(BY_SUM()):aggregate_scenarios(BY_SUM()):aggregate_blocks(BY_SUM()):to_list()[1];
     if x > 0.0 then
@@ -160,7 +160,7 @@ if( revenues:loaded() ) then
 			disp_agg:rename_agents({"Average"}):aggregate_scenarios(BY_AVERAGE()),
 			disp_agg:rename_agents({"P90"}):aggregate_scenarios(BY_PERCENTILE(90))
 		);
-        disp:save("sddp_dashboard_rev_disp");
+        disp:save("ncp_dashboard_rev_disp");
     end
 end
 
@@ -235,23 +235,23 @@ local viol_structs_debug = {
 	{name = "vfeact", block_aggregation = BY_AVERAGE()}
 }
 
--- Load output files from SDDP model
+-- Load output files from NCP model
 local output_list_name = "outfiles.out";
 local out_list = {};
 
 if Generic():file_exists(output_list_name) then
-	local sddp_outputs = Generic():load_table_without_header(output_list_name);
-	if #sddp_outputs > 0 then
+	local ncp_outputs = Generic():load_table_without_header(output_list_name);
+	if #ncp_outputs > 0 then
 		-- Create list of violation outputs to be considered
-		for lin = 1, #sddp_outputs do
-			local file = sddp_outputs[lin][1];
+		for lin = 1, #ncp_outputs do
+			local file = ncp_outputs[lin][1];
 			out_list[file] = true;
 		end
 	end
 end
 
 -- Log file with violation files used execution
-local log_viol = {file = Generic():create_writer("sddp_viol.out"), nrec = 0};
+local log_viol = {file = Generic():create_writer("ncp_viol.out"), nrec = 0};
 violation_output(log_viol, out_list, viol_structs, 0.01)
 log_viol.file:close();
 
@@ -263,7 +263,7 @@ log_viol.file:close();
 -- -- Get renewable generation spillage
 -- local rnw_spill = rnw:load("vergnd");
 
--- rnw_spill:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_scenarios(BY_AVERAGE()):remove_zeros():save("sddp_dashboard_result_avg_vergnd");
+-- rnw_spill:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_scenarios(BY_AVERAGE()):remove_zeros():save("ncp_dashboard_result_avg_vergnd");
 
 -----------------------------------------------------------------------------------------------
 -- LGC
@@ -271,11 +271,11 @@ log_viol.file:close();
 local lgcgen = Generic():load("lgcgen");
 local lgcrev = Generic():load("lgcrev");
 
--- sddp_dashboard_lgc_gen
+-- ncp_dashboard_lgc_gen
 if lgcgen:loaded() then
-	lgcgen:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM(), Profile.PER_YEAR):remove_zeros():save("sddp_dashboard_lgc_gen");
+	lgcgen:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM(), Profile.PER_YEAR):remove_zeros():save("ncp_dashboard_lgc_gen");
 end
--- sddp_dashboard_lgc_rev
+-- ncp_dashboard_lgc_rev
 if lgcrev:loaded() then
-	lgcrev:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM(), Profile.PER_YEAR):remove_zeros():save("sddp_dashboard_lgc_rev");
+	lgcrev:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM(), Profile.PER_YEAR):remove_zeros():save("ncp_dashboard_lgc_rev");
 end

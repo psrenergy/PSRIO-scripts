@@ -1,5 +1,4 @@
-IS_NCP = true;
-include("D:\\PSRIO-scripts\\ncp\\sddp-languages.lua")
-include("D:\\PSRIO-scripts\\ncp\\sddp-warnings.lua")
-include("D:\\PSRIO-scripts\\ncp\\sddp-dashlib.lua")
-include("D:\\PSRIO-scripts\\ncp\\sddp-dashboard.lua")
+include("D:\\PSRIO-scripts\\ncp\\ncp-languages.lua")
+include("D:\\PSRIO-scripts\\ncp\\ncp-warnings.lua")
+include("D:\\PSRIO-scripts\\ncp\\ncp-dashlib.lua")
+include("D:\\PSRIO-scripts\\ncp\\ncp-dashboard.lua")
