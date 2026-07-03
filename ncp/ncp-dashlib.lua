@@ -316,7 +316,7 @@ end
 
 function load_model_info(generic_cols, info_struct)
     local file_exists;
-    local info_file_name = "SDDP.info";
+    local info_file_name = "ncp.info";
     local existence_log = {}
 
     for i = 1, studies do
@@ -1489,45 +1489,6 @@ function create_marg_costs(col_struct)
     end
 
     -- Marginal cost aggregated by average
-    if not (IS_NCP) then
-        tab:push("## " .. dictionary.annual_cmo[LANGUAGE]);
-        if studies > 1 then
-            local system_data = {};
-            local system_unit = {};
-            for i = 1, studies do
-                cmg_aggyear = cmg[i]:aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[i].hours:select_stages_of_outputs(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), Collection.SYSTEM):save_cache();
-
-                for _,system in ipairs(cmg_aggyear:agents()) do
-                    local cmgdem_data = cmg_aggyear:select_agent(system):rename_agent(col_struct.case_dir_list[i]):change_currency_configuration(i);
-                    table.insert(system_unit, cmgdem_data:unit());
-                    if system_data[system] then
-                        table.insert(system_data[system], cmgdem_data);
-                    else
-                        system_data[system] = {cmgdem_data};
-                    end
-                end
-            end
-            
-            local count_sys = 1;
-            for system, data in pairs(system_data) do
-                local chart = Chart(system);
-
-                -- Add marginal costs outputs
-                for _,individual_data in ipairs(data) do
-                    chart:add_column(individual_data:force_unit(system_unit[count_sys]), {legendSizeLimit = LEGEND_MAX_CHAR});-- Annual Marg. cost
-                end
-                -- chart:add_column(concatenate(data):force_unit(system_unit[count_sys])); 
-                tab:push(chart);
-                count_sys = count_sys + 1;
-            end
-        else
-            local chart = Chart();
-            cmg_aggyear = cmg[1]:aggregate_stages_weighted(BY_AVERAGE(), col_struct.study[1].hours:select_stages_of_outputs(), Profile.PER_YEAR):aggregate_scenarios(BY_AVERAGE());
-            chart:add_column(cmg_aggyear:change_currency_configuration(), { xUnit=dictionary.cell_year[LANGUAGE], legendSizeLimit = LEGEND_MAX_CHAR });
-            tab:push(chart);
-        end
-    end
-
     tab:push("## " .. dictionary.stg_cmo[LANGUAGE]);
     if studies > 1 then
         local agents = cmg[1]:agents();
