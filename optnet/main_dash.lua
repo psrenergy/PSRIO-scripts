@@ -483,7 +483,7 @@ function load_data(output, lang, optnet_data)
             --:remove_zeros();
 
         -- ── Length of the Lines ──────────────────────────────────────────
-        local investment_decision = generic:load("opn_dashboard_investment_decision");
+        local investment_decision = generic:load("opn_dashboard_investment_decision"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, false, false, false, correct_series);
         local ac_line_length = acline:load_parameter("Length", "km"):aggregate_stages(BY_LAST_VALUE()):save_cache();
         local dc_line_length = dcline:load_parameter("Length", "km"):aggregate_stages(BY_LAST_VALUE()):save_cache();
 
