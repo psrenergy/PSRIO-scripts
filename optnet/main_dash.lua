@@ -345,13 +345,13 @@ function Expression.select_optnet_date_scn_blcks(self, optnet_data_case, system_
     if self_selected:stage_type() ~= 10 then
         if optnet_data_case.resolution_representation ~= 0 then
             if agg_blocks then
-                self_selected = self_selected:aggregate_blocks(optnet_data_case.selected_resolutions);
+                self_selected = self_selected:aggregate_blocks(BY_EXCLUDING(nil), optnet_data_case.selected_resolutions);
             else
                 self_selected = self_selected:select_blocks(optnet_data_case.selected_resolutions);
             end
         else
             if agg_blocks then
-                self_selected = self_selected:aggregate_blocks();
+                self_selected = self_selected:aggregate_blocks(BY_EXCLUDING(nil));
             end
         end
 
@@ -422,63 +422,63 @@ function load_data(output, lang, optnet_data)
 
         -- ── Circuit loading (max annual loading per element) ────────────
         output.optnet[case].acline_loading       = acline:load("opn_dashboard_acline_flow_loading"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
+            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
             :aggregate_agents(BY_MAX(), dictionary.ac_lines[lang]);
 
         output.optnet[case].transformer_loading  = transformer:load("opn_dashboard_transformers_flow_loading"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
+            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
             :aggregate_agents(BY_MAX(), dictionary.transformers[lang]);
 
         output.optnet[case].three_winding_loading = three_winding:load("opn_dashboard_threewindingtransformers_flow_loading"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
+            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
             :aggregate_agents(BY_MAX(), dictionary.three_winding_transformers[lang]);
 
         output.optnet[case].series_cap_loading   = series_capacitor:load("opn_dashboard_seriescapacitor_flow_loading"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
+            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
             :aggregate_agents(BY_MAX(), dictionary.series_capacitors[lang]);
 
         -- ── Redundancy (max annual violation per element) ───────────────
         output.optnet[case].acline_redundancy       = acline:load("opn_dashboard_acline_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
+            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
             --:remove_zeros();
 
         output.optnet[case].transformer_redundancy  = transformer:load("opn_dashboard_transformer_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
+            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
             --:remove_zeros();
 
         output.optnet[case].three_winding_redundancy = three_winding:load("opn_dashboard_threewindingtransformer_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
+            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
             --:remove_zeros();
 
         output.optnet[case].series_cap_redundancy   = series_capacitor:load("opn_dashboard_seriescapacitor_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
+            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
             --:remove_zeros();
 
         output.optnet[case].flow_ctrl_redundancy    = flwcontroller:load("opn_dashboard_flowcontroller_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
+            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
             --:remove_zeros();
 
         output.optnet[case].dc_line_redundancy      = dcline:load("opn_dashboard_dcline_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
+            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
             --:remove_zeros();
 
         output.optnet[case].converter_redundancy    = generic:load("opn_dashboard_converter_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, false, false, false, correct_series)
-            :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
+            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
             --:remove_zeros();
 
         output.optnet[case].dc_link_redundancy      = dclink:load("opn_dashboard_dclink_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX())
+            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX())
             :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
             --:remove_zeros();
 

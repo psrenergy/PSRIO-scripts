@@ -550,13 +550,13 @@ function Expression.select_optflow_date_scn_blcks(self, optflow_data_case, syste
 
     if optflow_data_case.resolution_representation ~= 0 then
         if agg_blocks then
-            self_selected = self_selected:aggregate_blocks(optflow_data_case.selected_resolutions);
+            self_selected = self_selected:aggregate_blocks(BY_EXCLUDING(nil), optflow_data_case.selected_resolutions);
         else
             self_selected = self_selected:select_blocks(optflow_data_case.selected_resolutions);
         end
     else
         if agg_blocks then
-            self_selected = self_selected:aggregate_blocks();
+            self_selected = self_selected:aggregate_blocks(BY_EXCLUDING(nil));
         end
     end
 
@@ -634,8 +634,8 @@ function load_data(output, lang, optflow_data)
         local reactive_injection = bus:load("opf_qinj"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false, correct_series):save_cache();
         local reactive_injection_pos = ifelse(reactive_injection:ge(1), reactive_injection, 0);
         local reactive_injection_neg = ifelse(reactive_injection:le(-1), reactive_injection, 0);
-        output.optflow[case].max_pos_reactive_injection_by_bus = reactive_injection_pos:aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX()):aggregate_stages(BY_MAX(), Profile.PER_YEAR):remove_zeros():sort_agents_descending();
-        output.optflow[case].max_neg_reactive_injection_by_bus = reactive_injection_neg:aggregate_blocks(BY_MIN()):aggregate_scenarios(BY_MIN()):aggregate_stages(BY_MIN(), Profile.PER_YEAR):remove_zeros():sort_agents_ascending();
+        output.optflow[case].max_pos_reactive_injection_by_bus = reactive_injection_pos:aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX()):aggregate_stages(BY_MAX(), Profile.PER_YEAR):remove_zeros():sort_agents_descending();
+        output.optflow[case].max_neg_reactive_injection_by_bus = reactive_injection_neg:aggregate_blocks(BY_MIN_EXCLUDING(nil)):aggregate_scenarios(BY_MIN()):aggregate_stages(BY_MIN(), Profile.PER_YEAR):remove_zeros():sort_agents_ascending();
         output.optflow[case].reactive_demand = bus:load("opf_qloa"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.reactive_load[lang]);
 
         output.optflow[case].active_load_shedding = bus:load("opf_lshp"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.active_deficit[lang]);
@@ -646,7 +646,7 @@ function load_data(output, lang, optflow_data)
         local voltage_margin_lower_case = bus:load("opf_voltagemarginlower"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, true, correct_series);
         voltage_margin_lower_case = voltage_margin_lower_case:select_agents(voltage_margin_lower_case:ne(-1)):save_cache();
 
-        output.optflow[case].voltage_margin_lower_min = bus:load("opf_voltagemarginlower"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false, correct_series):select_agents(voltage_margin_lower_case:agents()):aggregate_blocks(BY_MIN()):aggregate_scenarios(BY_MIN()):aggregate_stages(BY_MIN(), Profile.PER_YEAR);
+        output.optflow[case].voltage_margin_lower_min = bus:load("opf_voltagemarginlower"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false, correct_series):select_agents(voltage_margin_lower_case:agents()):aggregate_blocks(BY_MIN_EXCLUDING(nil)):aggregate_scenarios(BY_MIN()):aggregate_stages(BY_MIN(), Profile.PER_YEAR);
 
         local voltage_profile = {};
         local voltage_margin_lower = {};
@@ -663,8 +663,8 @@ function load_data(output, lang, optflow_data)
         output.optflow[case].voltage = concatenate_stages(voltage_profile):save_cache();
         output.optflow[case].voltage_margin_lower = concatenate_stages(voltage_margin_lower):save_cache();
 
-        output.optflow[case].voltage_max = bus:load("opf_volt"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false, correct_series):aggregate_blocks(BY_MAX()):aggregate_scenarios(BY_MAX()):aggregate_stages(BY_MAX(), Profile.PER_YEAR);
-        output.optflow[case].voltage_min = bus:load("opf_volt"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false, correct_series):aggregate_blocks(BY_MIN()):aggregate_scenarios(BY_MIN()):aggregate_stages(BY_MIN(), Profile.PER_YEAR);
+        output.optflow[case].voltage_max = bus:load("opf_volt"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false, correct_series):aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX()):aggregate_stages(BY_MAX(), Profile.PER_YEAR);
+        output.optflow[case].voltage_min = bus:load("opf_volt"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false, correct_series):aggregate_blocks(BY_MIN_EXCLUDING(nil)):aggregate_scenarios(BY_MIN()):aggregate_stages(BY_MIN(), Profile.PER_YEAR);
 
         output.sddp[case].active_thermal_generation = thermal:load("gerter"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):convert("MW"):aggregate_agents(BY_SUM(), dictionary.thermal[lang]):convert("MW");
         output.sddp[case].active_hydro_generation = hydro:load("gerhid"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):convert("MW"):aggregate_agents(BY_SUM(), dictionary.hydro[lang]):convert("MW");
@@ -734,7 +734,7 @@ function Tab.add_stage_solution_times_chart(self, n_cases, Lang, output)
     chart:horizontal_legend();
 
     for case = 1, n_cases do
-        local times = output.optflow[case].solution_time:aggregate_blocks(BY_MAX()):rename_agent(Generic(case):cloudname());
+        local times = output.optflow[case].solution_time:aggregate_blocks(BY_MAX_EXCLUDING(nil)):rename_agent(Generic(case):cloudname());
         chart:add_column(times, {showInLegend=show_in_legend, color = table_case_color[case]});
     end
     self:push(chart);
