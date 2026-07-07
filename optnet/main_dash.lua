@@ -798,7 +798,7 @@ function Tab.Solution_Quality(self, n_cases, Lang, output, optnet_data)
 
     local subTab_redund = SubTab(dictionary.check_redundancy[Lang]);
     subTab_redund:add_redundancy_chart(n_cases, Lang, output, optnet_data);
-    self:push(subTab_redund);
+    if #subTab_redund > 0 then self:push(subTab_redund) end;
 end
 
 ---------------------------------------------------------------------------
