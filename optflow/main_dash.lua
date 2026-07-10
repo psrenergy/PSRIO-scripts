@@ -469,10 +469,7 @@ local dictionary = {
 
     voltage_profiles = {en = "Voltage profiles", es = "Perfiles de voltaje", pt = "Perfis de tensão"},
     voltage_limits = {en = "Voltage limits", es = "Límites de voltaje", pt = "Limites de tensão"},
-    voltage_lower_limit = {en = "Voltage lower limit - Bus average", es = "Límite inferior de voltaje - Promedio de las barras", pt = "Limite inferior de tensão - Média das barras"},
-    voltage_upper_limit = {en = "Voltage upper limit - Bus average", es = "Límite superior de voltaje - Promedio de las barras", pt = "Limite superior de tensão - Média das barras"},
-    critical_buses_voltage_lower_limit = {en = "Buses with the lowest lower voltage margins per year", es = "Barras con los márgenes de voltaje inferiores más bajos por año", pt = "Barras com as margens superiores de tensão mais baixas por ano"},
-    critical_buses_voltage_upper_limit = {en = "Buses with the lowest upper voltage margins per year", es = "Barras con los márgenes de voltaje superiores más bajos por año", pt = "Barras com as margens inferiores de tensão mais baixas por ano"},
+    voltage_safety_margin_title = {en = "Voltage safety margin - Bus average", es = "Margen de seguridad de voltaje - Promedio de las barras", pt = "Margem de segurança de tensão - Média das barras"},
     solution_quality = {en = "Solution quality", es = "Calidad de la solución", pt = "Qualidade da solução"},
     solution_results = {en = "Solution results", es = "Resultados de la solución", pt = "Resultados da solução"},
 
@@ -607,7 +604,8 @@ function load_data(output, lang, optflow_data)
         output.sddp[case] = {};
 
         output.optflow[case].solution_status = generic:load("opf_status"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, false, false, false, correct_series);
-        output.optflow[case].solution_time = generic:load("opf_tcpu"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, false, false, false, correct_series);
+        local original_times = generic:load("opf_tcpu"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, false, false, false, correct_series);
+        output.optflow[case].solution_time = ifelse(original_times:eq(nil), 0, original_times);
 
         output.optflow[case].thermal_cost = thermal:load("opf_cotr"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.thermal[lang]);
         output.optflow[case].hydro_cost = hydro:load("opf_cohd"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.hydro[lang]);
@@ -1256,7 +1254,7 @@ function Tab.add_voltage_margin_chart(self, n_cases, Lang, output)
         end
 
         -- Voltage lower limit
-        local chart = Chart(dictionary.voltage_lower_limit[Lang], subtitle);
+        local chart = Chart(dictionary.voltage_safety_margin_title[Lang], subtitle);
 
         local options = {
             yLabel = y_label_legend,
