@@ -119,7 +119,7 @@ end
 
 -- HIDMXRSER - Hydro max reserve
 hydro = Hydro();
-local hydro_reserv = hydro.max_reserve:select_outputs_stages();
+local hydro_reserv = hydro.max_reserve:select_outputs_stages():save_cache();
 if hydro_reserv:loaded() then
   local reserve_unit = hydro:load_parameter("MaxSecondaryReserveUnit","");
   local nominal_capacity_hydro_agents = reserve_unit:eq(2);
@@ -147,7 +147,7 @@ end
 
 -- TERMXRSER - Thermal max reserve
 thermal = Thermal();
-local thermal_reserv = thermal.max_reserve:select_outputs_stages();
+local thermal_reserv = thermal.max_reserve:select_outputs_stages():save_cache();
 if thermal_reserv:loaded() then
   local reserve_unit = thermal:load_parameter("MaxSecondaryReserveUnit","");
   local nominal_capacity_thermal_agents = reserve_unit:eq(2);
