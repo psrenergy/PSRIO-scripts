@@ -41,6 +41,172 @@ function add_data_to_line_charts(chart, value_real_loss, value_linear_loss, annu
     end
 end
 
+--======================
+-- Functions to fill tabs
+--======================
+function fill_info_tab(tab)
+
+    NumberOfStudies = PSR.studies();
+
+    tab:push("# Dashboard Overview");
+    tab:push("This dashboard analyzes **linear and quadratic loss** outputs of the SDDP simulation. Its purpose is to **help visualize and compare both loss formulations** and highlight their differences, in both the system-level and component-level analysis.");
+
+    tab:push("");
+    tab:push("The dashboard is organized into **tabs by circuit element type**, which are automatically generated only when such elements exist in the network:");
+    tab:push("- AC Circuits  ");
+    tab:push("- DC Lines  ");
+    tab:push("- Transformers  ");
+    tab:push("- Three-Winding Transformers  ");
+    tab:push("- Series Capacitors  ");
+
+    tab:push("");
+    tab:push("Each tab provides two complementary analysis perspectives:");
+    tab:push("- **General Losses:** Aggregated charts showing total losses calculated with linear and quadratic models, including the total difference between the two models.");
+    tab:push("- **Losses by Element:** Detailed charts with individual loss values and differences per element, along with a scatter plot of losses versus circuit power flow to illustrate model behavior across loading levels.");
+
+    tab:push("# Case summary");
+    local label = {};
+    local path = {};
+    local description = {};
+
+    for S = 1, NumberOfStudies do
+        table.insert(label, Generic(S):cloudname());
+        table.insert(path, Generic(S):path());
+        table.insert(description, Study(S):get_parameter("Descricao", ""));
+    end
+
+    tab:push("| Directory Name | Case description | Path |");
+    tab:push("|:--------------:|:----------:|:----:|");
+
+    for S = 1, NumberOfStudies do
+        tab:push("| " .. label[S] .. " | " .. description[S] .. " | " .. path[S] .. " |");
+    end
+
+
+    tab:push("## Dimensions");
+
+    local header_string       = "| Case parameter ";
+    local lower_header_string = "|---------------";
+    local bus_string          = "| Buses ";
+    local ac_circuit_string   = "| AC circuits ";
+    local dc_circuit_string   = "| DC circuits ";
+    local transformer_string  = "| Transformers ";
+    local ser_capacit_string  = "| Series Capacitors ";
+
+    local transloss_string          = "| Transmission losses ";
+    local one_lin_circuit_string    = "| At least one loss linearization in each circuit ";
+    local phase_losses_repr_string  = "| Phase for losses representation ";
+    local iter_loss_calcul_string   = "| Iteration to calculate fixed losses in policy ";
+    local max_iter_loss_calc_string = "| Maximum micro-iterations for loss calculation ";
+    local max_iter_loss_corr_string = "| Maximum micro-iterations for loss correction ";
+    local load_cut_string           = "| Load shedding in buses ";
+    local mon_cir_string            = "| Monitoring of circuits limits ";
+    local over_mon_circ_string      = "| Overload on monitored circuits ";
+    local sec_constr_string         = "| Represent circuit security constraints ";
+
+    local transloss_val = {};
+    local one_lin_circuit_val = {};
+    local phase_losses_repr_val = {};
+    local iter_loss_calcul_val = {};
+    local max_iter_loss_calc_val = {};
+    local max_iter_loss_corr_val = {};
+    local load_cut_val = {};
+    local mon_cir_val = {};
+    local over_mon_circ_val = {};
+    local sec_constr_val = {};
+
+    for S = 1, NumberOfStudies do
+        header_string = header_string             .. " | " .. Generic(S):dirname();
+        lower_header_string = lower_header_string .. "|-----------";
+
+        bus_string         = bus_string         .. " | " .. tostring(#Bus(S):labels());
+        ac_circuit_string  = ac_circuit_string  .. " | " .. tostring(#Circuit(S):labels());
+        dc_circuit_string  = dc_circuit_string  .. " | " .. tostring(#DCLink(S):labels());
+        transformer_string = transformer_string .. " | " .. tostring(#Transformer(S):labels());
+        ser_capacit_string = ser_capacit_string .. " | " .. tostring(#SeriesCapacitor(S):labels());
+
+        transloss_val[S] = "❌";
+        if Study(S):get_parameter("Perdas", -1) == 1 then
+            transloss_val[S] = "✔️";
+        end
+        one_lin_circuit_val[S] = "❌";
+        if Study(S):get_parameter("FLSL", 0) == 1 then
+            one_lin_circuit_val[S] = "✔️";
+        end
+        phase_losses_repr_val[S] = "Policy and final simulation";
+        if Study(S):get_parameter("PFSL", 0) == 1 then
+            phase_losses_repr_val[S] = "Final simulation only";
+        end
+        iter_loss_calcul_val[S] = Study(S):get_parameter("ITAL", 3);
+        max_iter_loss_calc_val[S] = Study(S):get_parameter("MXLS", 6);
+        max_iter_loss_corr_val[S] = Study(S):get_parameter("MXLP", 6);
+        load_cut_val[S] = "None";
+        if Study(S):get_parameter("CCAR", -1) == 0 then
+            load_cut_val[S] = "All buses";
+        elseif Study(S):get_parameter("CCAR", -1) == 1 then
+            load_cut_val[S] = "Selected buses";
+        end
+        mon_cir_val[S] = "None";
+        if Study(S):get_parameter("CMON", -1) == 0 then
+            mon_cir_val[S] = "All circuits";
+        elseif Study(S):get_parameter("CMON", -1) == 1 then
+            mon_cir_val[S] = "Selected circuits";
+        elseif Study(S):get_parameter("CMON", -1) == 2 then
+            mon_cir_val[S] = "Selected circuits and tie-lines";
+        elseif Study(S):get_parameter("CMON", -1) == 3 then
+            mon_cir_val[S] = "Tie-lines only";
+        elseif Study(S):get_parameter("CMON", -1) == 4 then
+            mon_cir_val[S] = "Selected circuits and circuits between areas";
+        elseif Study(S):get_parameter("CMON", -1) == 5 then
+            mon_cir_val[S] = "Circuits between areas";
+        end
+        over_mon_circ_val[S] = "❌";
+        if Study(S):get_parameter("RFLW", 0) == 1 then
+            over_mon_circ_val[S] = "✔️";
+        end
+        sec_constr_val[S] = "❌";
+        if Study(S):get_parameter("CCNT", -1) == 1 then
+            sec_constr_val[S] = "✔️";
+        end
+
+        transloss_string           = transloss_string           .. " | " .. transloss_val[S];
+        one_lin_circuit_string     = one_lin_circuit_string     .. " | " .. one_lin_circuit_val[S];
+        phase_losses_repr_string   = phase_losses_repr_string   .. " | " .. phase_losses_repr_val[S];
+        iter_loss_calcul_string    = iter_loss_calcul_string    .. " | " .. iter_loss_calcul_val[S];
+        max_iter_loss_calc_string  = max_iter_loss_calc_string  .. " | " .. max_iter_loss_calc_val[S];
+        max_iter_loss_corr_string  = max_iter_loss_corr_string  .. " | " .. max_iter_loss_corr_val[S];
+        load_cut_string            = load_cut_string            .. " | " .. load_cut_val[S];
+        mon_cir_string             = mon_cir_string             .. " | " .. mon_cir_val[S];
+        over_mon_circ_string       = over_mon_circ_string       .. " | " .. over_mon_circ_val[S];
+        sec_constr_string          = sec_constr_string          .. " | " .. sec_constr_val[S];
+    end
+
+    tab:push(header_string       .. "|");
+    tab:push(lower_header_string .. "|");
+    tab:push(bus_string          .. "|");
+    tab:push(ac_circuit_string   .. "|");
+    tab:push(dc_circuit_string   .. "|");
+    tab:push(transformer_string  .. "|");
+    tab:push(ser_capacit_string  .. "|");
+
+    tab:push("## Execution options");
+
+    tab:push(header_string              .. "|");
+    tab:push(lower_header_string        .. "|");
+    tab:push(transloss_string           .. "|");
+    tab:push(one_lin_circuit_string     .. "|");
+    tab:push(phase_losses_repr_string   .. "|");
+    tab:push(iter_loss_calcul_string    .. "|");
+    tab:push(max_iter_loss_calc_string  .. "|");
+    tab:push(max_iter_loss_corr_string  .. "|");
+    tab:push(load_cut_string            .. "|");
+    tab:push(mon_cir_string             .. "|");
+    tab:push(over_mon_circ_string       .. "|");
+    tab:push(sec_constr_string          .. "|");
+
+    return tab;
+end
+
 function create_losses_tabs(tab, element_name, qdr_loss_file, linear_loss_file, flow_file)
     --======================
     -- Load Losses Datas
@@ -229,6 +395,10 @@ N_LARGESST_CIRCUITS_TO_GET = 10
 --======================
 -- Create and fill tabs
 --======================
+local tab_info = Tab("Info");
+tab_info:set_icon("info");
+fill_info_tab(tab_info);
+
 local tab_ac_circuit = Tab("AC Circuit");
 tab_ac_circuit:set_disabled();
 tab_ac_circuit:set_collapsed(true);
@@ -259,10 +429,11 @@ create_losses_tabs(tab_capacitors, "series capacitor", "seriescapacitor_quadrati
 --======================
 local dashboard = Dashboard();
 
-if #tab_ac_circuit > 0 then dashboard:push(tab_ac_circuit) end
-if #tab_dc_link > 0 then dashboard:push(tab_dc_link) end
-if #tab_transformers > 0 then dashboard:push(tab_transformers) end
-if #tab_three_winding_transformers > 0 then dashboard:push(tab_three_winding_transformers) end
-if #tab_capacitors > 0 then dashboard:push(tab_capacitors) end
+dashboard:push(tab_info);
+if #tab_ac_circuit > 0                 then dashboard:push(tab_ac_circuit)                 end;
+if #tab_dc_link > 0                    then dashboard:push(tab_dc_link)                    end;
+if #tab_transformers > 0               then dashboard:push(tab_transformers)               end;
+if #tab_three_winding_transformers > 0 then dashboard:push(tab_three_winding_transformers) end;
+if #tab_capacitors > 0                 then dashboard:push(tab_capacitors)                 end;
 
 dashboard:save("Dashboard_losses");
