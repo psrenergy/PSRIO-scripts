@@ -440,7 +440,7 @@ local dictionary = {
 
     nonexceedance_solution_times = {en = "Cumulative Distribution of Solution Times", es = "Distribución Acumulada de los Tiempos de Solución", pt = "Distribuição Acumulada dos Tempos de Solução"},
 
-    stage_solution_times = {en = "Max stage solution times", es = "Tiempos máximos de solución por etapa", pt = "Tempos máximos de solução por etapa"},
+    stage_solution_times = {en = "Dispersion of execution times per scenario", es = "Dispersión de los tiempos de ejecución por escenario", pt = "Dispersão dos tempos de execução por cenário"},
 
     operative_cost = {en = "Average operating cost", es = "Costo operativo promedio", pt = "Custo operacional médio"},
 
@@ -604,8 +604,7 @@ function load_data(output, lang, optflow_data)
         output.sddp[case] = {};
 
         output.optflow[case].solution_status = generic:load("opf_status"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, false, false, false, correct_series);
-        local original_times = generic:load("opf_tcpu"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, false, false, false, correct_series);
-        output.optflow[case].solution_time = ifelse(original_times:eq(nil), 0, original_times);
+        output.optflow[case].solution_time = generic:load("opf_tcpu"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, false, false, false, correct_series);
 
         output.optflow[case].thermal_cost = thermal:load("opf_cotr"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.thermal[lang]);
         output.optflow[case].hydro_cost = hydro:load("opf_cohd"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.hydro[lang]);
@@ -664,10 +663,10 @@ function load_data(output, lang, optflow_data)
         output.optflow[case].voltage_max = bus:load("opf_volt"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false, correct_series):aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX()):aggregate_stages(BY_MAX(), Profile.PER_YEAR);
         output.optflow[case].voltage_min = bus:load("opf_volt"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false, correct_series):aggregate_blocks(BY_MIN_EXCLUDING(nil)):aggregate_scenarios(BY_MIN()):aggregate_stages(BY_MIN(), Profile.PER_YEAR);
 
-        output.sddp[case].active_thermal_generation = thermal:load("gerter"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):convert("MW"):aggregate_agents(BY_SUM(), dictionary.thermal[lang]):convert("MW");
-        output.sddp[case].active_hydro_generation = hydro:load("gerhid"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):convert("MW"):aggregate_agents(BY_SUM(), dictionary.hydro[lang]):convert("MW");
-        output.sddp[case].active_renewable_generation = renewable:load("gergnd"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):convert("MW"):aggregate_agents(BY_SUM(), dictionary.renewable[lang]):convert("MW");
-        output.sddp[case].active_batt_generation = battery:load("gerbat"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):convert("MW"):aggregate_agents(BY_SUM(), dictionary.battery[lang]):convert("MW");
+        output.sddp[case].active_thermal_generation = thermal:load("gerter"):convert("MW"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.thermal[lang]);
+        output.sddp[case].active_hydro_generation = hydro:load("gerhid"):convert("MW"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.hydro[lang]);
+        output.sddp[case].active_renewable_generation = renewable:load("gergnd"):convert("MW"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.renewable[lang]);
+        output.sddp[case].active_batt_generation = battery:load("gerbat"):convert("MW"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.battery[lang]);
     end
 end
 
@@ -718,22 +717,30 @@ function Tab.add_nonexceedance_solution_times_chart(self, n_cases, Lang, output)
 
     for case = 1, n_cases do
         local times = output.optflow[case].solution_time:rename_agent(Generic(case):cloudname());
-        chart:add_probability_of_nonexceedance(times, {showInLegend=show_in_legend, color = table_case_color[case]});
+        local exceedance_times = ifelse(times:eq(nil), 0, times);
+        chart:add_probability_of_nonexceedance(exceedance_times, {showInLegend=show_in_legend, color = table_case_color[case]});
     end
     self:push(chart);
 
 end
 
 function Tab.add_stage_solution_times_chart(self, n_cases, Lang, output)
-    local show_in_legend = n_cases > 1;
 
-     -- Stage solution times
+    -- Stage solution times
     local chart = Chart(dictionary.stage_solution_times[Lang]);
     chart:horizontal_legend();
 
     for case = 1, n_cases do
-        local times = output.optflow[case].solution_time:aggregate_blocks(BY_MAX_EXCLUDING(nil)):rename_agent(Generic(case):cloudname());
-        chart:add_column(times, {showInLegend=show_in_legend, color = table_case_color[case]});
+        local times = output.optflow[case].solution_time:aggregate_blocks(BY_SUM_EXCLUDING(nil)):rename_agent("Average");
+        if n_cases > 1 then
+            times = times:rename_agent(Generic(case):cloudname().." (avg)");
+        end
+
+        chart:add_line(times:aggregate_scenarios(BY_AVERAGE()), { color = table_case_color[case]});
+        chart:add_area_range(times:aggregate_scenarios(BY_MIN()):rename_agent("MIN"),
+                            times:aggregate_scenarios(BY_MAX()):rename_agent("MAX"),
+                            { color = table_case_color[case], lineWidth = 0, fillOpacity = 0.2}
+        );
     end
     self:push(chart);
 end
@@ -1263,7 +1270,7 @@ function Tab.add_voltage_margin_chart(self, n_cases, Lang, output)
             xTickPixelInterval = 400/14,
             stopsMin = min,
             stopsMax = max,
-            stops = { { min, table_techtype_color.max_neg_reactive_injection }, { avg, "green" }, { max, table_techtype_color.max_pos_reactive_injection } }
+            stops = { { min, table_techtype_color.max_pos_reactive_injection }, { avg, "green" }, { max, table_techtype_color.max_neg_reactive_injection } }
         };
 
         chart:add_heatmap(output.optflow[case].voltage_margin_lower, options);
@@ -1276,7 +1283,7 @@ function Tab.add_critical_buses_upper_voltage_chart(self, n_cases, Lang, output)
     self:push(dictionary.critical_buses_upper_msg[Lang]);
 
     local show_in_legend = n_cases > 1;
-    local color = table_techtype_color.max_pos_reactive_injection;
+    local color = table_techtype_color.max_neg_reactive_injection;
 
     local n_lowest = 30;
 
@@ -1331,7 +1338,7 @@ function Tab.add_critical_buses_lower_voltage_chart(self, n_cases, Lang, output)
     self:push(dictionary.critical_buses_lower_msg[Lang]);
 
     local show_in_legend = n_cases > 1;
-    local color = table_techtype_color.max_neg_reactive_injection;
+    local color = table_techtype_color.max_pos_reactive_injection;
 
     local n_lowest = 30;
 
