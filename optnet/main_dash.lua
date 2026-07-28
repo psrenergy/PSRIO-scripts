@@ -422,23 +422,23 @@ function load_data(output, lang, optnet_data)
 
         -- ── Circuit loading (max annual loading per element) ────────────
         output.optnet[case].acline_loading       = acline:load("opn_dashboard_acline_flow_loading"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX())
-            :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
+            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX_EXCLUDING(nil))
+            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
             :aggregate_agents(BY_MAX(), dictionary.ac_lines[lang]);
 
         output.optnet[case].transformer_loading  = transformer:load("opn_dashboard_transformers_flow_loading"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX())
-            :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
+            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX_EXCLUDING(nil))
+            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
             :aggregate_agents(BY_MAX(), dictionary.transformers[lang]);
 
         output.optnet[case].three_winding_loading = three_winding:load("opn_dashboard_threewindingtransformers_flow_loading"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX())
-            :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
+            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX_EXCLUDING(nil))
+            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
             :aggregate_agents(BY_MAX(), dictionary.three_winding_transformers[lang]);
 
         output.optnet[case].series_cap_loading   = series_capacitor:load("opn_dashboard_seriescapacitor_flow_loading"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX())
-            :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
+            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX_EXCLUDING(nil))
+            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
             :aggregate_agents(BY_MAX(), dictionary.series_capacitors[lang]);
 
         -- ── Redundancy (max annual violation per element) ───────────────
@@ -579,7 +579,6 @@ end
 
 function Tab.add_investment_status_chart(self, n_cases, Lang, output)
     local options = {
-        yLabel = dictionary.scenarios_blocks[Lang],
         xLabel = dictionary.stages[Lang],
         showInLegend = true,
         dataClasses = {
