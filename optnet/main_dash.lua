@@ -124,6 +124,11 @@ local dictionary = {
     -- Circuit loading
     circuit_loading      = {en = "Circuit Loading",      es = "Carga de circuitos",       pt = "Carregamento de circuitos"},
     circuit_flow_loading = {en = "Circuit Flow Loading", es = "Carga de flujo de circuito",pt = "Carregamento de fluxo de circuito"},
+    no_circuit_loading_msg = {
+        en = "No circuit is critically loaded — the expansion relieved every element.",
+        es = "Ningún circuito está críticamente cargado — la expansión alivió todos los elementos.",
+        pt = "Nenhum circuito está criticamente carregado — a expansão aliviou todos os elementos.",
+    },
     ac_lines             = {en = "AC Lines",             es = "Líneas de CA",              pt = "Linhas de CA"},
     transformers         = {en = "Transformers",         es = "Transformadores",           pt = "Transformadores"},
     three_winding_transformers = {
@@ -139,12 +144,21 @@ local dictionary = {
 
     -- Redundancy
     check_redundancy = {en = "Check Redundancy", es = "Verificación de redundancia", pt = "Verificação de redundância"},
+    no_redundancy_msg = {
+        en = "No network reinforcement was added, so there is no element to check for redundancy.",
+        es = "No se añadió ningún refuerzo de red, por lo que no hay ningún elemento para verificar redundancia.",
+        pt = "Nenhum reforço de rede foi adicionado, portanto não há nenhum elemento para verificar redundância.",
+    },
 
     -- Investment results
     investment             = {en = "Investment",            es = "Inversión",             pt = "Investimento"},
     accumulated_capacity   = {en = "Accumulated Capacity",  es = "Capacidad acumulada",   pt = "Capacidade acumulada"},
     total_cost             = {en = "Total Cost",            es = "Costo total",           pt = "Custo total"},
     accumulated_length     = {en = "Accumulated Length",    es = "Longitud acumulada",    pt = "Comprimento acumulado"},
+    missing_length_ac_one  = {en = "1 AC transmission line in the expansion plan has missing length data.",  es = "1 línea de transmisión AC en el plan de expansión tiene datos de longitud faltantes.",  pt = "1 linha de transmissão AC no plano de expansão está sem dados de comprimento."},
+    missing_length_ac_many = {en = "%d AC transmission lines in the expansion plan have missing length data.", es = "%d líneas de transmisión AC en el plan de expansión tienen datos de longitud faltantes.", pt = "%d linhas de transmissão AC no plano de expansão estão sem dados de comprimento."},
+    missing_length_dc_one  = {en = "1 DC transmission line in the expansion plan has missing length data.",  es = "1 línea de transmisión CC en el plan de expansión tiene datos de longitud faltantes.",  pt = "1 linha de transmissão CC no plano de expansão está sem dados de comprimento."},
+    missing_length_dc_many = {en = "%d DC transmission lines in the expansion plan have missing length data.", es = "%d líneas de transmisión CC en el plan de expansión tienen datos de longitud faltantes.", pt = "%d linhas de transmissão CC no plano de expansão estão sem dados de comprimento."},
 
     -- Active power results
     active_power           = {en = "Active Power",          es = "Potencia activa",       pt = "Potência ativa"},
@@ -304,6 +318,22 @@ local dictionary = {
     },
 }
 
+-- Wraps a chart fallback message (shown when a chart has no data to display) in a
+-- soft "success/info" callout box. Pushed strings are rendered as markdown, which
+-- passes raw HTML through, so an inline-styled <div> gives a consistent look.
+function fallback_message(text)
+    return '<div style="background:#F1F9F4; border:1px solid #CDE8D7; border-radius:8px; '
+        .. 'padding:14px 18px; margin:6px 0; color:#2E7D50; font-size:0.95em; line-height:1.45;">'
+        .. text .. '</div>';
+end
+
+-- Same idea as fallback_message but a yellow "warning" callout (⚠️).
+function warning_message(text)
+    return '<div style="background:#FCF6E3; border:1px solid #EAD9A0; border-radius:8px; '
+        .. 'padding:14px 18px; margin:6px 0; color:#8A6D1B; font-size:0.95em; line-height:1.45;">'
+        .. '⚠️ ' .. text .. '</div>';
+end
+
 ---------------------------------------------------------------------------
 -- Expression extension: filter by optnet date/series/resolution/system
 ---------------------------------------------------------------------------
@@ -399,7 +429,7 @@ function load_data(output, lang, optnet_data)
 
         local series_index = Study(case):get_vector_values("IndexSeriesSimulacao", "");
         local correct_series = optnet_data[case].selected_series;
-        if #series_index > 0 then
+        if #series_index > 0 and optnet_data[case].serie_representation ~= 0 then
             correct_series = find_index(series_index, optnet_data[case].selected_series);
         end
 
@@ -423,63 +453,61 @@ function load_data(output, lang, optnet_data)
         -- ── Circuit loading (max annual loading per element) ────────────
         output.optnet[case].acline_loading       = acline:load("opn_dashboard_acline_flow_loading"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
             :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX_EXCLUDING(nil))
-            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
-            :aggregate_agents(BY_MAX(), dictionary.ac_lines[lang]);
+            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR);
+
 
         output.optnet[case].transformer_loading  = transformer:load("opn_dashboard_transformers_flow_loading"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
             :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX_EXCLUDING(nil))
-            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
-            :aggregate_agents(BY_MAX(), dictionary.transformers[lang]);
+            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR);
+
 
         output.optnet[case].three_winding_loading = three_winding:load("opn_dashboard_threewindingtransformers_flow_loading"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
             :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX_EXCLUDING(nil))
-            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
-            :aggregate_agents(BY_MAX(), dictionary.three_winding_transformers[lang]);
+            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR);
 
         output.optnet[case].series_cap_loading   = series_capacitor:load("opn_dashboard_seriescapacitor_flow_loading"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
             :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX_EXCLUDING(nil))
-            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
-            :aggregate_agents(BY_MAX(), dictionary.series_capacitors[lang]);
+            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR);
 
         -- ── Redundancy (max annual violation per element) ───────────────
         output.optnet[case].acline_redundancy       = acline:load("opn_dashboard_acline_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX())
-            :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
+            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX_EXCLUDING(nil))
+            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
             --:remove_zeros();
 
         output.optnet[case].transformer_redundancy  = transformer:load("opn_dashboard_transformer_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX())
-            :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
+            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX_EXCLUDING(nil))
+            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
             --:remove_zeros();
 
         output.optnet[case].three_winding_redundancy = three_winding:load("opn_dashboard_threewindingtransformer_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX())
-            :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
+            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX_EXCLUDING(nil))
+            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
             --:remove_zeros();
 
         output.optnet[case].series_cap_redundancy   = series_capacitor:load("opn_dashboard_seriescapacitor_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX())
-            :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
+            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX_EXCLUDING(nil))
+            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
             --:remove_zeros();
 
         output.optnet[case].flow_ctrl_redundancy    = flwcontroller:load("opn_dashboard_flowcontroller_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX())
-            :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
+            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX_EXCLUDING(nil))
+            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
             --:remove_zeros();
 
         output.optnet[case].dc_line_redundancy      = dcline:load("opn_dashboard_dcline_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX())
-            :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
+            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX_EXCLUDING(nil))
+            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
             --:remove_zeros();
 
         output.optnet[case].converter_redundancy    = generic:load("opn_dashboard_converter_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, false, false, false, correct_series)
-            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX())
-            :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
+            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX_EXCLUDING(nil))
+            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
             --:remove_zeros();
 
         output.optnet[case].dc_link_redundancy      = dclink:load("opn_dashboard_dclink_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX())
-            :aggregate_stages(BY_MAX(), Profile.PER_YEAR)
+            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX_EXCLUDING(nil))
+            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
             --:remove_zeros();
 
         -- ── Length of the Lines ──────────────────────────────────────────
@@ -487,21 +515,26 @@ function load_data(output, lang, optnet_data)
         local ac_line_length = acline:load_parameter("Length", "km"):aggregate_stages(BY_LAST_VALUE()):save_cache();
         local dc_line_length = dcline:load_parameter("Length", "km"):aggregate_stages(BY_LAST_VALUE()):save_cache();
 
-        local first_year = investment_decision:initial_year() + investment_decision:first_stage() - 1;
-        local last_year = first_year + investment_decision:stages() - 1;
+        if investment_decision:loaded() then
+            local first_year = investment_decision:initial_year() + investment_decision:first_stage() - 1;
+            local last_year = first_year + investment_decision:stages() - 1;
 
-        local ac_line_length_year = {};
-        local dc_line_length_year = {};
-        for year = first_year, last_year do
-            local investment_decision_year = investment_decision:select_stages_by_year(year):remove_zeros():agents();
-            local ac_line_inv_length = ac_line_length:select_agents(investment_decision_year):aggregate_agents(BY_SUM(), "AC Line"):set_stage_type(10);
-            local dc_line_inv_length = dc_line_length:select_agents(investment_decision_year):aggregate_agents(BY_SUM(), "DC Line"):set_stage_type(10);
+            local ac_line_length_year = {};
+            local dc_line_length_year = {};
+            for year = first_year, last_year do
+                local investment_decision_year = investment_decision:select_stages_by_year(year):remove_zeros():agents();
+                local ac_line_inv_length = ac_line_length:select_agents(investment_decision_year):aggregate_agents(BY_SUM(), "AC Line"):set_stage_type(10);
+                local dc_line_inv_length = dc_line_length:select_agents(investment_decision_year):aggregate_agents(BY_SUM(), "DC Line"):set_stage_type(10);
 
-            table.insert(ac_line_length_year, ac_line_inv_length);
-            table.insert(dc_line_length_year, dc_line_inv_length);
+                table.insert(ac_line_length_year, ac_line_inv_length);
+                table.insert(dc_line_length_year, dc_line_inv_length);
+            end
+            output.optnet[case].ac_line_length = concatenate_stages(ac_line_length_year);
+            output.optnet[case].dc_line_length = concatenate_stages(dc_line_length_year);
+        else
+            output.optnet[case].ac_line_length = investment_decision;
+            output.optnet[case].dc_line_length = investment_decision;
         end
-        output.optnet[case].ac_line_length = concatenate_stages(ac_line_length_year);
-        output.optnet[case].dc_line_length = concatenate_stages(dc_line_length_year);
 
 
         local investment_decision_agents = investment_decision:remove_zeros():agents()
@@ -653,57 +686,53 @@ function Tab.add_solution_time_chart(self, n_cases, Lang, output)
     end
 end
 
-function Tab.add_circuit_loading_chart(self, n_cases, Lang, output)
+function Tab.add_circuit_loading_chart(self, n_cases, Lang, output, optnet_data)
     local has_data = false;
 
-    if n_cases > 1 then
-        for case = 1, n_cases do
-            local loading = concatenate(
-                output.optnet[case].acline_loading,
-                output.optnet[case].transformer_loading,
-                output.optnet[case].three_winding_loading,
-                output.optnet[case].series_cap_loading
-            ):remove_zeros();
-
-            local chart = Chart(dictionary.circuit_flow_loading[Lang], Generic(case):cloudname());
-            chart:horizontal_legend();
-            chart:add_column(loading:select_agents(dictionary.ac_lines[Lang]),
-                { color = table_element_color.ac_line });
-            chart:add_column(loading:select_agents(dictionary.transformers[Lang]),
-                { color = table_element_color.transformer });
-            chart:add_column(loading:select_agents(dictionary.three_winding_transformers[Lang]),
-                { color = table_element_color.three_winding });
-            chart:add_column(loading:select_agents(dictionary.series_capacitors[Lang]),
-                { color = table_element_color.series_capacitor });
-
-            if #chart > 0 then
-                self:push(chart);
-                has_data = true;
-            end
+    for case = 1, n_cases do
+        local first_year = optnet_data[case].initial_year;
+        local last_year = optnet_data[case].final_year;
+        local seq = 0;
+        local seq_label = tostring(first_year);
+        local chart_loading;
+        if first_year ~= last_year then
+            chart_loading = Chart(dictionary.circuit_flow_loading[Lang]);
+            chart_loading:enable_controls();
+        else
+            chart_loading = Chart(dictionary.circuit_flow_loading[Lang], first_year);
         end
-    else
-        --local loading = concatenate(
-        --    output.optnet[1].acline_loading,
-        --    output.optnet[1].transformer_loading,
-        --    output.optnet[1].three_winding_loading,
-        --    output.optnet[1].series_cap_loading
-        --):remove_zeros();
 
-        local chart = Chart(dictionary.circuit_flow_loading[Lang]);
-        chart:horizontal_legend();
-        chart:add_column(output.optnet[1].acline_loading:remove_zeros(),
-            { color = table_element_color.ac_line });
-        chart:add_column(output.optnet[1].transformer_loading:remove_zeros(),
-            { color = table_element_color.transformer });
-        chart:add_column(output.optnet[1].three_winding_loading:remove_zeros(),
-            { color = table_element_color.three_winding });
-        chart:add_column(output.optnet[1].series_cap_loading:remove_zeros(),
-            { color = table_element_color.series_capacitor });
+        for year = first_year, last_year do
+            seq = seq + 1;
+            seq_label = tostring(year);
 
-        if #chart > 0 then
-            self:push(chart);
+            -- remove_zeros per year: only circuits with loading in this year are shown
+            local acline_loading        = output.optnet[case].acline_loading:select_stage(seq):remove_zeros();
+            local transformer_loading   = output.optnet[case].transformer_loading:select_stage(seq):remove_zeros();
+            local three_winding_loading = output.optnet[case].three_winding_loading:select_stage(seq):remove_zeros();
+            local series_cap_loading    = output.optnet[case].series_cap_loading:select_stage(seq):remove_zeros();
+
+            chart_loading:add_column_categories(acline_loading, dictionary.ac_lines[lang],
+                { color = table_element_color.ac_line, sequence = seq, sequence_label = seq_label });
+            chart_loading:add_column_categories(transformer_loading, dictionary.transformers[lang],
+                { color = table_element_color.transformer, sequence = seq, sequence_label = seq_label });
+            chart_loading:add_column_categories(three_winding_loading, dictionary.three_winding_transformers[lang],
+                { color = table_element_color.three_winding, sequence = seq, sequence_label = seq_label });
+            chart_loading:add_column_categories(series_cap_loading, dictionary.series_capacitors[lang],
+                { color = table_element_color.series_capacitor, sequence = seq, sequence_label = seq_label });
+        end
+
+        if #chart_loading > 0 then
+            if n_cases == 1 then
+                self:push("## "..Generic(case):cloudname());
+            end
+            self:push(chart_loading);
             has_data = true;
         end
+    end
+
+    if not has_data then
+        self:push(fallback_message(dictionary.no_circuit_loading_msg[Lang]));
     end
 
     return has_data;
@@ -766,12 +795,17 @@ function Tab.add_redundancy_chart(self, n_cases, Lang, output, optnet_data)
 
         if #chart_redundancy > 0 then
             if n_cases == 1 then
-                self:push("# "..Generic(case):cloudname());
+                self:push("## "..Generic(case):cloudname());
             end
             self:push(chart_redundancy);
             has_data = true;
         end
     end
+
+    if not has_data then
+        self:push(fallback_message(dictionary.no_redundancy_msg[Lang]));
+    end
+
     return has_data;
 end
 
@@ -786,16 +820,19 @@ function Tab.Solution_Quality(self, n_cases, Lang, output, optnet_data)
     self:push(subTab_conv);
 
     local subTab_time = SubTab(dictionary.solution_time[Lang]);
+    subTab_time:push("# " .. dictionary.total_cpu_time[Lang]);
     subTab_time:add_solution_time_chart(n_cases, Lang, output);
     self:push(subTab_time);
 
     local subTab_loading = SubTab(dictionary.circuit_loading[Lang]);
-    subTab_loading:add_circuit_loading_chart(n_cases, Lang, output);
+    subTab_loading:push("# " .. dictionary.circuit_flow_loading[Lang]);
+    subTab_loading:add_circuit_loading_chart(n_cases, Lang, output, optnet_data);
     if #subTab_loading > 0 then
         self:push(subTab_loading);
     end
 
     local subTab_redund = SubTab(dictionary.check_redundancy[Lang]);
+    subTab_redund:push("# " .. dictionary.check_redundancy[Lang]);
     subTab_redund:add_redundancy_chart(n_cases, Lang, output, optnet_data);
     if #subTab_redund > 0 then self:push(subTab_redund) end;
 end
@@ -806,47 +843,60 @@ end
 
 function Tab.add_investment_charts(self, n_cases, Lang, output)
     if n_cases > 1 then
+        -- One section title per metric, with every case's chart grouped beneath it.
+        -- Accumulated Capacity
+        local cap_charts = {};
         for case = 1, n_cases do
-
             local chart_cap = Chart(dictionary.accumulated_capacity[Lang] .. " (MW)", Generic(case):cloudname());
             chart_cap:horizontal_legend();
             chart_cap:add_column_stacking(output.optnet[case].investment_capacity:remove_zeros(),
                 { showInLegend = true, color = table_case_color[case] });
+            if #chart_cap > 0 then table.insert(cap_charts, chart_cap); end
+        end
+        if #cap_charts > 0 then
+            self:push("# " .. dictionary.accumulated_capacity[Lang]);
+            for _, c in ipairs(cap_charts) do self:push(c); end
+        end
 
+        -- Total Cost
+        local cost_charts = {};
+        for case = 1, n_cases do
             local chart_cost = Chart(dictionary.total_cost[Lang] .. " (k$)", Generic(case):cloudname());
             chart_cost:horizontal_legend();
             chart_cost:add_column_stacking(output.optnet[case].investment_cost:remove_zeros(),
                 { showInLegend = true, color = table_case_color[case] });
+            if #chart_cost > 0 then table.insert(cost_charts, chart_cost); end
+        end
+        if #cost_charts > 0 then
+            self:push("# " .. dictionary.total_cost[Lang]);
+            for _, c in ipairs(cost_charts) do self:push(c); end
+        end
 
+        -- Accumulated Length — title once, then per case its chart + missing-length warnings
+        local length_charts = {};
+        local has_length_section = false;
+        for case = 1, n_cases do
             local chart_length = Chart(dictionary.accumulated_length[Lang] .. " (km)", Generic(case):cloudname());
             chart_length:horizontal_legend();
             chart_length:add_column(output.optnet[case].ac_line_length, {color = table_element_color.ac_line});
             chart_length:add_column(output.optnet[case].dc_line_length, {color = table_element_color.dc_line});
-
-            if #chart_cap > 0 then self:push(chart_cap) end
-            if #chart_cost > 0 then self:push(chart_cost) end
-            if #chart_length > 0 then self:push(chart_length) end
-            if output.optnet[case].ac_lines_without_length > 0 then
-                local msg_warn_ac = {   en = "⚠️ *There is "..output.optnet[case].dc_lines_without_length.." AC transmission line in the expansion plan with missing length data.*",
-                                        es = "⚠️ *Hay "..output.optnet[case].dc_lines_without_length.." línea de transmisión AC en el plan de expansión con datos de longitud faltantes.*",
-                                        pt = "⚠️ *Há "..output.optnet[case].dc_lines_without_length.." linha de transmissão AC no plano de expansão sem dados de comprimento.*"};
-                if output.optnet[case].ac_lines_without_length > 1 then
-                    msg_warn_ac = { en = "⚠️ *There are "..output.optnet[case].ac_lines_without_length.." AC transmission lines in the expansion plan with missing length data.*",
-                                    es = "⚠️ *Hay "..output.optnet[case].ac_lines_without_length.." líneas de transmisión AC en el plan de expansión con datos de longitud faltantes.*",
-                                    pt = "⚠️ *Existem "..output.optnet[case].ac_lines_without_length.." linhas de transmissão AC no plano de expansão sem dados de comprimento.*"};
-                end
-                self:push(msg_warn_ac[Lang]);
+            length_charts[case] = (#chart_length > 0) and chart_length or false;
+            if length_charts[case] or output.optnet[case].ac_lines_without_length > 0 or output.optnet[case].dc_lines_without_length > 0 then
+                has_length_section = true;
             end
-            if output.optnet[case].dc_lines_without_length > 0 then
-                local msg_warn_dc = {   en = "⚠️ *There is "..output.optnet[case].dc_lines_without_length.." DC transmission line in the expansion plan with missing length data.*",
-                                        es = "⚠️ *Hay "..output.optnet[case].dc_lines_without_length.." línea de transmisión CC en el plan de expansión con datos de longitud faltantes.*",
-                                        pt = "⚠️ *Há "..output.optnet[case].dc_lines_without_length.." linha de transmissão CC no plano de expansão sem dados de comprimento.*"};
-                if output.optnet[case].dc_lines_without_length > 1 then
-                    msg_warn_dc = {  en = "⚠️ *There are "..output.optnet[case].dc_lines_without_length.." DC transmission lines in the expansion plan with missing length data.*",
-                        es = "⚠️ *Hay "..output.optnet[case].dc_lines_without_length.." líneas de transmisión CC en el plan de expansión con datos de longitud faltantes.*",
-                        pt = "⚠️ *Existem "..output.optnet[case].dc_lines_without_length.." linhas de transmissão CC no plano de expansão sem dados de comprimento.*"};
+        end
+        if has_length_section then
+            self:push("# " .. dictionary.accumulated_length[Lang]);
+            for case = 1, n_cases do
+                if length_charts[case] then self:push(length_charts[case]); end
+                local n_ac = output.optnet[case].ac_lines_without_length;
+                if n_ac > 0 then
+                    self:push(warning_message((n_ac > 1) and string.format(dictionary.missing_length_ac_many[Lang], n_ac) or dictionary.missing_length_ac_one[Lang]));
                 end
-                self:push(msg_warn_dc[Lang]);
+                local n_dc = output.optnet[case].dc_lines_without_length;
+                if n_dc > 0 then
+                    self:push(warning_message((n_dc > 1) and string.format(dictionary.missing_length_dc_many[Lang], n_dc) or dictionary.missing_length_dc_one[Lang]));
+                end
             end
         end
     else
@@ -875,31 +925,17 @@ function Tab.add_investment_charts(self, n_cases, Lang, output)
         chart_length:add_column(output.optnet[1].ac_line_length, {color = table_element_color.ac_line});
         chart_length:add_column(output.optnet[1].dc_line_length, {color = table_element_color.dc_line});
 
-        if #chart_cap  > 0 then self:push(chart_cap)  end
-        if #chart_cost > 0 then self:push(chart_cost) end
-        if #chart_length > 0 then self:push(chart_length) end
+        if #chart_cap  > 0 then self:push("# " .. dictionary.accumulated_capacity[Lang]); self:push(chart_cap)  end
+        if #chart_cost > 0 then self:push("# " .. dictionary.total_cost[Lang]); self:push(chart_cost) end
+        if #chart_length > 0 then self:push("# " .. dictionary.accumulated_length[Lang]); self:push(chart_length) end
 
-        if output.optnet[1].ac_lines_without_length > 0 then
-            local msg_warn_ac = {   en = "⚠️ *There is "..output.optnet[1].dc_lines_without_length.." AC transmission line in the expansion plan with missing length data.*",
-                                    es = "⚠️ *Hay "..output.optnet[1].dc_lines_without_length.." línea de transmisión AC en el plan de expansión con datos de longitud faltantes.*",
-                                    pt = "⚠️ *Há "..output.optnet[1].dc_lines_without_length.." linha de transmissão AC no plano de expansão sem dados de comprimento.*"};
-            if output.optnet[1].ac_lines_without_length > 1 then
-                msg_warn_ac = { en = "⚠️ *There are "..output.optnet[1].ac_lines_without_length.." AC transmission lines in the expansion plan with missing length data.*",
-                                es = "⚠️ *Hay "..output.optnet[1].ac_lines_without_length.." líneas de transmisión AC en el plan de expansión con datos de longitud faltantes.*",
-                                pt = "⚠️ *Existem "..output.optnet[1].ac_lines_without_length.." linhas de transmissão AC no plano de expansão sem dados de comprimento.*"};
-            end
-            self:push(msg_warn_ac[Lang]);
+        local n_ac = output.optnet[1].ac_lines_without_length;
+        if n_ac > 0 then
+            self:push(warning_message((n_ac > 1) and string.format(dictionary.missing_length_ac_many[Lang], n_ac) or dictionary.missing_length_ac_one[Lang]));
         end
-        if output.optnet[1].dc_lines_without_length > 0 then
-            local msg_warn_dc = {   en = "⚠️ *There is "..output.optnet[1].dc_lines_without_length.." DC transmission line in the expansion plan with missing length data.*",
-                                    es = "⚠️ *Hay "..output.optnet[1].dc_lines_without_length.." línea de transmisión CC en el plan de expansión con datos de longitud faltantes.*",
-                                    pt = "⚠️ *Há "..output.optnet[1].dc_lines_without_length.." linha de transmissão CC no plano de expansão sem dados de comprimento.*"};
-            if output.optnet[1].dc_lines_without_length > 1 then
-                msg_warn_dc = {  en = "⚠️ *There are "..output.optnet[1].dc_lines_without_length.." DC transmission lines in the expansion plan with missing length data.*",
-                    es = "⚠️ *Hay "..output.optnet[1].dc_lines_without_length.." líneas de transmisión CC en el plan de expansión con datos de longitud faltantes.*",
-                    pt = "⚠️ *Existem "..output.optnet[1].dc_lines_without_length.." linhas de transmissão CC no plano de expansão sem dados de comprimento.*"};
-            end
-            self:push(msg_warn_dc[Lang]);
+        local n_dc = output.optnet[1].dc_lines_without_length;
+        if n_dc > 0 then
+            self:push(warning_message((n_dc > 1) and string.format(dictionary.missing_length_dc_many[Lang], n_dc) or dictionary.missing_length_dc_one[Lang]));
         end
     end
 end
