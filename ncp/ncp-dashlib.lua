@@ -386,15 +386,15 @@ local function load_language()
 end
 
 function Expression.select_stages_of_outputs(self)
-    if self:loaded() then
-        local index = self:study_index();
-        local last_stage = Study(index):stages_without_buffer_years();
-        if Study(index):get_parameter("NumeroAnosAdicionaisParm2",-1) == 1 then
-            last_stage = Study(index):stages();
-        end
+    -- if self:loaded() then
+    --     local index = self:study_index();
+    --     local last_stage = Study(index):stages_without_buffer_years();
+    --     if Study(index):get_parameter("NumeroAnosAdicionaisParm2",-1) == 1 then
+    --         last_stage = Study(index):stages();
+    --     end
 
-        return self:select_stages(1,last_stage)
-    end
+    --     return self:select_stages(1,last_stage)
+    -- end
     return self
 end
 
@@ -1344,7 +1344,7 @@ function create_pol_report(col_struct)
 end
 
 function Tab.final_cost_table(self, col_struct)
-    local discount_rate = require("sddp/discount_rate");
+    -- local discount_rate = require("sddp/discount_rate");
 
     self:push("## " .. dictionary.final_cost[LANGUAGE]);
 
@@ -1356,11 +1356,11 @@ function Tab.final_cost_table(self, col_struct)
         local fut_cost = future_cost(i);
         if ime_cost:loaded() then
             
-            local study_discount_rate = discount_rate(i):select_stages_of_outputs();
-            local cost = ime_cost / study_discount_rate;
+            -- local study_discount_rate = discount_rate(i):select_stages_of_outputs();
+            local cost = ime_cost
 
             local obj_cost = cost:aggregate_agents(BY_SUM(), "Total cost"):aggregate_stages(BY_SUM()):save_cache();
-            local future_cost = fut_cost:aggregate_stages(BY_LAST_VALUE()) / study_discount_rate:aggregate_stages(BY_LAST_VALUE());
+            local future_cost = fut_cost:aggregate_stages(BY_LAST_VALUE());
 
             local total_cost = obj_cost + future_cost;
 
@@ -1396,12 +1396,11 @@ function create_sim_report(col_struct)
     local revenue_chart         = Chart(dictionary.breakdown_revenue_time[LANGUAGE]);
 
     local objcop = require("sddp/costs");
-    local discount_rate = require("sddp/discount_rate");
 
     if studies > 1 then
         local aux_table = {};
         for i = 1, studies do
-            costs = objcop(i) / discount_rate(i):select_stages_of_outputs();
+            costs = objcop(i);
             -- ncp_dashboard_cost_tot
             costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros();
             table.insert(aux_table,costs_agg);
@@ -1413,9 +1412,9 @@ function create_sim_report(col_struct)
             cost_chart:add_column_categories(adjusted_table[i]:reorder_agents(agents_order):change_currency_configuration(i), col_struct.case_dir_list[i], {legendSizeLimit = LEGEND_MAX_CHAR});
         end
     else
-        costs = objcop() / discount_rate():select_stages_of_outputs();
+        costs = objcop();
         costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros():save_cache();
-
+        
         if is_greater_than_zero(costs_agg) then
             local obj_cost    = max(costs_agg, 0):remove_zeros();
             local obj_revenue = min(costs_agg, 0):remove_zeros();
@@ -1429,13 +1428,9 @@ function create_sim_report(col_struct)
 
             if obj_cost:loaded() then
                 local obj_cost_chart_data = obj_cost:change_currency_configuration();
-                cost_chart:add_pie(obj_cost_chart_data, {colors = main_global_color, legendSizeLimit = LEGEND_MAX_CHAR});
                 cost_categories_chart:add_column_categories(obj_cost_chart_data, "", {showInLegend = false, colors = main_global_color, legendSizeLimit = LEGEND_MAX_CHAR});
             end
-
-            if obj_revenue:loaded() then
-                revenue_chart:add_pie(obj_revenue:abs():change_currency_configuration(), {colors = main_global_color, legendSizeLimit = LEGEND_MAX_CHAR});
-            end
+            
             
         end
     end
@@ -1485,7 +1480,8 @@ function create_marg_costs(col_struct)
     end
 
     for i = 1, studies do
-        cmg[i] = sys[i]:load("cmgdem");
+        -- cmg[i] = sys[i]:load("cmgdem");
+        cmg[i] = Generic(i):load("cmgdem");
     end
 
     -- Marginal cost aggregated by average
@@ -1494,7 +1490,6 @@ function create_marg_costs(col_struct)
         local agents = cmg[1]:agents();
         for _, agent in ipairs(agents) do
             local chart = Chart(agent);
-            local aux_tab = {};
             for j = 1, studies do
                 cmg_aggsum = cmg[j]:aggregate_scenarios(BY_AVERAGE());
                 local cmg_aggsum_agents = cmg_aggsum:select_agent(agent):rename_agent(col_struct.case_dir_list[j]);
