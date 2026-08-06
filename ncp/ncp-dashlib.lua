@@ -1423,50 +1423,6 @@ function create_marg_costs(col_struct)
         tab:push(chart);
     end
 
-    -- Area range marginal cost chart
-    show_sto_rep = false;
-    for istudy = 1, studies do
-        if col_struct.study[istudy]:scenarios() > 1 then
-            show_sto_rep = true;
-            break;
-        end 
-    end
-
-    if show_sto_rep then 
-        tab:push("## " .. dictionary.stg_cmo_sto[LANGUAGE]);
-        local systems = col_struct.system[1]:labels(); -- First case sets base agents
-        for i,system in ipairs(systems) do
-            local chart = Chart(system);
-            for istudy = 1, studies do
-            
-                
-                local cmg_agg = cmg[istudy]:select_agents({system}):save_cache();
-	    
-                local disp = concatenate(cmg_agg:aggregate_scenarios(BY_PERCENTILE(10)):rename_agent("P10"),
-                                         cmg_agg:aggregate_scenarios(BY_AVERAGE()):rename_agent(dictionary.cell_average[LANGUAGE]),
-                                         cmg_agg:aggregate_scenarios(BY_PERCENTILE(90)):rename_agent("P90")):save_cache();
-	    
-                if studies > 1 then
-                    chart:add_area_range(disp:select_agent(1):add_prefix(col_struct.case_dir_list[istudy] .. " - "):change_currency_configuration(), -- Area range
-                                         disp:select_agent(3):change_currency_configuration(),
-                                         {xUnit = dictionary.cell_stage[LANGUAGE],
-                                         colors = { light_global_color[istudy], light_global_color[istudy] },
-                                        legendSizeLimit = LEGEND_MAX_CHAR });
-                    chart:add_line(disp:select_agent(2):add_prefix(col_struct.case_dir_list[istudy] .. " - "):change_currency_configuration(), {legendSizeLimit = LEGEND_MAX_CHAR}); -- Average
-                
-                else
-                    chart:add_area_range(disp:select_agent(1):change_currency_configuration(), -- Area range
-                                         disp:select_agent(3):change_currency_configuration(),
-                                         {xUnit = dictionary.cell_stage[LANGUAGE],
-                                         colors = { light_global_color[istudy], light_global_color[istudy] },
-                                         legendSizeLimit = LEGEND_MAX_CHAR });
-                    chart:add_line(disp:select_agent(2):change_currency_configuration(), {legendSizeLimit = LEGEND_MAX_CHAR}); -- Average
-                end
-            end
-            tab:push(chart);
-        end
-    end
-    
     return tab;
 end
 
@@ -1673,8 +1629,43 @@ function create_gen_report(col_struct)
                 chart_tot_defcit:add_column(total_deficit, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_deficit }, legendSizeLimit = LEGEND_MAX_CHAR});
             end
         else
+            -- The chart stacks the last series at the base, so the series are added in the reverse
+            -- order to display, from the base up: hydro, thermal, renewables, battery, power
+            -- injection and deficit
             local colors_vector = {};
             local total_vector = {};
+            if total_deficit:remove_zeros():loaded() then
+                table.insert(colors_vector, color_deficit);
+                table.insert(total_vector, total_deficit);
+            end
+            if total_pot_inj:remove_zeros():loaded() then
+                table.insert(colors_vector, color_pinj);
+                table.insert(total_vector, total_pot_inj);
+            end
+            if total_batt_gen:remove_zeros():loaded() then
+                table.insert(colors_vector, color_battery);
+                table.insert(total_vector, total_batt_gen);
+            end
+            if total_other_renw_gen:remove_zeros():loaded() then
+                table.insert(colors_vector, color_renw_other);
+                table.insert(total_vector, total_other_renw_gen);
+            end
+            if total_csp_gen:remove_zeros():loaded() then
+                table.insert(colors_vector, color_csp);
+                table.insert(total_vector, total_csp_gen);
+            end
+            if total_small_hydro_gen:remove_zeros():loaded() then
+                table.insert(colors_vector, color_small_hydro);
+                table.insert(total_vector, total_small_hydro_gen);
+            end
+            if total_solar_gen:remove_zeros():loaded() then
+                table.insert(colors_vector, color_solar);
+                table.insert(total_vector, total_solar_gen);
+            end
+            if total_wind_gen:remove_zeros():loaded() then
+                table.insert(colors_vector, color_wind);
+                table.insert(total_vector, total_wind_gen);
+            end
             if total_thermal_gen:remove_zeros():loaded() then
                 table.insert(colors_vector, color_thermal);
                 table.insert(total_vector, total_thermal_gen);
@@ -1682,38 +1673,6 @@ function create_gen_report(col_struct)
             if total_hydro_gen:remove_zeros():loaded() then
                 table.insert(colors_vector, color_hydro);
                 table.insert(total_vector, total_hydro_gen);
-            end
-            if total_wind_gen:remove_zeros():loaded() then
-                table.insert(colors_vector, color_wind);
-                table.insert(total_vector, total_wind_gen);
-            end
-            if total_solar_gen:remove_zeros():loaded() then
-                table.insert(colors_vector, color_solar);
-                table.insert(total_vector, total_solar_gen);
-            end
-            if total_small_hydro_gen:remove_zeros():loaded() then
-                table.insert(colors_vector, color_small_hydro);
-                table.insert(total_vector, total_small_hydro_gen);
-            end
-            if total_csp_gen:remove_zeros():loaded() then
-                table.insert(colors_vector, color_csp);
-                table.insert(total_vector, total_csp_gen);
-            end
-            if total_other_renw_gen:remove_zeros():loaded() then
-                table.insert(colors_vector, color_renw_other);
-                table.insert(total_vector, total_other_renw_gen);
-            end
-            if total_batt_gen:remove_zeros():loaded() then
-                table.insert(colors_vector, color_battery);
-                table.insert(total_vector, total_batt_gen);
-            end
-            if total_pot_inj:remove_zeros():loaded() then
-                table.insert(colors_vector, color_pinj);
-                table.insert(total_vector, total_pot_inj);
-            end
-            if total_deficit:remove_zeros():loaded() then
-                table.insert(colors_vector, color_deficit);
-                table.insert(total_vector, total_deficit);
             end
             local total_generation = concatenate(total_vector);
             chart:add_column_stacking(total_generation, {xUnit=dictionary.cell_stage[LANGUAGE], colors = colors_vector, legendSizeLimit = LEGEND_MAX_CHAR});
@@ -2082,8 +2041,18 @@ function create_reserve_report(col_struct)
 
         -- The technologies are only stacked together when a single case is loaded
         if studies == 1 then
+            -- The chart stacks the last series at the base, so the series are added in the reverse
+            -- order to display, from the base up: hydro, thermal, renewable and battery
             local colors_vector = {};
             local total_vector = {};
+            if has_battery_reserve then
+                table.insert(colors_vector, color_reserve_battery);
+                table.insert(total_vector, total_battery_reserve);
+            end
+            if has_renewable_reserve then
+                table.insert(colors_vector, color_reserve_renewable);
+                table.insert(total_vector, total_renewable_reserve);
+            end
             if has_thermal_reserve then
                 table.insert(colors_vector, color_reserve_thermal);
                 table.insert(total_vector, total_thermal_reserve);
@@ -2091,14 +2060,6 @@ function create_reserve_report(col_struct)
             if has_hydro_reserve then
                 table.insert(colors_vector, color_reserve_hydro);
                 table.insert(total_vector, total_hydro_reserve);
-            end
-            if has_renewable_reserve then
-                table.insert(colors_vector, color_reserve_renewable);
-                table.insert(total_vector, total_renewable_reserve);
-            end
-            if has_battery_reserve then
-                table.insert(colors_vector, color_reserve_battery);
-                table.insert(total_vector, total_battery_reserve);
             end
 
             local total_reserve;
