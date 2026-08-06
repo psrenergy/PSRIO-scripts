@@ -149,6 +149,11 @@ local dictionary = {
         es = "No se añadió ningún refuerzo de red, por lo que no hay ningún elemento para verificar redundancia.",
         pt = "Nenhum reforço de rede foi adicionado, portanto não há nenhum elemento para verificar redundância.",
     },
+    no_redundancy_check_msg = {
+        en = "The redundancy check was not enabled in this run, so no redundancy results were generated.",
+        es = "La verificación de redundancia no fue habilitada en esta ejecución, por lo que no se generaron resultados de redundancia.",
+        pt = "A verificação de redundância não foi habilitada nesta execução, portanto nenhum resultado de redundância foi gerado.",
+    },
 
     -- Investment results
     investment             = {en = "Investment",            es = "Inversión",             pt = "Investimento"},
@@ -740,70 +745,83 @@ end
 
 function Tab.add_redundancy_chart(self, n_cases, Lang, output, optnet_data)
     local has_data = false;
+    local any_enabled = false;
 
     for case = 1, n_cases do
-        local first_year = optnet_data[case].initial_year;
-        local last_year = optnet_data[case].final_year;
-        local seq = 0;
-        local seq_label = tostring(first_year);
-        local chart_redundancy;
-        if first_year ~= last_year then
-            chart_redundancy = Chart(dictionary.check_redundancy[Lang]);
-            chart_redundancy:enable_controls();
-        else
-            chart_redundancy = Chart(dictionary.check_redundancy[Lang], first_year);
-        end
+        -- The redundancy output files are only produced when the check flag
+        -- (DEXE_CSVR) is on; a case with it off contributes nothing here.
+        if optnet_data[case].redundancy_check then
+            any_enabled = true;
 
-        for year = first_year, last_year do
-            seq = seq + 1;
-            seq_label = tostring(year);
-
-            local acline_stage = output.optnet[case].acline_redundancy:select_stage(seq);
-            local acline_redundancy = acline_stage:select_agents(acline_stage:ne(-1));
-            local transformer_stage = output.optnet[case].transformer_redundancy:select_stage(seq);
-            local transformer_redundancy = transformer_stage:select_agents(transformer_stage:ne(-1));
-            local transformer_3_stage = output.optnet[case].three_winding_redundancy:select_stage(seq);
-            local transformer_3_redundancy = transformer_3_stage:select_agents(transformer_3_stage:ne(-1));
-            local series_cap_stage = output.optnet[case].series_cap_redundancy:select_stage(seq);
-            local series_cap_redundancy = series_cap_stage:select_agents(series_cap_stage:ne(-1));
-            local flow_ctrl_stage = output.optnet[case].flow_ctrl_redundancy:select_stage(seq);
-            local flow_ctrl_redundancy = flow_ctrl_stage:select_agents(flow_ctrl_stage:ne(-1));
-            local dc_line_stage = output.optnet[case].dc_line_redundancy:select_stage(seq);
-            local dc_line_redundancy = dc_line_stage:select_agents(dc_line_stage:ne(-1));
-            local converter_stage = output.optnet[case].converter_redundancy:select_stage(seq);
-            local converter_redundancy = converter_stage:select_agents(converter_stage:ne(-1));
-            local dc_link_stage = output.optnet[case].dc_link_redundancy:select_stage(seq);
-            local dc_link_redundancy = dc_link_stage:select_agents(dc_link_stage:ne(-1));
-
-            chart_redundancy:add_column_categories(acline_redundancy, dictionary.ac_lines[lang],
-                { color = table_element_color.ac_line, sequence = seq, sequence_label = seq_label });
-            chart_redundancy:add_column_categories(transformer_redundancy, dictionary.transformers[lang],
-                { color = table_element_color.transformer, sequence = seq, sequence_label = seq_label });
-            chart_redundancy:add_column_categories(transformer_3_redundancy, dictionary.three_winding_transformers[lang],
-                { color = table_element_color.three_winding, sequence = seq, sequence_label = seq_label });
-            chart_redundancy:add_column_categories(series_cap_redundancy, dictionary.series_capacitors[lang],
-                { color = table_element_color.series_capacitor, sequence = seq, sequence_label = seq_label });
-            chart_redundancy:add_column_categories(flow_ctrl_redundancy, dictionary.flow_controllers[lang],
-                { color = table_element_color.flow_controller, sequence = seq, sequence_label = seq_label });
-            chart_redundancy:add_column_categories(dc_line_redundancy, dictionary.dc_lines_label[lang],
-                { color = table_element_color.dc_line, sequence = seq, sequence_label = seq_label });
-            chart_redundancy:add_column_categories(converter_redundancy, dictionary.converters_label[lang],
-                { color = table_element_color.converter, sequence = seq, sequence_label = seq_label });
-            chart_redundancy:add_column_categories(dc_link_redundancy, dictionary.dc_links_label[lang],
-            { color = table_element_color.dc_link, sequence = seq, sequence_label = seq_label });
-        end
-
-        if #chart_redundancy > 0 then
-            if n_cases == 1 then
-                self:push("## "..Generic(case):cloudname());
+            local first_year = optnet_data[case].initial_year;
+            local last_year = optnet_data[case].final_year;
+            local seq = 0;
+            local seq_label = tostring(first_year);
+            local chart_redundancy;
+            if first_year ~= last_year then
+                chart_redundancy = Chart(dictionary.check_redundancy[Lang]);
+                chart_redundancy:enable_controls();
+            else
+                chart_redundancy = Chart(dictionary.check_redundancy[Lang], first_year);
             end
-            self:push(chart_redundancy);
-            has_data = true;
+
+            for year = first_year, last_year do
+                seq = seq + 1;
+                seq_label = tostring(year);
+
+                local acline_stage = output.optnet[case].acline_redundancy:select_stage(seq);
+                local acline_redundancy = acline_stage:select_agents(acline_stage:ne(-1));
+                local transformer_stage = output.optnet[case].transformer_redundancy:select_stage(seq);
+                local transformer_redundancy = transformer_stage:select_agents(transformer_stage:ne(-1));
+                local transformer_3_stage = output.optnet[case].three_winding_redundancy:select_stage(seq);
+                local transformer_3_redundancy = transformer_3_stage:select_agents(transformer_3_stage:ne(-1));
+                local series_cap_stage = output.optnet[case].series_cap_redundancy:select_stage(seq);
+                local series_cap_redundancy = series_cap_stage:select_agents(series_cap_stage:ne(-1));
+                local flow_ctrl_stage = output.optnet[case].flow_ctrl_redundancy:select_stage(seq);
+                local flow_ctrl_redundancy = flow_ctrl_stage:select_agents(flow_ctrl_stage:ne(-1));
+                local dc_line_stage = output.optnet[case].dc_line_redundancy:select_stage(seq);
+                local dc_line_redundancy = dc_line_stage:select_agents(dc_line_stage:ne(-1));
+                local converter_stage = output.optnet[case].converter_redundancy:select_stage(seq);
+                local converter_redundancy = converter_stage:select_agents(converter_stage:ne(-1));
+                local dc_link_stage = output.optnet[case].dc_link_redundancy:select_stage(seq);
+                local dc_link_redundancy = dc_link_stage:select_agents(dc_link_stage:ne(-1));
+
+                chart_redundancy:add_column_categories(acline_redundancy, dictionary.ac_lines[lang],
+                    { color = table_element_color.ac_line, sequence = seq, sequence_label = seq_label });
+                chart_redundancy:add_column_categories(transformer_redundancy, dictionary.transformers[lang],
+                    { color = table_element_color.transformer, sequence = seq, sequence_label = seq_label });
+                chart_redundancy:add_column_categories(transformer_3_redundancy, dictionary.three_winding_transformers[lang],
+                    { color = table_element_color.three_winding, sequence = seq, sequence_label = seq_label });
+                chart_redundancy:add_column_categories(series_cap_redundancy, dictionary.series_capacitors[lang],
+                    { color = table_element_color.series_capacitor, sequence = seq, sequence_label = seq_label });
+                chart_redundancy:add_column_categories(flow_ctrl_redundancy, dictionary.flow_controllers[lang],
+                    { color = table_element_color.flow_controller, sequence = seq, sequence_label = seq_label });
+                chart_redundancy:add_column_categories(dc_line_redundancy, dictionary.dc_lines_label[lang],
+                    { color = table_element_color.dc_line, sequence = seq, sequence_label = seq_label });
+                chart_redundancy:add_column_categories(converter_redundancy, dictionary.converters_label[lang],
+                    { color = table_element_color.converter, sequence = seq, sequence_label = seq_label });
+                chart_redundancy:add_column_categories(dc_link_redundancy, dictionary.dc_links_label[lang],
+                    { color = table_element_color.dc_link, sequence = seq, sequence_label = seq_label });
+            end
+
+            if #chart_redundancy > 0 then
+                if n_cases == 1 then
+                    self:push("## "..Generic(case):cloudname());
+                end
+                self:push(chart_redundancy);
+                has_data = true;
+            end
         end
     end
 
     if not has_data then
-        self:push(fallback_message(dictionary.no_redundancy_msg[Lang]));
+        if any_enabled then
+            -- check ran, but nothing was expanded / nothing is critical
+            self:push(fallback_message(dictionary.no_redundancy_msg[Lang]));
+        else
+            -- check was never enabled, so the output files do not exist
+            self:push(fallback_message(dictionary.no_redundancy_check_msg[Lang]));
+        end
     end
 
     return has_data;
@@ -1564,6 +1582,7 @@ function load_optnet_data(file_name, case_index)
         circuit_overload            = 0,
         sum_circuit_flow            = false,
         contingency                 = false,
+        redundancy_check            = false,
     }
 
     local data = Generic(case_index):load_table_without_header(file_name);
@@ -1618,6 +1637,7 @@ function load_optnet_data(file_name, case_index)
                     elseif key == "DEXE_CMON" then optnet_struct.circuit_overload            = val
                     elseif key == "DEXE_SUMC" then optnet_struct.sum_circuit_flow            = (val == 1)
                     elseif key == "DEXE_SCTG" then optnet_struct.contingency                 = (val == 1)
+                    elseif key == "DEXE_CSVR" then optnet_struct.redundancy_check            = (val == 1)
                     end
                 end
             end
