@@ -701,7 +701,7 @@ function create_tab_summary(col_struct, info_struct)
     tab:push(netrep_string);
     tab:push(loss_representation_string);
 
-    tab:push("## " .. dictionary.dimentions[LANGUAGE]);
+    tab:push("## " .. dictionary.dimensions[LANGUAGE]);
 
     local sys_string        = "| " .. dictionary.cell_system[LANGUAGE];
     local battery_string    = "| " .. dictionary.cell_batteries[LANGUAGE];
@@ -1570,6 +1570,7 @@ function create_gen_report(col_struct)
         col_struct.rghsec[i] = col_struct.hydro[i]:load("rghsec"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache();
         col_struct.rgtsec[i] = col_struct.thermal[i]:load("rgtsec"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache();
         col_struct.rgrsec[i] = col_struct.renewable[i]:load("rgrsec"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache();
+        col_struct.rgbsec[i] = col_struct.battery[i]:load("rgbsec"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache();
         col_struct.rgermn[i] = col_struct.reserve[i]:load("rgermn"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache();
     end
 
@@ -1641,76 +1642,76 @@ function create_gen_report(col_struct)
         total_thermal_gen = gerter[i]:aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_thermal_gen_age);
 
         if studies > 1 then
-            if total_hydro_gen:loaded() then
+            if total_hydro_gen:remove_zeros():loaded() then
                 chart_tot_gerhid:add_column(total_hydro_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_hydro }, legendSizeLimit = LEGEND_MAX_CHAR});
             end
-            if total_thermal_gen:loaded() then
+            if total_thermal_gen:remove_zeros():loaded() then
                 chart_tot_gerter:add_column(total_thermal_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_thermal }, legendSizeLimit = LEGEND_MAX_CHAR});
             end
-            if total_other_renw_gen:loaded() then
+            if total_other_renw_gen:remove_zeros():loaded() then
                 chart_tot_other_renw:add_column(total_other_renw_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_renw_other }, legendSizeLimit = LEGEND_MAX_CHAR});
             end
-            if total_wind_gen:loaded() then
+            if total_wind_gen:remove_zeros():loaded() then
                 chart_tot_renw_wind:add_column(total_wind_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_wind }, legendSizeLimit = LEGEND_MAX_CHAR});
             end
-            if total_solar_gen:loaded() then
+            if total_solar_gen:remove_zeros():loaded() then
                 chart_tot_renw_solar:add_column(total_solar_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_solar }, legendSizeLimit = LEGEND_MAX_CHAR});
             end
-            if total_small_hydro_gen:loaded() then
+            if total_small_hydro_gen:remove_zeros():loaded() then
                 chart_tot_renw_shyd:add_column(total_small_hydro_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_small_hydro }, legendSizeLimit = LEGEND_MAX_CHAR});
             end
-            if total_csp_gen:loaded() then
+            if total_csp_gen:remove_zeros():loaded() then
                 chart_tot_renw_csp:add_column(total_csp_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_csp }, legendSizeLimit = LEGEND_MAX_CHAR});
             end
-            if total_batt_gen:loaded() then
+            if total_batt_gen:remove_zeros():loaded() then
                 chart_tot_gerbat:add_column(total_batt_gen, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_battery }, legendSizeLimit = LEGEND_MAX_CHAR});
             end
-            if total_pot_inj:loaded() then
+            if total_pot_inj:remove_zeros():loaded() then
                 chart_tot_potinj:add_column(total_pot_inj, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_pinj }, legendSizeLimit = LEGEND_MAX_CHAR});
             end
-            if total_deficit:loaded() then
+            if total_deficit:remove_zeros():loaded() then
                 chart_tot_defcit:add_column(total_deficit, { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_deficit }, legendSizeLimit = LEGEND_MAX_CHAR});
             end
         else
             local colors_vector = {};
             local total_vector = {};
-            if total_thermal_gen:loaded() then
+            if total_thermal_gen:remove_zeros():loaded() then
                 table.insert(colors_vector, color_thermal);
                 table.insert(total_vector, total_thermal_gen);
             end
-            if total_hydro_gen:loaded() then
+            if total_hydro_gen:remove_zeros():loaded() then
                 table.insert(colors_vector, color_hydro);
                 table.insert(total_vector, total_hydro_gen);
             end
-            if total_wind_gen:loaded() then
+            if total_wind_gen:remove_zeros():loaded() then
                 table.insert(colors_vector, color_wind);
                 table.insert(total_vector, total_wind_gen);
             end
-            if total_solar_gen:loaded() then
+            if total_solar_gen:remove_zeros():loaded() then
                 table.insert(colors_vector, color_solar);
                 table.insert(total_vector, total_solar_gen);
             end
-            if total_small_hydro_gen:loaded() then
+            if total_small_hydro_gen:remove_zeros():loaded() then
                 table.insert(colors_vector, color_small_hydro);
                 table.insert(total_vector, total_small_hydro_gen);
             end
-            if total_csp_gen:loaded() then
+            if total_csp_gen:remove_zeros():loaded() then
                 table.insert(colors_vector, color_csp);
                 table.insert(total_vector, total_csp_gen);
             end
-            if total_other_renw_gen:loaded() then
+            if total_other_renw_gen:remove_zeros():loaded() then
                 table.insert(colors_vector, color_renw_other);
                 table.insert(total_vector, total_other_renw_gen);
             end
-            if total_batt_gen:loaded() then
+            if total_batt_gen:remove_zeros():loaded() then
                 table.insert(colors_vector, color_battery);
                 table.insert(total_vector, total_batt_gen);
             end
-            if total_pot_inj:loaded() then
+            if total_pot_inj:remove_zeros():loaded() then
                 table.insert(colors_vector, color_pinj);
                 table.insert(total_vector, total_pot_inj);
             end
-            if total_deficit:loaded() then
+            if total_deficit:remove_zeros():loaded() then
                 table.insert(colors_vector, color_deficit);
                 table.insert(total_vector, total_deficit);
             end
@@ -1719,12 +1720,13 @@ function create_gen_report(col_struct)
 
             -- Demand is drawn as a dashed line over the stacked generation, adding up the supplied
             -- load and the AC circuit losses. Each output is checked before being added because
-            -- neither of them is always available
+            -- neither of them is always available, and remove_zeros also skips the ones that hold
+            -- only zeros
             local demand_vector = {};
-            if demandel[i]:loaded() then
+            if demandel[i]:remove_zeros():loaded() then
                 table.insert(demand_vector, demandel[i]:aggregate_agents(BY_SUM(), total_demand_age));
             end
-            if losses[i]:loaded() then
+            if losses[i]:remove_zeros():loaded() then
                 table.insert(demand_vector, losses[i]:aggregate_agents(BY_SUM(), total_demand_age));
             end
 
@@ -1965,8 +1967,8 @@ function create_gen_report(col_struct)
 end
 
 function create_risk_report(col_struct)
-    local tab = Tab(dictionary.tab_defict_risk[LANGUAGE]);
-    local chart = Chart(dictionary.total_defict_risk[LANGUAGE]);
+    local tab = Tab(dictionary.tab_deficit_risk[LANGUAGE]);
+    local chart = Chart(dictionary.total_deficit_risk[LANGUAGE]);
 
     if studies > 1 then
         for i = 1, studies do
@@ -1999,22 +2001,26 @@ function create_reserve_report(col_struct)
         color_reserve_hydro     = '#4E79A7';
         color_reserve_thermal   = '#F28E2B';
         color_reserve_renewable = '#8CD17D';
+        color_reserve_battery   = '#4bc9b2';
         color_reserve_req       = '#E15759';
     end
 
     local total_hydro_reserve;
     local total_thermal_reserve;
     local total_renewable_reserve;
+    local total_battery_reserve;
     local total_reserve_req;
 
     local total_hydro_reserve_age;
     local total_thermal_reserve_age;
     local total_renewable_reserve_age;
+    local total_battery_reserve_age;
     local total_reserve_req_age;
 
     local hydro_report_name       = dictionary.total_hydro[LANGUAGE];
     local thermal_report_name     = dictionary.total_thermal[LANGUAGE];
     local renewable_report_name   = dictionary.total_renewable[LANGUAGE];
+    local battery_report_name     = dictionary.total_battery[LANGUAGE];
     local reserve_req_report_name = dictionary.joint_reserve_requirement[LANGUAGE];
 
     local chart;
@@ -2026,7 +2032,8 @@ function create_reserve_report(col_struct)
     local reserve_data = {
         hydro     = {},
         thermal   = {},
-        renewable = {}
+        renewable = {},
+        battery   = {}
     };
     local has_more_than_one_study = studies > 1;
     for i = 1, studies do
@@ -2035,11 +2042,13 @@ function create_reserve_report(col_struct)
             total_hydro_reserve_age     = col_struct.case_dir_list[i];
             total_thermal_reserve_age   = col_struct.case_dir_list[i];
             total_renewable_reserve_age = col_struct.case_dir_list[i];
+            total_battery_reserve_age   = col_struct.case_dir_list[i];
             total_reserve_req_age       = col_struct.case_dir_list[i];
         else
             total_hydro_reserve_age     = hydro_report_name;
             total_thermal_reserve_age   = thermal_report_name;
             total_renewable_reserve_age = renewable_report_name;
+            total_battery_reserve_age   = battery_report_name;
             total_reserve_req_age       = reserve_req_report_name;
         end
 
@@ -2047,33 +2056,49 @@ function create_reserve_report(col_struct)
         total_hydro_reserve     = col_struct.rghsec[i]:aggregate_agents(BY_SUM(), total_hydro_reserve_age);
         total_thermal_reserve   = col_struct.rgtsec[i]:aggregate_agents(BY_SUM(), total_thermal_reserve_age);
         total_renewable_reserve = col_struct.rgrsec[i]:aggregate_agents(BY_SUM(), total_renewable_reserve_age);
+        total_battery_reserve   = col_struct.rgbsec[i]:aggregate_agents(BY_SUM(), total_battery_reserve_age);
         total_reserve_req       = col_struct.rgermn[i]:aggregate_agents(BY_SUM(), total_reserve_req_age);
 
-        if total_hydro_reserve:loaded() then
+        -- remove_zeros drops the agent when it holds only zeros, so the check also skips
+        -- technologies that did not provide any reserve along the whole horizon
+        local has_hydro_reserve     = total_hydro_reserve:remove_zeros():loaded();
+        local has_thermal_reserve   = total_thermal_reserve:remove_zeros():loaded();
+        local has_renewable_reserve = total_renewable_reserve:remove_zeros():loaded();
+        local has_battery_reserve   = total_battery_reserve:remove_zeros():loaded();
+        local has_reserve_req       = total_reserve_req:remove_zeros():loaded();
+
+        if has_hydro_reserve then
             table.insert(reserve_data.hydro, total_hydro_reserve);
         end
-        if total_thermal_reserve:loaded() then
+        if has_thermal_reserve then
             table.insert(reserve_data.thermal, total_thermal_reserve);
         end
-        if total_renewable_reserve:loaded() then
+        if has_renewable_reserve then
             table.insert(reserve_data.renewable, total_renewable_reserve);
+        end
+        if has_battery_reserve then
+            table.insert(reserve_data.battery, total_battery_reserve);
         end
 
         -- The technologies are only stacked together when a single case is loaded
         if studies == 1 then
             local colors_vector = {};
             local total_vector = {};
-            if total_thermal_reserve:loaded() then
+            if has_thermal_reserve then
                 table.insert(colors_vector, color_reserve_thermal);
                 table.insert(total_vector, total_thermal_reserve);
             end
-            if total_hydro_reserve:loaded() then
+            if has_hydro_reserve then
                 table.insert(colors_vector, color_reserve_hydro);
                 table.insert(total_vector, total_hydro_reserve);
             end
-            if total_renewable_reserve:loaded() then
+            if has_renewable_reserve then
                 table.insert(colors_vector, color_reserve_renewable);
                 table.insert(total_vector, total_renewable_reserve);
+            end
+            if has_battery_reserve then
+                table.insert(colors_vector, color_reserve_battery);
+                table.insert(total_vector, total_battery_reserve);
             end
 
             local total_reserve;
@@ -2083,7 +2108,7 @@ function create_reserve_report(col_struct)
             end
 
             -- The requirement is drawn as a dashed line over the stacked reserve
-            if total_reserve_req:loaded() then
+            if has_reserve_req then
                 -- The reserve sets the unit of the chart, MW is the default when no reserve was loaded
                 local reserve_unit = "MW";
                 if total_reserve and total_reserve:loaded() then
@@ -2104,6 +2129,7 @@ function create_reserve_report(col_struct)
     local chart_tot_rghsec = Chart(dictionary.total_hydro[LANGUAGE]);
     local chart_tot_rgtsec = Chart(dictionary.total_thermal[LANGUAGE]);
     local chart_tot_rgrsec = Chart(dictionary.total_renewable[LANGUAGE]);
+    local chart_tot_rgbsec = Chart(dictionary.total_battery[LANGUAGE]);
 
     if #reserve_data.hydro > 0 then
         chart_tot_rghsec:add_column(concatenate(reserve_data.hydro), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_reserve_hydro }, showInLegend = has_more_than_one_study, legendSizeLimit = LEGEND_MAX_CHAR});
@@ -2114,8 +2140,11 @@ function create_reserve_report(col_struct)
     if #reserve_data.renewable > 0 then
         chart_tot_rgrsec:add_column(concatenate(reserve_data.renewable), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_reserve_renewable }, showInLegend = has_more_than_one_study, legendSizeLimit = LEGEND_MAX_CHAR});
     end
+    if #reserve_data.battery > 0 then
+        chart_tot_rgbsec:add_column(concatenate(reserve_data.battery), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_reserve_battery }, showInLegend = has_more_than_one_study, legendSizeLimit = LEGEND_MAX_CHAR});
+    end
 
-    if #chart_tot_rghsec > 0 or #chart_tot_rgtsec > 0 or #chart_tot_rgrsec > 0 then
+    if #chart_tot_rghsec > 0 or #chart_tot_rgtsec > 0 or #chart_tot_rgrsec > 0 or #chart_tot_rgbsec > 0 then
         tab:push("## ".. dictionary.joint_reserve_technology[LANGUAGE]);
         if #chart_tot_rghsec > 0 then
             tab:push(chart_tot_rghsec);
@@ -2125,6 +2154,9 @@ function create_reserve_report(col_struct)
         end
         if #chart_tot_rgrsec > 0 then
             tab:push(chart_tot_rgrsec);
+        end
+        if #chart_tot_rgbsec > 0 then
+            tab:push(chart_tot_rgbsec);
         end
     end
 
@@ -2177,6 +2209,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
         rghsec          = {}, -- Hydro joint reserve
         rgtsec          = {}, -- Thermal joint reserve
         rgrsec          = {}, -- Renewable joint reserve
+        rgbsec          = {}, -- Battery joint reserve
         rgermn          = {}  -- Joint reserve requirement
     };
 
