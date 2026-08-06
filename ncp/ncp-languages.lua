@@ -627,6 +627,26 @@ dictionary = {
         es = "Fecha inicial",
         pt = "Data inicial"
     },
+    cell_fin_date = {
+        en = "Final date",
+        es = "Fecha final",
+        pt = "Data final"
+    },
+    cell_resolution = {
+        en = "Resolution",
+        es = "Resolución",
+        pt = "Resolução"
+    },
+    cell_minutes = {
+        en = "min",
+        es = "min",
+        pt = "min"
+    },
+    cell_short_term = {
+        en = "Short term",
+        es = "Corto plazo",
+        pt = "Curto prazo"
+    },
     cell_plc_resolution = {
         en = "Policy resolution",
         es = "Resolución de la politica",

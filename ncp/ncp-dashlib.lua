@@ -314,6 +314,49 @@ function load_info_file(file_name,case_index)
     return info_struct;
 end
 
+function load_short_term_file(file_name, case_index)
+
+    -- Initialize struct
+    local short_term_struct = {stages = "-", initial_date = "-", final_date = "-", resolution = "-"};
+
+    local dat_table = Generic(case_index):load_table_without_header(file_name);
+
+    if not dat_table or (#dat_table == 0) then
+        warning("The file " .. file_name .. " was not found or is empty.");
+        return short_term_struct;
+    end
+
+    -- The file holds one "Parameter    Value" pair per line, aligned with spaces
+    local parameters = {};
+    for lin = 1, #dat_table do
+        local line = dat_table[lin][1];
+        if line then
+            local parameter, value = string.match(line, "^%s*(%S+)%s+(.-)%s*$");
+            if parameter then
+                parameters[parameter] = value;
+            end
+        end
+    end
+
+    -- Dates are reported as DD/MM/YYYY:HH:MM and displayed as DD/MM/YYYY HH:MM
+    short_term_struct.initial_date = string.gsub(parameters["InitialDate"] or "-", "^(%d+/%d+/%d+):", "%1 ");
+    short_term_struct.final_date   = string.gsub(parameters["FinalDate"] or "-", "^(%d+/%d+/%d+):", "%1 ");
+
+    -- StageDuration is reported in hours, so 1 stands for 60 min and 0.5 for 30 min
+    local stage_duration = my_to_number(parameters["StageDuration"], 0) or 0;
+    if stage_duration > 0 then
+        short_term_struct.resolution = tostring(math.floor(stage_duration * 60)) .. " " .. dictionary.cell_minutes[LANGUAGE];
+
+        -- Number of stages is the horizon length divided by the duration of each stage
+        local number_of_hours = my_to_number(parameters["NumberHours"], 0) or 0;
+        if number_of_hours > 0 then
+            short_term_struct.stages = tostring(math.floor(number_of_hours / stage_duration));
+        end
+    end
+
+    return short_term_struct;
+end
+
 function load_model_info(generic_cols, info_struct)
     local file_exists;
     local info_file_name = "ncp.info";
@@ -485,12 +528,18 @@ function create_tab_summary(col_struct, info_struct)
     local hash = {};
     local description = {};
 
+    local short_term_file_name = "short_term_execution_parameters.dat";
+    local short_term_struct = {};
+
     for i = 1, studies do
         table.insert(label,col_struct.generic[i]:cloudname());
         table.insert(path, col_struct.generic[i]:path());
 
         local study = Study(i);
         table.insert(description, study:get_parameter("Descricao", ""));
+
+        -- Loading short term execution parameters from each case
+        short_term_struct[i] = load_short_term_file(short_term_file_name, i);
     end
 
     local case             = dictionary.cell_case[LANGUAGE];
@@ -588,92 +637,27 @@ function create_tab_summary(col_struct, info_struct)
     local header_string              = "| " .. dictionary.cell_case_parameters[LANGUAGE];
     local lower_header_string        = "|---------------";
     local exe_type_string            = "| " .. dictionary.cell_execution_type[LANGUAGE];
-    local case_type_string           = "| " .. dictionary.cell_case_type[LANGUAGE];
     local nstg_string                = "| " .. dictionary.cell_stages[LANGUAGE];
     local ini_date_string            = "| " .. dictionary.cell_ini_date[LANGUAGE];
-    local plc_resolution             = "| " .. dictionary.cell_plc_resolution[LANGUAGE];
-    local sim_resolution             = "| " .. dictionary.cell_sim_resolution[LANGUAGE];
-    local nforw_string               = "| " .. dictionary.cell_fwd_series[LANGUAGE];
-    local nback_string               = "| " .. dictionary.cell_bwd_series[LANGUAGE];
-    local sim_series                 = "| " .. dictionary.cell_sim_series[LANGUAGE];
-    local hrep_string                = "| " .. dictionary.cell_hourly_representation[LANGUAGE];
+    local fin_date_string            = "| " .. dictionary.cell_fin_date[LANGUAGE];
+    local resolution_string          = "| " .. dictionary.cell_resolution[LANGUAGE];
     local netrep_string              = "| " .. dictionary.cell_network_representation[LANGUAGE];
-    local typday_string              = "| " .. dictionary.cell_typicalday_representation[LANGUAGE];
     local loss_representation_string = "| " .. dictionary.cell_loss_representation[LANGUAGE];
-    local type_of_inflows            = "| " .. dictionary.inflows_type[LANGUAGE];
-    local inflows_initial_year       = "| " .. dictionary.inflows_initial_year[LANGUAGE];
-    local hrep_val   = {};
     local netrep_val = {};
-    local typday_val = {};
     local loss_repr  = {};
-    local inflow_repr  = {};
-    local inf_initial_year  = {};
-    local exe_type   = {};
-    local case_type  = {};
 
     local show_net_data = false;
 
     for i = 1, studies do
-        -- Number of stages
-        local number_of_stages = col_struct.study[i]:stages_without_buffer_years();
-        if col_struct.study[i]:get_parameter("NumeroAnosAdicionaisParm2",-1) == 1 then
-            number_of_stages = col_struct.study[i]:stages();
-        end
-
-        -- type of execution
-        exe_type[i] = dictionary.cell_policy[LANGUAGE];
-        local number_of_blocks = col_struct.study[i]:get_parameter("NumberBlocks", -1);
-        local policy_number_of_blocks = number_of_blocks .. " " .. dictionary.cell_blocks[LANGUAGE]
-        local resolution_of_simulation = policy_number_of_blocks;
-        local number_of_openings = tostring(col_struct.study[i]:openings());
-        local number_of_forwards = tostring(col_struct.study[i]:scenarios());
-        local mumber_of_simulated_series = number_of_forwards;
-        if col_struct.study[i]:get_parameter("Objetivo", -100) == 2 then
-            policy_number_of_blocks = " - ";
-            number_of_openings = " - ";
-            number_of_forwards = " - ";
-            exe_type[i] = dictionary.cell_simulation[LANGUAGE];
-        end
-        if col_struct.study[i]:get_parameter("Objetivo", -100) == -2 then
-            policy_number_of_blocks = " - ";
-            number_of_openings = " - ";
-            number_of_forwards = " - ";
-            exe_type[i] = dictionary.cell_commercial_simulation[LANGUAGE];
-        end
-        exe_type_string = exe_type_string .. " | " .. exe_type[i];
-
-        if col_struct.study[i]:is_hourly() then
-            resolution_of_simulation = dictionary.cell_hourly[LANGUAGE];
-        end
-
-        if col_struct.study[i]:get_parameter("Series_Simular", 0) == 1 then
-            mumber_of_simulated_series = #(col_struct.study[i]:selected_scenarios());
-        end
-        -- type of resolution
-        case_type[i] = dictionary.cell_monthly[LANGUAGE];
-        if col_struct.study[i]:stage_type() == 1 then
-            case_type[i] = dictionary.cell_weekly[LANGUAGE];
-        end
-        case_type_string = case_type_string .. " | " .. case_type[i];
-
-
         header_string = header_string             .. " | " .. col_struct.case_dir_list[i];
         lower_header_string = lower_header_string .. "|-----------";
 
-        nstg_string      = nstg_string      .. " | " .. tostring(number_of_stages);
-        ini_date_string  = ini_date_string  .. " | " .. tostring(col_struct.study[i]:initial_stage()) .. "/" 
-                                                     .. tostring(col_struct.study[i]:initial_year());
-        plc_resolution   = plc_resolution   .. " | " .. policy_number_of_blocks;
-        sim_resolution   = sim_resolution   .. " | " .. resolution_of_simulation;
-        nforw_string     = nforw_string     .. " | " .. number_of_forwards;
-        nback_string     = nback_string     .. " | " .. number_of_openings;
-        sim_series       = sim_series       .. " | " .. mumber_of_simulated_series;
-
-        hrep_val[i] = "❌";
-        if col_struct.study[i]:get_parameter("SIMH", -1) == 2 then
-            hrep_val[i] = "✔️";
-        end
-        hrep_string = hrep_string .. " | " .. hrep_val[i];
+        -- Horizon and resolution come from the short term execution parameters file
+        exe_type_string     = exe_type_string     .. " | " .. dictionary.cell_short_term[LANGUAGE];
+        nstg_string         = nstg_string         .. " | " .. short_term_struct[i].stages;
+        ini_date_string     = ini_date_string     .. " | " .. short_term_struct[i].initial_date;
+        fin_date_string     = fin_date_string     .. " | " .. short_term_struct[i].final_date;
+        resolution_string   = resolution_string   .. " | " .. short_term_struct[i].resolution;
 
         netrep_val[i] = "❌";
         if col_struct.study[i]:get_parameter("Rede", -1) == 1 then
@@ -684,74 +668,32 @@ function create_tab_summary(col_struct, info_struct)
         end
         netrep_string = netrep_string .. " | " .. netrep_val[i];
 
-        typday_val[i] = "❌";
-        if col_struct.study[i]:get_parameter("TDAY", -1) == 1 then
-            typday_val[i] = "✔️";
-        end
-        typday_string = typday_string .. " | " .. typday_val[i];
-
         loss_repr[i] = "❌";
         if col_struct.study[i]:get_parameter("Perdas", -1) == 1 then
             loss_repr[i] = "✔️";
         end
         loss_representation_string = loss_representation_string .. " | " .. loss_repr[i];
 
-        local ncp_inflow_type = col_struct.study[i]:get_parameter("Vazoes", -1);
-        if ncp_inflow_type > 0 then
-            if ncp_inflow_type == 1 then
-                inflow_repr[i] = dictionary.arp[LANGUAGE];
-            elseif ncp_inflow_type == 2 then
-                inflow_repr[i] = dictionary.historical[LANGUAGE];
-            elseif ncp_inflow_type == 3 then
-                inflow_repr[i] = dictionary.external_f_b[LANGUAGE];
-            elseif ncp_inflow_type == 4 then
-                inflow_repr[i] = dictionary.external_f[LANGUAGE];
-            else
-                inflow_repr[i] = "-";
-            end
-            
-        end
-        type_of_inflows = type_of_inflows .. " | " .. inflow_repr[i];
-
-        inf_initial_year[i] = col_struct.study[i]:get_parameter("Ano_Inicial_Hidro", 0);
-        inflows_initial_year = inflows_initial_year .. " | " .. inf_initial_year[i];
-
     end
     header_string                    = header_string              .. "|";
     lower_header_string              = lower_header_string        .. "|";
     exe_type_string                  = exe_type_string            .. "|";
-    case_type_string                 = case_type_string           .. "|";
     nstg_string                      = nstg_string                .. "|";
     ini_date_string                  = ini_date_string            .. "|";
-    plc_resolution                   = plc_resolution             .. "|";
-    sim_resolution                   = sim_resolution             .. "|";
-    nforw_string                     = nforw_string               .. "|";
-    nback_string                     = nback_string               .. "|";
-    sim_series                       = sim_series                 .. "|";
-    hrep_string                      = hrep_string                .. "|";
+    fin_date_string                  = fin_date_string            .. "|";
+    resolution_string                = resolution_string          .. "|";
     netrep_string                    = netrep_string              .. "|";
-    typday_string                    = typday_string              .. "|";
     loss_representation_string       = loss_representation_string .. "|";
-    type_of_inflows                  = type_of_inflows .. "|";
-    inflows_initial_year             = inflows_initial_year .. "|";
 
     tab:push(header_string);
     tab:push(lower_header_string);
     tab:push(exe_type_string);
-    tab:push(case_type_string);
     tab:push(nstg_string);
     tab:push(ini_date_string);
-    tab:push(plc_resolution);
-    tab:push(sim_resolution);
-    tab:push(nforw_string);
-    tab:push(nback_string);
-    tab:push(sim_series);
-    tab:push(hrep_string);
+    tab:push(fin_date_string);
+    tab:push(resolution_string);
     tab:push(netrep_string);
-    tab:push(typday_string);
     tab:push(loss_representation_string);
-    tab:push(type_of_inflows);
-    tab:push(inflows_initial_year);
 
     tab:push("## " .. dictionary.dimentions[LANGUAGE]);
 
@@ -820,50 +762,6 @@ function create_tab_summary(col_struct, info_struct)
         tab:push(dc_circuit_string);
     else
         tab:push(interc_string);
-    end
-
-    -- Non-convexities dimension report
-
-
-    local nconv_file_name = "nonconvrep.csv";
-    local nonconv_list = {};
-    local nonconv_order = {};
-
-    for i = 1, studies do
-        get_nonconv_info(col_struct,nconv_file_name,nonconv_list, nonconv_order,i);
-    end
-
-    if #nonconv_order then
-        tab:push("## " .. dictionary.non_convexities[LANGUAGE]);
-
-        header_string       = "| " .. dictionary.cell_non_convexities_type[LANGUAGE];
-        lower_header_string = "|-------------------";
-
-        for i = 1, studies do
-            if studies == 1 then
-                header_string       = header_string       .. "| " .. dictionary.cell_count[LANGUAGE];
-                lower_header_string = lower_header_string .. "|-------------------";
-            else
-                header_string       = header_string       .. "|" .. col_struct.case_dir_list[i];
-                lower_header_string = lower_header_string .. "|-------------------";
-            end
-        end
-
-        tab:push(header_string .. "|");
-        tab:push(lower_header_string .. "|");
-
-        for _, non_convexity_name in ipairs(nonconv_order) do
-            local non_convexity_line = "| " .. non_convexity_name;
-            for j = 1, studies do
-                if nonconv_list[non_convexity_name]["case_" .. j] then
-                    non_convexity_line = non_convexity_line .. " | " .. nonconv_list[non_convexity_name]["case_" .. j];
-                else
-                    non_convexity_line = non_convexity_line .. " | - ";
-                end
-            end
-            tab:push(non_convexity_line .. "|");
-        end
-        
     end
 
     return tab;
