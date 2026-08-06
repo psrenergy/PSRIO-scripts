@@ -54,7 +54,7 @@ dictionary = {
     },
     tab_losses = {
         en = "Losses",
-        es = "Perdidas",
+        es = "Pérdidas",
         pt = "Perdas"
     },
     tab_cmo = {
@@ -67,7 +67,7 @@ dictionary = {
         es = "Generación",
         pt = "Geração"
     },
-    tab_defict_risk = {
+    tab_deficit_risk = {
         en = "Deficit risk",
         es = "Riesgo de déficit",
         pt = "Risco de déficit"
@@ -79,7 +79,7 @@ dictionary = {
     },
     tab_infeasibility = {
         en = "Infeasibility report",
-        es = "Informe de infeasibilidad",
+        es = "Informe de inviabilidad",
         pt = "Relatório de inviabilidade"
     },
     tuvio = {
@@ -179,7 +179,7 @@ dictionary = {
     },
     breakdown_cost_time = {
         en = "Breakdown of total operating cost",
-        es = "Porciones de el costo operativo total",
+        es = "Porciones del costo operativo total",
         pt = "Parcelas do custo operativo total"
     },
     operating_cost_categories = {
@@ -190,7 +190,7 @@ dictionary = {
     breakdown_revenue_time = {
         en = "Breakdown of total operating revenues",
         es = "Porciones de los ingresos operativos totales",
-        pt = "Parcelas das receitas operativos totais"
+        pt = "Parcelas das receitas operativas totais"
     },
     annual_cmo = {
         en = "Annual marginal cost by system",
@@ -220,12 +220,12 @@ dictionary = {
     total_small_hydro = {
         en = "Small Hydro",
         es = "Pequeña central hidroeléctrica",
-        pt = "Pequena central hidroeléctrica"
+        pt = "Pequena central hidrelétrica"
     },
     total_thermal = {
         en = "Thermal",
         es = "Térmica",
-        pt = "Térmico"
+        pt = "Térmica"
     },
     total_renewable = {
         en = "Renewable",
@@ -233,9 +233,9 @@ dictionary = {
         pt = "Renovável"
     },
     total_renewable_other = {
-        en = "Renewable - Other technologies",
-        es = "Renovable - Otras tecnologías",
-        pt = "Renovável - Outras tecnologias"
+        en = "Renewable",
+        es = "Renovable",
+        pt = "Renovável"
     },
     total_renewable_wind = {
         en = "Renewable - Wind",
@@ -250,7 +250,7 @@ dictionary = {
     total_renewable_small_hydro = {
         en = "Renewable - Small hydro",
         es = "Renovable - Pequeña central hidroeléctrica",
-        pt = "Renovável - Pequena central hidroelétrica"
+        pt = "Renovável - Pequena central hidrelétrica"
     },
     total_renewable_csp = {
         en = "Renewable - CSP",
@@ -282,7 +282,7 @@ dictionary = {
         es = "Generación total",
         pt = "Geração total"
     },
-    total_defict_risk = {
+    total_deficit_risk = {
         en = "Deficit risk by system",
         es = "Riesgo de déficit por sistema",
         pt = "Risco de déficit por sistema"
@@ -300,7 +300,7 @@ dictionary = {
     edemdef = {
         en = "Supply chain: demand deficit",
         es = "Cadena energética: déficit de demanda",
-        pt = "Cadeia energética: déficit de demanda "
+        pt = "Cadeia energética: déficit de demanda"
     },
     nedefc = {
         en = "Gas: deficit",
@@ -359,7 +359,7 @@ dictionary = {
     },
     vmxost = {
         en = "Hydro: maximum operative storage",
-        es = "Hidro: volumen maximo operativo",
+        es = "Hidro: volumen máximo operativo",
         pt = "Hidro: volume máximo operativo"
     },
     vimxsp = {
@@ -388,8 +388,8 @@ dictionary = {
         pt = "Hidro: turbinamento mínimo"
     },
     vimnsp = {
-        en = "Hydro: mininum spillage",
-        es = "Hidro: vertimiento mínino",
+        en = "Hydro: minimum spillage",
+        es = "Hidro: vertimiento mínimo",
         pt = "Hidro: vertimento mínimo"
     },
     rampvio = {
@@ -398,7 +398,7 @@ dictionary = {
         pt = "Hidro: rampa de defluência"
     },
     mnsplpvio = {
-        en = "Hydro: minimum percentual spillage",
+        en = "Hydro: minimum percentage spillage",
         es = "Hidro: vertimiento porcentual mínimo",
         pt = "Hidro: vertimento percentual mínimo"
     },
@@ -425,7 +425,7 @@ dictionary = {
     vgmntt = {
         en = "Thermal: minimum technical generation",
         es = "Térmica: generación mínima técnica",
-        pt = "Térmica: geração minima técnica"
+        pt = "Térmica: geração mínima técnica"
     },
     terunmin = {
         en = "Thermal generating group: minimum technical generation",
@@ -479,8 +479,8 @@ dictionary = {
     },
     finjvio = {
         en = "Power injection: fixed injection",
-        es = "Inyeccion de potencia: inyeccion fixa",
-        pt = "Injecao de potencia: injecao fixa"
+        es = "Inyección de potencia: inyección fija",
+        pt = "Injeção de potência: injeção fixa"
     },
     case_summary = {
         en = "Case summary",
@@ -507,7 +507,7 @@ dictionary = {
         es = "Horizonte, resolución y opciones de ejecución",
         pt = "Horizonte, resolução e opções de execução"
     },
-    dimentions = {
+    dimensions = {
         en = "Dimensions",
         es = "Dimensiones",
         pt = "Dimensões"
@@ -577,7 +577,7 @@ dictionary = {
         es = "ID",
         pt = "ID"
     },
-	cell_arch = {
+    cell_arch = {
         en = "Architecture",
         es = "Arquitectura",
         pt = "Arquitetura"
@@ -614,8 +614,8 @@ dictionary = {
     },
     cell_scenarios = {
         en = "Scenarios",
-        es = "Scenarios",
-        pt = "Cenarios"
+        es = "Escenarios",
+        pt = "Cenários"
     },
     cell_year = {
         en = "Year",
@@ -664,7 +664,7 @@ dictionary = {
     },
     cell_plc_resolution = {
         en = "Policy resolution",
-        es = "Resolución de la politica",
+        es = "Resolución de la política",
         pt = "Resolução da política"
     },
     cell_sim_resolution = {
@@ -683,9 +683,9 @@ dictionary = {
         pt = "Horária"
     },
     cell_fwd_series = {
-        en = "Foward series",
-        es = "Series Foward",
-        pt = "Séries Foward"
+        en = "Forward series",
+        es = "Series forward",
+        pt = "Séries forward"
     },
     cell_bwd_series = {
         en = "Backward series",
@@ -764,7 +764,7 @@ dictionary = {
     },
     cell_renewable_small_hydro = {
         en = "Renewable plants - Small hydro",
-        es = "Plantas renovables - Pequeñas centrais hidroeléctricas",
+        es = "Plantas renovables - Pequeñas centrales hidroeléctricas",
         pt = "Usinas renováveis - Pequenas centrais hidrelétricas",
     },
     cell_renewable_csp = {
@@ -773,9 +773,9 @@ dictionary = {
         pt = "Usinas renováveis - CSP",
     },
     cell_renewable_other = {
-        en = "Renewable plants - Other techs",
-        es = "Plantas renovables - Otras tecnologías",
-        pt = "Usinas renováveis - Outras tecnologias",
+        en = "Renewable plants",
+        es = "Plantas renovables",
+        pt = "Usinas renováveis",
     },
     cell_thermal_plants = {
         en = "Thermal plants",
@@ -829,7 +829,7 @@ dictionary = {
     },
     cell_total_processes = {
         en = "Total number of processes",
-        es = "Numero total de procesos",
+        es = "Número total de procesos",
         pt = "Número total de processos"
     },
     cell_total_nodes = {
@@ -991,7 +991,7 @@ dictionary = {
     },
     sum_of_circ = {
         en = "Sum of circuits",
-        es = "Suma the circuitos",
+        es = "Suma de circuitos",
         pt = "Soma de circuitos"
     },
     others = {
@@ -1029,7 +1029,7 @@ dictionary = {
     final_cost = {
         en = "Final cost statistics",
         es = "Estadísticas del costo final",
-        pt = "Estatisticas do custo final"
+        pt = "Estatísticas do custo final"
     },
     cell_average_total_cost = {
         en = "Average cost",
@@ -1038,13 +1038,13 @@ dictionary = {
     },
     cell_max_total_cost = {
         en = "Maximum cost",
-        es = "Costo maximo",
-        pt = "Custo maximo"
+        es = "Costo máximo",
+        pt = "Custo máximo"
     },
     cell_min_total_cost = {
         en = "Minimum cost",
-        es = "Costo minimo",
-        pt = "Custo minimo"
+        es = "Costo mínimo",
+        pt = "Custo mínimo"
     },
     cell_std_total_cost = {
         en = "Standard deviation",
@@ -1073,8 +1073,8 @@ non_convexities_labels = {
     ['Flow controllers'] = 'Flow controllers',
     ['Multi-fuel thermal plants with exclusive generation'] = 'Multi-fuel thermal plants with exclusive generation ',
     ['Hydro plants with net head representation (integer var.)'] = 'Hydro plants with net head representation (integer var.)',
-	['Binary generic variables'] = 'Binary generic variables',
-	
+    ['Binary generic variables'] = 'Binary generic variables',
+    
 
     ['Centrales hidroelectricas con coeficiente de produccion variable'] = 'Centrales hidroeléctricas con coeficiente de producción variable',
     ['Centrales hidroelectricas con evaporacion variable con la area'] = 'Centrales hidroeléctricas con evaporación variable según la superficie',
@@ -1092,7 +1092,7 @@ non_convexities_labels = {
     ['Controladores de flujo'] = 'Controladores de flujo',
     ['Centrales termicas multi-combustible con generacion exclusiva'] = 'Centrales térmicas multi-combustible con generación exclusiva',
     ['Centrales hidroelectricas con representacion de caida neta (v. entera)'] = 'Centrales hidroeléctricas con representación de caída neta (v. entera)',
-	['Variables genericas binarias'] = 'Variables genéricas binarias',
+    ['Variables genericas binarias'] = 'Variables genéricas binarias',
 
     ['Usinas hidroeletricas com coeficiente de producao variavel'] = 'Usinas hidrelétricas com coeficiente de produção variável',
     ['Usinas hidroeletricas com evaporacao variavel com a area'] = 'Usinas hidrelétricas com evaporação variável com a área',
@@ -1110,5 +1110,5 @@ non_convexities_labels = {
     ['Controladores de fluxo'] = 'Controladores de fluxo',   
     ['Usinas termicas multi-combustivel com geracao exclusiva'] = 'Usinas térmicas multi-combustível com geração exclusiva',
     ['Usinas hidroeletricas com representacao de queda liquida (v. inteira)'] = 'Usinas hidroelétricas com representação de queda líquida (v. inteira)',
-	['Variaveis genericas binarias'] = 'Variáveis genéricas binárias',
+    ['Variaveis genericas binarias'] = 'Variáveis genéricas binárias',
 };
