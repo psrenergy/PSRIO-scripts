@@ -622,6 +622,21 @@ dictionary = {
         es = "Año",
         pt = "Ano"
     },
+    cell_hydro_units = {
+        en = "Hydro units",
+        es = "Unidades hidroeléctricas",
+        pt = "Unidades hidrelétricas"
+    },
+    cell_thermal_units = {
+        en = "Thermal units",
+        es = "Unidades térmicas",
+        pt = "Unidades térmicas"
+    },
+    cell_renewable_units = {
+        en = "Renewable units",
+        es = "Unidades renovables",
+        pt = "Unidades renováveis"
+    },
     cell_ini_date = {
         en = "Initial date",
         es = "Fecha inicial",

@@ -384,15 +384,18 @@ function load_collections(col_struct, info_struct)
         table.insert(col_struct.dclink         , DCLink(i));
         table.insert(col_struct.generic        , Generic(i));
         table.insert(col_struct.hydro          , Hydro(i));
+        table.insert(col_struct.hydro_unit     , HydroGenerator(i));
         table.insert(col_struct.interconnection, Interconnection(i));
         table.insert(col_struct.power_injection, PowerInjection(i));
         table.insert(col_struct.renewable      , Renewable(i));
+        table.insert(col_struct.renewable_unit , RenewableGenerator(i));
         table.insert(col_struct.csp            , ConcentratedSolarPower(i));
         table.insert(col_struct.reserve        , ReserveGenerationConstraint(i));
         table.insert(col_struct.study          , Study(i));
         table.insert(col_struct.system         , System(i));
         table.insert(col_struct.demand         , Demand(i));
         table.insert(col_struct.thermal        , Thermal(i));
+        table.insert(col_struct.thermal_unit   , ThermalGenerator(i));
 
         table.insert(col_struct.case_dir_list  , Generic(i):username());
     end
@@ -405,13 +408,16 @@ function remove_case_info(col_struct, info_struct, case_index)
     table.insert(col_struct.dclink         , case_index);
     table.remove(col_struct.generic        , case_index);
     table.remove(col_struct.hydro          , case_index);
+    table.remove(col_struct.hydro_unit     , case_index);
     table.remove(col_struct.interconnection, case_index);
     table.remove(col_struct.power_injection, case_index);
     table.remove(col_struct.renewable      , case_index);
+    table.remove(col_struct.renewable_unit , case_index);
     table.remove(col_struct.reserve        , case_index);
     table.remove(col_struct.study          , case_index);
     table.remove(col_struct.system         , case_index);
     table.remove(col_struct.thermal        , case_index);
+    table.remove(col_struct.thermal_unit   , case_index);
 
     table.remove(col_struct.case_dir_list  , case_index);
 
@@ -711,6 +717,9 @@ function create_tab_summary(col_struct, info_struct)
     local renw_csp_string   = "| " .. dictionary.cell_renewable_csp[LANGUAGE];
     local renw_oth_string   = "| " .. dictionary.cell_renewable_other[LANGUAGE];
     local thermal_string    = "| " .. dictionary.cell_thermal_plants[LANGUAGE];
+    local hydro_unit_string     = "| " .. dictionary.cell_hydro_units[LANGUAGE];
+    local thermal_unit_string   = "| " .. dictionary.cell_thermal_units[LANGUAGE];
+    local renewable_unit_string = "| " .. dictionary.cell_renewable_units[LANGUAGE];
 
     for i = 1, studies do
         sys_string = sys_string             .. " | " .. tostring(#col_struct.system[i]:labels());
@@ -742,6 +751,11 @@ function create_tab_summary(col_struct, info_struct)
         renw_oth_string = renw_oth_string .. " | " .. tostring(renw_oth);
 
         thermal_string  = thermal_string  .. " | " .. tostring(#col_struct.thermal[i]:labels());
+
+        -- Number of generating units of each technology
+        hydro_unit_string     = hydro_unit_string     .. " | " .. tostring(#col_struct.hydro_unit[i]:labels());
+        thermal_unit_string   = thermal_unit_string   .. " | " .. tostring(#col_struct.thermal_unit[i]:labels());
+        renewable_unit_string = renewable_unit_string .. " | " .. tostring(#col_struct.renewable_unit[i]:labels());
     end
 
     tab:push(header_string);
@@ -749,6 +763,9 @@ function create_tab_summary(col_struct, info_struct)
     tab:push(sys_string);
     tab:push(hydro_string);
     tab:push(thermal_string);
+    tab:push(hydro_unit_string);
+    tab:push(thermal_unit_string);
+    tab:push(renewable_unit_string);
     tab:push(renw_w_string);
     tab:push(renw_s_string);
     tab:push(renw_sh_string)
@@ -2142,14 +2159,17 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
         dclink          = {},
         generic         = {},
         hydro           = {},
+        hydro_unit      = {},
         interconnection = {},
         power_injection = {},
         renewable       = {},
+        renewable_unit  = {},
         csp             = {},
         reserve         = {},
         study           = {},
         system          = {},
         thermal         = {},
+        thermal_unit    = {},
         demand          = {},
         case_dir_list   = {}, -- Cases' directory names
 
