@@ -345,8 +345,10 @@ function load_collections(col_struct, info_struct)
         table.insert(col_struct.power_injection, PowerInjection(i));
         table.insert(col_struct.renewable      , Renewable(i));
         table.insert(col_struct.csp            , ConcentratedSolarPower(i));
+        table.insert(col_struct.reserve        , ReserveGenerationConstraint(i));
         table.insert(col_struct.study          , Study(i));
         table.insert(col_struct.system         , System(i));
+        table.insert(col_struct.demand         , Demand(i));
         table.insert(col_struct.thermal        , Thermal(i));
 
         table.insert(col_struct.case_dir_list  , Generic(i):username());
@@ -363,6 +365,7 @@ function remove_case_info(col_struct, info_struct, case_index)
     table.remove(col_struct.interconnection, case_index);
     table.remove(col_struct.power_injection, case_index);
     table.remove(col_struct.renewable      , case_index);
+    table.remove(col_struct.reserve        , case_index);
     table.remove(col_struct.study          , case_index);
     table.remove(col_struct.system         , case_index);
     table.remove(col_struct.thermal        , case_index);
@@ -1481,7 +1484,7 @@ function create_marg_costs(col_struct)
 
     for i = 1, studies do
         -- cmg[i] = sys[i]:load("cmgdem");
-        cmg[i] = Generic(i):load("cmgdem");
+        cmg[i] = col_struct.generic[i]:load("cmgdem");
     end
 
     -- Marginal cost aggregated by average
@@ -1571,6 +1574,7 @@ function create_gen_report(col_struct)
         color_battery = '#4bc9b2';
         color_deficit = '#000000';
         color_pinj = '#BAB0AC';
+        color_demand = '#E15759';
     end
 
     local total_hydro_gen;
@@ -1594,6 +1598,7 @@ function create_gen_report(col_struct)
     local total_small_hydro_gen_age;
     local total_thermal_gen_age;
     local total_csp_gen_age;
+    local total_demand_age;
 
     local hydro_agent_name;
     local thermal_agent_name;
@@ -1626,6 +1631,8 @@ function create_gen_report(col_struct)
     local gerbat = {};
     local potinj = {};
     local defcit = {};
+    local demandel = {};
+    local losses = {};
 
     -- Loading generations files
     for i = 1, studies do
@@ -1636,7 +1643,19 @@ function create_gen_report(col_struct)
         gercsp[i] = col_struct.csp[i]:load("cspgen"):convert("GWh"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache();
         gerbat[i] = col_struct.battery[i]:load("gerbat"):convert("GWh"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache(); -- Explicitly converting to GWh
         potinj[i] = col_struct.power_injection[i]:load("powinj"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache();
-        defcit[i] = col_struct.system[i]:load("defcit"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache();
+        -- defcit[i] = col_struct.system[i]:load("defcit"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache();
+        defcit[i] = col_struct.generic[i]:load("defcit"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache();
+        -- demandel is the supplied load, made up of the elastic and the inelastic demand. It is
+        -- loaded through the generic collection because its agent names are truncated in the output
+        -- and do not match the system collection labels
+        demandel[i] = col_struct.generic[i]:load("demandel"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache();
+        losses[i]   = col_struct.generic[i]:load("losses"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache();
+
+        -- Joint reserve outputs, broken into technologies and consumed by the reserve report
+        col_struct.rghsec[i] = col_struct.hydro[i]:load("rghsec"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache();
+        col_struct.rgtsec[i] = col_struct.thermal[i]:load("rgtsec"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache();
+        col_struct.rgrsec[i] = col_struct.renewable[i]:load("rgrsec"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache();
+        col_struct.rgermn[i] = col_struct.reserve[i]:load("rgermn"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache();
     end
 
     if studies > 1 then
@@ -1669,17 +1688,19 @@ function create_gen_report(col_struct)
             total_small_hydro_gen_age = col_struct.case_dir_list[i];
             total_thermal_gen_age     = col_struct.case_dir_list[i];
             total_csp_gen_age         = col_struct.case_dir_list[i];
+            total_demand_age          = col_struct.case_dir_list[i];
         else
-            total_hydro_gen_age       = "Hydro";
-            total_batt_gen_age        = "Battery";
-            total_deficit_age         = "Deficit";
-            total_pot_inj_age         = "P. Inj.";
-            total_other_renw_gen_age  = "Renewable - Other tech.";
-            total_wind_gen_age        = "Renewable - Wind";
-            total_solar_gen_age       = "Renewable - Solar";
-            total_small_hydro_gen_age = "Renewable - Small hydro";
-            total_thermal_gen_age     = "Thermal";
-            total_csp_gen_age         = "Renewable - CSP";
+            total_hydro_gen_age       = dictionary.total_hydro[LANGUAGE];
+            total_batt_gen_age        = dictionary.total_battery[LANGUAGE];
+            total_deficit_age         = dictionary.total_deficit[LANGUAGE];
+            total_pot_inj_age         = dictionary.total_power_injection[LANGUAGE];
+            total_other_renw_gen_age  = dictionary.total_renewable_other[LANGUAGE];
+            total_wind_gen_age        = dictionary.total_renewable_wind[LANGUAGE];
+            total_solar_gen_age       = dictionary.total_renewable_solar[LANGUAGE];
+            total_small_hydro_gen_age = dictionary.total_renewable_small_hydro[LANGUAGE];
+            total_thermal_gen_age     = dictionary.total_thermal[LANGUAGE];
+            total_csp_gen_age         = dictionary.total_renewable_csp[LANGUAGE];
+            total_demand_age          = dictionary.total_demand[LANGUAGE];
         end
 
         -- Data processing
@@ -1779,7 +1800,35 @@ function create_gen_report(col_struct)
                 table.insert(total_vector, total_deficit);
             end
             local total_generation = concatenate(total_vector);
-            chart:add_area_stacking(total_generation, {xUnit=dictionary.cell_stage[LANGUAGE], colors = colors_vector, legendSizeLimit = LEGEND_MAX_CHAR});
+            chart:add_column_stacking(total_generation, {xUnit=dictionary.cell_stage[LANGUAGE], colors = colors_vector, legendSizeLimit = LEGEND_MAX_CHAR});
+
+            -- Demand is drawn as a dashed line over the stacked generation, adding up the supplied
+            -- load and the AC circuit losses. Each output is checked before being added because
+            -- neither of them is always available
+            local demand_vector = {};
+            if demandel[i]:loaded() then
+                table.insert(demand_vector, demandel[i]:aggregate_agents(BY_SUM(), total_demand_age));
+            end
+            if losses[i]:loaded() then
+                table.insert(demand_vector, losses[i]:aggregate_agents(BY_SUM(), total_demand_age));
+            end
+
+            if #demand_vector > 0 then
+                -- The generation sets the unit of the chart, MWh is the default when no generation was loaded
+                local demand_unit = "MWh";
+                if total_generation:loaded() then
+                    demand_unit = total_generation:unit();
+                end
+
+                -- Each parcel is converted before being added because the losses are reported in
+                -- power while the demands are reported in energy
+                local total_demand = demand_vector[1]:convert(demand_unit);
+                for j = 2, #demand_vector do
+                    total_demand = total_demand + demand_vector[j]:convert(demand_unit);
+                end
+
+                chart:add_line(total_demand:rename_agent(total_demand_age), {colors = { color_demand }, dashStyle = "dash", legendSizeLimit = LEGEND_MAX_CHAR});
+            end
         end
     end
 
@@ -2024,6 +2073,150 @@ function create_risk_report(col_struct)
 end
 
 -----------------------------------------------------------------------------------------------
+-- Reserve report function
+-----------------------------------------------------------------------------------------------
+
+function create_reserve_report(col_struct)
+    local tab = Tab(dictionary.tab_reserve[LANGUAGE]);
+
+    -- Color preferences
+    if studies == 1 then
+        color_reserve_hydro     = '#4E79A7';
+        color_reserve_thermal   = '#F28E2B';
+        color_reserve_renewable = '#8CD17D';
+        color_reserve_req       = '#E15759';
+    end
+
+    local total_hydro_reserve;
+    local total_thermal_reserve;
+    local total_renewable_reserve;
+    local total_reserve_req;
+
+    local total_hydro_reserve_age;
+    local total_thermal_reserve_age;
+    local total_renewable_reserve_age;
+    local total_reserve_req_age;
+
+    local hydro_report_name       = dictionary.total_hydro[LANGUAGE];
+    local thermal_report_name     = dictionary.total_thermal[LANGUAGE];
+    local renewable_report_name   = dictionary.total_renewable[LANGUAGE];
+    local reserve_req_report_name = dictionary.joint_reserve_requirement[LANGUAGE];
+
+    local chart;
+    if studies == 1 then
+        chart = Chart("");
+    end
+
+    -- Joint reserve report
+    local reserve_data = {
+        hydro     = {},
+        thermal   = {},
+        renewable = {}
+    };
+    local has_more_than_one_study = studies > 1;
+    for i = 1, studies do
+
+        if studies > 1 then
+            total_hydro_reserve_age     = col_struct.case_dir_list[i];
+            total_thermal_reserve_age   = col_struct.case_dir_list[i];
+            total_renewable_reserve_age = col_struct.case_dir_list[i];
+            total_reserve_req_age       = col_struct.case_dir_list[i];
+        else
+            total_hydro_reserve_age     = hydro_report_name;
+            total_thermal_reserve_age   = thermal_report_name;
+            total_renewable_reserve_age = renewable_report_name;
+            total_reserve_req_age       = reserve_req_report_name;
+        end
+
+        -- Data processing
+        total_hydro_reserve     = col_struct.rghsec[i]:aggregate_agents(BY_SUM(), total_hydro_reserve_age);
+        total_thermal_reserve   = col_struct.rgtsec[i]:aggregate_agents(BY_SUM(), total_thermal_reserve_age);
+        total_renewable_reserve = col_struct.rgrsec[i]:aggregate_agents(BY_SUM(), total_renewable_reserve_age);
+        total_reserve_req       = col_struct.rgermn[i]:aggregate_agents(BY_SUM(), total_reserve_req_age);
+
+        if total_hydro_reserve:loaded() then
+            table.insert(reserve_data.hydro, total_hydro_reserve);
+        end
+        if total_thermal_reserve:loaded() then
+            table.insert(reserve_data.thermal, total_thermal_reserve);
+        end
+        if total_renewable_reserve:loaded() then
+            table.insert(reserve_data.renewable, total_renewable_reserve);
+        end
+
+        -- The technologies are only stacked together when a single case is loaded
+        if studies == 1 then
+            local colors_vector = {};
+            local total_vector = {};
+            if total_thermal_reserve:loaded() then
+                table.insert(colors_vector, color_reserve_thermal);
+                table.insert(total_vector, total_thermal_reserve);
+            end
+            if total_hydro_reserve:loaded() then
+                table.insert(colors_vector, color_reserve_hydro);
+                table.insert(total_vector, total_hydro_reserve);
+            end
+            if total_renewable_reserve:loaded() then
+                table.insert(colors_vector, color_reserve_renewable);
+                table.insert(total_vector, total_renewable_reserve);
+            end
+
+            local total_reserve;
+            if #total_vector > 0 then
+                total_reserve = concatenate(total_vector);
+                chart:add_column_stacking(total_reserve, {xUnit=dictionary.cell_stage[LANGUAGE], colors = colors_vector, legendSizeLimit = LEGEND_MAX_CHAR});
+            end
+
+            -- The requirement is drawn as a dashed line over the stacked reserve
+            if total_reserve_req:loaded() then
+                -- The reserve sets the unit of the chart, MW is the default when no reserve was loaded
+                local reserve_unit = "MW";
+                if total_reserve and total_reserve:loaded() then
+                    reserve_unit = total_reserve:unit();
+                end
+
+                chart:add_line(total_reserve_req:convert(reserve_unit), {xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_reserve_req }, dashStyle = "dash", legendSizeLimit = LEGEND_MAX_CHAR});
+            end
+        end
+    end
+
+    if studies == 1 and #chart > 0 then
+        tab:push("## ".. dictionary.joint_reserve[LANGUAGE]);
+        tab:push(chart);
+    end
+
+    -- One individual chart per technology
+    local chart_tot_rghsec = Chart(dictionary.total_hydro[LANGUAGE]);
+    local chart_tot_rgtsec = Chart(dictionary.total_thermal[LANGUAGE]);
+    local chart_tot_rgrsec = Chart(dictionary.total_renewable[LANGUAGE]);
+
+    if #reserve_data.hydro > 0 then
+        chart_tot_rghsec:add_column(concatenate(reserve_data.hydro), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_reserve_hydro }, showInLegend = has_more_than_one_study, legendSizeLimit = LEGEND_MAX_CHAR});
+    end
+    if #reserve_data.thermal > 0 then
+        chart_tot_rgtsec:add_column(concatenate(reserve_data.thermal), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_reserve_thermal }, showInLegend = has_more_than_one_study, legendSizeLimit = LEGEND_MAX_CHAR});
+    end
+    if #reserve_data.renewable > 0 then
+        chart_tot_rgrsec:add_column(concatenate(reserve_data.renewable), { xUnit=dictionary.cell_stage[LANGUAGE], colors = { color_reserve_renewable }, showInLegend = has_more_than_one_study, legendSizeLimit = LEGEND_MAX_CHAR});
+    end
+
+    if #chart_tot_rghsec > 0 or #chart_tot_rgtsec > 0 or #chart_tot_rgrsec > 0 then
+        tab:push("## ".. dictionary.joint_reserve_technology[LANGUAGE]);
+        if #chart_tot_rghsec > 0 then
+            tab:push(chart_tot_rghsec);
+        end
+        if #chart_tot_rgtsec > 0 then
+            tab:push(chart_tot_rgtsec);
+        end
+        if #chart_tot_rgrsec > 0 then
+            tab:push(chart_tot_rgrsec);
+        end
+    end
+
+    return tab;
+end
+
+-----------------------------------------------------------------------------------------------
 -- Warning and errors
 -----------------------------------------------------------------------------------------------
 
@@ -2055,10 +2248,18 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
         power_injection = {},
         renewable       = {},
         csp             = {},
+        reserve         = {},
         study           = {},
         system          = {},
         thermal         = {},
-        case_dir_list   = {}  -- Cases' directory names
+        demand          = {},
+        case_dir_list   = {}, -- Cases' directory names
+
+        -- Outputs shared between reports
+        rghsec          = {}, -- Hydro joint reserve
+        rgtsec          = {}, -- Thermal joint reserve
+        rgrsec          = {}, -- Renewable joint reserve
+        rgermn          = {}  -- Joint reserve requirement
     };
 
     -- Loading study collections
@@ -2275,6 +2476,7 @@ function create_operation_report(dashboard, studies, info_struct, info_existence
     push_tab_to_tab(create_gen_report(col_struct)    ,tab_results);
     push_tab_to_tab(create_risk_report(col_struct)   ,tab_results);
     push_tab_to_tab(create_inflow_energy(col_struct) ,tab_results);
+    push_tab_to_tab(create_reserve_report(col_struct),tab_results);
 
     push_tab_to_tab(tab_results,dashboard);
 

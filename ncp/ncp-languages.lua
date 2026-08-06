@@ -72,6 +72,11 @@ dictionary = {
         es = "Riesgo de déficit",
         pt = "Risco de déficit"
     },
+    tab_reserve = {
+        en = "Reserve",
+        es = "Reserva",
+        pt = "Reserva"
+    },
     tab_infeasibility = {
         en = "Infeasibility report",
         es = "Informe de infeasibilidad",
@@ -86,6 +91,21 @@ dictionary = {
         en = "Total inflow energy",
         es = "Energía total afluente",
         pt = "Energia total afluente"
+    },
+    joint_reserve = {
+        en = "Joint reserve",
+        es = "Reserva conjunta",
+        pt = "Reserva conjunta"
+    },
+    joint_reserve_requirement = {
+        en = "Joint requirement",
+        es = "Requisito conjunto",
+        pt = "Requisito conjunto"
+    },
+    joint_reserve_technology = {
+        en = "Joint reserve per technology",
+        es = "Reserva conjunta por tecnología",
+        pt = "Reserva conjunta por tecnologia"
     },
     convergence = {
         en = "Convergence",
@@ -207,6 +227,11 @@ dictionary = {
         es = "Térmica",
         pt = "Térmico"
     },
+    total_renewable = {
+        en = "Renewable",
+        es = "Renovable",
+        pt = "Renovável"
+    },
     total_renewable_other = {
         en = "Renewable - Other technologies",
         es = "Renovable - Otras tecnologías",
@@ -246,6 +271,11 @@ dictionary = {
         en = "Deficit",
         es = "Déficit",
         pt = "Déficit"
+    },
+    total_demand = {
+        en = "Demand",
+        es = "Demanda",
+        pt = "Demanda"
     },
     total_generation = {
         en = "Total generation",
