@@ -417,6 +417,16 @@ dictionary = {
         es = "Hidro: almacenamiento mínimo",
         pt = "Hidro: volume mínimo"
     },
+    hydro_controllable_spillage_violation = {
+        en = "Hydro: controllable spillage",
+        es = "Hidro: vertimiento controlable",
+        pt = "Hidro: vertimento controlavel"
+    },
+    hydro_non_controllable_spillage_violation = {
+        en = "Hydro: non controllable spillage",
+        es = "Hidro: vertimiento no controlable",
+        pt = "Hidro: vertimento nao controlavel"
+    },
     vreseg = {
         en = "Reserve: joint requirement",
         es = "Reserva: requisito conjunto",
