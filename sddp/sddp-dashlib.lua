@@ -1962,12 +1962,13 @@ function create_gen_report(col_struct)
 
         total_other_renw_gen  = gergnd[i]:remove_agents(wind_agents)
                                          :remove_agents(solar_agents)
-                                         :remove_agents(small_hydro_agents);
+                                         :remove_agents(small_hydro_agents)
+                                         :aggregate_agents(BY_SUM(), total_other_renw_gen_age)
+                                         :save_cache();
 
-        total_other_renw_gen  = total_other_renw_gen:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_other_renw_gen_age);
-        total_wind_gen        = gergnd[i]:select_agents(wind_agents):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_wind_gen_age);
-        total_solar_gen       = gergnd[i]:select_agents(solar_agents):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_solar_gen_age);
-        total_small_hydro_gen = gergnd[i]:select_agents(small_hydro_agents):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_small_hydro_gen_age);
+        total_wind_gen        = gergnd[i]:select_agents(wind_agents):aggregate_agents(BY_SUM(), total_wind_gen_age):save_cache();
+        total_solar_gen       = gergnd[i]:select_agents(solar_agents):aggregate_agents(BY_SUM(), total_solar_gen_age):save_cache();
+        total_small_hydro_gen = gergnd[i]:select_agents(small_hydro_agents):aggregate_agents(BY_SUM(), total_small_hydro_gen_age):save_cache();
         total_csp_gen         = gercsp[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_csp_gen_age);
         total_thermal_gen = gerter[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_thermal_gen_age);
 
@@ -2139,8 +2140,8 @@ function create_gen_report(col_struct)
         total_pot_inj     = potinj[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE());
         total_csp_gen     = gercsp[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE());
 
-        -- Renewable generation is broken into 3 types
-        local renw_gen = gergnd[i]:aggregate_blocks(BY_SUM()):aggregate_scenarios(BY_AVERAGE()):save_cache();
+        -- Renewable generation is already aggregated by block and scenario.
+        local renw_gen = gergnd[i];
         total_other_renw_gen = renw_gen:select_agents(col_struct.renewable[i].tech_type:ne(1) &
                                       col_struct.renewable[i].tech_type:ne(2) &
                                       col_struct.renewable[i].tech_type:ne(4))
@@ -2152,10 +2153,10 @@ function create_gen_report(col_struct)
         total_small_hydro_gen = renw_gen:select_agents(col_struct.renewable[i].tech_type:eq(4))
                                          :select_agents(Collection.RENEWABLE);
 
-        total_other_renw_gen  = total_other_renw_gen:aggregate_agents(BY_SUM(), Collection.SYSTEM);
-        total_wind_gen        = total_wind_gen:aggregate_agents(BY_SUM(), Collection.SYSTEM);
-        total_solar_gen       = total_solar_gen:aggregate_agents(BY_SUM(), Collection.SYSTEM);
-        total_small_hydro_gen = total_small_hydro_gen:aggregate_agents(BY_SUM(), Collection.SYSTEM);
+        total_other_renw_gen  = total_other_renw_gen:aggregate_agents(BY_SUM(), Collection.SYSTEM):save_cache();
+        total_wind_gen        = total_wind_gen:aggregate_agents(BY_SUM(), Collection.SYSTEM):save_cache();
+        total_solar_gen       = total_solar_gen:aggregate_agents(BY_SUM(), Collection.SYSTEM):save_cache();
+        total_small_hydro_gen = total_small_hydro_gen:aggregate_agents(BY_SUM(), Collection.SYSTEM):save_cache();
 
         for _, agent in ipairs(agents) do
             local system_total_hydro_gen = total_hydro_gen:select_agent(agent):rename_agent(hydro_agent_name);
