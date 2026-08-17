@@ -228,7 +228,8 @@ local viol_structs = {
 	{name = "mnsplpvio", block_aggregation = BY_AVERAGE()},
     {name = "hydro_minimum_storage_violation", block_aggregation = BY_AVERAGE()},
     {name = "hydro_controllable_spillage_violation", block_aggregation = BY_AVERAGE()},
-    {name = "hydro_non_controllable_spillage_violation", block_aggregation = BY_AVERAGE()}
+    {name = "hydro_non_controllable_spillage_violation", block_aggregation = BY_AVERAGE()},
+    {name = "hydro_target_storage_violation", block_aggregation = BY_AVERAGE()}
 }
 
 local viol_structs_debug = {
