@@ -427,6 +427,11 @@ dictionary = {
         es = "Hidro: vertimiento no controlable",
         pt = "Hidro: vertimento nao controlavel"
     },
+    hydro_target_storage_violation = {
+        en = "Hydro: target storage",
+        es = "Hidro: volumen meta",
+        pt = "Hidro: volume meta"
+    },
     vreseg = {
         en = "Reserve: joint requirement",
         es = "Reserva: requisito conjunto",
