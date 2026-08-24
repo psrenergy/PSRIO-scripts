@@ -427,6 +427,11 @@ dictionary = {
         es = "Hidro: vertimiento no controlable",
         pt = "Hidro: vertimento não controlável"
     },
+    hydro_target_storage_violation = {
+        en = "Hydro: target storage",
+        es = "Hidro: volumen meta",
+        pt = "Hidro: volume meta"
+    },
     inertia_violation = {
         en = "Inertia",
         es = "Inércia",
