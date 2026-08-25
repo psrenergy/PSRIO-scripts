@@ -123,11 +123,23 @@ local dictionary = {
 
     -- Circuit loading
     circuit_loading      = {en = "Circuit Loading",      es = "Carga de circuitos",       pt = "Carregamento de circuitos"},
-    circuit_flow_loading = {en = "Circuit Flow Loading", es = "Carga de flujo de circuito",pt = "Carregamento de fluxo de circuito"},
+    circuit_flow_loading = {en = "Circuit Loading", es = "Carga del circuito",pt = "Carregamento do circuito"},
     no_circuit_loading_msg = {
         en = "No circuit is critically loaded — the expansion relieved every element.",
         es = "Ningún circuito está críticamente cargado — la expansión alivió todos los elementos.",
         pt = "Nenhum circuito está criticamente carregado — a expansão aliviou todos os elementos.",
+    },
+    loading_lower_violation = {en = "Lower loading limit violation", es = "Violación del límite inferior de carga", pt = "Violação do limite inferior de carregamento"},
+    loading_upper_violation = {en = "Upper loading limit violation", es = "Violación del límite superior de carga", pt = "Violação do limite superior de carregamento"},
+    no_loading_lower_msg = {
+        en = "No circuit violated its lower loading limit.",
+        es = "Ningún circuito violó su límite inferior de carga.",
+        pt = "Nenhum circuito violou o limite inferior de carregamento.",
+    },
+    no_loading_upper_msg = {
+        en = "No circuit violated its upper loading limit.",
+        es = "Ningún circuito violó su límite superior de carga.",
+        pt = "Nenhum circuito violou o limite superior de carregamento.",
     },
     ac_lines             = {en = "AC Lines",             es = "Líneas de CA",              pt = "Linhas de CA"},
     transformers         = {en = "Transformers",         es = "Transformadores",           pt = "Transformadores"},
@@ -166,7 +178,7 @@ local dictionary = {
     missing_length_dc_many = {en = "%d DC transmission lines in the expansion plan have missing length data.", es = "%d líneas de transmisión CC en el plan de expansión tienen datos de longitud faltantes.", pt = "%d linhas de transmissão CC no plano de expansão estão sem dados de comprimento."},
 
     -- Active power results
-    active_power           = {en = "Active Power",          es = "Potencia activa",       pt = "Potência ativa"},
+    generation             = {en = "Generation",            es = "Generación",            pt = "Geração"},
     total_generation       = {en = "Total Generation",      es = "Generación total",      pt = "Geração total"},
     total_gen_deviation    = {en = "Total Generation Deviation", es = "Desviación total de generación", pt = "Desvio total de geração"},
     thermal_deviation      = {en = "Thermal deviation",     es = "Desviación térmica",    pt = "Desvio térmico"},
@@ -325,18 +337,20 @@ local dictionary = {
 
 -- Wraps a chart fallback message (shown when a chart has no data to display) in a
 -- soft "success/info" callout box. Pushed strings are rendered as markdown, which
--- passes raw HTML through, so an inline-styled <div> gives a consistent look.
+-- passes raw HTML through, so an inline-styled <div> gives a consistent look. The
+-- trailing blank line ends the HTML block so a following "# heading" push still
+-- parses as a heading (markdown otherwise absorbs it into the raw-HTML block).
 function fallback_message(text)
     return '<div style="background:#F1F9F4; border:1px solid #CDE8D7; border-radius:8px; '
         .. 'padding:14px 18px; margin:6px 0; color:#2E7D50; font-size:0.95em; line-height:1.45;">'
-        .. text .. '</div>';
+        .. text .. '</div>\n\n';
 end
 
 -- Same idea as fallback_message but a yellow "warning" callout (⚠️).
 function warning_message(text)
     return '<div style="background:#FCF6E3; border:1px solid #EAD9A0; border-radius:8px; '
         .. 'padding:14px 18px; margin:6px 0; color:#8A6D1B; font-size:0.95em; line-height:1.45;">'
-        .. '⚠️ ' .. text .. '</div>';
+        .. '⚠️ ' .. text .. '</div>\n\n';
 end
 
 ---------------------------------------------------------------------------
@@ -457,22 +471,29 @@ function load_data(output, lang, optnet_data)
 
         -- ── Circuit loading (max annual loading per element) ────────────
         output.optnet[case].acline_loading       = acline:load("opn_dashboard_acline_flow_loading"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX_EXCLUDING(nil))
-            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR);
-
 
         output.optnet[case].transformer_loading  = transformer:load("opn_dashboard_transformers_flow_loading"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX_EXCLUDING(nil))
-            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR);
-
 
         output.optnet[case].three_winding_loading = three_winding:load("opn_dashboard_threewindingtransformers_flow_loading"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX_EXCLUDING(nil))
-            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR);
 
         output.optnet[case].series_cap_loading   = series_capacitor:load("opn_dashboard_seriescapacitor_flow_loading"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX_EXCLUDING(nil))
-            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR);
+
+        -- ── Operative loading violations (lower/upper, worst % per element per year) ──
+        output.optnet[case].acline_loading_lower = acline:load("opn_dashboard_acline_operative_loading_lower"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
+
+        output.optnet[case].acline_loading_upper = acline:load("opn_dashboard_acline_operative_loading_upper"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
+
+        output.optnet[case].transformer_loading_lower = transformer:load("opn_dashboard_transformer_operative_loading_lower"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
+
+        output.optnet[case].transformer_loading_upper = transformer:load("opn_dashboard_transformer_operative_loading_upper"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
+
+        output.optnet[case].three_winding_loading_lower = three_winding:load("opn_dashboard_threewindingtransformer_operative_loading_lower"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
+
+        output.optnet[case].three_winding_loading_upper = three_winding:load("opn_dashboard_threewindingtransformer_operative_loading_upper"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
+
+        output.optnet[case].series_cap_loading_lower = series_capacitor:load("opn_dashboard_seriescapacitor_operative_loading_lower"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
+
+        output.optnet[case].series_cap_loading_upper = series_capacitor:load("opn_dashboard_seriescapacitor_operative_loading_upper"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
 
         -- ── Redundancy (max annual violation per element) ───────────────
         output.optnet[case].acline_redundancy       = acline:load("opn_dashboard_acline_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
@@ -707,30 +728,29 @@ function Tab.add_circuit_loading_chart(self, n_cases, Lang, output, optnet_data)
             chart_loading = Chart(dictionary.circuit_flow_loading[Lang], first_year);
         end
 
+        -- remove_zeros over the whole horizon (drop never-loaded circuits), then
+        -- select each year. A per-year remove_zeros would leave years with no
+        -- element empty of any layer, so the play control would have gaps/one frame.
+        local acline_loading        = output.optnet[case].acline_loading:remove_zeros();
+        local transformer_loading   = output.optnet[case].transformer_loading:remove_zeros();
+        local three_winding_loading = output.optnet[case].three_winding_loading:remove_zeros();
+        local series_cap_loading    = output.optnet[case].series_cap_loading:remove_zeros();
+
         for year = first_year, last_year do
             seq = seq + 1;
             seq_label = tostring(year);
 
-            -- remove_zeros per year: only circuits with loading in this year are shown
-            local acline_loading        = output.optnet[case].acline_loading:select_stage(seq):remove_zeros();
-            local transformer_loading   = output.optnet[case].transformer_loading:select_stage(seq):remove_zeros();
-            local three_winding_loading = output.optnet[case].three_winding_loading:select_stage(seq):remove_zeros();
-            local series_cap_loading    = output.optnet[case].series_cap_loading:select_stage(seq):remove_zeros();
-
-            chart_loading:add_column_categories(acline_loading, dictionary.ac_lines[lang],
+            chart_loading:add_column_categories(acline_loading:select_stage(seq):sort_agents_descending(), dictionary.ac_lines[lang],
                 { color = table_element_color.ac_line, sequence = seq, sequence_label = seq_label });
-            chart_loading:add_column_categories(transformer_loading, dictionary.transformers[lang],
+            chart_loading:add_column_categories(transformer_loading:select_stage(seq):sort_agents_descending(), dictionary.transformers[lang],
                 { color = table_element_color.transformer, sequence = seq, sequence_label = seq_label });
-            chart_loading:add_column_categories(three_winding_loading, dictionary.three_winding_transformers[lang],
+            chart_loading:add_column_categories(three_winding_loading:select_stage(seq):sort_agents_descending(), dictionary.three_winding_transformers[lang],
                 { color = table_element_color.three_winding, sequence = seq, sequence_label = seq_label });
-            chart_loading:add_column_categories(series_cap_loading, dictionary.series_capacitors[lang],
+            chart_loading:add_column_categories(series_cap_loading:select_stage(seq):sort_agents_descending(), dictionary.series_capacitors[lang],
                 { color = table_element_color.series_capacitor, sequence = seq, sequence_label = seq_label });
         end
 
         if #chart_loading > 0 then
-            if n_cases == 1 then
-                self:push("## "..Generic(case):cloudname());
-            end
             self:push(chart_loading);
             has_data = true;
         end
@@ -738,6 +758,109 @@ function Tab.add_circuit_loading_chart(self, n_cases, Lang, output, optnet_data)
 
     if not has_data then
         self:push(fallback_message(dictionary.no_circuit_loading_msg[Lang]));
+    end
+
+    return has_data;
+end
+
+-- Lower operative loading-limit violation — same animated per-year format as the
+-- circuit-loading chart.
+function Tab.add_loading_lower_chart(self, n_cases, Lang, output, optnet_data)
+    local has_data = false;
+
+    for case = 1, n_cases do
+        local first_year = optnet_data[case].initial_year;
+        local last_year = optnet_data[case].final_year;
+        local seq = 0;
+        local chart;
+        if first_year ~= last_year then
+            chart = Chart(dictionary.loading_lower_violation[Lang]);
+            chart:enable_controls();
+        else
+            chart = Chart(dictionary.loading_lower_violation[Lang], first_year);
+        end
+
+        -- remove_zeros over the whole horizon (drop never-violating elements), then
+        -- select each year, so every year keeps a frame and the play control works.
+        local acline        = output.optnet[case].acline_loading_lower:remove_zeros();
+        local transformer   = output.optnet[case].transformer_loading_lower:remove_zeros();
+        local three_winding = output.optnet[case].three_winding_loading_lower:remove_zeros();
+        local series_cap    = output.optnet[case].series_cap_loading_lower:remove_zeros();
+        series_cap:save("teste",{csv=true});
+
+        for year = first_year, last_year do
+            seq = seq + 1;
+            local seq_label = tostring(year);
+
+            chart:add_column_categories(acline:select_stage(seq):sort_agents_descending(), dictionary.ac_lines[lang],
+                { color = table_element_color.ac_line, sequence = seq, sequence_label = seq_label });
+            chart:add_column_categories(transformer:select_stage(seq):sort_agents_descending(), dictionary.transformers[lang],
+                { color = table_element_color.transformer, sequence = seq, sequence_label = seq_label });
+            chart:add_column_categories(three_winding:select_stage(seq):sort_agents_descending(), dictionary.three_winding_transformers[lang],
+                { color = table_element_color.three_winding, sequence = seq, sequence_label = seq_label });
+            chart:add_column_categories(series_cap:select_stage(seq):sort_agents_descending(), dictionary.series_capacitors[lang],
+                { color = table_element_color.series_capacitor, sequence = seq, sequence_label = seq_label });
+        end
+
+        if #chart > 0 then
+            self:push(chart);
+            has_data = true;
+        end
+    end
+
+    if not has_data then
+        self:push(fallback_message(dictionary.no_loading_lower_msg[Lang]));
+    end
+
+    return has_data;
+end
+
+-- Upper operative loading-limit violation — same animated per-year format as the
+-- circuit-loading chart.
+function Tab.add_loading_upper_chart(self, n_cases, Lang, output, optnet_data)
+    local has_data = false;
+
+    for case = 1, n_cases do
+        local first_year = optnet_data[case].initial_year;
+        local last_year = optnet_data[case].final_year;
+        local seq = 0;
+        local chart;
+        if first_year ~= last_year then
+            chart = Chart(dictionary.loading_upper_violation[Lang]);
+            chart:enable_controls();
+        else
+            chart = Chart(dictionary.loading_upper_violation[Lang], first_year);
+        end
+
+        -- remove_zeros over the whole horizon (drop never-violating elements), then
+        -- select each year, so every year keeps a frame and the play control works.
+        local acline        = output.optnet[case].acline_loading_upper:remove_zeros();
+        local transformer   = output.optnet[case].transformer_loading_upper:remove_zeros();
+        local three_winding = output.optnet[case].three_winding_loading_upper:remove_zeros();
+        local series_cap    = output.optnet[case].series_cap_loading_upper:remove_zeros();
+
+        for year = first_year, last_year do
+            seq = seq + 1;
+            local seq_label = tostring(year);
+
+            chart:add_column_categories(acline:select_stage(seq):sort_agents_descending(), dictionary.ac_lines[lang],
+                { color = table_element_color.ac_line, sequence = seq, sequence_label = seq_label });
+            chart:add_column_categories(transformer:select_stage(seq):sort_agents_descending(), dictionary.transformers[lang],
+                { color = table_element_color.transformer, sequence = seq, sequence_label = seq_label });
+            chart:add_column_categories(three_winding:select_stage(seq):sort_agents_descending(), dictionary.three_winding_transformers[lang],
+                { color = table_element_color.three_winding, sequence = seq, sequence_label = seq_label });
+            chart:add_column_categories(series_cap:select_stage(seq):sort_agents_descending(), dictionary.series_capacitors[lang],
+                { color = table_element_color.series_capacitor, sequence = seq, sequence_label = seq_label });
+        end
+
+        if #chart > 0 then
+            self:push(chart);
+            has_data = true;
+        end
+    end
+
+    if not has_data then
+        self:push(fallback_message(dictionary.no_loading_upper_msg[Lang]));
     end
 
     return has_data;
@@ -805,9 +928,6 @@ function Tab.add_redundancy_chart(self, n_cases, Lang, output, optnet_data)
             end
 
             if #chart_redundancy > 0 then
-                if n_cases == 1 then
-                    self:push("## "..Generic(case):cloudname());
-                end
                 self:push(chart_redundancy);
                 has_data = true;
             end
@@ -845,6 +965,10 @@ function Tab.Solution_Quality(self, n_cases, Lang, output, optnet_data)
     local subTab_loading = SubTab(dictionary.circuit_loading[Lang]);
     subTab_loading:push("# " .. dictionary.circuit_flow_loading[Lang]);
     subTab_loading:add_circuit_loading_chart(n_cases, Lang, output, optnet_data);
+    subTab_loading:push("# " .. dictionary.loading_lower_violation[Lang]);
+    subTab_loading:add_loading_lower_chart(n_cases, Lang, output, optnet_data);
+    subTab_loading:push("# " .. dictionary.loading_upper_violation[Lang]);
+    subTab_loading:add_loading_upper_chart(n_cases, Lang, output, optnet_data);
     if #subTab_loading > 0 then
         self:push(subTab_loading);
     end
@@ -1076,7 +1200,7 @@ function Tab.Results(self, n_cases, Lang, output, slack_representation)
     subTab_inv:add_investment_charts(n_cases, Lang, output);
     self:push(subTab_inv);
 
-    local subTab_ap = SubTab(dictionary.active_power[Lang]);
+    local subTab_ap = SubTab(dictionary.generation[Lang]);
     subTab_ap:push("# " .. dictionary.total_generation[Lang]);
     subTab_ap:add_total_generation_chart(n_cases, Lang, output);
     subTab_ap:push("# " .. dictionary.total_gen_deviation[Lang]);
