@@ -48,6 +48,7 @@ local dictionary = {
     average = {en = "Average", es = "Promedio", pt = "Média"},
     costs = {en = "Costs", es = "Costos", pt = "Custos"},
     generation = {en = "Generation", es = "Generación", pt = "Geração"},
+    active_power = {en = "Active Power", es = "Potencia activa", pt = "Potência ativa"},
     thermal = {en = "Thermal", es = "Térmica", pt = "Térmica"},
     hydro = {en = "Hydro", es = "Hidro", pt = "Hidro"},
     renewable = {en = "Renewable", es = "Renovable", pt = "Renovável"},
@@ -1010,15 +1011,16 @@ end
 -- negative denormals that de-energized buses store as ~0.
 -- =====================================================================
 
--- Diverging palette for the 7 margin bands (green in the middle).
+-- Diverging palette for the 7 margin bands (green in the middle): blue near the
+-- lower limit (margin ~0), red near the upper limit (margin ~1).
 local voltage_band_defs = {
-    { lo = -1e9,  hi = 0.005, inclo = true,  inchi = true,  color = "#C0392B" },
-    { lo = 0.005, hi = 0.05,  inclo = false, inchi = true,  color = "#E67E22" },
-    { lo = 0.05,  hi = 0.25,  inclo = false, inchi = true,  color = "#F1C40F" },
+    { lo = -1e9,  hi = 0.005, inclo = true,  inchi = true,  color = "#2471A3" },
+    { lo = 0.005, hi = 0.05,  inclo = false, inchi = true,  color = "#3498DB" },
+    { lo = 0.05,  hi = 0.25,  inclo = false, inchi = true,  color = "#5DADE2" },
     { lo = 0.25,  hi = 0.75,  inclo = false, inchi = true,  color = "#2ECC71" },
-    { lo = 0.75,  hi = 0.95,  inclo = false, inchi = true,  color = "#5DADE2" },
-    { lo = 0.95,  hi = 0.995, inclo = false, inchi = false, color = "#3498DB" },
-    { lo = 0.995, hi = 1e9,   inclo = true,  inchi = true,  color = "#2471A3" },
+    { lo = 0.75,  hi = 0.95,  inclo = false, inchi = true,  color = "#F1C40F" },
+    { lo = 0.95,  hi = 0.995, inclo = false, inchi = false, color = "#E67E22" },
+    { lo = 0.995, hi = 1e9,   inclo = true,  inchi = true,  color = "#C0392B" },
 };
 
 local function voltage_band_label(def, Lang)
@@ -1051,17 +1053,17 @@ end
 -- Render one per-panel heatmap (% of readings near a limit), with a color
 -- scale fitted to the panel's own range and an empty-state message. What the
 -- color means is stated in the chart title (no per-agent legend).
-local function voltage_push_limit_heatmap(tab, pct, title, subtitle, y_label, strong_color, Lang)
+local function voltage_push_limit_heatmap(tab, pct, title, subtitle, y_label, strong_color, mid_colors, Lang)
     local maxv = pct:aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_stages(BY_MAX_EXCLUDING(nil)):aggregate_agents(BY_MAX_EXCLUDING(nil), "m"):to_list()[1];
     if maxv == nil or maxv <= 1e-6 then
         tab:push("#### " .. title);
         tab:push(fallback_message(dictionary.no_buses_near_limit[Lang]));
         return;
     end
-    -- Colour scale runs from green at the panel's minimum value to the panel's
-    -- colour at its maximum (min fitted to the data, like the max).
+    -- Colour scale runs from green at the panel's minimum value to the panel's colour at its maximum (both fitted to the data).
     local minv = pct:aggregate_blocks(BY_MIN_EXCLUDING(nil)):aggregate_stages(BY_MIN_EXCLUDING(nil)):aggregate_agents(BY_MIN_EXCLUDING(nil), "m"):to_list()[1];
     if minv == nil or minv >= maxv then minv = 0; end
+
     local chart = Chart(title, subtitle);
     chart:add_heatmap(pct, {
         yLabel = y_label,
@@ -1069,8 +1071,15 @@ local function voltage_push_limit_heatmap(tab, pct, title, subtitle, y_label, st
         showInLegend = false,
         stopsMin = minv,
         stopsMax = maxv,
-        stops = { { minv, "#8ACE7E" }, { maxv, strong_color } },
+        stops = {
+            { 0.00, "#8ACE7E" },
+            { 0.40, mid_colors[1] },
+            { 0.70, mid_colors[2] },
+            { 1.00, strong_color },
+        },
     });
+    -- Drop the agent header from the tooltip
+    chart:tooltip_header_format("");
     tab:push(chart);
 end
 
@@ -1087,10 +1096,11 @@ local function voltage_push_time_at_limit(tab, pct, title, subtitle, color, base
     top = voltage_rename_with_kv(top, base_kv);
 
     local chart = Chart(title, subtitle);
-    chart:invert_axes();
+    chart:xlabel_rotation(-90);
     chart:add_column_categories(top, dictionary.pct_of_readings[Lang], {
         color = color, showInLegend = false,
         xLabel = dictionary.buses[Lang], yLabel = dictionary.pct_of_readings[Lang],
+        xTickPixelInterval = 14, yMin = 0, yMax = 100,
     });
     tab:push(chart);
 end
@@ -1187,12 +1197,16 @@ function Tab.add_voltage_band_chart(self, n_cases, Lang, output)
         local chart = Chart(dictionary.buses_by_margin_band[Lang], subtitle);
         chart:horizontal_legend();
 
-        for idx, def in ipairs(voltage_band_defs) do
+        -- Added in reverse so the lowest-margin band (near 0) sits at the BOTTOM of
+        -- the stack and the highest (near 1) at the top (Highcharts stacks the
+        -- first-added series on top by default).
+        for i = #voltage_band_defs, 1, -1 do
+            local def = voltage_band_defs[i];
             local lo_mask = def.inclo and rep:ge(def.lo) or rep:gt(def.lo);
             local hi_mask = def.inchi and rep:le(def.hi) or rep:lt(def.hi);
             local count = (lo_mask * hi_mask * has_active):aggregate_agents(BY_SUM_EXCLUDING(nil), voltage_band_label(def, Lang));
             local opts = { color = def.color };
-            if idx == 1 then
+            if i == #voltage_band_defs then
                 opts.xLabel = dictionary.months[Lang];
                 opts.yLabel = dictionary.number_of_buses[Lang];
             end
@@ -1223,8 +1237,10 @@ function Tab.add_voltage_limit_heatmaps(self, n_cases, Lang, output)
         local near_up = (m:gt(0.95) * valid):aggregate_agents(BY_SUM_EXCLUDING(nil), "n"):aggregate_scenarios(BY_SUM_EXCLUDING(nil));
         local pct_up = safe_divide(near_up, den):convert("%");
 
-        voltage_push_limit_heatmap(self, pct_low, dictionary.readings_near_lower[Lang], subtitle, y_label, "#C0392B", Lang);
-        voltage_push_limit_heatmap(self, pct_up, dictionary.readings_near_upper[Lang], subtitle, y_label, "#2471A3", Lang);
+        -- Intermediate stops from the G2 palette: green -> light/medium blue -> dark
+        -- blue (lower), green -> yellow -> orange -> red (upper).
+        voltage_push_limit_heatmap(self, pct_low, dictionary.readings_near_lower[Lang], subtitle, y_label, "#2471A3", { "#5DADE2", "#3498DB" }, Lang);
+        voltage_push_limit_heatmap(self, pct_up, dictionary.readings_near_upper[Lang], subtitle, y_label, "#C0392B", { "#F1C40F", "#E67E22" }, Lang);
     end
 end
 
@@ -1246,8 +1262,8 @@ function Tab.add_voltage_time_at_limit_charts(self, n_cases, Lang, output)
         local num_up = (m:ge(0.995) * valid):aggregate_blocks(BY_SUM_EXCLUDING(nil)):aggregate_scenarios(BY_SUM_EXCLUDING(nil)):aggregate_stages(BY_SUM_EXCLUDING(nil));
         local up_pct = safe_divide(num_up, den):convert("%"):remove_zeros();
 
-        voltage_push_time_at_limit(self, low_pct, dictionary.time_at_lower[Lang], subtitle, "#C0392B", base_kv, Lang);
-        voltage_push_time_at_limit(self, up_pct, dictionary.time_at_upper[Lang], subtitle, "#2471A3", base_kv, Lang);
+        voltage_push_time_at_limit(self, low_pct, dictionary.time_at_lower[Lang], subtitle, "#2471A3", base_kv, Lang);
+        voltage_push_time_at_limit(self, up_pct, dictionary.time_at_upper[Lang], subtitle, "#C0392B", base_kv, Lang);
     end
 end
 
@@ -1282,7 +1298,7 @@ end
 function Tab.Solution_Results(self, n_cases, Lang, output)
     self:set_icon("line-chart");
 
-    local subTab = SubTab(dictionary.generation[Lang]);
+    local subTab = SubTab(dictionary.active_power[Lang]);
     subTab:push("# " .. dictionary.generation_results[Lang]);
     subTab:active_generation_charts(n_cases, Lang, output);
     --subTab:reactive_generation_charts(n_cases, Lang, output);
