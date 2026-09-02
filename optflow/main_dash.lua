@@ -387,9 +387,12 @@ local dictionary = {
 -- soft "success/info" callout box. Pushed strings are rendered as markdown, which
 -- passes raw HTML through, so an inline-styled <div> gives a consistent look.
 function fallback_message(text)
+    -- Trailing blank line so the raw-HTML block is closed: PSRIO concatenates consecutive
+    -- markdown pushes, and in CommonMark an HTML block runs until a blank line — without it
+    -- the next push (e.g. a "# Heading") gets absorbed into the div and rendered literally.
     return '<div style="background:#F1F9F4; border:1px solid #CDE8D7; border-radius:8px; '
         .. 'padding:14px 18px; margin:6px 0; color:#2E7D50; font-size:0.95em; line-height:1.45;">'
-        .. text .. '</div>';
+        .. text .. '</div>\n\n';
 end
 
 -- auxiliar function to deal with selecting the correct scenarios
@@ -420,25 +423,25 @@ function Expression.select_optflow_date_scn_blcks(self, optflow_data_case, syste
 
     if optflow_data_case.resolution_representation ~= 0 then
         if agg_blocks then
-            self_selected = self_selected:aggregate_blocks(BY_EXCLUDING(nil), optflow_data_case.selected_resolutions);
+            self_selected = self_selected:aggregate_blocks(BY_EXCLUDING_KEEP_NAN(nil), optflow_data_case.selected_resolutions);
         else
             self_selected = self_selected:select_blocks(optflow_data_case.selected_resolutions);
         end
     else
         if agg_blocks then
-            self_selected = self_selected:aggregate_blocks(BY_EXCLUDING(nil));
+            self_selected = self_selected:aggregate_blocks(BY_EXCLUDING_KEEP_NAN(nil));
         end
     end
 
     if optflow_data_case.serie_representation ~= 0 then
         if agg_scenarios then
-            self_selected = self_selected:aggregate_scenarios(BY_AVERAGE_EXCLUDING(nil), selected_scenarios);
+            self_selected = self_selected:aggregate_scenarios(BY_AVERAGE_EXCLUDING_KEEP_NAN(nil), selected_scenarios);
         else
             self_selected = self_selected:select_scenarios(selected_scenarios);
         end
     else
         if agg_scenarios then
-            self_selected = self_selected:aggregate_scenarios(BY_AVERAGE_EXCLUDING(nil));
+            self_selected = self_selected:aggregate_scenarios(BY_AVERAGE_EXCLUDING_KEEP_NAN(nil));
         end
     end
 
@@ -590,12 +593,12 @@ function Tab.add_stage_solution_times_chart(self, n_cases, Lang, output)
     chart:horizontal_legend();
 
     for case = 1, n_cases do
-        local times = output.optflow[case].solution_time:aggregate_blocks(BY_SUM_EXCLUDING(nil)):rename_agent("Average");
+        local times = output.optflow[case].solution_time:aggregate_blocks(BY_SUM_EXCLUDING_KEEP_NAN(nil)):rename_agent("Average");
         if n_cases > 1 then
             times = times:rename_agent(Generic(case):cloudname().." (avg)");
         end
 
-        chart:add_line(times:aggregate_scenarios(BY_AVERAGE_EXCLUDING(nil)), { color = table_case_color[case]});
+        chart:add_line(times:aggregate_scenarios(BY_AVERAGE_EXCLUDING_KEEP_NAN(nil)), { color = table_case_color[case]});
         chart:add_area_range(times:aggregate_scenarios(BY_MIN_EXCLUDING(nil)):rename_agent("MIN"),
                             times:aggregate_scenarios(BY_MAX_EXCLUDING(nil)):rename_agent("MAX"),
                             { color = table_case_color[case], lineWidth = 0, fillOpacity = 0.2}
@@ -1140,9 +1143,9 @@ function Tab.add_voltage_distribution_chart(self, n_cases, Lang, output)
             -- Cumulative counting: one "< edge AND energized" pass per interior edge,
             -- differenced into per-bin counts (nb: energized mask keeps < 0.5 out).
             local function count_below(threshold)
-                return (volt:lt(threshold) * energized):aggregate_blocks(BY_SUM_EXCLUDING(nil)):aggregate_scenarios(BY_SUM_EXCLUDING(nil)):aggregate_stages(BY_SUM()):aggregate_agents(BY_SUM(), "c"):to_list()[1] or 0;
+                return (volt:lt(threshold) * energized):aggregate_blocks(BY_SUM_EXCLUDING_KEEP_NAN(nil)):aggregate_scenarios(BY_SUM_EXCLUDING_KEEP_NAN(nil)):aggregate_stages(BY_SUM()):aggregate_agents(BY_SUM(), "c"):to_list()[1] or 0;
             end
-            local total = energized:aggregate_blocks(BY_SUM_EXCLUDING(nil)):aggregate_scenarios(BY_SUM_EXCLUDING(nil)):aggregate_stages(BY_SUM()):aggregate_agents(BY_SUM(), "c"):to_list()[1] or 0;
+            local total = energized:aggregate_blocks(BY_SUM_EXCLUDING_KEEP_NAN(nil)):aggregate_scenarios(BY_SUM_EXCLUDING_KEEP_NAN(nil)):aggregate_stages(BY_SUM()):aggregate_agents(BY_SUM(), "c"):to_list()[1] or 0;
 
             if total <= 0 then
                 self:push(fallback_message(dictionary.no_buses_near_limit[Lang]));
@@ -1204,7 +1207,7 @@ function Tab.add_voltage_band_chart(self, n_cases, Lang, output)
             local def = voltage_band_defs[i];
             local lo_mask = def.inclo and rep:ge(def.lo) or rep:gt(def.lo);
             local hi_mask = def.inchi and rep:le(def.hi) or rep:lt(def.hi);
-            local count = (lo_mask * hi_mask * has_active):aggregate_agents(BY_SUM_EXCLUDING(nil), voltage_band_label(def, Lang));
+            local count = (lo_mask * hi_mask * has_active):aggregate_agents(BY_SUM_EXCLUDING_KEEP_NAN(nil), voltage_band_label(def, Lang));
             local opts = { color = def.color };
             if i == #voltage_band_defs then
                 opts.xLabel = dictionary.months[Lang];
@@ -1229,12 +1232,12 @@ function Tab.add_voltage_limit_heatmaps(self, n_cases, Lang, output)
 
         local m = output.optflow[case].margin_real;
         local valid = m:gt(-1e9) - m:eq(-1);   -- exclude -1 (inactive) and NaN (non-converged)
-        local den = valid:aggregate_agents(BY_SUM_EXCLUDING(nil), "n"):aggregate_scenarios(BY_SUM_EXCLUDING(nil));
+        local den = valid:aggregate_agents(BY_SUM_EXCLUDING_KEEP_NAN(nil), "n"):aggregate_scenarios(BY_SUM_EXCLUDING_KEEP_NAN(nil));
 
-        local near_low = (m:lt(0.05) * valid):aggregate_agents(BY_SUM_EXCLUDING(nil), "n"):aggregate_scenarios(BY_SUM_EXCLUDING(nil));
+        local near_low = (m:lt(0.05) * valid):aggregate_agents(BY_SUM_EXCLUDING_KEEP_NAN(nil), "n"):aggregate_scenarios(BY_SUM_EXCLUDING_KEEP_NAN(nil));
         local pct_low = safe_divide(near_low, den):convert("%");
 
-        local near_up = (m:gt(0.95) * valid):aggregate_agents(BY_SUM_EXCLUDING(nil), "n"):aggregate_scenarios(BY_SUM_EXCLUDING(nil));
+        local near_up = (m:gt(0.95) * valid):aggregate_agents(BY_SUM_EXCLUDING_KEEP_NAN(nil), "n"):aggregate_scenarios(BY_SUM_EXCLUDING_KEEP_NAN(nil));
         local pct_up = safe_divide(near_up, den):convert("%");
 
         -- Intermediate stops from the G2 palette: green -> light/medium blue -> dark
@@ -1254,12 +1257,12 @@ function Tab.add_voltage_time_at_limit_charts(self, n_cases, Lang, output)
         local base_kv = output.optflow[case].bus_base_kv;
         local m = output.optflow[case].margin_real;
         local valid = m:gt(-1e9) - m:eq(-1);   -- exclude -1 (inactive) and NaN (non-converged)
-        local den = valid:aggregate_blocks(BY_SUM_EXCLUDING(nil)):aggregate_scenarios(BY_SUM_EXCLUDING(nil)):aggregate_stages(BY_SUM_EXCLUDING(nil)):save_cache();
+        local den = valid:aggregate_blocks(BY_SUM_EXCLUDING_KEEP_NAN(nil)):aggregate_scenarios(BY_SUM_EXCLUDING_KEEP_NAN(nil)):aggregate_stages(BY_SUM_EXCLUDING_KEEP_NAN(nil)):save_cache();
 
-        local num_low = (m:le(0.005) * valid):aggregate_blocks(BY_SUM_EXCLUDING(nil)):aggregate_scenarios(BY_SUM_EXCLUDING(nil)):aggregate_stages(BY_SUM_EXCLUDING(nil));
+        local num_low = (m:le(0.005) * valid):aggregate_blocks(BY_SUM_EXCLUDING_KEEP_NAN(nil)):aggregate_scenarios(BY_SUM_EXCLUDING_KEEP_NAN(nil)):aggregate_stages(BY_SUM_EXCLUDING_KEEP_NAN(nil));
         local low_pct = safe_divide(num_low, den):convert("%"):remove_zeros();
 
-        local num_up = (m:ge(0.995) * valid):aggregate_blocks(BY_SUM_EXCLUDING(nil)):aggregate_scenarios(BY_SUM_EXCLUDING(nil)):aggregate_stages(BY_SUM_EXCLUDING(nil));
+        local num_up = (m:ge(0.995) * valid):aggregate_blocks(BY_SUM_EXCLUDING_KEEP_NAN(nil)):aggregate_scenarios(BY_SUM_EXCLUDING_KEEP_NAN(nil)):aggregate_stages(BY_SUM_EXCLUDING_KEEP_NAN(nil));
         local up_pct = safe_divide(num_up, den):convert("%"):remove_zeros();
 
         voltage_push_time_at_limit(self, low_pct, dictionary.time_at_lower[Lang], subtitle, "#2471A3", base_kv, Lang);

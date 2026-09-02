@@ -394,13 +394,13 @@ function Expression.select_optnet_date_scn_blcks(self, optnet_data_case, system_
     if self_selected:stage_type() ~= 10 then
         if optnet_data_case.resolution_representation ~= 0 then
             if agg_blocks then
-                self_selected = self_selected:aggregate_blocks(BY_EXCLUDING(nil), optnet_data_case.selected_resolutions);
+                self_selected = self_selected:aggregate_blocks(BY_EXCLUDING_KEEP_NAN(nil), optnet_data_case.selected_resolutions);
             else
                 self_selected = self_selected:select_blocks(optnet_data_case.selected_resolutions);
             end
         else
             if agg_blocks then
-                self_selected = self_selected:aggregate_blocks(BY_EXCLUDING(nil));
+                self_selected = self_selected:aggregate_blocks(BY_EXCLUDING_KEEP_NAN(nil));
             end
         end
 
@@ -871,8 +871,6 @@ function Tab.add_redundancy_chart(self, n_cases, Lang, output, optnet_data)
     local any_enabled = false;
 
     for case = 1, n_cases do
-        -- The redundancy output files are only produced when the check flag
-        -- (DEXE_CSVR) is on; a case with it off contributes nothing here.
         if optnet_data[case].redundancy_check then
             any_enabled = true;
 
@@ -1761,7 +1759,7 @@ function load_optnet_data(file_name, case_index)
                     elseif key == "DEXE_CMON" then optnet_struct.circuit_overload            = val
                     elseif key == "DEXE_SUMC" then optnet_struct.sum_circuit_flow            = (val == 1)
                     elseif key == "DEXE_SCTG" then optnet_struct.contingency                 = (val == 1)
-                    elseif key == "DEXE_CSVR" then optnet_struct.redundancy_check            = (val == 1)
+                    elseif key == "DEXE_CHKR" then optnet_struct.redundancy_check            = (val == 2)
                     end
                 end
             end
