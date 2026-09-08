@@ -437,6 +437,16 @@ dictionary = {
         es = "Inércia",
         pt = "Inercia"
     },
+    hydro_oxru_violation = {
+        en = "Hydro: multi-level outflow ramp-up",
+        es = "Hidro: rampa de defluencia multinivel (subida)",
+        pt = "Hidro: rampa de defluência multinível (subida)"
+    },
+    hydro_oxrd_violation = {
+        en = "Hydro: multi-level outflow ramp-down",
+        es = "Hidro: rampa de defluencia multinivel (bajada)",
+        pt = "Hidro: rampa de defluência multinível (descida)"
+    },
     vreseg = {
         en = "Reserve: joint requirement",
         es = "Reserva: requisito conjunto",
