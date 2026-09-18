@@ -437,6 +437,26 @@ dictionary = {
         es = "Inércia",
         pt = "Inercia"
     },
+    hydro_reserve_down_capacity_violation = {
+        en = "Hydro: reserve capacity violation (Down)",
+        es = "Hidro: violacion de capacidad de reserva (Bajada)",
+        pt = "Hidro: violacao de capacidade de reserva (Descida)"
+    },
+    thermal_reserve_down_capacity_violation = {
+        en = "Thermal: reserve capacity violation (Down)",
+        es = "Termica: violacion de capacidad de reserva (Bajada)",
+        pt = "Termica: violacao de capacidade de reserva (Descida)"
+    },
+    battery_reserve_down_capacity_violation = {
+        en = "Battery: reserve capacity violation (Down)",
+        es = "Bateria: violacion de capacidad de reserva (Bajada)",
+        pt = "Bateria: violacao de capacidade de reserva (Descida)"
+    },
+    battery_reserve_down_storage_violation = {
+        en = "Battery: reserve storage violation (Down)",
+        es = "Bateria: violacion de almacenamiento de reserva (Bajada)",
+        pt = "Bateria: violacao de armazenamento de reserva (Descida)"
+    },
     vreseg = {
         en = "Reserve: joint requirement",
         es = "Reserva: requisito conjunto",

@@ -231,7 +231,11 @@ local viol_structs = {
     {name = "hydro_controllable_spillage_violation", block_aggregation = BY_AVERAGE()},
     {name = "hydro_non_controllable_spillage_violation", block_aggregation = BY_AVERAGE()},
     {name = "hydro_target_storage_violation", block_aggregation = BY_AVERAGE()},
-    {name = "inertia_violation", block_aggregation = BY_AVERAGE()}
+    {name = "inertia_violation", block_aggregation = BY_AVERAGE()},
+    {name = "hydro_reserve_down_capacity_violation", block_aggregation = BY_AVERAGE()},
+    {name = "thermal_reserve_down_capacity_violation", block_aggregation = BY_AVERAGE()},
+    {name = "battery_reserve_down_capacity_violation", block_aggregation = BY_AVERAGE()},
+    {name = "battery_reserve_down_storage_violation", block_aggregation = BY_AVERAGE()}
 }
 
 local viol_structs_debug = {
