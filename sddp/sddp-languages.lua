@@ -452,11 +452,6 @@ dictionary = {
         es = "Bateria: violacion de capacidad de reserva (Bajada)",
         pt = "Bateria: violacao de capacidade de reserva (Descida)"
     },
-    battery_reserve_down_storage_violation = {
-        en = "Battery: reserve storage violation (Down)",
-        es = "Bateria: violacion de almacenamiento de reserva (Bajada)",
-        pt = "Bateria: violacao de armazenamento de reserva (Descida)"
-    },
     vreseg = {
         en = "Reserve: joint requirement",
         es = "Reserva: requisito conjunto",
