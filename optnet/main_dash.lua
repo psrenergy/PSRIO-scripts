@@ -157,14 +157,24 @@ local dictionary = {
     -- Redundancy
     check_redundancy = {en = "Check Redundancy", es = "Verificación de redundancia", pt = "Verificação de redundância"},
     no_redundancy_msg = {
-        en = "No network reinforcement was added, so there is no element to check for redundancy.",
-        es = "No se añadió ningún refuerzo de red, por lo que no hay ningún elemento para verificar redundancia.",
-        pt = "Nenhum reforço de rede foi adicionado, portanto não há nenhum elemento para verificar redundância.",
+        en = "No critical redundancy result to report for this run.",
+        es = "No hay ningún resultado crítico de redundancia que reportar para esta ejecución.",
+        pt = "Não há nenhum resultado crítico de redundância a reportar para esta execução.",
     },
     no_redundancy_check_msg = {
         en = "The redundancy check was not enabled in this run, so no redundancy results were generated.",
         es = "La verificación de redundancia no fue habilitada en esta ejecución, por lo que no se generaron resultados de redundancia.",
         pt = "A verificação de redundância não foi habilitada nesta execução, portanto nenhum resultado de redundância foi gerado.",
+    },
+    redundancy_timeout_one = {
+        en = "The CPU time limit was reached during the redundancy check, so the analysis was not completed for year %s.",
+        es = "Se alcanzó el límite de tiempo de CPU durante la verificación de redundancia, por lo que el análisis no se completó para el año %s.",
+        pt = "O limite de tempo de CPU foi atingido durante a verificação de redundância, portanto a análise não foi concluída para o ano %s.",
+    },
+    redundancy_timeout_many = {
+        en = "The CPU time limit was reached during the redundancy check, so the analysis was not completed for the years %s.",
+        es = "Se alcanzó el límite de tiempo de CPU durante la verificación de redundancia, por lo que el análisis no se completó para los años %s.",
+        pt = "O limite de tempo de CPU foi atingido durante a verificação de redundância, portanto a análise não foi concluída para os anos %s.",
     },
 
     -- Investment results
@@ -497,44 +507,28 @@ function load_data(output, lang, optnet_data)
 
         -- ── Redundancy (max annual violation per element) ───────────────
         output.optnet[case].acline_redundancy       = acline:load("opn_dashboard_acline_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX_EXCLUDING(nil))
             :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
-            --:remove_zeros();
 
         output.optnet[case].transformer_redundancy  = transformer:load("opn_dashboard_transformer_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX_EXCLUDING(nil))
             :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
-            --:remove_zeros();
 
         output.optnet[case].three_winding_redundancy = three_winding:load("opn_dashboard_threewindingtransformer_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX_EXCLUDING(nil))
             :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
-            --:remove_zeros();
 
         output.optnet[case].series_cap_redundancy   = series_capacitor:load("opn_dashboard_seriescapacitor_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX_EXCLUDING(nil))
             :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
-            --:remove_zeros();
 
         output.optnet[case].flow_ctrl_redundancy    = flwcontroller:load("opn_dashboard_flowcontroller_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX_EXCLUDING(nil))
             :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
-            --:remove_zeros();
 
         output.optnet[case].dc_line_redundancy      = dcline:load("opn_dashboard_dcline_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX_EXCLUDING(nil))
             :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
-            --:remove_zeros();
 
         output.optnet[case].converter_redundancy    = generic:load("opn_dashboard_converter_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, false, false, false, correct_series)
-            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX_EXCLUDING(nil))
             :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
-            --:remove_zeros();
 
         output.optnet[case].dc_link_redundancy      = dclink:load("opn_dashboard_dclink_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX_EXCLUDING(nil))
             :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
-            --:remove_zeros();
 
         -- ── Length of the Lines ──────────────────────────────────────────
         local investment_decision = generic:load("opn_dashboard_investment_decision"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, false, false, false, correct_series);
@@ -866,9 +860,16 @@ function Tab.add_loading_upper_chart(self, n_cases, Lang, output, optnet_data)
     return has_data;
 end
 
+-- Values OptNet reserves in the redundancy outputs instead of a violation:
+-- -1 means the element was not analysed, -2 means the CPU time limit was hit
+-- before the check for that year could finish. Neither is plottable.
+local REDUNDANCY_NOT_ANALYSED = -1;
+local REDUNDANCY_TIMEOUT      = -2;
+
 function Tab.add_redundancy_chart(self, n_cases, Lang, output, optnet_data)
     local has_data = false;
     local any_enabled = false;
+    local timeout_years = {};       -- set of years where some element hit the CPU limit
 
     for case = 1, n_cases do
         if optnet_data[case].redundancy_check then
@@ -890,22 +891,25 @@ function Tab.add_redundancy_chart(self, n_cases, Lang, output, optnet_data)
                 seq = seq + 1;
                 seq_label = tostring(year);
 
-                local acline_stage = output.optnet[case].acline_redundancy:select_stage(seq);
-                local acline_redundancy = acline_stage:select_agents(acline_stage:ne(-1));
-                local transformer_stage = output.optnet[case].transformer_redundancy:select_stage(seq);
-                local transformer_redundancy = transformer_stage:select_agents(transformer_stage:ne(-1));
-                local transformer_3_stage = output.optnet[case].three_winding_redundancy:select_stage(seq);
-                local transformer_3_redundancy = transformer_3_stage:select_agents(transformer_3_stage:ne(-1));
-                local series_cap_stage = output.optnet[case].series_cap_redundancy:select_stage(seq);
-                local series_cap_redundancy = series_cap_stage:select_agents(series_cap_stage:ne(-1));
-                local flow_ctrl_stage = output.optnet[case].flow_ctrl_redundancy:select_stage(seq);
-                local flow_ctrl_redundancy = flow_ctrl_stage:select_agents(flow_ctrl_stage:ne(-1));
-                local dc_line_stage = output.optnet[case].dc_line_redundancy:select_stage(seq);
-                local dc_line_redundancy = dc_line_stage:select_agents(dc_line_stage:ne(-1));
-                local converter_stage = output.optnet[case].converter_redundancy:select_stage(seq);
-                local converter_redundancy = converter_stage:select_agents(converter_stage:ne(-1));
-                local dc_link_stage = output.optnet[case].dc_link_redundancy:select_stage(seq);
-                local dc_link_redundancy = dc_link_stage:select_agents(dc_link_stage:ne(-1));
+                -- Keeps only the plottable agents of this year, and flags the year
+                -- as incomplete as soon as any element reports the CPU time limit.
+                local function year_slice(series)
+                    local stage = series:select_stage(seq);
+                    if not stage:loaded() then return stage; end
+                    if stage:select_agents(stage:eq(REDUNDANCY_TIMEOUT)):loaded() then
+                        timeout_years[year] = true;
+                    end
+                    return stage:select_agents(stage:ne(REDUNDANCY_NOT_ANALYSED) & stage:ne(REDUNDANCY_TIMEOUT)):remove_zeros();
+                end
+
+                local acline_redundancy        = year_slice(output.optnet[case].acline_redundancy);
+                local transformer_redundancy   = year_slice(output.optnet[case].transformer_redundancy);
+                local transformer_3_redundancy = year_slice(output.optnet[case].three_winding_redundancy);
+                local series_cap_redundancy    = year_slice(output.optnet[case].series_cap_redundancy);
+                local flow_ctrl_redundancy     = year_slice(output.optnet[case].flow_ctrl_redundancy);
+                local dc_line_redundancy       = year_slice(output.optnet[case].dc_line_redundancy);
+                local converter_redundancy     = year_slice(output.optnet[case].converter_redundancy);
+                local dc_link_redundancy       = year_slice(output.optnet[case].dc_link_redundancy);
 
                 chart_redundancy:add_column_categories(acline_redundancy, dictionary.ac_lines[lang],
                     { color = table_element_color.ac_line, sequence = seq, sequence_label = seq_label });
@@ -940,6 +944,19 @@ function Tab.add_redundancy_chart(self, n_cases, Lang, output, optnet_data)
             -- check was never enabled, so the output files do not exist
             self:push(fallback_message(dictionary.no_redundancy_check_msg[Lang]));
         end
+    end
+
+    -- Shown whether or not the chart was drawn: the years below are incomplete.
+    -- When the check was never enabled there is nothing to read, so the set is
+    -- empty and only the fallback above is shown.
+    local incomplete_years = {};
+    for year in pairs(timeout_years) do table.insert(incomplete_years, year); end
+    if #incomplete_years > 0 then
+        table.sort(incomplete_years);
+        local year_list = table.concat(incomplete_years, ", ");
+        self:push(warning_message((#incomplete_years > 1)
+            and string.format(dictionary.redundancy_timeout_many[Lang], year_list)
+            or string.format(dictionary.redundancy_timeout_one[Lang], year_list)));
     end
 
     return has_data;
