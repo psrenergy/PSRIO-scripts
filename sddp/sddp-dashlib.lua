@@ -1413,9 +1413,9 @@ function Tab.final_cost_table(self, col_struct)
                 local maximum_cost = total_cost:aggregate_scenarios(BY_MAX()):to_list()[1];
                 local std_cost = total_cost:aggregate_scenarios(BY_STDDEV()):to_list()[1];
 
-                local replacement = col_struct.study[i]:get_parameter("CurrencyReference","k$");
+                local replacement = col_struct.study[i]:get_parameter("CurrencyReference","$");
 
-                self:push("| " .. col_struct.case_dir_list[i] .. " | " .. replacement .. " " .. string.format("%.2f", average_cost) .. " | " .. replacement .. " " .. string.format("%.2f", std_cost) .. " | " .. replacement .. " " .. string.format("%.2f", minimum_cost) .. " | " .. replacement .. " " .. string.format("%.2f", maximum_cost) .. " |");
+                self:push("| " .. col_struct.case_dir_list[i] .. " | " .. "k" .. replacement .. " " .. string.format("%.2f", average_cost) .. " | " .. "k" .. replacement .. " " .. string.format("%.2f", std_cost) .. " | " .. "k" .. replacement .. " " .. string.format("%.2f", minimum_cost) .. " | " .. "k" .. replacement .. " " .. string.format("%.2f", maximum_cost) .. " |");
             else
                 warn("Total cost not loaded")
             end
