@@ -437,15 +437,25 @@ dictionary = {
         es = "Inércia",
         pt = "Inercia"
     },
-    hydro_oxru_violation = {
-        en = "Hydro: multi-level outflow ramp-up",
-        es = "Hidro: rampa de defluencia multinivel (subida)",
-        pt = "Hidro: rampa de defluência multinível (subida)"
+    hydro_oxru_hour_violation = {
+        en = "Hydro: multi-level outflow ramp-up (hourly rate)",
+        es = "Hidro: rampa de defluencia multinivel (subida, tasa horaria)",
+        pt = "Hidro: rampa de defluência multinível (subida, taxa horária)"
     },
-    hydro_oxrd_violation = {
-        en = "Hydro: multi-level outflow ramp-down",
-        es = "Hidro: rampa de defluencia multinivel (bajada)",
-        pt = "Hidro: rampa de defluência multinível (descida)"
+    hydro_oxru_day_violation = {
+        en = "Hydro: multi-level outflow ramp-up (daily rate)",
+        es = "Hidro: rampa de defluencia multinivel (subida, tasa diaria)",
+        pt = "Hidro: rampa de defluência multinível (subida, taxa diária)"
+    },
+    hydro_oxrd_hour_violation = {
+        en = "Hydro: multi-level outflow ramp-down (hourly rate)",
+        es = "Hidro: rampa de defluencia multinivel (bajada, tasa horaria)",
+        pt = "Hidro: rampa de defluência multinível (descida, taxa horária)"
+    },
+    hydro_oxrd_day_violation = {
+        en = "Hydro: multi-level outflow ramp-down (daily rate)",
+        es = "Hidro: rampa de defluencia multinivel (bajada, tasa diaria)",
+        pt = "Hidro: rampa de defluência multinível (descida, taxa diária)"
     },
     vreseg = {
         en = "Reserve: joint requirement",
