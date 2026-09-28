@@ -59,7 +59,7 @@ local function save_hydro_violation(label, suffixes, unit_conversion)
             unit_violation_cost = hydro:load(label .. "_unit_violation_cost__week"):to_hour(BY_REPEATING());
         end
 
-        (unit_violation_cost * violation):save(label .. "_violation_cost" .. suffix, { variable_by_block = 2 });
+        (unit_violation_cost * violation):save(label .. "_violation_cost" .. suffix, { variable_by_block = 1 });
     end
 end
 
@@ -74,7 +74,7 @@ local function save_custom_hydro_violation(label_violation, label_violation_cost
             unit_violation_cost = hydro:load(label_unit_violation_cost .. "__week"):to_hour(BY_REPEATING());
         end
 
-        (unit_violation_cost * violation):save(label_violation_cost .. suffix, { variable_by_block = 2 });
+        (unit_violation_cost * violation):save(label_violation_cost .. suffix, { variable_by_block = 1 });
     end
 end
 
@@ -132,7 +132,6 @@ local function save_outputs()
 
     local violations = {
        { label = "alert_storage", unit_conversion = "hm3" },
-       { label = "discharge_rate", unit_conversion = "(m3/s)/hour" },
        { label = "irrigation", unit_conversion = "hm3" },
        { label = "max_oper_stge", unit_conversion = "hm3" },   -- "max_operative_storage",
        { label = "max_spill", unit_conversion = "hm3" },       -- "max_spillage",
@@ -149,6 +148,11 @@ local function save_outputs()
 
     for _, violation in ipairs(violations) do
         save_hydro_violation(violation.label, suffixes, violation.unit_conversion)
+    end
+
+    -- the SDDP discharge_rate_violation_cost (no suffix or __week) is written by SDDP itself; only the NCP ones are computed here
+    if is_genesys then
+        save_hydro_violation("discharge_rate", { "__day", "__hour", "__trueup" }, "(m3/s)/hour")
     end
 
     -- Custom violations
