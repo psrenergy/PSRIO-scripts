@@ -17,7 +17,7 @@ for _,agent in ipairs(dprdash_psrio_agents) do
     for stage = 1, dprdash_psrio:last_stage() do
         chart:add_area(dprdash_psrio:select_agent(agent)
              :select_stage(stage),
-             { sequence = stage, color = "#2690DA", showInLegend = false, yMin = ymin, yMax = ymax});
+             { sequence = stage, , sequence_label = "Stage: "..stage, color = "#2690DA", showInLegend = false, yMin = ymin, yMax = ymax});
     end
     tab:push(chart);
 end
