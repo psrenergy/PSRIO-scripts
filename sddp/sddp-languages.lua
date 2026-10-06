@@ -179,12 +179,12 @@ dictionary = {
     },
     breakdown_cost_time = {
         en = "Breakdown of total operating cost",
-        es = "Porciones del costo operativo total",
+        es = "Componentes del costo operativo total",
         pt = "Parcelas do custo operativo total"
     },
     breakdown_revenue_time = {
         en = "Breakdown of total operating revenues",
-        es = "Porciones de los ingresos operativos totales",
+        es = "Componentes de los ingresos operativos totales",
         pt = "Parcelas das receitas operativas totais"
     },
     execution_times = {
