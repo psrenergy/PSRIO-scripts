@@ -387,13 +387,7 @@ end
 
 function Expression.select_stages_of_outputs(self)
     if self:loaded() then
-        local index = self:study_index();
-        local last_stage = Study(index):stages_without_buffer_years();
-        if Study(index):get_parameter("NumeroAnosAdicionaisParm2",-1) == 1 then
-            last_stage = Study(index):stages();
-        end
-
-        return self:select_stages(1,last_stage)
+        return self:select_stages(1, 1)
     end
     return self
 end
@@ -1414,7 +1408,7 @@ function create_sim_report(col_struct)
         end
     else
         costs = objcop() / discount_rate():select_stages_of_outputs();
-        costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_stages(BY_SUM()):remove_zeros():save_cache();
+        costs_agg = costs:aggregate_scenarios(BY_AVERAGE()):aggregate_blocks(BY_SUM()):aggregate_stages(BY_SUM()):remove_zeros():save_cache();
 
         if is_greater_than_zero(costs_agg) then
             local obj_cost    = max(costs_agg, 0):remove_zeros();
@@ -1638,8 +1632,8 @@ function create_gen_report(col_struct)
         gerter[i] = col_struct.thermal[i]:load("gerter"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache();
         gerhid[i] = col_struct.hydro[i]:load("gerhid"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache();
         gergnd[i] = col_struct.renewable[i]:load("gergnd"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache();
-        gercsp[i] = col_struct.csp[i]:load("cspgen"):convert("GWh"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache();
-        gerbat[i] = col_struct.battery[i]:load("gerbat"):convert("GWh"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache(); -- Explicitly converting to GWh
+        gercsp[i] = col_struct.csp[i]:load("cspgen"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache();
+        gerbat[i] = col_struct.battery[i]:load("gerbat"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache();
         potinj[i] = col_struct.power_injection[i]:load("powinj"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache();
         defcit[i] = col_struct.system[i]:load("defcit"):select_stages_of_outputs():aggregate_scenarios(BY_AVERAGE()):save_cache();
     end
@@ -1688,10 +1682,10 @@ function create_gen_report(col_struct)
         end
 
         -- Data processing
-        total_hydro_gen = gerhid[i]:aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_hydro_gen_age);
-        total_batt_gen  = gerbat[i]:aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_batt_gen_age);
-        total_deficit   = defcit[i]:aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_deficit_age);
-        total_pot_inj   = potinj[i]:aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_pot_inj_age);
+        total_hydro_gen = gerhid[i]:aggregate_agents(BY_SUM(), total_hydro_gen_age);
+        total_batt_gen  = gerbat[i]:aggregate_agents(BY_SUM(), total_batt_gen_age);
+        total_deficit   = defcit[i]:aggregate_agents(BY_SUM(), total_deficit_age);
+        total_pot_inj   = potinj[i]:aggregate_agents(BY_SUM(), total_pot_inj_age);
 
         -- Renewable generation is broken into 3 types
         local wind_agents  = col_struct.renewable[i].tech_type:eq(1):remove_zeros():agents();
@@ -1702,12 +1696,12 @@ function create_gen_report(col_struct)
                                          :remove_agents(solar_agents)
                                          :remove_agents(small_hydro_agents);
 
-        total_other_renw_gen  = total_other_renw_gen:aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_other_renw_gen_age);
-        total_wind_gen        = gergnd[i]:select_agents(wind_agents):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_wind_gen_age);
-        total_solar_gen       = gergnd[i]:select_agents(solar_agents):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_solar_gen_age);
-        total_small_hydro_gen = gergnd[i]:select_agents(small_hydro_agents):aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_small_hydro_gen_age);
-        total_csp_gen         = gercsp[i]:aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_csp_gen_age);
-        total_thermal_gen = gerter[i]:aggregate_scenarios(BY_AVERAGE()):aggregate_agents(BY_SUM(), total_thermal_gen_age);
+        total_other_renw_gen  = total_other_renw_gen:aggregate_agents(BY_SUM(), total_other_renw_gen_age);
+        total_wind_gen        = gergnd[i]:select_agents(wind_agents):aggregate_agents(BY_SUM(), total_wind_gen_age);
+        total_solar_gen       = gergnd[i]:select_agents(solar_agents):aggregate_agents(BY_SUM(), total_solar_gen_age);
+        total_small_hydro_gen = gergnd[i]:select_agents(small_hydro_agents):aggregate_agents(BY_SUM(), total_small_hydro_gen_age);
+        total_csp_gen         = gercsp[i]:aggregate_agents(BY_SUM(), total_csp_gen_age);
+        total_thermal_gen = gerter[i]:aggregate_agents(BY_SUM(), total_thermal_gen_age);
 
         if studies > 1 then
             if total_hydro_gen:loaded() then
@@ -1870,15 +1864,15 @@ function create_gen_report(col_struct)
         local agents = col_struct.system[i]:labels();
 
         -- Data processing
-        total_hydro_gen   = gerhid[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_scenarios(BY_AVERAGE());
-        total_thermal_gen = gerter[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_scenarios(BY_AVERAGE());
-        total_batt_gen    = gerbat[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_scenarios(BY_AVERAGE());
-        total_deficit     = defcit[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_scenarios(BY_AVERAGE());
-        total_pot_inj     = potinj[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_scenarios(BY_AVERAGE());
-        total_csp_gen     = gercsp[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM):aggregate_scenarios(BY_AVERAGE());
+        total_hydro_gen   = gerhid[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM);
+        total_thermal_gen = gerter[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM);
+        total_batt_gen    = gerbat[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM);
+        total_deficit     = defcit[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM);
+        total_pot_inj     = potinj[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM);
+        total_csp_gen     = gercsp[i]:aggregate_agents(BY_SUM(), Collection.SYSTEM);
 
         -- Renewable generation is broken into 3 types
-        local renw_gen = gergnd[i]:aggregate_scenarios(BY_AVERAGE()):save_cache();
+        local renw_gen = gergnd[i]:save_cache();
         total_other_renw_gen = renw_gen:select_agents(col_struct.renewable[i].tech_type:ne(1) &
                                       col_struct.renewable[i].tech_type:ne(2) &
                                       col_struct.renewable[i].tech_type:ne(4))
