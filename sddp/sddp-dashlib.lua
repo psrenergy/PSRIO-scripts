@@ -297,6 +297,13 @@ function load_info_file(file_name,case_index)
     exe_mode   = toml:get_integer("mode", 0);
 	arch       = toml:get_string("arch", "-");
 
+    -- Block resolution (written by SDDP; -1 if not available in the info file)
+    local blocks                          = toml:get_integer("blocks", -1);
+    local policy_block_aggregation        = toml:get_integer("policy_block_aggregation", -1);
+    local simulation_block_aggregation    = toml:get_integer("simulation_block_aggregation", -1);
+    local policy_disaggregation_iteration = toml:get_integer("policy_disaggregation_iteration", -1);
+    local typical_days                    = toml:get_integer("typical_days", 0);
+
     info_struct.model     = model;
     info_struct.user      = user;
     info_struct.version   = version;
@@ -307,6 +314,11 @@ function load_info_file(file_name,case_index)
     info_struct.cloud     = cloud;
     info_struct.exe_mode  = exe_mode;
 	info_struct.arch      = arch;
+    info_struct.blocks                          = blocks;
+    info_struct.policy_block_aggregation        = policy_block_aggregation;
+    info_struct.simulation_block_aggregation    = simulation_block_aggregation;
+    info_struct.policy_disaggregation_iteration = policy_disaggregation_iteration;
+    info_struct.typical_days                    = typical_days;
 
     return info_struct;
 end
@@ -466,70 +478,39 @@ local AGRBLK_NONE = 0;
 local AGRBLK_ONE  = 1;
 local AGRBLK_MAP  = 2;
 
--- Reproduces the definition of pctr%agrblk_pol and pctr%agrblk_sim
--- made by the model (ledger.for and leparm.for). Options available only
--- in the CHAVE file (APOL, ABLK and NBAL) are not visible to PSRIO
-function get_block_aggregation(study)
-    local is_policy        = study:get_parameter("Objetivo", -100) == 1;
-    local number_of_blocks = study:get_parameter("NumberBlocks", -1);
-    local bdis             = study:get_parameter("BDIS", 0) or 0;
-
-    local agrblk_pol = AGRBLK_ONE;
-    local agrblk_sim = AGRBLK_NONE;
-
-    -- Aggregation of load blocks in policy (ledger.for)
-    if is_policy and ( study:get_parameter("NumeroBlocosDemandaParm2", -1) == 1 or number_of_blocks == 1 ) then
-        agrblk_pol = AGRBLK_NONE;
-    end
-
-    -- Block disaggregation in policy (BDIS)
-    if bdis > 0 then
-        agrblk_pol = AGRBLK_ONE;
-    end
-    local hybrid_disaggregation = bdis == 1;
-
-    -- Different number of blocks (DBLK/TBLK); aggregation in policy takes precedence
-    if study:get_parameter("DBLK", 0) == 1 then
-        local tblk = study:get_parameter("TBLK", AGRBLK_ONE);
-        if agrblk_pol ~= AGRBLK_ONE then
-            agrblk_pol = tblk;
-        end
-        agrblk_sim = tblk;
-    end
-
-    -- If the case has 1 block originally, the aggregation in a single block is not needed
-    if number_of_blocks == 1 then
-        if agrblk_pol == AGRBLK_ONE then
-            agrblk_pol = AGRBLK_NONE;
-        end
-        if agrblk_sim == AGRBLK_ONE then
-            agrblk_sim = AGRBLK_NONE;
-        end
-    end
-
-    -- Typical days representation activates internal block-remapping,
-    -- unless for policy with aggregation in one block
-    local typical_days = study:get_parameter("TDAY", -1) == 1;
-    if typical_days then
-        if not ( agrblk_pol == AGRBLK_ONE and is_policy ) then
-            agrblk_pol = AGRBLK_MAP;
-        end
-        agrblk_sim = AGRBLK_MAP;
-    end
-
-    return agrblk_pol, agrblk_sim, hybrid_disaggregation, typical_days;
-end
-
-function get_block_resolution_label(study, agrblk, typical_days)
+-- Label of the block resolution, given the block aggregation written by SDDP in SDDP.info
+function get_block_resolution_label(info, agrblk)
     if agrblk == AGRBLK_ONE then
         return "1 " .. dictionary.cell_block[LANGUAGE];
     elseif agrblk == AGRBLK_MAP then
-        if typical_days then
-            return dictionary.cell_typical_days[LANGUAGE];
+        if info.typical_days > 0 then
+            return info.typical_days .. " " .. dictionary.cell_typical_days[LANGUAGE];
         end
         return dictionary.cell_block_remap[LANGUAGE];
     end
-    return study:get_parameter("NumberBlocks", -1) .. " " .. dictionary.cell_blocks[LANGUAGE];
+    return info.blocks .. " " .. dictionary.cell_blocks[LANGUAGE];
+end
+
+-- Returns the policy and simulation resolution labels
+function get_resolution_labels(study, info)
+    -- Info file without block resolution (older versions): original number of blocks
+    if info == nil or info.blocks == nil or info.blocks < 0 then
+        local label = study:get_parameter("NumberBlocks", -1) .. " " .. dictionary.cell_blocks[LANGUAGE];
+        return label, label;
+    end
+
+    local policy_resolution = get_block_resolution_label(info, info.policy_block_aggregation);
+    if info.policy_disaggregation_iteration >= 0 then
+        -- Aggregated blocks in the first iterations and simulation resolution afterwards
+        policy_resolution = policy_resolution .. " → " .. get_block_resolution_label(info, info.simulation_block_aggregation);
+        if info.policy_disaggregation_iteration > 0 then
+            policy_resolution = policy_resolution .. " (" .. dictionary.cell_from_iteration[LANGUAGE] .. " " ..
+                                info.policy_disaggregation_iteration .. ")";
+        end
+    end
+    local simulation_resolution = get_block_resolution_label(info, info.simulation_block_aggregation);
+
+    return policy_resolution, simulation_resolution;
 end
 
 function create_tab_summary(col_struct, info_struct)
@@ -666,18 +647,7 @@ function create_tab_summary(col_struct, info_struct)
 
         -- type of execution
         exe_type[i] = dictionary.cell_policy[LANGUAGE];
-        local agrblk_pol, agrblk_sim, hybrid_disaggregation, typical_days = get_block_aggregation(col_struct.study[i]);
-        local policy_number_of_blocks = get_block_resolution_label(col_struct.study[i], agrblk_pol, typical_days);
-        if hybrid_disaggregation then
-            -- One block in the first iterations, all blocks from iteration BDIT onwards
-            policy_number_of_blocks = policy_number_of_blocks .. " → " ..
-                                      get_block_resolution_label(col_struct.study[i], AGRBLK_NONE, typical_days);
-            local bdit = col_struct.study[i]:get_parameter("BDIT", -1);
-            if bdit ~= nil and bdit > 0 then
-                policy_number_of_blocks = policy_number_of_blocks .. " (" .. dictionary.cell_from_iteration[LANGUAGE] .. " " .. bdit .. ")";
-            end
-        end
-        local resolution_of_simulation = get_block_resolution_label(col_struct.study[i], agrblk_sim, typical_days);
+        local policy_number_of_blocks, resolution_of_simulation = get_resolution_labels(col_struct.study[i], info_struct[i]);
         local number_of_openings = tostring(col_struct.study[i]:openings());
         local number_of_forwards = tostring(col_struct.study[i]:scenarios());
         local mumber_of_simulated_series = number_of_forwards;
