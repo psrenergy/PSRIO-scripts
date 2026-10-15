@@ -303,6 +303,7 @@ function load_info_file(file_name,case_index)
     local simulation_block_aggregation    = toml:get_integer("simulation_block_aggregation", -1);
     local policy_disaggregation_iteration = toml:get_integer("policy_disaggregation_iteration", -1);
     local typical_days                    = toml:get_integer("typical_days", 0);
+    local remap_blocks                    = toml:get_integer("remap_blocks", 0);
 
     info_struct.model     = model;
     info_struct.user      = user;
@@ -319,6 +320,7 @@ function load_info_file(file_name,case_index)
     info_struct.simulation_block_aggregation    = simulation_block_aggregation;
     info_struct.policy_disaggregation_iteration = policy_disaggregation_iteration;
     info_struct.typical_days                    = typical_days;
+    info_struct.remap_blocks                    = remap_blocks;
 
     return info_struct;
 end
@@ -485,6 +487,9 @@ function get_block_resolution_label(info, agrblk)
     elseif agrblk == AGRBLK_MAP then
         if info.typical_days > 0 then
             return info.typical_days .. " " .. dictionary.cell_typical_days[LANGUAGE];
+        end
+        if info.remap_blocks > 0 then
+            return info.remap_blocks .. " " .. dictionary.cell_remapped_blocks[LANGUAGE];
         end
         return dictionary.cell_block_remap[LANGUAGE];
     end

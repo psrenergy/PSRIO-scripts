@@ -652,6 +652,11 @@ dictionary = {
         es = "Remapeo de bloques",
         pt = "Remapeamento de blocos"
     },
+    cell_remapped_blocks = {
+        en = "Remapped blocks",
+        es = "Bloques remapeados",
+        pt = "Blocos remapeados"
+    },
     cell_typical_days = {
         en = "Typical days",
         es = "Días típicos",
