@@ -178,14 +178,14 @@ dictionary = {
         pt = "Custo marginal anual por sistema"
     },
     stg_cmo = {
-        en = "Average marginal costs per stage per system",
-        es = "Costos marginales promedio por etapa por sistema",
-        pt = "Custos marginais médios por estágio por sistema"
+        en = "Marginal cost",
+        es = "Costo marginal",
+        pt = "Custo marginal"
     },
     stg_cmo_sto = {
-        en = "Stochastic marginal costs per stage per system",
-        es = "Costos marginales estocásticos por etapa por sistema",
-        pt = "Custos marginais estocásticos por estágio por sistema"
+        en = "System marginal cost",
+        es = "Costo marginal del sistema",
+        pt = "Custo marginal do sistema"
     },
     stg_cmo_ind = {
         en = "Marginal cost",
