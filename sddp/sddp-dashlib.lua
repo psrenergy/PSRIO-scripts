@@ -302,6 +302,14 @@ function load_info_file(file_name,case_index)
     total_processes = toml:get_integer("total_process", 1);
     processing_type = toml:get_string("processing_type", "-");
 
+    -- Block resolution (written by SDDP; -1 if not available in the info file)
+    local blocks                          = toml:get_integer("blocks", -1);
+    local policy_block_aggregation        = toml:get_integer("policy_block_aggregation", -1);
+    local simulation_block_aggregation    = toml:get_integer("simulation_block_aggregation", -1);
+    local policy_disaggregation_iteration = toml:get_integer("policy_disaggregation_iteration", -1);
+    local typical_days                    = toml:get_integer("typical_days", 0);
+    local remap_blocks                    = toml:get_integer("remap_blocks", 0);
+
     info_struct.model           = model;
     info_struct.user            = user;
     info_struct.version         = version;
@@ -315,6 +323,12 @@ function load_info_file(file_name,case_index)
     info_struct.total_nodes     = total_nodes;
     info_struct.total_processes = total_processes;
     info_struct.processing_type = processing_type;
+    info_struct.blocks                          = blocks;
+    info_struct.policy_block_aggregation        = policy_block_aggregation;
+    info_struct.simulation_block_aggregation    = simulation_block_aggregation;
+    info_struct.policy_disaggregation_iteration = policy_disaggregation_iteration;
+    info_struct.typical_days                    = typical_days;
+    info_struct.remap_blocks                    = remap_blocks;
 
     return info_struct;
 end
@@ -467,6 +481,49 @@ function get_nonconv_info(col_struct, file_name, nonconv_list, nonconv_order, ca
             end
         end
     end
+end
+
+-- Block aggregation types (same as AGRBLK_* in sddp_controls.f90)
+local AGRBLK_NONE = 0;
+local AGRBLK_ONE  = 1;
+local AGRBLK_MAP  = 2;
+
+-- Label of the block resolution, given the block aggregation written by SDDP in SDDP.info
+function get_block_resolution_label(info, agrblk)
+    if agrblk == AGRBLK_ONE then
+        return "1 " .. dictionary.cell_block[LANGUAGE];
+    elseif agrblk == AGRBLK_MAP then
+        if info.typical_days > 0 then
+            return info.typical_days .. " " .. dictionary.cell_typical_days[LANGUAGE];
+        end
+        if info.remap_blocks > 0 then
+            return info.remap_blocks .. " " .. dictionary.cell_remapped_blocks[LANGUAGE];
+        end
+        return dictionary.cell_block_remap[LANGUAGE];
+    end
+    return info.blocks .. " " .. dictionary.cell_blocks[LANGUAGE];
+end
+
+-- Returns the policy and simulation resolution labels
+function get_resolution_labels(study, info)
+    -- Info file without block resolution (older versions): original number of blocks
+    if info == nil or info.blocks == nil or info.blocks < 0 then
+        local label = study:get_parameter("NumberBlocks", -1) .. " " .. dictionary.cell_blocks[LANGUAGE];
+        return label, label;
+    end
+
+    local policy_resolution = get_block_resolution_label(info, info.policy_block_aggregation);
+    if info.policy_disaggregation_iteration >= 0 then
+        -- Aggregated blocks in the first iterations and simulation resolution afterwards
+        policy_resolution = policy_resolution .. " → " .. get_block_resolution_label(info, info.simulation_block_aggregation);
+        if info.policy_disaggregation_iteration > 0 then
+            policy_resolution = policy_resolution .. " (" .. dictionary.cell_from_iteration[LANGUAGE] .. " " ..
+                                info.policy_disaggregation_iteration .. ")";
+        end
+    end
+    local simulation_resolution = get_block_resolution_label(info, info.simulation_block_aggregation);
+
+    return policy_resolution, simulation_resolution;
 end
 
 function create_tab_summary(col_struct, info_struct)
@@ -624,9 +681,7 @@ function create_tab_summary(col_struct, info_struct)
 
         -- type of execution
         exe_type[i] = dictionary.cell_policy[LANGUAGE];
-        local number_of_blocks = col_struct.study[i]:get_parameter("NumberBlocks", -1);
-        local policy_number_of_blocks = number_of_blocks .. " " .. dictionary.cell_blocks[LANGUAGE]
-        local resolution_of_simulation = policy_number_of_blocks;
+        local policy_number_of_blocks, resolution_of_simulation = get_resolution_labels(col_struct.study[i], info_struct[i]);
         local number_of_openings = tostring(col_struct.study[i]:openings());
         local number_of_forwards = tostring(col_struct.study[i]:scenarios());
         local mumber_of_simulated_series = number_of_forwards;
