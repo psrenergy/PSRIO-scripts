@@ -210,10 +210,15 @@ local dictionary = {
         es = "Baterías",
         pt = "Baterias",
     },
-    cell_buses = {
-        en = "Buses",
-        es = "Barras",
-        pt = "Barras",
+    cell_ac_bus = {
+        en = "AC buses",
+        es = "Barras de CA",
+        pt = "Barras de CA",
+    },
+    cell_dc_bus = {
+        en = "DC buses",
+        es = "Barras de CC",
+        pt = "Barras de CC",
     },
     cell_hydro_plants = {
         en = "Hydro plants",
@@ -331,6 +336,18 @@ local dictionary = {
         pt = "A tolerância de mismatch de potência reativa (%.4f) foi respeitada em todos os problemas."
     },
 
+    mismatch_active_file_missing_msg = {
+        en = "Active power mismatch results (%s) were not found for this case, so this analysis is not shown.",
+        es = "No se encontraron los resultados de mismatch de potencia activa (%s) para este caso; este análisis no se muestra.",
+        pt = "Os resultados de mismatch de potência ativa (%s) não foram encontrados para este caso; esta análise não é exibida."
+    },
+
+    mismatch_reactive_file_missing_msg = {
+        en = "Reactive power mismatch results (%s) were not found for this case, so this analysis is not shown.",
+        es = "No se encontraron los resultados de mismatch de potencia reactiva (%s) para este caso; este análisis no se muestra.",
+        pt = "Os resultados de mismatch de potência reativa (%s) não foram encontrados para este caso; esta análise não é exibida."
+    },
+
     voltage_margin_msg = {
         en = "The voltage safety margin represents the **normalized distance** of the current voltage relative to its lower and upper operating limits. It is calculated as: $$ Margin = \\\\frac{Vcur - Vmin}{Vmax - Vmin} $$ where Vmax = upper voltage limit, Vmin = lower voltage limit and Vcur = current voltage value. Margin values equal to 1 pu indicate that the voltage is at the upper limit, while values equal to 0 pu indicate that it is at the lower limit.",
         es = "El margen de seguridad de tensión representa la **distancia normalizada** del voltaje actual con respecto a sus límites inferior y superior de operación. Se calcula como: $$ Margen = \\\\frac{Vcur - Vmin}{Vmax - Vmin} $$ donde Vmax = límite superior de tensión, Vmin = límite inferior de tensión y Vcur = valor actual de la tensión. Valores de margen iguales a 1 pu indican que la tensión se encuentra en el límite superior, mientras que valores iguales a 0 pu indican que se encuentra en el límite inferior.",
@@ -383,16 +400,15 @@ local dictionary = {
     }
 }
 
--- Wraps a chart fallback message (shown when a chart has no data to display) in a
--- soft "success/info" callout box. Pushed strings are rendered as markdown, which
--- passes raw HTML through, so an inline-styled <div> gives a consistent look.
+-- Wraps a chart fallback message (shown when a chart has no data to display) in an
+-- "info" callout box. Pure markdown only: PSRIO rc25+ drops raw HTML from pushed
+-- markdown, so the box is a one-cell table (bordered, padded, wraps long text).
+-- "|" would split the cell and a newline would end the table, hence the escaping.
+-- The trailing blank line ends the table so the next push (e.g. "# Heading") is
+-- not absorbed into it — PSRIO concatenates consecutive markdown pushes.
 function fallback_message(text)
-    -- Trailing blank line so the raw-HTML block is closed: PSRIO concatenates consecutive
-    -- markdown pushes, and in CommonMark an HTML block runs until a blank line — without it
-    -- the next push (e.g. a "# Heading") gets absorbed into the div and rendered literally.
-    return '<div style="background:#F1F9F4; border:1px solid #CDE8D7; border-radius:8px; '
-        .. 'padding:14px 18px; margin:6px 0; color:#2E7D50; font-size:0.95em; line-height:1.45;">'
-        .. text .. '</div>\n\n';
+    local cell = text:gsub("|", "\\|"):gsub("\n", " ");
+    return "| ℹ️ " .. cell .. " |\n|:---|\n\n";
 end
 
 -- auxiliar function to deal with selecting the correct scenarios
@@ -507,8 +523,8 @@ function load_data(output, lang, optflow_data)
         local reactive_injection = bus:load("opf_qinj"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, false, false, correct_series):save_cache();
         local reactive_injection_pos = ifelse(reactive_injection:ge(1), reactive_injection, 0);
         local reactive_injection_neg = ifelse(reactive_injection:le(-1), reactive_injection, 0);
-        output.optflow[case].max_pos_reactive_injection_by_bus = reactive_injection_pos:aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_scenarios(BY_MAX_EXCLUDING(nil)):aggregate_stages(BY_MAX(), Profile.PER_YEAR);
-        output.optflow[case].max_neg_reactive_injection_by_bus = reactive_injection_neg:aggregate_blocks(BY_MIN_EXCLUDING(nil)):aggregate_scenarios(BY_MIN_EXCLUDING(nil)):aggregate_stages(BY_MIN(), Profile.PER_YEAR);
+        output.optflow[case].max_pos_reactive_injection_by_bus = reactive_injection_pos:aggregate_blocks(BY_MAX_EXCLUDING_KEEP_NAN(nil)):aggregate_scenarios(BY_MAX_EXCLUDING_KEEP_NAN(nil)):aggregate_stages(BY_MAX(), Profile.PER_YEAR);
+        output.optflow[case].max_neg_reactive_injection_by_bus = reactive_injection_neg:aggregate_blocks(BY_MIN_EXCLUDING_KEEP_NAN(nil)):aggregate_scenarios(BY_MIN_EXCLUDING_KEEP_NAN(nil)):aggregate_stages(BY_MIN(), Profile.PER_YEAR);
         output.optflow[case].reactive_demand = bus:load("opf_qloa"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.reactive_load[lang]);
 
         output.optflow[case].active_load_shedding = bus:load("opf_lshp"):select_optflow_date_scn_blcks(optflow_data[case], system_codes, true, true, true, correct_series):aggregate_agents(BY_SUM(), dictionary.active_deficit[lang]);
@@ -542,8 +558,10 @@ function Tab.add_convergence_status_chart(self, n_cases, Lang, output)
             { color = "#8ACE7E", from = -0.1, to = 0.1, name = dictionary.optimal_solution[Lang]},
             { color = "#4E79A7", from = 0.9, to = 1.1, name = dictionary.feasible_solution[Lang]},
             { color = "#7A7A7A", from = -1.1, to = -0.9, name = dictionary.unselected[Lang]},
-            { color = "#FF796A", from = -2.1, to = -2.0, name = dictionary.not_converged_solution[Lang]},
-            { color = "#C64B3E", from = -2.9, to = -3.1, name = dictionary.divergent_solution[Lang]}
+            -- from must be < to: Highcharts matches from <= value <= to, and a value
+            -- outside every class falls back to its series' palette color.
+            { color = "#FF796A", from = -2.1, to = -1.9, name = dictionary.not_converged_solution[Lang]},
+            { color = "#C64B3E", from = -3.1, to = -2.9, name = dictionary.divergent_solution[Lang]}
         }
     };
 
@@ -599,8 +617,8 @@ function Tab.add_stage_solution_times_chart(self, n_cases, Lang, output)
         end
 
         chart:add_line(times:aggregate_scenarios(BY_AVERAGE_EXCLUDING_KEEP_NAN(nil)), { color = table_case_color[case]});
-        chart:add_area_range(times:aggregate_scenarios(BY_MIN_EXCLUDING(nil)):rename_agent("MIN"),
-                            times:aggregate_scenarios(BY_MAX_EXCLUDING(nil)):rename_agent("MAX"),
+        chart:add_area_range(times:aggregate_scenarios(BY_MIN_EXCLUDING_KEEP_NAN(nil)):rename_agent("MIN"),
+                            times:aggregate_scenarios(BY_MAX_EXCLUDING_KEEP_NAN(nil)):rename_agent("MAX"),
                             { color = table_case_color[case], lineWidth = 0, fillOpacity = 0.2}
         );
     end
@@ -615,30 +633,35 @@ function Tab.active_solution_mismatches_charts(self, n_cases, Lang, optflow_data
             subtitle = Generic(case):cloudname();
         end
 
-        local pos_active_power_mismatches = max(0,output.optflow[case].active_power_mismatches);
-        local neg_active_power_mismatches = min(0,output.optflow[case].active_power_mismatches);
-
-        local pos_active_power_mismatches_gt_tolerance = (pos_active_power_mismatches:gt(optflow_data[case].mismatch_tolerance) * pos_active_power_mismatches):remove_zeros();
-        local neg_active_power_mismatches_lt_tolerance = (neg_active_power_mismatches:lt(-optflow_data[case].mismatch_tolerance) * neg_active_power_mismatches):remove_zeros();
-
-        if pos_active_power_mismatches_gt_tolerance:loaded() and neg_active_power_mismatches_lt_tolerance:loaded() then
-            local msg = dictionary.mismatch_solution_msg[Lang];
-            self:push(msg);
-
-            local chart_pos = Chart(dictionary.active_power_solution_mismatches[Lang] .. " - " .. dictionary.positive[Lang], subtitle);
-            chart_pos:add_probability_of_exceedance_without_zeros(pos_active_power_mismatches_gt_tolerance, {showInLegend = false});
-
-            local chart_neg = Chart(dictionary.active_power_solution_mismatches[Lang] .. " - " .. dictionary.negative[Lang], subtitle);
-            chart_neg:add_probability_of_nonexceedance_without_zeros(neg_active_power_mismatches_lt_tolerance, {showInLegend = false});
-            
-            self:push({chart_pos,chart_neg});
+        -- Missing file: say so instead of falling into the "tolerance respected" message.
+        if not output.optflow[case].active_power_mismatches:loaded() then
+            self:push(fallback_message(string.format(dictionary.mismatch_active_file_missing_msg[Lang], "opf_mismatmw")));
         else
-            local msg = string.format(
-            dictionary.mismatch_active_tolerance_msg[Lang],
-            optflow_data[case].mismatch_tolerance);
-            self:push(fallback_message(msg));
+            local pos_active_power_mismatches = max(0,output.optflow[case].active_power_mismatches);
+            local neg_active_power_mismatches = min(0,output.optflow[case].active_power_mismatches);
+
+            local pos_active_power_mismatches_gt_tolerance = (pos_active_power_mismatches:gt(optflow_data[case].mismatch_tolerance) * pos_active_power_mismatches):remove_zeros();
+            local neg_active_power_mismatches_lt_tolerance = (neg_active_power_mismatches:lt(-optflow_data[case].mismatch_tolerance) * neg_active_power_mismatches):remove_zeros();
+
+            if pos_active_power_mismatches_gt_tolerance:loaded() and neg_active_power_mismatches_lt_tolerance:loaded() then
+                local msg = dictionary.mismatch_solution_msg[Lang];
+                self:push(msg);
+
+                local chart_pos = Chart(dictionary.active_power_solution_mismatches[Lang] .. " - " .. dictionary.positive[Lang], subtitle);
+                chart_pos:add_probability_of_exceedance_without_zeros(pos_active_power_mismatches_gt_tolerance, {showInLegend = false});
+
+                local chart_neg = Chart(dictionary.active_power_solution_mismatches[Lang] .. " - " .. dictionary.negative[Lang], subtitle);
+                chart_neg:add_probability_of_nonexceedance_without_zeros(neg_active_power_mismatches_lt_tolerance, {showInLegend = false});
+
+                self:push({chart_pos,chart_neg});
+            else
+                local msg = string.format(
+                dictionary.mismatch_active_tolerance_msg[Lang],
+                optflow_data[case].mismatch_tolerance);
+                self:push(fallback_message(msg));
+            end
         end
-        
+
     end
 end
 
@@ -650,25 +673,30 @@ function Tab.reactive_solution_mismatches_charts(self, n_cases, Lang, optflow_da
             subtitle = Generic(case):cloudname();
         end
 
-        local pos_reactive_power_mismatches = max(0,output.optflow[case].reactive_power_mismatches);
-        local neg_reactive_power_mismatches = min(0,output.optflow[case].reactive_power_mismatches);
-
-        local pos_reactive_power_mismatches_gt_tolerance = (pos_reactive_power_mismatches:gt(optflow_data[case].mismatch_tolerance) * pos_reactive_power_mismatches):remove_zeros();
-        local neg_reactive_power_mismatches_lt_tolerance = (neg_reactive_power_mismatches:lt(-optflow_data[case].mismatch_tolerance) * neg_reactive_power_mismatches):remove_zeros();
-
-        if pos_reactive_power_mismatches_gt_tolerance:loaded() and neg_reactive_power_mismatches_lt_tolerance:loaded() then
-            local chart_pos = Chart(dictionary.reactive_power_solution_mismatches[Lang] .. " - " .. dictionary.positive[Lang], subtitle);
-            chart_pos:add_probability_of_exceedance_without_zeros(pos_reactive_power_mismatches_gt_tolerance, {showInLegend = false});
-
-            local chart_neg = Chart(dictionary.reactive_power_solution_mismatches[Lang] .. " - " .. dictionary.negative[Lang], subtitle);
-            chart_neg:add_probability_of_nonexceedance_without_zeros(neg_reactive_power_mismatches_lt_tolerance, {showInLegend = false});
-
-            self:push({chart_pos,chart_neg});
+        -- Missing file: say so instead of falling into the "tolerance respected" message.
+        if not output.optflow[case].reactive_power_mismatches:loaded() then
+            self:push(fallback_message(string.format(dictionary.mismatch_reactive_file_missing_msg[Lang], "opf_mismatmvar")));
         else
-            local msg = string.format(
-            dictionary.mismatch_reactive_tolerance_msg[Lang],
-            optflow_data[case].mismatch_tolerance);
-            self:push(fallback_message(msg));
+            local pos_reactive_power_mismatches = max(0,output.optflow[case].reactive_power_mismatches);
+            local neg_reactive_power_mismatches = min(0,output.optflow[case].reactive_power_mismatches);
+
+            local pos_reactive_power_mismatches_gt_tolerance = (pos_reactive_power_mismatches:gt(optflow_data[case].mismatch_tolerance) * pos_reactive_power_mismatches):remove_zeros();
+            local neg_reactive_power_mismatches_lt_tolerance = (neg_reactive_power_mismatches:lt(-optflow_data[case].mismatch_tolerance) * neg_reactive_power_mismatches):remove_zeros();
+
+            if pos_reactive_power_mismatches_gt_tolerance:loaded() and neg_reactive_power_mismatches_lt_tolerance:loaded() then
+                local chart_pos = Chart(dictionary.reactive_power_solution_mismatches[Lang] .. " - " .. dictionary.positive[Lang], subtitle);
+                chart_pos:add_probability_of_exceedance_without_zeros(pos_reactive_power_mismatches_gt_tolerance, {showInLegend = false});
+
+                local chart_neg = Chart(dictionary.reactive_power_solution_mismatches[Lang] .. " - " .. dictionary.negative[Lang], subtitle);
+                chart_neg:add_probability_of_nonexceedance_without_zeros(neg_reactive_power_mismatches_lt_tolerance, {showInLegend = false});
+
+                self:push({chart_pos,chart_neg});
+            else
+                local msg = string.format(
+                dictionary.mismatch_reactive_tolerance_msg[Lang],
+                optflow_data[case].mismatch_tolerance);
+                self:push(fallback_message(msg));
+            end
         end
     end
 
@@ -848,6 +876,31 @@ function Tab.reactive_load_shedding_chart(self, n_cases, Lang, output)
     end
 end
 
+-- Fixed bus list (and order) for the animated reactive-injection charts.
+-- PSRPlotPlay shares ONE category axis among all frames: the categories of every
+-- frame are merged into a single list in first-seen order and each frame's data is
+-- remapped onto it (missing buses -> 0). Per-frame category order/filtering is
+-- therefore lost in the browser. Instead, rank the buses over the whole horizon
+-- (max positive / most negative injection), keep the top max_buses, and give
+-- every frame exactly that list in that order, so the axis is deliberate and the
+-- frames only change the bar heights.
+local function reactive_injection_bus_order(by_bus, positive, max_buses)
+    if not by_bus:loaded() then return nil; end
+    local overall;
+    if positive then
+        overall = by_bus:aggregate_stages(BY_MAX()):remove_zeros();
+    else
+        overall = by_bus:aggregate_stages(BY_MIN()):remove_zeros();
+    end
+    local n = overall:agents_size();
+    if n == 0 then return nil; end
+    if n > max_buses then n = max_buses; end
+    if positive then
+        return overall:select_largest_agents(n):sort_agents_descending():agents();
+    end
+    return overall:select_smallest_agents(n):sort_agents_ascending():agents();
+end
+
 function Tab.reactive_injection_chart(self, n_cases, Lang, output)
     local show_in_legend = n_cases > 1;
     local pos_color = table_techtype_color.max_pos_reactive_injection;
@@ -868,15 +921,25 @@ function Tab.reactive_injection_chart(self, n_cases, Lang, output)
     local seq_label = tostring(first_year);
     local chart_pos;
     local chart_neg;
+    -- Per-case bus list/order shared by all frames of the animated charts.
+    local pos_bus_order = {};
+    local neg_bus_order = {};
     if first_year ~= last_year then
         chart_pos = Chart(dictionary.max_pos_reactive_injection[Lang]);
         chart_neg = Chart(dictionary.max_neg_reactive_injection[Lang]);
         chart_pos:enable_controls();
         chart_neg:enable_controls();
+        for case = 1, n_cases do
+            pos_bus_order[case] = reactive_injection_bus_order(output.optflow[case].max_pos_reactive_injection_by_bus, true, 30);
+            neg_bus_order[case] = reactive_injection_bus_order(output.optflow[case].max_neg_reactive_injection_by_bus, false, 30);
+        end
     else
         chart_pos = Chart(dictionary.max_pos_reactive_injection[Lang], first_year);
         chart_neg = Chart(dictionary.max_neg_reactive_injection[Lang], first_year);
     end
+    -- Vertical bus names + low tick interval so Highcharts shows every name.
+    chart_pos:xlabel_rotation(-90);
+    chart_neg:xlabel_rotation(-90);
 
     for year = first_year, last_year do
         seq = seq + 1;
@@ -889,11 +952,18 @@ function Tab.reactive_injection_chart(self, n_cases, Lang, output)
             end
 
             if first_year ~= last_year then
-                chart_pos:add_column_categories(output.optflow[case].max_pos_reactive_injection_by_bus:select_stage(seq):remove_zeros():sort_agents_descending(), Generic(case):cloudname(), {color = pos_color, showInLegend = show_in_legend, sequence = seq, sequence_label = seq_label});
-                chart_neg:add_column_categories(output.optflow[case].max_neg_reactive_injection_by_bus:select_stage(seq):remove_zeros():sort_agents_ascending(), Generic(case):cloudname(), {color = neg_color, showInLegend = show_in_legend, sequence = seq, sequence_label = seq_label});
+                -- Same bus list/order in every frame (see reactive_injection_bus_order).
+                local pos_buses = pos_bus_order[case];
+                local neg_buses = neg_bus_order[case];
+                if pos_buses ~= nil then
+                    chart_pos:add_column_categories(output.optflow[case].max_pos_reactive_injection_by_bus:select_stage(seq):select_agents(pos_buses), Generic(case):cloudname(), {color = pos_color, showInLegend = show_in_legend, xTickPixelInterval = 14, sequence = seq, sequence_label = seq_label});
+                end
+                if neg_buses ~= nil then
+                    chart_neg:add_column_categories(output.optflow[case].max_neg_reactive_injection_by_bus:select_stage(seq):select_agents(neg_buses), Generic(case):cloudname(), {color = neg_color, showInLegend = show_in_legend, xTickPixelInterval = 14, sequence = seq, sequence_label = seq_label});
+                end
             else
-                chart_pos:add_column_categories(output.optflow[case].max_pos_reactive_injection_by_bus:remove_zeros():sort_agents_descending(), Generic(case):cloudname(), {color = pos_color, showInLegend = show_in_legend});
-                chart_neg:add_column_categories(output.optflow[case].max_neg_reactive_injection_by_bus:remove_zeros():sort_agents_ascending(), Generic(case):cloudname(), {color = neg_color, showInLegend = show_in_legend});
+                chart_pos:add_column_categories(output.optflow[case].max_pos_reactive_injection_by_bus:remove_zeros():sort_agents_descending(), Generic(case):cloudname(), {color = pos_color, showInLegend = show_in_legend, xTickPixelInterval = 14});
+                chart_neg:add_column_categories(output.optflow[case].max_neg_reactive_injection_by_bus:remove_zeros():sort_agents_ascending(), Generic(case):cloudname(), {color = neg_color, showInLegend = show_in_legend, xTickPixelInterval = 14});
             end
         end
     end
@@ -1036,36 +1106,45 @@ local function voltage_band_label(def, Lang)
 end
 
 -- Append each bus's base voltage to its name, e.g. "Altamira 115 [115 kV]".
--- add_suffix only takes a literal string, so we loop agent by agent (selecting
--- one, suffixing its own kV) and concatenate the pieces back together.
+-- A single to_list fetches the kV of all plotted buses at once (first stage
+-- only), then rename_agents relabels them in one call. Do NOT go back to a
+-- per-agent select_agent/add_suffix/concatenate loop: each iteration kept
+-- ~175 MB alive on large cases (cenace) and collectgarbage does not free it.
 local function voltage_rename_with_kv(exp, base_kv)
     if base_kv == nil or not base_kv:loaded() then return exp; end
     local names = exp:agents();
-    local parts = {};
+    if #names == 0 then return exp; end
+    local kv_exp = base_kv:select_stage(1):select_agents(names);
+    local kv_names = kv_exp:agents();
+    local kv_values = kv_exp:to_list();
+    local kv_by_name = {};
+    for j = 1, #kv_names do kv_by_name[kv_names[j]] = kv_values[j]; end
+    local new_names = {};
     for i = 1, #names do
-        local single = exp:select_agent(names[i]);
-        local kv = base_kv:select_agent(names[i]):to_list()[1];
+        local kv = kv_by_name[names[i]];
         if kv ~= nil then
-            single = single:add_suffix(" [" .. string.format("%g", kv) .. " kV]");
+            new_names[i] = names[i] .. " [" .. string.format("%g", kv) .. " kV]";
+        else
+            new_names[i] = names[i];
         end
-        table.insert(parts, single);
     end
-    return concatenate(table.unpack(parts));
+    return exp:rename_agents(new_names);
 end
 
 -- Render one per-panel heatmap (% of readings near a limit), with a color
 -- scale fitted to the panel's own range and an empty-state message. What the
 -- color means is stated in the chart title (no per-agent legend).
 local function voltage_push_limit_heatmap(tab, pct, title, subtitle, y_label, strong_color, mid_colors, Lang)
-    local maxv = pct:aggregate_blocks(BY_MAX_EXCLUDING(nil)):aggregate_stages(BY_MAX_EXCLUDING(nil)):aggregate_agents(BY_MAX_EXCLUDING(nil), "m"):to_list()[1];
-    if maxv == nil or maxv <= 1e-6 then
+    local maxv = pct:aggregate_blocks(BY_MAX_EXCLUDING_KEEP_NAN(nil)):aggregate_stages(BY_MAX_EXCLUDING_KEEP_NAN(nil)):aggregate_agents(BY_MAX_EXCLUDING_KEEP_NAN(nil), "m"):to_list()[1];
+    -- maxv ~= maxv catches NaN (an all-NaN panel stays NaN under KEEP_NAN).
+    if maxv == nil or maxv ~= maxv or maxv <= 1e-6 then
         tab:push("#### " .. title);
         tab:push(fallback_message(dictionary.no_buses_near_limit[Lang]));
         return;
     end
     -- Colour scale runs from green at the panel's minimum value to the panel's colour at its maximum (both fitted to the data).
-    local minv = pct:aggregate_blocks(BY_MIN_EXCLUDING(nil)):aggregate_stages(BY_MIN_EXCLUDING(nil)):aggregate_agents(BY_MIN_EXCLUDING(nil), "m"):to_list()[1];
-    if minv == nil or minv >= maxv then minv = 0; end
+    local minv = pct:aggregate_blocks(BY_MIN_EXCLUDING_KEEP_NAN(nil)):aggregate_stages(BY_MIN_EXCLUDING_KEEP_NAN(nil)):aggregate_agents(BY_MIN_EXCLUDING_KEEP_NAN(nil), "m"):to_list()[1];
+    if minv == nil or minv ~= minv or minv >= maxv then minv = 0; end
 
     local chart = Chart(title, subtitle);
     chart:add_heatmap(pct, {
@@ -1156,6 +1235,9 @@ function Tab.add_voltage_distribution_chart(self, n_cases, Lang, output)
                     local cum = (b < nbins) and count_below(lo + b * width) or total;
                     counts[b] = cum - prev;
                     prev = cum;
+                    if b % 10 == 0 then
+                        collectgarbage("collect") -- "collect" força um ciclo completo
+                    end
                 end
 
                 local parts = {};
@@ -1191,10 +1273,10 @@ function Tab.add_voltage_band_chart(self, n_cases, Lang, output)
         -- valid = 1 for a usable reading, 0 for the -1 sentinel (inactive) AND for
         -- NaN (non-converged). gt(-1e9) is 0 for NaN / 1 for any finite value;
         -- eq(-1) removes the sentinel. Invalid readings are pushed to +inf before
-        -- the min so an all-NaN scenario can't collapse it to 0 (a BY_MIN_EXCLUDING
-        -- quirk). A bus with no valid reading that month keeps rep = 1e9.
+        -- the min so neither the sentinel nor NaN can win it. A bus with no valid
+        -- reading that month keeps rep = 1e9.
         local valid = m:gt(-1e9) - m:eq(-1);
-        local rep = ifelse(valid, m, 1e9):aggregate_blocks(BY_MIN_EXCLUDING(nil)):aggregate_scenarios(BY_MIN_EXCLUDING(nil)):save_cache();
+        local rep = ifelse(valid, m, 1e9):aggregate_blocks(BY_MIN_EXCLUDING_KEEP_NAN(nil)):aggregate_scenarios(BY_MIN_EXCLUDING_KEEP_NAN(nil)):save_cache();
         local has_active = rep:lt(1e8):save_cache();    -- 1 only if the bus has a valid margin that month
 
         local chart = Chart(dictionary.buses_by_margin_band[Lang], subtitle);
@@ -1244,6 +1326,7 @@ function Tab.add_voltage_limit_heatmaps(self, n_cases, Lang, output)
         -- blue (lower), green -> yellow -> orange -> red (upper).
         voltage_push_limit_heatmap(self, pct_low, dictionary.readings_near_lower[Lang], subtitle, y_label, "#2471A3", { "#5DADE2", "#3498DB" }, Lang);
         voltage_push_limit_heatmap(self, pct_up, dictionary.readings_near_upper[Lang], subtitle, y_label, "#C0392B", { "#F1C40F", "#E67E22" }, Lang);
+        collectgarbage("collect") -- "collect" força um ciclo completo
     end
 end
 
@@ -1327,6 +1410,8 @@ function Tab.Voltage_Limits(self, n_cases, Lang, output)
     self:push("# " .. dictionary.voltage_distribution[Lang]);
     self:push(dictionary.voltage_distribution_msg[Lang]);
     self:add_voltage_distribution_chart(n_cases, Lang, output);
+    collectgarbage("collect") -- "collect" força um ciclo completo
+
 
     self:push("# " .. dictionary.buses_by_margin_band[Lang]);
     self:push(dictionary.voltage_margin_msg[Lang]);   -- margin definition (used by the charts below)
@@ -1784,7 +1869,8 @@ function Tab.create_summary(self, n_cases, Lang, info_struct, optflow_data)
 
     local sys_string            = "| " .. dictionary.cell_system[Lang];
     local battery_string        = "| " .. dictionary.cell_batteries[Lang];
-    local bus_string            = "| " .. dictionary.cell_buses[Lang];
+    local ac_bus_string         = "| " .. dictionary.cell_ac_bus[Lang];
+    local dc_bus_string         = "| " .. dictionary.cell_dc_bus[Lang];
     local ac_line_string        = "| " .. dictionary.cell_ac_line[Lang];
     local dc_line_string        = "| " .. dictionary.cell_dc_line[Lang];
     local ac_interc_string      = "| " .. dictionary.cell_ac_interc[Lang];
@@ -1808,7 +1894,8 @@ function Tab.create_summary(self, n_cases, Lang, info_struct, optflow_data)
         sys_string = sys_string             .. " | " .. tostring(#System(i):labels());
         battery_string = battery_string     .. " | " .. tostring(#Battery(i):labels());
 
-        bus_string     = bus_string        .. " | " .. tostring(#Bus(i):labels());
+        ac_bus_string  = ac_bus_string  .. " | " .. tostring(#ACBus(i):labels());
+        dc_bus_string  = dc_bus_string  .. " | " .. tostring(#DCBus(i):labels());
         ac_line_string = ac_line_string .. " | " .. tostring(#ACLine(i):labels());
         dc_line_string = dc_line_string .. " | " .. tostring(#DCLine(i):labels());
         ac_interc_string = ac_interc_string .. " | " .. tostring(#DCLink(i):labels());
@@ -1851,7 +1938,8 @@ function Tab.create_summary(self, n_cases, Lang, info_struct, optflow_data)
     self:push(renw_csp_string);
     self:push(battery_string);
     self:push(pinj_string);
-    self:push(bus_string);
+    self:push(ac_bus_string);
+    self:push(dc_bus_string);
     self:push(ac_line_string);
     self:push(dc_line_string);
     self:push(ac_interc_string);

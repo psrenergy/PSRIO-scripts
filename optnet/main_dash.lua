@@ -324,7 +324,8 @@ local dictionary = {
     cell_renewable_csp      = {en = "Renewable plants - CSP",    es = "Plantas renovables - CSP",      pt = "Usinas renováveis - CSP"},
     cell_renewable_other    = {en = "Renewable plants - Other techs", es = "Plantas renovables - Otras tecnologías", pt = "Usinas renováveis - Outras tecnologias"},
     cell_batteries          = {en = "Batteries",                  es = "Baterías",           pt = "Baterias"},
-    cell_buses              = {en = "Buses",                      es = "Barras",             pt = "Barras"},
+    cell_ac_bus             = {en = "AC buses",                   es = "Barras de CA",       pt = "Barras de CA"},
+    cell_dc_bus             = {en = "DC buses",                   es = "Barras de CC",       pt = "Barras de CC"},
     cell_power_injections   = {en = "Power injections",           es = "Inyecciones de energía", pt = "Injeções de energia"},
     cell_ac_line            = {en = "AC lines",                   es = "Líneas de CA",       pt = "Linhas de CA"},
     cell_dc_line_dim        = {en = "DC lines",                   es = "Líneas de CC",       pt = "Linhas de CC"},
@@ -345,22 +346,24 @@ local dictionary = {
     },
 }
 
--- Wraps a chart fallback message (shown when a chart has no data to display) in a
--- soft "success/info" callout box. Pushed strings are rendered as markdown, which
--- passes raw HTML through, so an inline-styled <div> gives a consistent look. The
--- trailing blank line ends the HTML block so a following "# heading" push still
--- parses as a heading (markdown otherwise absorbs it into the raw-HTML block).
-function fallback_message(text)
-    return '<div style="background:#F1F9F4; border:1px solid #CDE8D7; border-radius:8px; '
-        .. 'padding:14px 18px; margin:6px 0; color:#2E7D50; font-size:0.95em; line-height:1.45;">'
-        .. text .. '</div>\n\n';
+-- Wraps a chart fallback message (shown when a chart has no data to display) in an
+-- "info" callout box. Pure markdown only: PSRIO rc25+ drops raw HTML from pushed
+-- markdown, so the box is a one-cell table (bordered, padded, wraps long text).
+-- "|" would split the cell and a newline would end the table, hence the escaping.
+-- The trailing blank line ends the table so a following "# heading" push still
+-- parses as a heading (PSRIO concatenates consecutive markdown pushes).
+local function callout(icon, text)
+    local cell = text:gsub("|", "\\|"):gsub("\n", " ");
+    return "| " .. icon .. " " .. cell .. " |\n|:---|\n\n";
 end
 
--- Same idea as fallback_message but a yellow "warning" callout (⚠️).
+function fallback_message(text)
+    return callout("ℹ️", text);
+end
+
+-- Same box as fallback_message, with the warning icon.
 function warning_message(text)
-    return '<div style="background:#FCF6E3; border:1px solid #EAD9A0; border-radius:8px; '
-        .. 'padding:14px 18px; margin:6px 0; color:#8A6D1B; font-size:0.95em; line-height:1.45;">'
-        .. '⚠️ ' .. text .. '</div>\n\n';
+    return callout("⚠️", text);
 end
 
 ---------------------------------------------------------------------------
@@ -507,28 +510,28 @@ function load_data(output, lang, optnet_data)
 
         -- ── Redundancy (max annual violation per element) ───────────────
         output.optnet[case].acline_redundancy       = acline:load("opn_dashboard_acline_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
+            :aggregate_stages(BY_MAX_EXCLUDING_KEEP_NAN(nil), Profile.PER_YEAR)
 
         output.optnet[case].transformer_redundancy  = transformer:load("opn_dashboard_transformer_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
+            :aggregate_stages(BY_MAX_EXCLUDING_KEEP_NAN(nil), Profile.PER_YEAR)
 
         output.optnet[case].three_winding_redundancy = three_winding:load("opn_dashboard_threewindingtransformer_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
+            :aggregate_stages(BY_MAX_EXCLUDING_KEEP_NAN(nil), Profile.PER_YEAR)
 
         output.optnet[case].series_cap_redundancy   = series_capacitor:load("opn_dashboard_seriescapacitor_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
+            :aggregate_stages(BY_MAX_EXCLUDING_KEEP_NAN(nil), Profile.PER_YEAR)
 
         output.optnet[case].flow_ctrl_redundancy    = flwcontroller:load("opn_dashboard_flowcontroller_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
+            :aggregate_stages(BY_MAX_EXCLUDING_KEEP_NAN(nil), Profile.PER_YEAR)
 
         output.optnet[case].dc_line_redundancy      = dcline:load("opn_dashboard_dcline_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
+            :aggregate_stages(BY_MAX_EXCLUDING_KEEP_NAN(nil), Profile.PER_YEAR)
 
         output.optnet[case].converter_redundancy    = generic:load("opn_dashboard_converter_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, false, false, false, correct_series)
-            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
+            :aggregate_stages(BY_MAX_EXCLUDING_KEEP_NAN(nil), Profile.PER_YEAR)
 
         output.optnet[case].dc_link_redundancy      = dclink:load("opn_dashboard_dclink_redundancy"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, true, false, false, correct_series)
-            :aggregate_stages(BY_MAX_EXCLUDING(nil), Profile.PER_YEAR)
+            :aggregate_stages(BY_MAX_EXCLUDING_KEEP_NAN(nil), Profile.PER_YEAR)
 
         -- ── Length of the Lines ──────────────────────────────────────────
         local investment_decision = generic:load("opn_dashboard_investment_decision"):select_optnet_date_scn_blcks(optnet_data[case], system_codes, false, false, false, correct_series);
@@ -1561,7 +1564,8 @@ function Tab.create_summary(self, n_cases, Lang, info_struct, optnet_data)
     local renw_csp_str      = "| " .. dictionary.cell_renewable_csp[Lang];
     local renw_oth_str      = "| " .. dictionary.cell_renewable_other[Lang];
     local battery_str       = "| " .. dictionary.cell_batteries[Lang];
-    local bus_str           = "| " .. dictionary.cell_buses[Lang];
+    local ac_bus_str        = "| " .. dictionary.cell_ac_bus[Lang];
+    local dc_bus_str        = "| " .. dictionary.cell_dc_bus[Lang];
     local pinj_str          = "| " .. dictionary.cell_power_injections[Lang];
     local acline_str        = "| " .. dictionary.cell_ac_line[Lang];
     local transformer_str   = "| " .. dictionary.cell_transformers_dim[Lang];
@@ -1582,7 +1586,8 @@ function Tab.create_summary(self, n_cases, Lang, info_struct, optnet_data)
         hydro_str     = hydro_str               .. " | " .. tostring(#Hydro(i):labels());
         thermal_str   = thermal_str             .. " | " .. tostring(#Thermal(i):labels());
         battery_str   = battery_str             .. " | " .. tostring(#Battery(i):labels());
-        bus_str       = bus_str                 .. " | " .. tostring(#Bus(i):labels());
+        ac_bus_str    = ac_bus_str              .. " | " .. tostring(#ACBus(i):labels());
+        dc_bus_str    = dc_bus_str              .. " | " .. tostring(#DCBus(i):labels());
         pinj_str      = pinj_str                .. " | " .. tostring(#PowerInjection(i):labels());
         acline_str    = acline_str              .. " | " .. tostring(#ACLine(i):labels());
         transformer_str = transformer_str       .. " | " .. tostring(#Transformer(i):labels());
@@ -1617,7 +1622,8 @@ function Tab.create_summary(self, n_cases, Lang, info_struct, optnet_data)
             renw_csp_str      = renw_csp_str      .. "|";
             renw_oth_str      = renw_oth_str      .. "|";
             battery_str       = battery_str       .. "|";
-            bus_str           = bus_str           .. "|";
+            ac_bus_str        = ac_bus_str        .. "|";
+            dc_bus_str        = dc_bus_str        .. "|";
             pinj_str          = pinj_str          .. "|";
             acline_str        = acline_str        .. "|";
             transformer_str   = transformer_str   .. "|";
@@ -1641,7 +1647,8 @@ function Tab.create_summary(self, n_cases, Lang, info_struct, optnet_data)
     self:push(renw_csp_str);
     self:push(battery_str);
     self:push(pinj_str);
-    self:push(bus_str);
+    self:push(ac_bus_str);
+    self:push(dc_bus_str);
     self:push(acline_str);
     self:push(transformer_str);
     self:push(three_wind_str);
