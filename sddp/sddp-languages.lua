@@ -437,22 +437,22 @@ dictionary = {
         es = "Inércia",
         pt = "Inercia"
     },
-    hydro_oxru_hour_violation = {
+    hydro_outflow_ramp_table_up_hour_viol = {
         en = "Hydro: multi-level outflow ramp-up (hourly rate)",
         es = "Hidro: rampa de defluencia multinivel (subida, tasa horaria)",
         pt = "Hidro: rampa de defluência multinível (subida, taxa horária)"
     },
-    hydro_oxru_day_violation = {
+    hydro_outflow_ramp_table_up_day_viol = {
         en = "Hydro: multi-level outflow ramp-up (daily rate)",
         es = "Hidro: rampa de defluencia multinivel (subida, tasa diaria)",
         pt = "Hidro: rampa de defluência multinível (subida, taxa diária)"
     },
-    hydro_oxrd_hour_violation = {
+    hydro_outflow_ramp_table_down_hour_viol = {
         en = "Hydro: multi-level outflow ramp-down (hourly rate)",
         es = "Hidro: rampa de defluencia multinivel (bajada, tasa horaria)",
         pt = "Hidro: rampa de defluência multinível (descida, taxa horária)"
     },
-    hydro_oxrd_day_violation = {
+    hydro_outflow_ramp_table_down_day_viol = {
         en = "Hydro: multi-level outflow ramp-down (daily rate)",
         es = "Hidro: rampa de defluencia multinivel (bajada, tasa diaria)",
         pt = "Hidro: rampa de defluência multinível (descida, taxa diária)"

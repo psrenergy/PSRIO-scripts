@@ -232,10 +232,10 @@ local viol_structs = {
     {name = "hydro_non_controllable_spillage_violation", block_aggregation = BY_AVERAGE()},
     {name = "hydro_target_storage_violation", block_aggregation = BY_AVERAGE()},
     {name = "inertia_violation", block_aggregation = BY_AVERAGE()},
-    {name = "hydro_oxru_hour_violation", block_aggregation = BY_AVERAGE()},
-    {name = "hydro_oxru_day_violation", block_aggregation = BY_AVERAGE()},
-    {name = "hydro_oxrd_hour_violation", block_aggregation = BY_AVERAGE()},
-    {name = "hydro_oxrd_day_violation", block_aggregation = BY_AVERAGE()}
+    {name = "hydro_outflow_ramp_table_up_hour_viol", block_aggregation = BY_AVERAGE()},
+    {name = "hydro_outflow_ramp_table_up_day_viol", block_aggregation = BY_AVERAGE()},
+    {name = "hydro_outflow_ramp_table_down_hour_viol", block_aggregation = BY_AVERAGE()},
+    {name = "hydro_outflow_ramp_table_down_day_viol", block_aggregation = BY_AVERAGE()}
 }
 
 local viol_structs_debug = {
