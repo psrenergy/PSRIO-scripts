@@ -1177,12 +1177,13 @@ function create_hourly_sol_status_graph(tab, col_struct, i)
     xLabel = dictionary.cell_stages[LANGUAGE],
     showInLegend = false,
     stopsMin = 0,
-    stopsMax = 3,
+    stopsMax = 4,
     dataClasses = {
-                  { color = "#8ACE7E", from = 0, to = 1, name = "Optimal solution" },
-                  { color = "#4E79A7", from = 1, to = 2, name = "Feasible solution"},
-                  { color = "#FBEEB3", from = 3        , name = "Relaxed solution" },
-                  { color = "#C64B3E", from = 2, to = 3, name = "No solution"      }
+                  { color = "#8ACE7E", from = -0.5, to = 0.5, name = "Optimal solution" },
+                  { color = "#4E79A7", from =  0.5, to = 1.5, name = "Feasible solution"},
+                  { color = "#FBEEB3", from =  2.5, to = 3.5, name = "Relaxed solution" },
+                  { color = "#C64B3E", from =  1.5, to = 2.5, name = "No solution"      },
+                  { color = "#000000", from =  3.5, to = 4.5, name = "Infeasible problem"}
                   },
     legendSizeLimit = LEGEND_MAX_CHAR
     };
@@ -1192,8 +1193,12 @@ function create_hourly_sol_status_graph(tab, col_struct, i)
     chart:add_heatmap(status,options);
     tab:push(chart);
 
-    if status:remove_zeros():loaded() then
+    -- Status 4, a problem proven infeasible, has its own warning
+    if (status:ge(1) & status:le(3)):remove_zeros():loaded() then
         advisor:push_warning("mip_convergence");
+    end
+    if status:eq(4):remove_zeros():loaded() then
+        advisor:push_warning("hourly_infeasible");
     end
 end
 

@@ -151,6 +151,28 @@ O gap de convergência do MIP não foi atendido para algumas soluções, conform
 ]]
         }
     },
+    hourly_infeasible = {
+        MAIN = {
+            en = [[
+The hourly problem was proven infeasible for some stages and scenarios, as indicated by the "Solution Status per Stage and Scenario" chart in the "Simulation" tab. Please consider the following options:
+
+🠊 Review the data of the constraints that apply to the hourly representation in these stages (for example, ramps and unit commitment), which may be impossible to meet together.
+🠊 Evaluate if these constraints can be met or if they should be relaxed.
+]],
+            es = [[
+Se comprobó que el problema horario es infactible en algunas etapas y escenarios, según lo indicado en el gráfico de "Estado de la Solución por Etapa y Escenario" en la pestaña de "Simulación". Considere las siguientes opciones:
+
+🠊 Revise los datos de las restricciones que se aplican a la representación horaria en estas etapas (por ejemplo, rampas y compromiso de unidades), que pueden ser imposibles de cumplir en conjunto.
+🠊 Evalúe si estas restricciones se pueden cumplir o si deben ser relajadas.
+]],
+            pt = [[
+O problema horário foi comprovadamente inviável em alguns estágios e cenários, conforme indicado pelo gráfico de "Status da Solução por Estágio e Cenário" na guia de "Simulação". Considere as seguintes opções:
+
+🠊 Revise os dados das restrições que se aplicam à representação horária nesses estágios (por exemplo, rampas e unit commitment), que podem ser impossíveis de atender em conjunto.
+🠊 Avalie se essas restrições podem ser atendidas ou se devem ser relaxadas.
+]]
+        }
+    },
     obj_costs = {
         MAIN = {
             en = [[
